@@ -1,0 +1,96 @@
+// =====================================================================
+// KCIC / WHOOSH Custom Global Styles
+// Matches https://ticket.kcic.co.id brand identity
+// Primary: #ED1C24 (KCIC Red)
+// Sidebar/Dark: #1a1f5e (KCIC Deep Navy Blue)
+// =====================================================================
+
+// ─── CSS Variable Overrides ───────────────────────────────────────────
+:root {
+  // Primary KCIC Red
+  --bs-primary:         #ED1C24;
+  --bs-primary-rgb:     237, 28, 36;
+
+  // Derived primary subtones
+  --bs-primary-bg-subtle:     #fde8e9;
+  --bs-primary-border-subtle: #f9b4b7;
+
+  // Dark (used in sidebar, .bg-dark etc.) → KCIC Navy
+  --bs-dark:     #1a1f5e;
+  --bs-dark-rgb: 26, 31, 94;
+}
+
+// ─── Sidebar / Vertical Menu overrides removed for white theme ───────────
+
+// ─── Navbar top bar ──────────────────────────────────────────────────
+// Keep the navbar white/paper, matching ticket.kcic.co.id
+
+// ─── Buttons – primary KCIC red ──────────────────────────────────────
+.btn-primary {
+  background-color: #ED1C24 !important;
+  border-color: #ED1C24 !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: #c7161c !important;
+  border-color: #c7161c !important;
+  color: #fff !important;
+}
+
+.btn-outline-primary {
+  color: #ED1C24 !important;
+  border-color: #ED1C24 !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #ED1C24 !important;
+  color: #fff !important;
+}
+
+// ─── Badge label-primary (light tint) ────────────────────────────────
+.bg-label-primary {
+  background-color: rgba(237, 28, 36, 0.16) !important;
+  color: #ED1C24 !important;
+}
+
+// ─── Nav tabs active underline ────────────────────────────────────────
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-link:hover {
+  border-bottom-color: #ED1C24 !important;
+  color: #ED1C24 !important;
+}
+
+// ─── Form controls focus ring ─────────────────────────────────────────
+.form-control:focus,
+.form-select:focus {
+  border-color: #ED1C24 !important;
+  box-shadow: 0 0.125rem 0.25rem 0 rgba(237, 28, 36, 0.4) !important;
+}
+
+// ─── Checkbox / radio checked color ──────────────────────────────────
+.form-check-input:checked {
+  background-color: #ED1C24 !important;
+  border-color: #ED1C24 !important;
+}
+
+// ─── Pagination active ────────────────────────────────────────────────
+.page-item.active .page-link {
+  background-color: #ED1C24 !important;
+  border-color: #ED1C24 !important;
+}
+
+// ─── Links ───────────────────────────────────────────────────────────
+a {
+  color: #ED1C24;
+}
+a:hover {
+  color: #c7161c;
+}
+
+// ─── Mobile menu overlay / hamburger ────────────────────────────────
+.layout-menu-toggle .bx {
+  color: #ED1C24;
+}

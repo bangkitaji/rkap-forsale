@@ -1,0 +1,14 @@
+// ===================================================================================================================
+// KCIC / WHOOSH Brand Theme Override
+// Primary color: KCIC Red #ED1C24
+// Dark/Sidebar: KCIC Navy #1a1f5e (deep navy blue, matches ticket.kcic.co.id)
+// ===================================================================================================================
+
+// KCIC brand primary: vibrant red
+$primary: #ED1C24;
+
+// KCIC navy for dark elements (sidebar, dark mode)
+$dark: #1a1f5e;
+
+// Override red sass variable with KCIC red (used in danger states etc.)
+$red: #ED1C24;
