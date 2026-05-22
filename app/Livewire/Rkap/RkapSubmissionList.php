@@ -12,6 +12,22 @@ class RkapSubmissionList extends Component
     public string $search = '';
     public string $filterStatus = '';
     public ?int $filterPeriod = null;
+    public bool $showPeriodSelector = false;
+
+    public function openPeriodSelector(): void
+    {
+        $this->showPeriodSelector = true;
+    }
+
+    public function closePeriodSelector(): void
+    {
+        $this->showPeriodSelector = false;
+    }
+
+    public function selectPeriod(int $periodId): void
+    {
+        $this->redirectRoute('rkap-submissions-create', ['periodId' => $periodId]);
+    }
 
     public function render()
     {
@@ -54,10 +70,14 @@ class RkapSubmissionList extends Component
             'approved'    => (clone $statsQuery)->where('status', 'approved')->count(),
         ];
 
+        $periods = RkapPeriod::orderByDesc('year')->get();
+        $activePeriods = RkapPeriod::active()->orderByDesc('year')->get();
+
         return view('livewire.rkap.rkap-submission-list', [
-            'submissions' => $submissions,
-            'periods' => RkapPeriod::orderByDesc('year')->get(),
-            'stats' => $stats,
+            'submissions'   => $submissions,
+            'periods'       => $periods,
+            'activePeriods' => $activePeriods,
+            'stats'         => $stats,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

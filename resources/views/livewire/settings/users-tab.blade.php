@@ -26,6 +26,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Organisasi</th>
                     <th>Roles</th>
                     <th>Actions</th>
                 </tr>
@@ -35,6 +36,20 @@
                 <tr>
                     <td><strong>{{ $user->name }}</strong></td>
                     <td>{{ $user->email }}</td>
+                    <td>
+                        @if($user->bureau)
+                            <span class="badge bg-label-info">Biro</span>
+                            {{ $user->bureau->name }}
+                        @elseif($user->department)
+                            <span class="badge bg-label-warning">Departemen</span>
+                            {{ $user->department->name }}
+                        @elseif($user->directorate)
+                            <span class="badge bg-label-success">Direktorat</span>
+                            {{ $user->directorate->name }}
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
                     <td>
                         @foreach($user->roles as $role)
                             <span class="badge bg-label-primary m-1">{{ $role->name }}</span>
@@ -51,7 +66,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="text-center">No users found.</td>
+                    <td colspan="5" class="text-center">No users found.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -88,6 +103,48 @@
                             @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
+                        <div class="mb-3">
+                            <label class="form-label">Organisasi</label>
+                            <select class="form-select mb-2" wire:model.live="organization_type">
+                                <option value="">-- Pilih Tipe Organisasi --</option>
+                                <option value="bureau">Biro</option>
+                                <option value="department">Departemen</option>
+                                <option value="directorate">Direktorat</option>
+                            </select>
+
+                            @if($organization_type === 'bureau')
+                                <select class="form-select @error('bureau_id') is-invalid @enderror" wire:model="bureau_id">
+                                    <option value="">-- Pilih Biro --</option>
+                                    @foreach($bureaus as $bureau)
+                                        <option value="{{ $bureau->id }}">{{ $bureau->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('bureau_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @elseif($organization_type === 'department')
+                                <select class="form-select @error('department_id') is-invalid @enderror" wire:model="department_id">
+                                    <option value="">-- Pilih Departemen --</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @elseif($organization_type === 'directorate')
+                                <select class="form-select @error('directorate_id') is-invalid @enderror" wire:model="directorate_id">
+                                    <option value="">-- Pilih Direktorat --</option>
+                                    @foreach($directorates as $directorate)
+                                        <option value="{{ $directorate->id }}">{{ $directorate->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('directorate_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @endif
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Jabatan / Posisi</label>
+                            <input type="text" id="position" class="form-control @error('position') is-invalid @enderror" wire:model="position" placeholder="contoh: Manager, Staff">
+                            @error('position') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">Roles</label>
                             <div class="row">

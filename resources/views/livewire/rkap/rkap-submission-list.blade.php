@@ -2,9 +2,9 @@
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Pengajuan RKAP</h4>
         @can('rkap.create')
-            <a href="#" class="btn btn-primary" wire:click.prevent="$dispatch('open-period-selector')">
+            <button wire:click="openPeriodSelector" class="btn btn-primary">
                 <i class="bx bx-plus me-1"></i> Buat Pengajuan
-            </a>
+            </button>
         @endcan
     </div>
 
@@ -181,4 +181,40 @@
             {{ $submissions->links() }}
         </div>
     </div>
+
+    {{-- Period Selector Modal --}}
+    @if($showPeriodSelector)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-calendar-plus me-2"></i>Pilih Periode RKAP</h5>
+                    <button type="button" class="btn-close" wire:click="closePeriodSelector"></button>
+                </div>
+                <div class="modal-body">
+                    @forelse($activePeriods as $period)
+                        <button wire:click="selectPeriod({{ $period->id }})" class="btn btn-outline-primary w-100 mb-2 text-start">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ $period->title }}</strong>
+                                    <div class="small text-muted">{{ $period->year }} &bull; <span class="badge bg-label-success">{{ ucfirst($period->status) }}</span></div>
+                                </div>
+                                <i class="bx bx-chevron-right"></i>
+                            </div>
+                        </button>
+                    @empty
+                        <div class="text-center text-muted py-4">
+                            <i class="bx bx-calendar-x bx-lg d-block mb-2"></i>
+                            Tidak ada periode aktif.<br>
+                            <small>Hubungi admin untuk mengaktifkan periode RKAP.</small>
+                        </div>
+                    @endforelse
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" wire:click="closePeriodSelector">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

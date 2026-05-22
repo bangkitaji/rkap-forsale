@@ -39,19 +39,22 @@
       "slug": "rkap-periods"
     },
     {
-      "menuHeader": "Settings"
+      "menuHeader": "Settings",
+      "permission": "settings.show"
     },
     {
       "url": "settings/user-management",
       "icon": "menu-icon icon-base bx bx-user-circle",
       "name": "User Management",
-      "slug": "settings-user-management"
+      "slug": "settings-user-management",
+      "permission": "settings.show"
     },
     {
       "url": "settings/organization",
       "icon": "menu-icon icon-base bx bx-building",
       "name": "Organisasi",
-      "slug": "settings-organization"
+      "slug": "settings-organization",
+      "permission": "settings.show"
     }
   ]
 }

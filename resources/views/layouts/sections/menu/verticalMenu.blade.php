@@ -20,8 +20,14 @@ use Illuminate\Support\Facades\Route;
 
     <ul class="menu-inner py-1">
         @foreach ($menuData[0]->menu as $menu)
-
         {{-- adding active and open class if child is active --}}
+
+        {{-- permission guard --}}
+        @if (isset($menu->permission))
+            @cannot($menu->permission)
+                @continue
+            @endcannot
+        @endif
 
         {{-- menu headers --}}
         @if (isset($menu->menuHeader))
