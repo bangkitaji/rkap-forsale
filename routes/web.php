@@ -56,8 +56,23 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/settings/user-management', \App\Livewire\Settings\UserManagement::class)->name('settings-user-management');
+        Route::get('/settings/organization', \App\Livewire\Settings\OrganizationManagement::class)->name('settings-organization');
+    });
+
+    // RKAP routes
+    Route::prefix('rkap')->group(function () {
+        Route::get('/dashboard', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
+        Route::get('/periods', \App\Livewire\Rkap\RkapPeriodManagement::class)
+            ->middleware('permission:rkap.manage.period')
+            ->name('rkap-periods');
+        Route::get('/submissions', \App\Livewire\Rkap\RkapSubmissionList::class)->name('rkap-submissions');
+        Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
+        Route::get('/submissions/{id}/edit', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-edit');
+        Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');
+        Route::get('/submissions/{id}/versions', \App\Livewire\Rkap\RkapVersionHistory::class)->name('rkap-submissions-versions');
     });
 });
+
 
 // layout
 Route::get('/layouts/without-menu', [WithoutMenu::class, 'index'])->name('layouts-without-menu');

@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -22,6 +24,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'bureau_id',
+        'department_id',
+        'directorate_id',
+        'position',
     ];
 
     /**
@@ -45,5 +51,75 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // ── Organisation Relations ──
+
+    public function bureau(): BelongsTo
+    {
+        return $this->belongsTo(Bureau::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function directorate(): BelongsTo
+    {
+        return $this->belongsTo(Directorate::class);
+    }
+
+    // ── RKAP Relations ──
+
+    public function rkapSubmissions(): HasMany
+    {
+        return $this->hasMany(RkapSubmission::class, 'created_by');
+    }
+
+    public function rkapApprovals(): HasMany
+    {
+        return $this->hasMany(RkapApproval::class);
+    }
+
+    // ── Role Helper Methods ──
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isKepalaBiro(): bool
+    {
+        return $this->hasRole('kepala_biro');
+    }
+
+    public function isKepalaDepartemen(): bool
+    {
+        return $this->hasRole('kepala_departemen');
+    }
+
+    public function isDireksi(): bool
+    {
+        return $this->hasRole('direksi');
+    }
+
+    public function isVerifikator(): bool
+    {
+        return $this->hasRole('verifikator');
+    }
+
+    public function getOrganizationNameAttribute(): string
+    {
+        if ($this->bureau) {
+            return $this->bureau->name;
+        }
+        if ($this->department) {
+            return $this->department->name;
+        }
+        if ($this->directorate) {
+            return $this->directorate->name;
+        }
+        return '-';
     }
 }
