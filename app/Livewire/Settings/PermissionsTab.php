@@ -2,16 +2,27 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\Rule;
 
 class PermissionsTab extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $search = '';
     public $name;
     public $permissionId;
     public $isEditMode = false;
     public $isModalOpen = false;
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     protected function rules()
     {
@@ -99,8 +110,13 @@ class PermissionsTab extends Component
 
     public function render()
     {
+        $permissions = Permission::when($this->search, function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
+            ->paginate(10);
+
         return view('livewire.settings.permissions-tab', [
-            'permissions' => Permission::all()
+            'permissions' => $permissions
         ]);
     }
 }

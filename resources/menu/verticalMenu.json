@@ -36,7 +36,26 @@
       "url": "rkap/periods",
       "icon": "menu-icon icon-base bx bx-calendar",
       "name": "Periode RKAP",
-      "slug": "rkap-periods"
+      "slug": "rkap-periods",
+      "permission": "rkap.manage.period"
+    },
+    {
+      "menuHeader": "Master Data",
+      "permission": "masterdata.show"
+    },
+    {
+      "name": "Work Plan",
+      "icon": "menu-icon icon-base bx bx-task",
+      "url": "master-data/work-plans",
+      "slug": "master-data.work-plans",
+      "permission": "masterdata.workplan.manage"
+    },
+    {
+      "name": "Activity",
+      "icon": "menu-icon icon-base bx bx-list-check",
+      "url": "master-data/activities",
+      "slug": "master-data.activities",
+      "permission": "masterdata.activity.manage"
     },
     {
       "menuHeader": "Settings",

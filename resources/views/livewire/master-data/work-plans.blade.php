@@ -1,4 +1,10 @@
 <div>
+    <h4 class="py-3 mb-4">
+        <span class="text-muted fw-light">Master Data /</span> Work Plan
+    </h4>
+
+    <div class="card">
+        <div class="card-body">
     @if (session()->has('message'))
         <div class="alert alert-success alert-dismissible" role="alert">
             {{ session('message') }}
@@ -14,14 +20,14 @@
     @endif
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0">Roles</h5>
+        <h5 class="mb-0">Work Plans</h5>
         <div class="d-flex gap-2">
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text"><i class="bx bx-search"></i></span>
-                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search roles...">
+                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search work plans...">
             </div>
             <button wire:click="create()" class="btn btn-primary btn-sm">
-                <i class="bx bx-plus me-1"></i> Add Role
+                <i class="bx bx-plus me-1"></i> Add Work Plan
             </button>
         </div>
     </div>
@@ -30,34 +36,28 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Permissions</th>
+                    <th>Code</th>
+                    <th>Title</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
-                @forelse($roles as $role)
+                @forelse($workPlans as $workPlan)
                 <tr>
-                    <td>{{ $role->id }}</td>
-                    <td><strong>{{ $role->name }}</strong></td>
-                    <td class="text-wrap">
-                        @foreach($role->permissions as $perm)
-                            <span class="badge bg-label-info m-1">{{ $perm->name }}</span>
-                        @endforeach
-                    </td>
+                    <td><strong>{{ $workPlan->code }}</strong></td>
+                    <td>{{ $workPlan->title }}</td>
                     <td>
-                        <button wire:click="edit({{ $role->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect">
+                        <button wire:click="edit({{ $workPlan->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect">
                             <i class="bx bx-edit-alt"></i>
                         </button>
-                        <button wire:click="delete({{ $role->id }})" wire:confirm="Are you sure you want to delete this role?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect">
+                        <button wire:click="delete({{ $workPlan->id }})" wire:confirm="Are you sure you want to delete this work plan?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect">
                             <i class="bx bx-trash"></i>
                         </button>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="text-center">No roles found.</td>
+                    <td colspan="3" class="text-center">No work plans found.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -65,40 +65,32 @@
     </div>
 
     <div class="mt-4">
-        {{ $roles->links() }}
+        {{ $workPlans->links() }}
+    </div>
+        </div>
     </div>
 
     <!-- Modal -->
     @if($isModalOpen)
     <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $isEditMode ? 'Edit Role' : 'Add New Role' }}</h5>
+                    <h5 class="modal-title">{{ $isEditMode ? 'Edit Work Plan' : 'Add New Work Plan' }}</h5>
                     <button type="button" class="btn-close" wire:click="closeModal()"></button>
                 </div>
                 <form wire:submit.prevent="store">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="roleName" class="form-label">Role Name</label>
-                            <input type="text" id="roleName" class="form-control @error('name') is-invalid @enderror" wire:model="name" placeholder="e.g. editor" autofocus>
-                            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <label for="code" class="form-label">Code</label>
+                            <input type="text" id="code" class="form-control @error('code') is-invalid @enderror" wire:model="code" placeholder="e.g. WP-01" autofocus>
+                            @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">Permissions</label>
-                            <div class="row">
-                                @foreach($permissions as $permission)
-                                <div class="col-md-4 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="{{ $permission->name }}" id="perm_{{ $permission->id }}" wire:model.live="rolePermissions">
-                                        <label class="form-check-label" for="perm_{{ $permission->id }}">
-                                            {{ $permission->name }}
-                                        </label>
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" id="title" class="form-control @error('title') is-invalid @enderror" wire:model="title" placeholder="Work Plan Title">
+                            @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
                     <div class="modal-footer">

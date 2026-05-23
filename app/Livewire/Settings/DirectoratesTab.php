@@ -3,11 +3,17 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\Directorate;
 use Illuminate\Validation\Rule;
 
 class DirectoratesTab extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $search = '';
     public ?int $directorateId = null;
     public string $code = '';
     public string $name = '';
@@ -15,6 +21,11 @@ class DirectoratesTab extends Component
     public bool $is_active = true;
     public bool $isEditMode = false;
     public bool $isModalOpen = false;
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     protected function rules(): array
     {
@@ -99,8 +110,16 @@ class DirectoratesTab extends Component
 
     public function render()
     {
+        $directorates = Directorate::withCount(['departments', 'users'])
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('code', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy('code')
+            ->paginate(10);
+
         return view('livewire.settings.directorates-tab', [
-            'directorates' => Directorate::withCount(['departments', 'users'])->orderBy('code')->get(),
+            'directorates' => $directorates,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Bureau;
 use App\Models\Department;
@@ -12,6 +13,11 @@ use Illuminate\Validation\Rule;
 
 class UsersTab extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $search = '';
     public $name;
     public $email;
     public $password;
@@ -19,6 +25,11 @@ class UsersTab extends Component
     public $isEditMode = false;
     public $isModalOpen = false;
     public $userRoles = [];
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     // Organization fields
     public $organization_type = ''; // 'bureau' | 'department' | 'directorate'
@@ -166,7 +177,13 @@ class UsersTab extends Component
 
     public function render()
     {
-        $users       = User::with(['roles', 'bureau', 'department', 'directorate'])->get();
+        $users = User::with(['roles', 'bureau', 'department', 'directorate'])
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('email', 'like', '%' . $this->search . '%');
+            })
+            ->paginate(10);
+
         $roles       = Role::all();
         $bureaus     = Bureau::active()->orderBy('name')->get();
         $departments = Department::active()->orderBy('name')->get();

@@ -14,9 +14,15 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h5 class="mb-0">Departemen</h5>
-        <button wire:click="create()" class="btn btn-primary btn-sm">
-            <i class="bx bx-plus me-1"></i> Tambah Departemen
-        </button>
+        <div class="d-flex gap-2">
+            <div class="input-group input-group-sm w-auto">
+                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search departments...">
+            </div>
+            <button wire:click="create()" class="btn btn-primary btn-sm">
+                <i class="bx bx-plus me-1"></i> Tambah Departemen
+            </button>
+        </div>
     </div>
 
     <div class="table-responsive text-nowrap">
@@ -74,6 +80,10 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <div class="mt-4">
+        {{ $departments->links() }}
     </div>
 
     {{-- Modal --}}

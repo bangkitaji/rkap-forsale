@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\Bureau;
 use App\Models\Department;
 use App\Models\Directorate;
@@ -10,6 +11,11 @@ use Illuminate\Validation\Rule;
 
 class BureausTab extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $search = '';
     public ?int $bureauId = null;
     public ?int $department_id = null;
     public string $code = '';
@@ -18,6 +24,11 @@ class BureausTab extends Component
     public bool $is_active = true;
     public bool $isEditMode = false;
     public bool $isModalOpen = false;
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     protected function rules(): array
     {
@@ -100,7 +111,14 @@ class BureausTab extends Component
     public function render()
     {
         return view('livewire.settings.bureaus-tab', [
-            'bureaus' => Bureau::with(['department.directorate'])->withCount('users')->orderBy('code')->get(),
+            'bureaus' => Bureau::with(['department.directorate'])
+                ->withCount('users')
+                ->when($this->search, function($query) {
+                    $query->where('name', 'like', '%' . $this->search . '%')
+                          ->orWhere('code', 'like', '%' . $this->search . '%');
+                })
+                ->orderBy('code')
+                ->paginate(10),
             'departments' => Department::with('directorate')->active()->orderBy('name')->get(),
         ]);
     }
