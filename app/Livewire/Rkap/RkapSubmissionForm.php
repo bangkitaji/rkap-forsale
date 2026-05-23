@@ -7,6 +7,8 @@ use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
 use App\Models\RkapWorkPlan;
 use App\Models\RkapBudgetItem;
+use App\Models\WorkPlan;
+use App\Models\Activity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -40,27 +42,60 @@ class RkapSubmissionForm extends Component
         }
     }
 
+    /**
+     * Reset activity_id whenever work_plan_id changes for a given row.
+     */
+    public function updated(string $name): void
+    {
+        if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
+            $idx = (int) $m[1];
+            $this->workPlans[$idx]['activity_id'] = null;
+        }
+    }
+
+    /**
+     * All available WorkPlans (with their activities) for the Program Kerja select.
+     */
+    public function getWorkPlanOptionsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return WorkPlan::with('activities')->orderBy('code')->get();
+    }
+
+    /**
+     * Activities filtered by the selected work_plan_id for a given row index.
+     */
+    public function getActivitiesForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
+    {
+        $workPlanId = $this->workPlans[$wpIndex]['work_plan_id'] ?? null;
+
+        if (!$workPlanId) {
+            return collect();
+        }
+
+        return Activity::where('work_plan_id', $workPlanId)->orderBy('code')->get();
+    }
+
     private function loadWorkPlans(): void
     {
         $this->workPlans = $this->submission->workPlans->map(function ($wp) {
             return [
-                'id' => $wp->id,
-                'program_code' => $wp->program_code ?? '',
-                'program_name' => $wp->program_name,
-                'description' => $wp->description ?? '',
+                'id'            => $wp->id,
+                'work_plan_id'  => $wp->work_plan_id,
+                'activity_id'   => $wp->activity_id,
+                'description'   => $wp->description ?? '',
                 'output_target' => $wp->output_target ?? '',
-                'unit' => $wp->unit ?? '',
-                'quantity' => $wp->quantity,
-                'sort_order' => $wp->sort_order,
-                'budget_items' => $wp->budgetItems->map(function ($bi) {
+                'unit'          => $wp->unit ?? '',
+                'quantity'      => $wp->quantity,
+                'sort_order'    => $wp->sort_order,
+                'budget_items'  => $wp->budgetItems->map(function ($bi) {
                     return [
-                        'id' => $bi->id,
+                        'id'           => $bi->id,
                         'account_code' => $bi->account_code ?? '',
-                        'description' => $bi->description,
-                        'unit' => $bi->unit ?? '',
-                        'quantity' => $bi->quantity,
-                        'unit_price' => $bi->unit_price,
-                        'remarks' => $bi->remarks ?? '',
+                        'description'  => $bi->description,
+                        'unit'         => $bi->unit ?? '',
+                        'quantity'     => $bi->quantity,
+                        'unit_price'   => $bi->unit_price,
+                        'remarks'      => $bi->remarks ?? '',
                     ];
                 })->toArray(),
             ];
@@ -70,22 +105,22 @@ class RkapSubmissionForm extends Component
     public function addWorkPlan(): void
     {
         $this->workPlans[] = [
-            'id' => null,
-            'program_code' => '',
-            'program_name' => '',
-            'description' => '',
+            'id'            => null,
+            'work_plan_id'  => null,
+            'activity_id'   => null,
+            'description'   => '',
             'output_target' => '',
-            'unit' => '',
-            'quantity' => 1,
-            'sort_order' => count($this->workPlans),
-            'budget_items' => [[
-                'id' => null,
+            'unit'          => '',
+            'quantity'      => 1,
+            'sort_order'    => count($this->workPlans),
+            'budget_items'  => [[
+                'id'           => null,
                 'account_code' => '',
-                'description' => '',
-                'unit' => '',
-                'quantity' => 1,
-                'unit_price' => 0,
-                'remarks' => '',
+                'description'  => '',
+                'unit'         => '',
+                'quantity'     => 1,
+                'unit_price'   => 0,
+                'remarks'      => '',
             ]],
         ];
     }
@@ -99,13 +134,13 @@ class RkapSubmissionForm extends Component
     public function addBudgetItem(int $wpIndex): void
     {
         $this->workPlans[$wpIndex]['budget_items'][] = [
-            'id' => null,
+            'id'           => null,
             'account_code' => '',
-            'description' => '',
-            'unit' => '',
-            'quantity' => 1,
-            'unit_price' => 0,
-            'remarks' => '',
+            'description'  => '',
+            'unit'         => '',
+            'quantity'     => 1,
+            'unit_price'   => 0,
+            'remarks'      => '',
         ];
     }
 
@@ -129,14 +164,15 @@ class RkapSubmissionForm extends Component
     protected function rules(): array
     {
         return [
-            'notes' => 'nullable|string',
-            'workPlans' => 'required|array|min:1',
-            'workPlans.*.program_name' => 'required|string|max:255',
-            'workPlans.*.quantity' => 'required|integer|min:1',
-            'workPlans.*.budget_items' => 'required|array|min:1',
-            'workPlans.*.budget_items.*.description' => 'required|string|max:255',
-            'workPlans.*.budget_items.*.quantity' => 'required|integer|min:1',
-            'workPlans.*.budget_items.*.unit_price' => 'required|numeric|min:0',
+            'notes'                                          => 'nullable|string',
+            'workPlans'                                      => 'required|array|min:1',
+            'workPlans.*.work_plan_id'                       => 'required|integer|exists:work_plans,id',
+            'workPlans.*.activity_id'                        => 'nullable|integer|exists:activities,id',
+            'workPlans.*.quantity'                           => 'required|integer|min:1',
+            'workPlans.*.budget_items'                       => 'required|array|min:1',
+            'workPlans.*.budget_items.*.description'         => 'required|string|max:255',
+            'workPlans.*.budget_items.*.quantity'            => 'required|integer|min:1',
+            'workPlans.*.budget_items.*.unit_price'          => 'required|numeric|min:0',
         ];
     }
 
@@ -172,28 +208,37 @@ class RkapSubmissionForm extends Component
                     'bureau_id'      => $user->bureau_id,
                     'created_by'     => $user->id,
                     'notes'          => $this->notes ?: null,
-                    'status'         => $this->submissionId ? null : $status, // don't change status on update
+                    'status'         => $this->submissionId ? null : $status,
                 ]
             );
 
             if ($this->submissionId) {
-                // Delete removed work plans
                 $existingWpIds = collect($this->workPlans)->pluck('id')->filter()->toArray();
                 $submission->workPlans()->whereNotIn('id', $existingWpIds)->delete();
             }
 
             foreach ($this->workPlans as $sortIdx => $wpData) {
+                // Resolve program_name from the selected Activity (or WorkPlan as fallback)
+                $programName = null;
+                if (!empty($wpData['activity_id'])) {
+                    $programName = Activity::find($wpData['activity_id'])?->title;
+                }
+                if (!$programName && !empty($wpData['work_plan_id'])) {
+                    $programName = WorkPlan::find($wpData['work_plan_id'])?->title;
+                }
+
                 $workPlan = RkapWorkPlan::updateOrCreate(
                     ['id' => $wpData['id'] ?? null],
                     [
                         'rkap_submission_id' => $submission->id,
-                        'program_code'   => $wpData['program_code'] ?: null,
-                        'program_name'   => $wpData['program_name'],
-                        'description'    => $wpData['description'] ?: null,
-                        'output_target'  => $wpData['output_target'] ?: null,
-                        'unit'           => $wpData['unit'] ?: null,
-                        'quantity'       => $wpData['quantity'],
-                        'sort_order'     => $sortIdx,
+                        'work_plan_id'       => $wpData['work_plan_id'] ?: null,
+                        'activity_id'        => $wpData['activity_id'] ?: null,
+                        'program_name'       => $programName,     // kept for backward compatibility
+                        'description'        => $wpData['description'] ?: null,
+                        'output_target'      => $wpData['output_target'] ?: null,
+                        'unit'               => $wpData['unit'] ?: null,
+                        'quantity'           => $wpData['quantity'],
+                        'sort_order'         => $sortIdx,
                     ]
                 );
 
@@ -224,7 +269,8 @@ class RkapSubmissionForm extends Component
 
     public function render()
     {
-        return view('livewire.rkap.rkap-submission-form')
-            ->layout('layouts.contentNavbarLayout');
+        return view('livewire.rkap.rkap-submission-form', [
+            'workPlanOptions' => $this->workPlanOptions,
+        ])->layout('layouts.contentNavbarLayout');
     }
 }

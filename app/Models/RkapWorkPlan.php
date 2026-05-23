@@ -10,6 +10,8 @@ class RkapWorkPlan extends Model
 {
     protected $fillable = [
         'rkap_submission_id',
+        'work_plan_id',
+        'activity_id',
         'program_code',
         'program_name',
         'description',
@@ -22,14 +24,26 @@ class RkapWorkPlan extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'sort_order' => 'integer',
+            'quantity'     => 'integer',
+            'sort_order'   => 'integer',
+            'work_plan_id' => 'integer',
+            'activity_id'  => 'integer',
         ];
     }
 
     public function submission(): BelongsTo
     {
         return $this->belongsTo(RkapSubmission::class, 'rkap_submission_id');
+    }
+
+    public function workPlan(): BelongsTo
+    {
+        return $this->belongsTo(WorkPlan::class);
+    }
+
+    public function activity(): BelongsTo
+    {
+        return $this->belongsTo(Activity::class);
     }
 
     public function budgetItems(): HasMany
@@ -42,3 +56,4 @@ class RkapWorkPlan extends Model
         return (float) $this->budgetItems->sum('total_price');
     }
 }
+
