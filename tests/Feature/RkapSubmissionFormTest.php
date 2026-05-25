@@ -189,18 +189,32 @@ class RkapSubmissionFormTest extends TestCase
             ->assertSet('workPlans.0.budget_items.0.coa_id', null);
     }
 
-    public function test_cannot_save_budget_item_coa_not_mapped_to_selected_activity(): void
+    public function test_can_save_budget_item_coa_not_mapped_to_selected_activity(): void
     {
         $this->actingAs($this->user);
 
-        // Activity without COAs -> should not allow COA selection
+        // Activity without COAs -> should allow COA selection now based on updated rules
         $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             ->set('workPlans.0.activity_id', $this->activityWithoutCoas->id)
             ->set('workPlans.0.budget_items.0.coa_id', $this->coa1->id);
 
         $component->call('saveDraft')
-            ->assertHasErrors(); // mapping validation should prevent saving
+            ->assertHasNoErrors();
+    }
+
+    public function test_cannot_save_budget_item_coa_without_activity(): void
+    {
+        $this->actingAs($this->user);
+
+        // COA selected but Activity is null -> should throw validation errors
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activity_id', null)
+            ->set('workPlans.0.budget_items.0.coa_id', $this->coa1->id);
+
+        $component->call('saveDraft')
+            ->assertHasErrors();
     }
 
     public function test_coa_options_are_filtered_by_activity(): void

@@ -143,14 +143,35 @@ class RkapSubmissionForm extends Component
      */
     public function getCoaOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
     {
-        $activityId = $this->workPlans[$wpIndex]['activity_id'] ?? null;
-        if ($activityId) {
-            $activity = Activity::with('coas')->find($activityId);
-            if ($activity && $activity->coas->isNotEmpty()) {
-                return $activity->coas->sortBy('code');
+        // Return all available COAs regardless of activity selection
+        return $this->coaOptions;
+    }
+
+    /**
+     * Get display label for a budget item's COA (code — title).
+     * Falls back to account_code and description if COA lookup fails.
+     */
+    public function getCoaDisplayLabel(int $wpIndex, int $biIndex): string
+    {
+        $bi = $this->workPlans[$wpIndex]['budget_items'][$biIndex] ?? null;
+        if (!$bi) {
+            return '';
+        }
+
+        // Try to get from COA lookup first
+        if (isset($bi['coa_id']) && $bi['coa_id']) {
+            $coa = $this->coaOptions->firstWhere('id', $bi['coa_id']);
+            if ($coa) {
+                return $coa->code . ' — ' . $coa->title;
             }
         }
-        return $this->coaOptions;
+
+        // Fallback to account_code and description stored in budget item
+        if (!empty($bi['account_code']) || !empty($bi['description'])) {
+            return trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
+        }
+
+        return '';
     }
 
     private function loadWorkPlans(): void
@@ -287,35 +308,16 @@ class RkapSubmissionForm extends Component
      */
     private function validateBudgetItemsCoaMapping(): void
     {
-        // Build: activityId => allowedCoaIds[]
-        $activityCoaMap = Activity::with('coas:id')->get()->map(function (Activity $a) {
-            return [
-                'activity_id' => (int) $a->id,
-                'coa_ids'     => $a->coas->pluck('id')->map(fn($id) => (int) $id)->values()->all(),
-            ];
-        })->keyBy('activity_id')->toArray();
-
+        // Validate that if COA is selected, Activity must be selected
         foreach (($this->workPlans ?? []) as $wpData) {
             $activityId = $wpData['activity_id'] ?? null;
 
             foreach (($wpData['budget_items'] ?? []) as $biData) {
                 $coaId = $biData['coa_id'] ?? null;
 
-                if (!$activityId) {
-                    if (!empty($coaId)) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'workPlans' => 'COA dipilih tanpa Activity yang dipilih pada salah satu baris.',
-                        ]);
-                    }
-                    continue;
-                }
-
-                $activityKey = (int) $activityId;
-                $allowedCoaIds = $activityCoaMap[$activityKey]['coa_ids'] ?? [];
-
-                if (empty($coaId) || !in_array((int) $coaId, $allowedCoaIds, true)) {
+                if (!$activityId && !empty($coaId)) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        'workPlans' => 'COA yang dipilih tidak termasuk ke COA yang dipetakan untuk Activity pada baris tersebut.',
+                        'workPlans' => 'Activity harus dipilih jika COA telah dipilih pada salah satu baris.',
                     ]);
                 }
             }

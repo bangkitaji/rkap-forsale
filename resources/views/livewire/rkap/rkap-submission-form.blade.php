@@ -297,10 +297,13 @@
                             }
                             @endphp
                             <td
+                                wire:key="coa-cell-{{ $wpIdx }}-{{ $biIdx }}-{{ $bi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
                                 x-data="{
                                     open: false,
                                     search: @js($searchLabel),
+                                    currentLabel: @js($searchLabel),
                                 }"
+                                x-effect="if (!open && search !== currentLabel) search = currentLabel"
                                 :style="open ? 'position: relative; z-index: 1060;' : ''"
                                 @click.outside="open = false; $dispatch('coa-dropdown-close')">
                                 <div class="position-relative">
@@ -346,7 +349,8 @@
                                             x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
                                             @click="
                                                     $wire.set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', {{ $coa->id }});
-                                                    search = '{{ $coa->code }} — {{ $coa->title }}';
+                                                    currentLabel = '{{ $coa->code }} — {{ $coa->title }}';
+                                                    search = currentLabel;
                                                     open = false;
                                                     $dispatch('coa-dropdown-close');
                                                 ">
