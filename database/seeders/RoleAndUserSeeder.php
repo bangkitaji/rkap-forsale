@@ -24,6 +24,7 @@ class RoleAndUserSeeder extends Seeder
         $permMasterDataShow = Permission::firstOrCreate(['name' => 'masterdata.show', 'guard_name' => 'web']);
         $permMasterDataWorkplanManage = Permission::firstOrCreate(['name' => 'masterdata.workplan.manage', 'guard_name' => 'web']);
         $permMasterDataActivityManage = Permission::firstOrCreate(['name' => 'masterdata.activity.manage', 'guard_name' => 'web']);
+        $permMasterDataCoaManage = Permission::firstOrCreate(['name' => 'masterdata.coa.manage', 'guard_name' => 'web']);
 
         // create role
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -34,7 +35,8 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsShow,
             $permMasterDataShow,
             $permMasterDataWorkplanManage,
-            $permMasterDataActivityManage
+            $permMasterDataActivityManage,
+            $permMasterDataCoaManage,
         ]);
 
         // create admin user

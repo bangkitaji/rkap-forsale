@@ -1,0 +1,4 @@
+/* Keep active nav-pill text white on hover */
+.nav-pills .nav-link.active:hover {
+    color: #fff !important;
+}

@@ -58,6 +58,13 @@
       "permission": "masterdata.activity.manage"
     },
     {
+      "name": "COA",
+      "icon": "menu-icon icon-base bx bx-spreadsheet",
+      "url": "master-data/coas",
+      "slug": "master-data.coas",
+      "permission": "masterdata.coa.manage"
+    },
+    {
       "menuHeader": "Settings",
       "permission": "settings.show"
     },
@@ -65,14 +72,14 @@
       "url": "settings/user-management",
       "icon": "menu-icon icon-base bx bx-user-circle",
       "name": "User Management",
-      "slug": "settings-user-management",
+      "slug": ["settings-user-management", "settings-user-management-users", "settings-user-management-roles", "settings-user-management-permissions"],
       "permission": "settings.show"
     },
     {
       "url": "settings/organization",
       "icon": "menu-icon icon-base bx bx-building",
       "name": "Organisasi",
-      "slug": "settings-organization",
+      "slug": ["settings-organization", "settings-organization-directorates", "settings-organization-departments", "settings-organization-bureaus"],
       "permission": "settings.show"
     }
   ]

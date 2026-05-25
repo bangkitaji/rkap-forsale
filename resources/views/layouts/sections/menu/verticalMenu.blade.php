@@ -44,18 +44,16 @@ use Illuminate\Support\Facades\Route;
         if ($currentRouteName === $menu->slug) {
         $activeClass = 'active';
         }
-        elseif (isset($menu->submenu)) {
-        if (gettype($menu->slug) === 'array') {
+        elseif (gettype($menu->slug) === 'array') {
         foreach($menu->slug as $slug){
         if (str_contains($currentRouteName,$slug) and strpos($currentRouteName,$slug) === 0) {
-        $activeClass = 'active open';
+        $activeClass = isset($menu->submenu) ? 'active open' : 'active';
         }
         }
         }
-        else{
+        elseif (isset($menu->submenu)) {
         if (str_contains($currentRouteName,$menu->slug) and strpos($currentRouteName,$menu->slug) === 0) {
         $activeClass = 'active open';
-        }
         }
         }
         @endphp

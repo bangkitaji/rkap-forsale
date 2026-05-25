@@ -2,7 +2,23 @@
     <h4 class="py-3 mb-4">
         <span class="text-muted fw-light">Settings /</span> User Management
     </h4>
-
+    <div class="row">
+        <div class="col-md-12">
+            <div class="nav-align-top">
+                <ul class="nav nav-pills flex-column flex-md-row mb-6 gap-md-0 gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="javascript:void(0);"><i class="icon-base bx bx-user icon-sm me-1_5"></i> Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url('settings/manage-roles') }}"><i class="icon-base bx bx-group icon-sm me-1_5"></i> Roles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url('settings/manage-permissions') }}"><i class="icon-base bx bx-link-alt icon-sm me-1_5"></i> Permissions</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <div class="card">
         <div class="card-header border-bottom mb-3">
             <ul class="nav nav-tabs card-header-tabs" role="tablist">
@@ -27,11 +43,11 @@
             <div class="tab-content p-0 border-0">
                 <div class="tab-pane fade show active" role="tabpanel">
                     @if($activeTab === 'users')
-                        <livewire:settings.users-tab />
+                    <livewire:settings.users-tab />
                     @elseif($activeTab === 'roles')
-                        <livewire:settings.roles-tab />
+                    <livewire:settings.roles-tab />
                     @elseif($activeTab === 'permissions')
-                        <livewire:settings.permissions-tab />
+                    <livewire:settings.permissions-tab />
                     @endif
                 </div>
             </div>

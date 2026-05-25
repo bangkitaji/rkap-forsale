@@ -55,8 +55,16 @@ Route::middleware(['auth'])->group(function () {
     })->name('logout');
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/settings/user-management', \App\Livewire\Settings\UserManagement::class)->name('settings-user-management');
-        Route::get('/settings/organization', \App\Livewire\Settings\OrganizationManagement::class)->name('settings-organization');
+        // User management (split into separate routes)
+        Route::get('/settings/user-management', \App\Livewire\Settings\UserManagementUsers::class)->name('settings-user-management');
+        Route::get('/settings/user-management/users', \App\Livewire\Settings\UserManagementUsers::class)->name('settings-user-management-users');
+        Route::get('/settings/user-management/roles', \App\Livewire\Settings\UserManagementRoles::class)->name('settings-user-management-roles');
+        Route::get('/settings/user-management/permissions', \App\Livewire\Settings\UserManagementPermissions::class)->name('settings-user-management-permissions');
+
+        Route::get('/settings/organization', \App\Livewire\Settings\OrganizationDirectorates::class)->name('settings-organization');
+        Route::get('/settings/organization/directorates', \App\Livewire\Settings\OrganizationDirectorates::class)->name('settings-organization-directorates');
+        Route::get('/settings/organization/departments', \App\Livewire\Settings\OrganizationDepartments::class)->name('settings-organization-departments');
+        Route::get('/settings/organization/bureaus', \App\Livewire\Settings\OrganizationBureaus::class)->name('settings-organization-bureaus');
     });
 
     // RKAP routes
@@ -76,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('master-data')->name('master-data.')->group(function () {
         Route::get('work-plans', \App\Livewire\MasterData\WorkPlans::class)->name('work-plans')->middleware('can:masterdata.workplan.manage');
         Route::get('activities', \App\Livewire\MasterData\Activities::class)->name('activities')->middleware('can:masterdata.activity.manage');
+        Route::get('coas', \App\Livewire\MasterData\Coas::class)->name('coas')->middleware('can:masterdata.coa.manage');
     });
 });
 
