@@ -1,8 +1,9 @@
 <?php
+
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\User;
 use App\Models\Bureau;
 use App\Models\Department;
@@ -13,9 +14,7 @@ use Illuminate\Validation\Rule;
 
 class UsersTab extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public $name;
@@ -76,7 +75,7 @@ class UsersTab extends Component
     {
         $this->resetInputFields();
         $this->isEditMode = true;
-        
+
         try {
             $user = User::findOrFail($id);
             $this->userId        = $user->id;
@@ -178,17 +177,14 @@ class UsersTab extends Component
     public function render()
     {
         $users = User::with(['roles', 'bureau', 'department', 'directorate'])
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
-            })
-            ->paginate(10);
+            ->search('name|email', $this->search)
+            ->paginate($this->perPage);
 
         $roles       = Role::all();
         $bureaus     = Bureau::active()->orderBy('name')->get();
         $departments = Department::active()->orderBy('name')->get();
         $directorates = Directorate::active()->orderBy('name')->get();
-        
+
         return view('livewire.settings.users-tab', [
             'users'        => $users,
             'roles'        => $roles,

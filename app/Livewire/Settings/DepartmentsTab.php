@@ -3,16 +3,14 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Department;
 use App\Models\Directorate;
 use Illuminate\Validation\Rule;
 
 class DepartmentsTab extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public string $search = '';
     public ?int $departmentId = null;
@@ -117,12 +115,9 @@ class DepartmentsTab extends Component
         return view('livewire.settings.departments-tab', [
             'departments' => Department::with('directorate')
                 ->withCount(['bureaus', 'users'])
-                ->when($this->search, function($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                          ->orWhere('code', 'like', '%' . $this->search . '%');
-                })
+                ->search('name|code', $this->search)
                 ->orderBy('code')
-                ->paginate(10),
+                ->paginate($this->perPage),
             'directorates' => Directorate::active()->orderBy('name')->get(),
         ]);
     }

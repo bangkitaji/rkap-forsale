@@ -9,6 +9,7 @@ use App\Models\RkapWorkPlan;
 use App\Models\RkapBudgetItem;
 use App\Models\WorkPlan;
 use App\Models\Activity;
+use App\Models\Coa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -62,6 +63,14 @@ class RkapSubmissionForm extends Component
     }
 
     /**
+     * All available COAs for the Budget Item select.
+     */
+    public function getCoaOptionsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Coa::orderBy('code')->get();
+    }
+
+    /**
      * Activities filtered by the selected work_plan_id for a given row index.
      */
     public function getActivitiesForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
@@ -88,8 +97,10 @@ class RkapSubmissionForm extends Component
                 'quantity'      => $wp->quantity,
                 'sort_order'    => $wp->sort_order,
                 'budget_items'  => $wp->budgetItems->map(function ($bi) {
+                    $coa = Coa::where('code', $bi->account_code)->first();
                     return [
                         'id'           => $bi->id,
+                        'coa_id'       => $coa ? $coa->id : null,
                         'account_code' => $bi->account_code ?? '',
                         'description'  => $bi->description,
                         'unit'         => $bi->unit ?? '',
@@ -115,6 +126,7 @@ class RkapSubmissionForm extends Component
             'sort_order'    => count($this->workPlans),
             'budget_items'  => [[
                 'id'           => null,
+                'coa_id'       => null,
                 'account_code' => '',
                 'description'  => '',
                 'unit'         => '',
@@ -135,6 +147,7 @@ class RkapSubmissionForm extends Component
     {
         $this->workPlans[$wpIndex]['budget_items'][] = [
             'id'           => null,
+            'coa_id'       => null,
             'account_code' => '',
             'description'  => '',
             'unit'         => '',
@@ -170,7 +183,7 @@ class RkapSubmissionForm extends Component
             'workPlans.*.activity_id'                        => 'nullable|integer|exists:activities,id',
             'workPlans.*.quantity'                           => 'required|integer|min:1',
             'workPlans.*.budget_items'                       => 'required|array|min:1',
-            'workPlans.*.budget_items.*.description'         => 'required|string|max:255',
+            'workPlans.*.budget_items.*.coa_id'              => 'required|integer|exists:coas,id',
             'workPlans.*.budget_items.*.quantity'            => 'required|integer|min:1',
             'workPlans.*.budget_items.*.unit_price'          => 'required|numeric|min:0',
         ];
@@ -246,12 +259,13 @@ class RkapSubmissionForm extends Component
                 $workPlan->budgetItems()->whereNotIn('id', $existingBiIds)->delete();
 
                 foreach ($wpData['budget_items'] as $biData) {
+                    $coa = Coa::find($biData['coa_id']);
                     RkapBudgetItem::updateOrCreate(
                         ['id' => $biData['id'] ?? null],
                         [
                             'rkap_work_plan_id' => $workPlan->id,
-                            'account_code'  => $biData['account_code'] ?: null,
-                            'description'   => $biData['description'],
+                            'account_code'  => $coa ? $coa->code : null,
+                            'description'   => $coa ? $coa->title : '',
                             'unit'          => $biData['unit'] ?: null,
                             'quantity'      => $biData['quantity'],
                             'unit_price'    => $biData['unit_price'],
@@ -271,6 +285,7 @@ class RkapSubmissionForm extends Component
     {
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,
+            'coaOptions'      => $this->coaOptions,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

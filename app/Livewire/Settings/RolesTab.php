@@ -1,18 +1,18 @@
 <?php
+
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class RolesTab extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public $name;
@@ -50,7 +50,7 @@ class RolesTab extends Component
     {
         $this->resetInputFields();
         $this->isEditMode = true;
-        
+
         try {
             $role = Role::findOrFail($id);
             $this->roleId = $role->id;
@@ -115,10 +115,10 @@ class RolesTab extends Component
     public function render()
     {
         $roles = Role::with('permissions')
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($query) {
+                $query->where(DB::raw('LOWER(name)'), 'like', '%' . strtolower($this->search) . '%');
             })
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.settings.roles-tab', [
             'roles' => $roles,

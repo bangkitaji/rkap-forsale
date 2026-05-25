@@ -5,6 +5,7 @@
       "name": "Dashboards",
       "icon": "menu-icon icon-base bx bx-home-smile",
       "slug": "dashboard",
+      "permission": "dashboard.show",
       "badge": [
         "success",
         "0"
@@ -72,14 +73,24 @@
       "url": "settings/user-management",
       "icon": "menu-icon icon-base bx bx-user-circle",
       "name": "User Management",
-      "slug": ["settings-user-management", "settings-user-management-users", "settings-user-management-roles", "settings-user-management-permissions"],
+      "slug": [
+        "settings-user-management",
+        "settings-user-management-users",
+        "settings-user-management-roles",
+        "settings-user-management-permissions"
+      ],
       "permission": "settings.show"
     },
     {
       "url": "settings/organization",
       "icon": "menu-icon icon-base bx bx-building",
       "name": "Organisasi",
-      "slug": ["settings-organization", "settings-organization-directorates", "settings-organization-departments", "settings-organization-bureaus"],
+      "slug": [
+        "settings-organization",
+        "settings-organization-directorates",
+        "settings-organization-departments",
+        "settings-organization-bureaus"
+      ],
       "permission": "settings.show"
     }
   ]

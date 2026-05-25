@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\Searchable;
 
 class Directorate extends Model
 {
+    use Searchable;
+
     protected $fillable = [
         'code',
         'name',

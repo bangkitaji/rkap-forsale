@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\Searchable;
 
 class Department extends Model
 {
+    use Searchable;
+
     protected $fillable = [
         'directorate_id',
         'code',

@@ -75,7 +75,15 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-1">
+                    <select class="form-select" wire:model.live="perPage" title="Baris per halaman">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input type="text" class="form-control" placeholder="Cari biro atau periode..." wire:model.live.debounce.300ms="search">

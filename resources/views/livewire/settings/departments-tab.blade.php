@@ -15,6 +15,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h5 class="mb-0">Departemen</h5>
         <div class="d-flex gap-2">
+            <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text"><i class="bx bx-search"></i></span>
                 <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search departments...">

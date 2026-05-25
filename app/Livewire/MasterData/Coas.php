@@ -1,16 +1,15 @@
 <?php
+
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Coa;
 use Illuminate\Validation\Rule;
 
 class Coas extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public $coaId = null;
@@ -112,13 +111,9 @@ class Coas extends Component
 
     public function render()
     {
-        $coas = Coa::when($this->search, function ($query) {
-                $query->where('code', 'like', '%' . $this->search . '%')
-                      ->orWhere('title', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
-            })
+        $coas = Coa::search('code|title|description', $this->search)
             ->orderBy('code')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.master-data.coas', [
             'coas' => $coas,

@@ -1,22 +1,21 @@
 <?php
+
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\WorkPlan;
 use Illuminate\Validation\Rule;
 
 class WorkPlans extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public $workPlanId = null;
     public $code = '';
     public $title = '';
-    
+
     public $isEditMode = false;
     public $isModalOpen = false;
 
@@ -49,7 +48,7 @@ class WorkPlans extends Component
     {
         $this->resetInputFields();
         $this->isEditMode = true;
-        
+
         try {
             $workPlan = WorkPlan::findOrFail($id);
             $this->workPlanId = $workPlan->id;
@@ -107,12 +106,9 @@ class WorkPlans extends Component
 
     public function render()
     {
-        $workPlans = WorkPlan::when($this->search, function($query) {
-                $query->where('code', 'like', '%' . $this->search . '%')
-                      ->orWhere('title', 'like', '%' . $this->search . '%');
-            })
+        $workPlans = WorkPlan::search('code|title', $this->search)
             ->orderBy('code')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.master-data.work-plans', [
             'workPlans' => $workPlans

@@ -3,12 +3,15 @@
 namespace App\Livewire\Rkap;
 
 use Livewire\Component;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
 use Illuminate\Support\Facades\Auth;
 
 class RkapSubmissionList extends Component
 {
+    use WithCustomPagination;
+
     public string $search = '';
     public string $filterStatus = '';
     public ?int $filterPeriod = null;
@@ -34,10 +37,7 @@ class RkapSubmissionList extends Component
         $user = Auth::user();
 
         $query = RkapSubmission::with(['bureau.department.directorate', 'period', 'creator'])
-            ->when($this->search, function ($q) {
-                $q->whereHas('bureau', fn($b) => $b->where('name', 'like', "%{$this->search}%"))
-                  ->orWhereHas('period', fn($p) => $p->where('title', 'like', "%{$this->search}%"));
-            })
+            ->search('bureau.name|period.title', $this->search)
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterPeriod, fn($q) => $q->where('rkap_period_id', $this->filterPeriod));
 
@@ -51,7 +51,7 @@ class RkapSubmissionList extends Component
         }
         // Verifikator and Admin see all
 
-        $submissions = $query->orderByDesc('updated_at')->paginate(15);
+        $submissions = $query->orderByDesc('updated_at')->paginate($this->perPage);
 
         // Stats
         $statsQuery = RkapSubmission::query();

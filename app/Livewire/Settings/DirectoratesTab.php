@@ -3,15 +3,13 @@
 namespace App\Livewire\Settings;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Directorate;
 use Illuminate\Validation\Rule;
 
 class DirectoratesTab extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public ?int $directorateId = null;
@@ -111,12 +109,9 @@ class DirectoratesTab extends Component
     public function render()
     {
         $directorates = Directorate::withCount(['departments', 'users'])
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('code', 'like', '%' . $this->search . '%');
-            })
+            ->search('name|code', $this->search)
             ->orderBy('code')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.settings.directorates-tab', [
             'directorates' => $directorates,

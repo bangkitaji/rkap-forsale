@@ -1,17 +1,16 @@
 <?php
+
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
-use Livewire\WithPagination;
+use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Activity;
 use App\Models\WorkPlan;
 use Illuminate\Validation\Rule;
 
 class Activities extends Component
 {
-    use WithPagination;
-
-    protected $paginationTheme = 'bootstrap';
+    use WithCustomPagination;
 
     public $search = '';
     public $activityId = null;
@@ -19,7 +18,7 @@ class Activities extends Component
     public $code = '';
     public $title = '';
     public $description = '';
-    
+
     public $isEditMode = false;
     public $isModalOpen = false;
 
@@ -54,7 +53,7 @@ class Activities extends Component
     {
         $this->resetInputFields();
         $this->isEditMode = true;
-        
+
         try {
             $activity = Activity::findOrFail($id);
             $this->activityId = $activity->id;
@@ -119,16 +118,9 @@ class Activities extends Component
     public function render()
     {
         $activities = Activity::with('workPlan')
-            ->when($this->search, function($query) {
-                $query->where('code', 'like', '%' . $this->search . '%')
-                      ->orWhere('title', 'like', '%' . $this->search . '%')
-                      ->orWhereHas('workPlan', function($q) {
-                          $q->where('title', 'like', '%' . $this->search . '%')
-                            ->orWhere('code', 'like', '%' . $this->search . '%');
-                      });
-            })
+            ->search('code|title|workPlan.title|workPlan.code', $this->search)
             ->orderBy('code')
-            ->paginate(10);
+            ->paginate($this->perPage);
 
         return view('livewire.master-data.activities', [
             'activities' => $activities,
