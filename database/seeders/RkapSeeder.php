@@ -223,6 +223,75 @@ class RkapSeeder extends Seeder
         );
         $ver->syncRoles([$roleVerifikator]);
 
-        $this->command->info('RKAP Seeder completed: roles, permissions, org structure, and sample users created.');
+        // ── 6. Sample Master Data (WorkPlans, Activities, COAs) ──
+        $wp1 = \App\Models\WorkPlan::firstOrCreate(
+            ['code' => 'WP-IT-01'],
+            ['title' => 'Pengembangan Infrastruktur & Sistem TI']
+        );
+        $wp2 = \App\Models\WorkPlan::firstOrCreate(
+            ['code' => 'WP-OP-02'],
+            ['title' => 'Pemeliharaan & Operasional Lapangan']
+        );
+
+        $act1 = \App\Models\Activity::firstOrCreate(
+            ['code' => 'ACT-IT-101'],
+            [
+                'work_plan_id' => $wp1->id,
+                'title' => 'Upgrade Server & Cloud Storage',
+                'description' => 'Migrasi dan upgrade resource cloud server utama.'
+            ]
+        );
+        $act2 = \App\Models\Activity::firstOrCreate(
+            ['code' => 'ACT-IT-102'],
+            [
+                'work_plan_id' => $wp1->id,
+                'title' => 'Pengembangan Sistem RKAP Online',
+                'description' => 'Pembuatan modul dan integrasi database rkap.'
+            ]
+        );
+        $act3 = \App\Models\Activity::firstOrCreate(
+            ['code' => 'ACT-OP-201'],
+            [
+                'work_plan_id' => $wp2->id,
+                'title' => 'Overhaul Mesin Generator Utama',
+                'description' => 'Pemeliharaan berkala generator operasional.'
+            ]
+        );
+
+        $coa1 = \App\Models\Coa::firstOrCreate(
+            ['code' => '510101'],
+            [
+                'title' => 'Beban Pemeliharaan Server/Hardware',
+                'description' => 'Biaya perbaikan, sewa, dan pemeliharaan server hardware.'
+            ]
+        );
+        $coa2 = \App\Models\Coa::firstOrCreate(
+            ['code' => '510102'],
+            [
+                'title' => 'Beban Lisensi Software & Cloud Services',
+                'description' => 'Biaya langganan cloud dan lisensi tahunan.'
+            ]
+        );
+        $coa3 = \App\Models\Coa::firstOrCreate(
+            ['code' => '510201'],
+            [
+                'title' => 'Beban Pemeliharaan Mesin & Generator',
+                'description' => 'Biaya suku cadang dan jasa overhaul.'
+            ]
+        );
+        $coa4 = \App\Models\Coa::firstOrCreate(
+            ['code' => '520101'],
+            [
+                'title' => 'Beban Perjalanan Dinas',
+                'description' => 'Biaya tiket, akomodasi, dan uang saku dinas.'
+            ]
+        );
+
+        // Sync some initial mappings
+        $act1->coas()->syncWithoutDetaching([$coa1->id, $coa2->id]);
+        $act2->coas()->syncWithoutDetaching([$coa2->id, $coa4->id]);
+        $act3->coas()->syncWithoutDetaching([$coa3->id]);
+
+        $this->command->info('RKAP Seeder completed: roles, permissions, org structure, sample users, and master data created.');
     }
 }

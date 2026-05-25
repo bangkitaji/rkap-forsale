@@ -66,6 +66,13 @@
       "permission": "masterdata.coa.manage"
     },
     {
+      "name": "Activity ↔ COA Mapping",
+      "icon": "menu-icon icon-base bx bx-link",
+      "url": "master-data/activity-coa-mapping",
+      "slug": "master-data.activity-coa-mapping",
+      "permission": "masterdata.activity.manage"
+    },
+    {
       "menuHeader": "Settings",
       "permission": "settings.show"
     },

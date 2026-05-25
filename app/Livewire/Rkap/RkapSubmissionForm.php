@@ -51,6 +51,60 @@ class RkapSubmissionForm extends Component
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
             $idx = (int) $m[1];
             $this->workPlans[$idx]['activity_id'] = null;
+            $this->workPlans[$idx]['budget_items'] = [[
+                'id'           => null,
+                'coa_id'       => null,
+                'account_code' => '',
+                'description'  => '',
+                'unit'         => '',
+                'quantity'     => 1,
+                'unit_price'   => 0,
+                'remarks'      => '',
+            ]];
+        }
+
+        if (preg_match('/^workPlans\.(\d+)\.activity_id$/', $name, $m)) {
+            $idx = (int) $m[1];
+            $activityId = $this->workPlans[$idx]['activity_id'] ?? null;
+            if ($activityId) {
+                $activity = Activity::with('coas')->find($activityId);
+                if ($activity && $activity->coas->isNotEmpty()) {
+                    $this->workPlans[$idx]['budget_items'] = $activity->coas->map(function ($coa) {
+                        return [
+                            'id'           => null,
+                            'coa_id'       => $coa->id,
+                            'account_code' => $coa->code,
+                            'description'  => $coa->title,
+                            'unit'         => '',
+                            'quantity'     => 1,
+                            'unit_price'   => 0,
+                            'remarks'      => '',
+                        ];
+                    })->toArray();
+                } else {
+                    $this->workPlans[$idx]['budget_items'] = [[
+                        'id'           => null,
+                        'coa_id'       => null,
+                        'account_code' => '',
+                        'description'  => '',
+                        'unit'         => '',
+                        'quantity'     => 1,
+                        'unit_price'   => 0,
+                        'remarks'      => '',
+                    ]];
+                }
+            } else {
+                $this->workPlans[$idx]['budget_items'] = [[
+                    'id'           => null,
+                    'coa_id'       => null,
+                    'account_code' => '',
+                    'description'  => '',
+                    'unit'         => '',
+                    'quantity'     => 1,
+                    'unit_price'   => 0,
+                    'remarks'      => '',
+                ]];
+            }
         }
     }
 
@@ -82,6 +136,21 @@ class RkapSubmissionForm extends Component
         }
 
         return Activity::where('work_plan_id', $workPlanId)->orderBy('code')->get();
+    }
+
+    /**
+     * Get COA options for a specific work plan index, filtered by the selected activity if applicable.
+     */
+    public function getCoaOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
+    {
+        $activityId = $this->workPlans[$wpIndex]['activity_id'] ?? null;
+        if ($activityId) {
+            $activity = Activity::with('coas')->find($activityId);
+            if ($activity && $activity->coas->isNotEmpty()) {
+                return $activity->coas->sortBy('code');
+            }
+        }
+        return $this->coaOptions;
     }
 
     private function loadWorkPlans(): void
@@ -192,6 +261,7 @@ class RkapSubmissionForm extends Component
     public function saveDraft(): void
     {
         $this->validate();
+        $this->validateBudgetItemsCoaMapping();
         $this->saveSubmission('draft');
         session()->flash('message', 'Draft RKAP berhasil disimpan.');
     }
@@ -199,6 +269,8 @@ class RkapSubmissionForm extends Component
     public function submitForReview(): void
     {
         $this->validate();
+        $this->validateBudgetItemsCoaMapping();
+
         $submission = $this->saveSubmission('draft');
 
         if ($submission->status === 'draft') {
@@ -207,6 +279,47 @@ class RkapSubmissionForm extends Component
 
         session()->flash('message', 'RKAP berhasil diajukan untuk review.');
         $this->redirectRoute('rkap-submissions');
+    }
+
+    /**
+     * Enforce: every selected budget_item COA must belong to the selected Activity for that row.
+     * If activity_id is null, we reject non-null coa_id to prevent choosing COA not mapped to activity.
+     */
+    private function validateBudgetItemsCoaMapping(): void
+    {
+        // Build: activityId => allowedCoaIds[]
+        $activityCoaMap = Activity::with('coas:id')->get()->map(function (Activity $a) {
+            return [
+                'activity_id' => (int) $a->id,
+                'coa_ids'     => $a->coas->pluck('id')->map(fn($id) => (int) $id)->values()->all(),
+            ];
+        })->keyBy('activity_id')->toArray();
+
+        foreach (($this->workPlans ?? []) as $wpData) {
+            $activityId = $wpData['activity_id'] ?? null;
+
+            foreach (($wpData['budget_items'] ?? []) as $biData) {
+                $coaId = $biData['coa_id'] ?? null;
+
+                if (!$activityId) {
+                    if (!empty($coaId)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'workPlans' => 'COA dipilih tanpa Activity yang dipilih pada salah satu baris.',
+                        ]);
+                    }
+                    continue;
+                }
+
+                $activityKey = (int) $activityId;
+                $allowedCoaIds = $activityCoaMap[$activityKey]['coa_ids'] ?? [];
+
+                if (empty($coaId) || !in_array((int) $coaId, $allowedCoaIds, true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'workPlans' => 'COA yang dipilih tidak termasuk ke COA yang dipetakan untuk Activity pada baris tersebut.',
+                    ]);
+                }
+            }
+        }
     }
 
     private function saveSubmission(string $status): RkapSubmission

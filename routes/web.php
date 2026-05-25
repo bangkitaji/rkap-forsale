@@ -48,7 +48,7 @@ use App\Http\Controllers\tables\Basic as TablesBasic;
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
     Route::post('/logout', function () {
-        Auth::logout();
+        \Illuminate\Support\Facades\Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
         return redirect('/login');
@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('work-plans', \App\Livewire\MasterData\WorkPlans::class)->name('work-plans')->middleware('can:masterdata.workplan.manage');
         Route::get('activities', \App\Livewire\MasterData\Activities::class)->name('activities')->middleware('can:masterdata.activity.manage');
         Route::get('coas', \App\Livewire\MasterData\Coas::class)->name('coas')->middleware('can:masterdata.coa.manage');
+        Route::get('activity-coa-mapping', \App\Livewire\MasterData\ActivityCoaMapping::class)->name('activity-coa-mapping')->middleware('can:masterdata.activity.manage');
     });
 });
 

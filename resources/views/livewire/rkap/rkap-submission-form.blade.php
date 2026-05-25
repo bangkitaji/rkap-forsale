@@ -59,7 +59,7 @@
     : null;
     @endphp
 
-    <div class="card mb-3 border-start border-primary border-3">
+    <div class="card mb-3 border-start border-primary border-3" wire:key="wp-card-{{ $wpIdx }}">
         {{-- ===== Card Header: Program Kerja searchable select ===== --}}
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center gap-3">
@@ -173,20 +173,19 @@
                     <div
                         x-data="{
                                 open: false,
-                                search: '',
+                                search: '{{ $selectedActivity ? $selectedActivity->code . " — " . $selectedActivity->title : "" }}',
                             }"
-                        class="position-relative">
+                        class="position-relative"
+                        @click.outside="open = false">
                         {{-- Trigger input --}}
                         <div class="input-group input-group-sm">
                             <input
                                 type="text"
-                                class="form-control form-control-sm @error(" workPlans.$wpIdx.activity_id") is-invalid @enderror"
+                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.activity_id') is-invalid @enderror"
                                 placeholder="Cari kegiatan..."
                                 x-model="search"
                                 @focus="open = true"
-                                @click.outside="open = false"
                                 @input="open = true"
-                                value="{{ $selectedActivity ? $selectedActivity->code . ' — ' . $selectedActivity->title : '' }}"
                                 autocomplete="off"
                                 id="act-search-{{ $wpIdx }}">
                             @if($wp['activity_id'])
@@ -198,7 +197,7 @@
                             </button>
                             @endif
                         </div>
-                        @error("workPlans.$wpIdx.activity_id")
+                        @error('workPlans.'.$wpIdx.'.activity_id')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
 
@@ -266,7 +265,7 @@
                 <table class="table table-sm table-bordered align-middle mb-2">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:30%">Kode Akun & Uraian Belanja <span class="text-danger">*</span></th>
+                            <th style="width:30%">Uraian Belanja <span class="text-danger">*</span></th>
                             <th style="width:150px">Detail Belanja</th>
                             <th style="width:80px">Satuan</th>
                             <th style="width:70px">Vol <span class="text-danger">*</span></th>
@@ -277,27 +276,42 @@
                     </thead>
                     <tbody>
                         @foreach($wp['budget_items'] as $biIdx => $bi)
-                        <tr>
-                            <td>
-                                @php
-                                $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
-                                @endphp
-                                <div
-                                    x-data="{
-                                        open: false,
-                                        search: '',
-                                    }"
-                                    class="position-relative">
+                        <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}">
+                            @php
+                            $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
+                            $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
+
+                            // Ensure selected COA is always on top for the dropdown list.
+                            $filteredCoasOrdered = $filteredCoas;
+                            if ($bi['coa_id'] ?? null) {
+                            $filteredCoasOrdered = $filteredCoas
+                            ->sortBy(fn($c) => ($c->id === $bi['coa_id']) ? 0 : 1)
+                            ->values();
+                            }
+
+                            $searchLabel = '';
+                            if ($selectedCoa) {
+                            $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
+                            } elseif (!empty($bi['account_code']) || !empty($bi['description'])) {
+                            $searchLabel = trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
+                            }
+                            @endphp
+                            <td
+                                x-data="{
+                                    open: false,
+                                    search: @js($searchLabel),
+                                }"
+                                :style="open ? 'position: relative; z-index: 1060;' : ''"
+                                @click.outside="open = false; $dispatch('coa-dropdown-close')">
+                                <div class="position-relative">
                                     <div class="input-group input-group-sm">
                                         <input
                                             type="text"
-                                            class="form-control form-control-sm @error(" workPlans.$wpIdx.budget_items.$biIdx.coa_id") is-invalid @enderror"
+                                            class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id') is-invalid @enderror"
                                             placeholder="Cari akun/belanja..."
                                             x-model="search"
                                             @focus="open = true; $dispatch('coa-dropdown-open')"
-                                            @click.outside="open = false; $dispatch('coa-dropdown-close')"
                                             @input="open = true; $dispatch('coa-dropdown-open')"
-                                            value="{{ $selectedCoa ? $selectedCoa->code . ' — ' . $selectedCoa->title : '' }}"
                                             autocomplete="off">
                                         @if($bi['coa_id'])
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -308,7 +322,7 @@
                                         </button>
                                         @endif
                                     </div>
-                                    @error("workPlans.$wpIdx.budget_items.$biIdx.coa_id")
+                                    @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
 
@@ -316,7 +330,7 @@
                                         wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id"
                                         class="d-none">
                                         <option value=""></option>
-                                        @foreach($coaOptions as $coa)
+                                        @foreach($filteredCoasOrdered as $coa)
                                         <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
                                         @endforeach
                                     </select>
@@ -326,9 +340,9 @@
                                         x-cloak
                                         class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
                                         style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                                        @forelse($coaOptions as $coa)
+                                        @forelse($filteredCoasOrdered as $coa)
                                         <div
-                                            class="px-3 py-2 cursor-pointer dropdown-item small {{ $bi['coa_id'] == $coa->id ? 'bg-primary text-white' : '' }}"
+                                            class="px-3 py-2 cursor-pointer dropdown-item small {{ ($bi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
                                             x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
                                             @click="
                                                     $wire.set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', {{ $coa->id }});
@@ -348,11 +362,11 @@
                             <td><input type="text" class="form-control form-control-sm" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks" placeholder="Ket..."></td>
                             <td><input type="text" class="form-control form-control-sm" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit" placeholder="Bh, Paket"></td>
                             <td>
-                                <input type="number" class="form-control form-control-sm @error(" workPlans.$wpIdx.budget_items.$biIdx.quantity") is-invalid @enderror"
+                                <input type="number" class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
                                     wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity" min="1">
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm @error(" workPlans.$wpIdx.budget_items.$biIdx.unit_price") is-invalid @enderror"
+                                <input type="number" class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
                                     wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price" min="0" step="1000">
                             </td>
                             <td class="text-end text-nowrap fw-semibold text-primary">
