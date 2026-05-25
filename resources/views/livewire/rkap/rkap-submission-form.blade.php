@@ -319,7 +319,7 @@
                                         @if($bi['coa_id'])
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
                                             wire:click="$set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', null)"
-                                            @click="search = ''; $dispatch('coa-dropdown-close')"
+                                            @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close')"
                                             title="Hapus pilihan">
                                             <i class="bx bx-x"></i>
                                         </button>
