@@ -220,11 +220,11 @@ class RkapSubmission extends Model
             return $user->department_id === $this->bureau->department_id;
         }
         // Direksi
-        if ($this->status === 'dept_approved' && $user->hasRole('direksi')) {
+        if ($this->status === 'dir_review' && $user->hasRole('direksi')) {
             return $user->directorate_id === $this->bureau->department->directorate_id;
         }
         // Verifikator
-        if ($this->status === 'dir_approved' && $user->hasRole('verifikator')) {
+        if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
             return true;
         }
         return false;

@@ -73,11 +73,19 @@ class RkapSubmissionList extends Component
         $periods = RkapPeriod::orderByDesc('year')->get();
         $activePeriods = RkapPeriod::active()->orderByDesc('year')->get();
 
+        $submittedPeriodIds = [];
+        if ($user->bureau_id) {
+            $submittedPeriodIds = RkapSubmission::where('bureau_id', $user->bureau_id)
+                ->pluck('rkap_period_id')
+                ->toArray();
+        }
+
         return view('livewire.rkap.rkap-submission-list', [
-            'submissions'   => $submissions,
-            'periods'       => $periods,
-            'activePeriods' => $activePeriods,
-            'stats'         => $stats,
+            'submissions'        => $submissions,
+            'periods'            => $periods,
+            'activePeriods'      => $activePeriods,
+            'stats'              => $stats,
+            'submittedPeriodIds' => $submittedPeriodIds,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

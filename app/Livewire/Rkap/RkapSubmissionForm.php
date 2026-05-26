@@ -37,6 +37,18 @@ class RkapSubmissionForm extends Component
             $this->notes = $this->submission->notes ?? '';
             $this->loadWorkPlans();
         } elseif ($periodId) {
+            $user = Auth::user();
+            if ($user->bureau_id) {
+                $exists = RkapSubmission::where('rkap_period_id', $periodId)
+                    ->where('bureau_id', $user->bureau_id)
+                    ->exists();
+                if ($exists) {
+                    session()->flash('error', 'Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
+                    $this->redirectRoute('rkap-submissions');
+                    return;
+                }
+            }
+
             $this->periodId = $periodId;
             $this->period = RkapPeriod::findOrFail($periodId);
             $this->addWorkPlan();
@@ -329,15 +341,20 @@ class RkapSubmissionForm extends Component
         return DB::transaction(function () use ($status) {
             $user = Auth::user();
 
+            $data = [
+                'rkap_period_id' => $this->periodId,
+                'bureau_id'      => $user->bureau_id,
+                'created_by'     => $user->id,
+                'notes'          => $this->notes ?: null,
+            ];
+
+            if (!$this->submissionId) {
+                $data['status'] = $status;
+            }
+
             $submission = RkapSubmission::updateOrCreate(
                 ['id' => $this->submissionId],
-                [
-                    'rkap_period_id' => $this->periodId,
-                    'bureau_id'      => $user->bureau_id,
-                    'created_by'     => $user->id,
-                    'notes'          => $this->notes ?: null,
-                    'status'         => $this->submissionId ? null : $status,
-                ]
+                $data
             );
 
             if ($this->submissionId) {
