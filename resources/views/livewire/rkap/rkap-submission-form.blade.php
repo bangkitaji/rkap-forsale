@@ -258,361 +258,423 @@
                 </div>
             </div>
 
-            {{-- Budget Items --}}
-            <div class="table-responsive"
-                x-data="{ dropdownOpen: false }"
+            {{-- Budget Items — wrapped in Alpine for modal state --}}
+            <div
+                x-data="{
+                    dropdownOpen: false,
+                    modalKey: null,
+                    openModal(key) { this.modalKey = key; },
+                    closeModal() { this.modalKey = null; }
+                }"
                 @coa-dropdown-open.window="dropdownOpen = true"
                 @coa-dropdown-close.window="dropdownOpen = false"
-                :style="dropdownOpen ? 'overflow: visible;' : ''">
-                <table class="table table-sm table-bordered align-middle mb-2">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width:40%">Uraian & Detail Belanja <span class="text-danger">*</span></th>
-                            <th style="width:80px">Satuan</th>
-                            <th style="width:70px">Vol <span class="text-danger">*</span></th>
-                            <th style="width:140px">Harga Satuan (Rp) <span class="text-danger">*</span></th>
-                            <th style="width:140px">Total (Rp)</th>
-                            <th style="width:40px"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($wp['budget_items'] as $biIdx => $bi)
-                        @php
-                            $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
-                            $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
-                            $monthlyRemainder = $biTotal - $monthlyAllocated;
-                            $selectedMonths = $bi['distribution_months'] ?? [];
-                        @endphp
-                        <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}">
+                @keydown.escape.window="closeModal()">
+
+                {{-- Table --}}
+                <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
+                    <table class="table table-sm table-bordered align-middle mb-2">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:40%">Uraian & Detail Belanja <span class="text-danger">*</span></th>
+                                <th style="width:80px">Satuan</th>
+                                <th style="width:70px">Vol <span class="text-danger">*</span></th>
+                                <th style="width:140px">Harga Satuan (Rp) <span class="text-danger">*</span></th>
+                                <th style="width:160px">Total (Rp)</th>
+                                <th style="width:120px">Detail</th>
+                                <th style="width:40px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($wp['budget_items'] as $biIdx => $bi)
                             @php
-                            $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
-                            $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
-
-                            // Ensure selected COA is always on top for the dropdown list.
-                            $filteredCoasOrdered = $filteredCoas;
-                            if ($bi['coa_id'] ?? null) {
-                            $filteredCoasOrdered = $filteredCoas
-                            ->sortBy(fn($c) => ($c->id === $bi['coa_id']) ? 0 : 1)
-                            ->values();
-                            }
-
-                            $searchLabel = '';
-                            if ($selectedCoa) {
-                            $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
-                            } elseif (!empty($bi['account_code']) || !empty($bi['description'])) {
-                            $searchLabel = trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
-                            }
+                                $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
+                                $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
+                                $monthlyRemainder = $biTotal - $monthlyAllocated;
+                                $selectedMonths = $bi['distribution_months'] ?? [];
+                                $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                                $cashOutRemainder = $biTotal - $cashOutAllocated;
+                                $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                                $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                                $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
+                                $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
+                                $filteredCoasOrdered = $filteredCoas;
+                                if ($bi['coa_id'] ?? null) {
+                                    $filteredCoasOrdered = $filteredCoas->sortBy(fn($c) => ($c->id === $bi['coa_id']) ? 0 : 1)->values();
+                                }
+                                $searchLabel = '';
+                                if ($selectedCoa) {
+                                    $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
+                                } elseif (!empty($bi['account_code']) || !empty($bi['description'])) {
+                                    $searchLabel = trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
+                                }
                             @endphp
-                            <td
-                                wire:key="coa-cell-{{ $wpIdx }}-{{ $biIdx }}-{{ $bi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
-                                x-data="{
-                                    open: false,
-                                    search: @js($searchLabel),
-                                    currentLabel: @js($searchLabel),
-                                }"
-                                x-effect="if (!open && search !== currentLabel) search = currentLabel"
-                                :style="open ? 'position: relative; z-index: 1060;' : ''"
-                                @click.outside="open = false; $dispatch('coa-dropdown-close')">
-                                <div class="position-relative">
-                                    <div class="input-group input-group-sm">
-                                        <input
-                                            type="text"
-                                            class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id') is-invalid @enderror"
-                                            placeholder="Cari akun/belanja..."
-                                            x-model="search"
-                                            @focus="open = true; $dispatch('coa-dropdown-open')"
-                                            @input="open = true; $dispatch('coa-dropdown-open')"
-                                            autocomplete="off">
-                                        @if($bi['coa_id'])
-                                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            wire:click="$set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', null)"
-                                            @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close')"
-                                            title="Hapus pilihan">
-                                            <i class="bx bx-x"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                    @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id')
-                                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
-
-                                    <select
-                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id"
-                                        class="d-none">
-                                        <option value=""></option>
-                                        @foreach($filteredCoasOrdered as $coa)
-                                        <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
-                                        @endforeach
-                                    </select>
-
-                                    <div
-                                        x-show="open"
-                                        x-cloak
-                                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                                        style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                                        @forelse($filteredCoasOrdered as $coa)
+                            <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}">
+                                <td
+                                    wire:key="coa-cell-{{ $wpIdx }}-{{ $biIdx }}-{{ $bi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
+                                    x-data="{
+                                        open: false,
+                                        search: @js($searchLabel),
+                                        currentLabel: @js($searchLabel),
+                                    }"
+                                    x-effect="if (!open && search !== currentLabel) search = currentLabel"
+                                    :style="open ? 'position: relative; z-index: 1060;' : ''"
+                                    @click.outside="open = false; $dispatch('coa-dropdown-close')">
+                                    <div class="position-relative">
+                                        <div class="input-group input-group-sm">
+                                            <input
+                                                type="text"
+                                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id') is-invalid @enderror"
+                                                placeholder="Cari akun/belanja..."
+                                                x-model="search"
+                                                @focus="open = true; $dispatch('coa-dropdown-open')"
+                                                @input="open = true; $dispatch('coa-dropdown-open')"
+                                                autocomplete="off">
+                                            @if($bi['coa_id'])
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                wire:click="$set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', null)"
+                                                @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close')"
+                                                title="Hapus pilihan">
+                                                <i class="bx bx-x"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                        @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.coa_id')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                        <select
+                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id"
+                                            class="d-none">
+                                            <option value=""></option>
+                                            @foreach($filteredCoasOrdered as $coa)
+                                            <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
+                                            @endforeach
+                                        </select>
                                         <div
-                                            class="px-3 py-2 cursor-pointer dropdown-item small {{ ($bi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
-                                            x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
-                                            @click="
+                                            x-show="open"
+                                            x-cloak
+                                            class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                            style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                                            @forelse($filteredCoasOrdered as $coa)
+                                            <div
+                                                class="px-3 py-2 cursor-pointer dropdown-item small {{ ($bi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
+                                                x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
+                                                @click="
                                                     $wire.set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.coa_id', {{ $coa->id }});
                                                     currentLabel = '{{ $coa->code }} — {{ $coa->title }}';
                                                     search = currentLabel;
                                                     open = false;
                                                     $dispatch('coa-dropdown-close');
                                                 ">
-                                            <span class="fw-semibold text-primary">{{ $coa->code }}</span>
-                                            <span class="ms-1">{{ $coa->title }}</span>
+                                                <span class="fw-semibold text-primary">{{ $coa->code }}</span>
+                                                <span class="ms-1">{{ $coa->title }}</span>
+                                            </div>
+                                            @empty
+                                            <div class="px-3 py-2 text-muted small">Tidak ada data COA.</div>
+                                            @endforelse
                                         </div>
-                                        @empty
-                                        <div class="px-3 py-2 text-muted small">Tidak ada data COA.</div>
-                                        @endforelse
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mt-2"
+                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks"
+                                        placeholder="Detail Belanja / Ket...">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm"
+                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit"
+                                        placeholder="Bh, Paket">
+                                </td>
+                                <td>
+                                    <input type="number"
+                                        class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
+                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity"
+                                        min="1">
+                                </td>
+                                <td>
+                                    <input type="number"
+                                        class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
+                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price"
+                                        min="0" step="1000">
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <button type="button"
+                                        class="btn btn-xs btn-outline-primary py-0 px-1"
+                                        style="font-size:0.7rem;"
+                                        @click="openModal('{{ $modalKey }}')">
+                                        <i class="bx bx-detail me-1"></i>More Details
+                                    </button>
+                                    @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
+                                    <div class="mt-1">
+                                        @if(!empty($selectedMonths))
+                                            @if(abs($monthlyRemainder) < 0.01)
+                                                <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Dist</span>
+                                            @else
+                                                <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
+                                            @endif
+                                        @endif
+                                        @if(!empty($selectedMonths) && !empty($selectedCashOutMonths))
+                                        @endif
+                                        @if(!empty($selectedCashOutMonths))
+                                            @if(abs($cashOutRemainder) < 0.01)
+                                                <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Kas</span>
+                                            @else
+                                                <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(count($wp['budget_items']) > 1)
+                                    <button type="button"
+                                        wire:click="removeBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
+                                        class="btn btn-sm btn-icon btn-text-danger rounded-pill"
+                                        title="Hapus item">
+                                        <i class="bx bx-minus-circle"></i>
+                                    </button>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>{{-- end .table-responsive --}}
+
+                {{-- MODALS — outside the overflow container --}}
+                @foreach($wp['budget_items'] as $biIdx => $bi)
+                @php
+                    $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
+                    $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
+                    $monthlyRemainder = $biTotal - $monthlyAllocated;
+                    $selectedMonths = $bi['distribution_months'] ?? [];
+                    $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                    $cashOutRemainder = $biTotal - $cashOutAllocated;
+                    $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                    $allMonths = array_unique(array_merge($selectedMonths, $selectedCashOutMonths));
+                    sort($allMonths);
+                    $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                @endphp
+                <div
+                    wire:key="modal-{{ $wpIdx }}-{{ $biIdx }}"
+                    x-show="modalKey === '{{ $modalKey }}'"
+                    x-cloak
+                    class="position-fixed top-0 start-0 w-100 h-100 overflow-y-auto py-3 px-2"
+                    :class="modalKey === '{{ $modalKey }}' ? 'd-flex align-items-start justify-content-center' : 'd-none'"
+                    style="z-index: 1080; background: rgba(0,0,0,0.5);">
+                    <div
+                        x-show="modalKey === '{{ $modalKey }}'"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 translate-y-4"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 translate-y-4"
+                        class="bg-white rounded-3 shadow-lg"
+                        style="width: 740px; max-width: 96vw; max-height: calc(100vh - 3rem); display: flex; flex-direction: column;"
+                        @click.stop>
+                        {{-- Modal Header --}}
+                        <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom flex-shrink-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bx bx-detail text-primary fs-5"></i>
+                                <h6 class="mb-0 fw-bold">Detail Pengajuan</h6>
+                                <span class="badge bg-label-secondary rounded-pill small">Item {{ $biIdx + 1 }}</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-pill" @click="closeModal()">
+                                <i class="bx bx-x fs-5"></i>
+                            </button>
+                        </div>
+                        {{-- Modal Body --}}
+                        <div class="px-4 py-3" style="overflow-y: auto; max-height: calc(100vh - 12rem);">
+                            <div class="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-4">
+                                <span class="small fw-semibold">Total Item</span>
+                                <span class="fw-bold fs-6">Rp {{ number_format($biTotal, 0, ',', '.') }}</span>
+                            </div>
+                            {{-- Distribusi Beban --}}
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bx bx-calendar text-primary"></i>
+                                        <span class="fw-semibold text-primary small">Distribusi Bulanan</span>
+                                        @if(!empty($selectedMonths))
+                                            <span class="badge bg-label-primary rounded-pill">{{ count($selectedMonths) }} bulan</span>
+                                        @endif
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($biTotal > 0)
+                                            @if(abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
+                                                <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                                            @elseif($monthlyRemainder < 0)
+                                                <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($monthlyRemainder), 0, ',', '.') }}</span>
+                                            @elseif(!empty($selectedMonths))
+                                                <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}</span>
+                                            @endif
+                                        @endif
+                                        <button type="button"
+                                            wire:click="distributeEvenly({{ $wpIdx }}, {{ $biIdx }})"
+                                            class="btn btn-xs btn-outline-primary py-0 px-2"
+                                            style="font-size:0.72rem;"
+                                            @if($biTotal <= 0) disabled @endif>
+                                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                                        </button>
                                     </div>
                                 </div>
-                                <input type="text" class="form-control form-control-sm mt-2" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks" placeholder="Detail Belanja / Ket...">
-                            </td>
-                            <td><input type="text" class="form-control form-control-sm" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit" placeholder="Bh, Paket"></td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
-                                    wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity" min="1">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
-                                    wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price" min="0" step="1000">
-                            </td>
-                            <td class="text-end text-nowrap fw-semibold text-primary">
-                                Rp {{ number_format($biTotal, 0, ',', '.') }}
-                            </td>
-                            <td>
-                                @if(count($wp['budget_items']) > 1)
-                                <button type="button" wire:click="removeBudgetItem({{ $wpIdx }}, {{ $biIdx }})" class="btn btn-sm btn-icon btn-text-danger rounded-pill">
-                                    <i class="bx bx-minus-circle"></i>
-                                </button>
-                                @endif
-                            </td>
-                        </tr>
-
-                        {{-- Monthly Distribution Panel --}}
-                        <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-monthly">
-                            <td colspan="6" class="p-0 border-top-0">
-                                <div x-data="{ expanded: {{ !empty($selectedMonths) ? 'true' : 'false' }} }" class="border-top" style="background-color: #fafbfc;">
-                                    {{-- Toggle bar --}}
-                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer border-bottom"
-                                         @click="expanded = !expanded"
-                                         style="user-select: none;">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="bx bx-calendar text-primary"></i>
-                                            <span class="small fw-semibold text-primary">Distribusi Bulanan</span>
-                                            @if(!empty($selectedMonths))
-                                                <span class="badge bg-label-primary rounded-pill">{{ count($selectedMonths) }} bulan</span>
-                                            @endif
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3">
-                                            @if($biTotal > 0)
-                                                @if(abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
-                                                    <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
-                                                @elseif($monthlyRemainder < 0)
-                                                    <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($monthlyRemainder), 0, ',', '.') }}</span>
-                                                @elseif(!empty($selectedMonths))
-                                                    <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}</span>
-                                                @endif
-                                            @endif
-                                            <i class="bx" :class="expanded ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
-                                        </div>
+                                <label class="form-label small text-muted mb-1">Pilih Bulan Distribusi Beban:</label>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    @foreach($monthLabels as $monthNum => $monthLabel)
+                                    <button type="button"
+                                        wire:click="toggleMonth({{ $wpIdx }}, {{ $biIdx }}, {{ $monthNum }})"
+                                        class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
+                                        style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                        {{ $monthLabel }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                                @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.monthly')
+                                <div class="alert alert-danger small py-2 mb-2"><i class="bx bx-error-circle me-1"></i>{{ $message }}</div>
+                                @enderror
+                            </div>
+                            {{-- Rencana Kas Keluar --}}
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bx bx-wallet text-primary"></i>
+                                        <span class="fw-semibold text-primary small">Rencana Kas Keluar</span>
+                                        @if(!empty($selectedCashOutMonths))
+                                            <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }} bulan</span>
+                                        @endif
                                     </div>
-
-                                    {{-- Expandable content --}}
-                                    <div x-show="expanded" x-collapse>
-                                        <div class="px-3 py-3">
-                                            @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.monthly')
-                                            <div class="alert alert-danger small py-2 mb-3">
-                                                <i class="bx bx-error-circle me-1"></i>{{ $message }}
-                                            </div>
-                                            @enderror
-
-                                            {{-- Month toggles --}}
-                                            <div class="mb-3">
-                                                <label class="form-label small text-muted mb-2">Pilih Bulan:</label>
-                                                <div class="d-flex flex-wrap gap-1">
-                                                    @foreach($monthLabels as $monthNum => $monthLabel)
-                                                    <button type="button"
-                                                        wire:click="toggleMonth({{ $wpIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                                                        class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                                                        style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
-                                                        {{ $monthLabel }}
-                                                    </button>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-
-                                            @if(!empty($selectedMonths))
-                                            {{-- Action buttons --}}
-                                            <div class="mb-3">
-                                                <button type="button"
-                                                    wire:click="distributeEvenly({{ $wpIdx }}, {{ $biIdx }})"
-                                                    class="btn btn-sm btn-outline-primary"
-                                                    @if($biTotal <= 0) disabled @endif>
-                                                    <i class="bx bx-equalizer me-1"></i> Bagi Rata
-                                                </button>
-                                            </div>
-
-                                            {{-- Monthly amount inputs --}}
-                                            <div class="row g-2">
-                                                @foreach($monthLabels as $monthNum => $monthLabel)
-                                                    @if(in_array($monthNum, $selectedMonths))
-                                                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                                                        <label class="form-label small text-muted mb-1">{{ $monthLabel }}</label>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Rp</span>
-                                                            <input type="number"
-                                                                class="form-control form-control-sm"
-                                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
-                                                                min="0"
-                                                                step="1000"
-                                                                placeholder="0"
-                                                                style="font-size: 0.8rem;">
-                                                        </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($biTotal > 0)
+                                            @if(abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
+                                                <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                                            @elseif($cashOutRemainder < 0)
+                                                <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
+                                            @elseif(!empty($selectedCashOutMonths))
+                                                <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}</span>
+                                            @endif
+                                        @endif
+                                        <button type="button"
+                                            wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $biIdx }})"
+                                            class="btn btn-xs btn-outline-primary py-0 px-2"
+                                            style="font-size:0.72rem;"
+                                            @if($biTotal <= 0) disabled @endif>
+                                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                                        </button>
+                                    </div>
+                                </div>
+                                <label class="form-label small text-muted mb-1">Pilih Bulan Pembayaran:</label>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    @foreach($monthLabels as $monthNum => $monthLabel)
+                                    <button type="button"
+                                        wire:click="toggleCashOutMonth({{ $wpIdx }}, {{ $biIdx }}, {{ $monthNum }})"
+                                        class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
+                                        style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                        {{ $monthLabel }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                                @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.cash_out')
+                                <div class="alert alert-danger small py-2 mb-2"><i class="bx bx-error-circle me-1"></i>{{ $message }}</div>
+                                @enderror
+                            </div>
+                            {{-- 3-column summary table --}}
+                            @if(!empty($allMonths))
+                            <div class="border rounded-2 table-responsive">
+                                <table class="table table-sm table-bordered mb-0" style="min-width: 600px;">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th class="text-center" style="width:110px;">Bulan</th>
+                                            <th class="text-end">Distribusi Beban (Rp)</th>
+                                            <th class="text-end">Rencana Kas Keluar (Rp)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($monthLabels as $monthNum => $monthLabel)
+                                            @php
+                                                $isDistribMonth = in_array($monthNum, $selectedMonths);
+                                                $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
+                                            @endphp
+                                            @if($isDistribMonth || $isCashOutMonth)
+                                            <tr>
+                                                <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
+                                                <td class="text-end">
+                                                    @if($isDistribMonth)
+                                                    <div class="input-group input-group-sm justify-content-end">
+                                                        <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
+                                                        <input type="number"
+                                                            class="form-control form-control-sm text-end"
+                                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
+                                                            min="0" step="1000" placeholder="0"
+                                                            style="font-size:0.8rem;max-width:180px;">
                                                     </div>
+                                                    @else
+                                                    <span class="text-muted small">—</span>
                                                     @endif
-                                                @endforeach
-                                            </div>
-
-                                            {{-- Remaining indicator --}}
-                                            <div class="mt-3 d-flex justify-content-between align-items-center small border-top pt-2">
-                                                <span class="text-muted">
-                                                    Total Item: <strong>Rp {{ number_format($biTotal, 0, ',', '.') }}</strong>
-                                                </span>
-                                                <span class="text-muted">
-                                                    Teralokasi: <strong>Rp {{ number_format($monthlyAllocated, 0, ',', '.') }}</strong>
-                                                </span>
-                                                <span class="{{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }} fw-semibold">
-                                                    Sisa: Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}
-                                                </span>
-                                            </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-
-                        {{-- Cash Out Plan Panel --}}
-                        @php
-                            $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
-                            $cashOutRemainder = $biTotal - $cashOutAllocated;
-                            $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
-                        @endphp
-                        <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-cashout">
-                            <td colspan="6" class="p-0 border-top-0">
-                                <div x-data="{ expanded: {{ !empty($selectedCashOutMonths) ? 'true' : 'false' }} }" class="border-top" style="background-color: #f1f3f5;">
-                                    {{-- Toggle bar --}}
-                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer border-bottom"
-                                         @click="expanded = !expanded"
-                                         style="user-select: none;">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="bx bx-wallet text-primary"></i>
-                                            <span class="small fw-semibold text-primary">Rencana Kas Keluar</span>
-                                            @if(!empty($selectedCashOutMonths))
-                                                <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }} bulan</span>
-                                            @endif
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3">
-                                            @if($biTotal > 0)
-                                                @if(abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
-                                                    <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
-                                                @elseif($cashOutRemainder < 0)
-                                                    <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
-                                                @elseif(!empty($selectedCashOutMonths))
-                                                    <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}</span>
-                                                @endif
-                                            @endif
-                                            <i class="bx" :class="expanded ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
-                                        </div>
-                                    </div>
-
-                                    {{-- Expandable content --}}
-                                    <div x-show="expanded" x-collapse>
-                                        <div class="px-3 py-3">
-                                            @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.cash_out')
-                                            <div class="alert alert-danger small py-2 mb-3">
-                                                <i class="bx bx-error-circle me-1"></i>{{ $message }}
-                                            </div>
-                                            @enderror
-
-                                            {{-- Month toggles --}}
-                                            <div class="mb-3">
-                                                <label class="form-label small text-muted mb-2">Pilih Bulan Pembayaran:</label>
-                                                <div class="d-flex flex-wrap gap-1">
-                                                    @foreach($monthLabels as $monthNum => $monthLabel)
-                                                    <button type="button"
-                                                        wire:click="toggleCashOutMonth({{ $wpIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                                                        class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                                                        style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
-                                                        {{ $monthLabel }}
-                                                    </button>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-
-                                            @if(!empty($selectedCashOutMonths))
-                                            {{-- Action buttons --}}
-                                            <div class="mb-3">
-                                                <button type="button"
-                                                    wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $biIdx }})"
-                                                    class="btn btn-sm btn-outline-primary"
-                                                    @if($biTotal <= 0) disabled @endif>
-                                                    <i class="bx bx-equalizer me-1"></i> Bagi Rata
-                                                </button>
-                                            </div>
-
-                                            {{-- Monthly amount inputs --}}
-                                            <div class="row g-2">
-                                                @foreach($monthLabels as $monthNum => $monthLabel)
-                                                    @if(in_array($monthNum, $selectedCashOutMonths))
-                                                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                                                        <label class="form-label small text-muted mb-1">{{ $monthLabel }}</label>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Rp</span>
-                                                            <input type="number"
-                                                                class="form-control form-control-sm"
-                                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
-                                                                min="0"
-                                                                step="1000"
-                                                                placeholder="0"
-                                                                style="font-size: 0.8rem;">
-                                                        </div>
+                                                </td>
+                                                <td class="text-end">
+                                                    @if($isCashOutMonth)
+                                                    <div class="input-group input-group-sm justify-content-end">
+                                                        <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
+                                                        <input type="number"
+                                                            class="form-control form-control-sm text-end"
+                                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
+                                                            min="0" step="1000" placeholder="0"
+                                                            style="font-size:0.8rem;max-width:180px;">
                                                     </div>
+                                                    @else
+                                                    <span class="text-muted small">—</span>
                                                     @endif
-                                                @endforeach
-                                            </div>
-
-                                            {{-- Remaining indicator --}}
-                                            <div class="mt-3 d-flex justify-content-between align-items-center small border-top pt-2">
-                                                <span class="text-muted">
-                                                    Total Item: <strong>Rp {{ number_format($biTotal, 0, ',', '.') }}</strong>
-                                                </span>
-                                                <span class="text-muted">
-                                                    Teralokasi: <strong>Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}</strong>
-                                                </span>
-                                                <span class="{{ $cashOutRemainder < 0 ? 'text-danger' : (abs($cashOutRemainder) < 0.01 ? 'text-success' : 'text-warning') }} fw-semibold">
-                                                    Sisa: Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
-                                                </span>
-                                            </div>
+                                                </td>
+                                            </tr>
                                             @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <button type="button" wire:click="addBudgetItem({{ $wpIdx }})" class="btn btn-sm btn-label-secondary">
-                <i class="bx bx-plus me-1"></i> Tambah Item Belanja
-            </button>
-        </div>
-    </div>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <th class="text-center small">Total</th>
+                                            <th class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                                Rp {{ number_format($monthlyAllocated, 0, ',', '.') }}
+                                            </th>
+                                            <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                                Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th class="text-center small text-muted">Sisa</th>
+                                            <th class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                                Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}
+                                            </th>
+                                            <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                                Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            @else
+                            <div class="text-center text-muted small py-3 border rounded-2">
+                                <i class="bx bx-info-circle me-1"></i>Belum ada bulan yang dipilih. Pilih bulan di atas untuk memulai distribusi.
+                            </div>
+                            @endif
+                        </div>{{-- end modal body --}}
+                        {{-- Modal Footer --}}
+                        <div class="px-4 py-3 border-top d-flex justify-content-end flex-shrink-0">
+                            <button type="button" class="btn btn-primary" @click="closeModal()">
+                                <i class="bx bx-check me-1"></i>Selesai
+                            </button>
+                        </div>
+                    </div>
+                </div>{{-- end modal overlay --}}
+                @endforeach
+
+                <button type="button" wire:click="addBudgetItem({{ $wpIdx }})" class="btn btn-sm btn-label-secondary mt-2">
+                    <i class="bx bx-plus me-1"></i> Tambah Item Belanja
+                </button>
+
+            </div>{{-- end Alpine x-data budget section --}}
+        </div>{{-- end card-body --}}
+    </div>{{-- end card --}}
     @endforeach
 
     <div class="d-flex gap-2 mb-4">
