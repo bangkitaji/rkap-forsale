@@ -267,8 +267,7 @@
                 <table class="table table-sm table-bordered align-middle mb-2">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:30%">Uraian Belanja <span class="text-danger">*</span></th>
-                            <th style="width:150px">Detail Belanja</th>
+                            <th style="width:40%">Uraian & Detail Belanja <span class="text-danger">*</span></th>
                             <th style="width:80px">Satuan</th>
                             <th style="width:70px">Vol <span class="text-danger">*</span></th>
                             <th style="width:140px">Harga Satuan (Rp) <span class="text-danger">*</span></th>
@@ -364,8 +363,8 @@
                                         @endforelse
                                     </div>
                                 </div>
+                                <input type="text" class="form-control form-control-sm mt-2" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks" placeholder="Detail Belanja / Ket...">
                             </td>
-                            <td><input type="text" class="form-control form-control-sm" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks" placeholder="Ket..."></td>
                             <td><input type="text" class="form-control form-control-sm" wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit" placeholder="Bh, Paket"></td>
                             <td>
                                 <input type="number" class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"

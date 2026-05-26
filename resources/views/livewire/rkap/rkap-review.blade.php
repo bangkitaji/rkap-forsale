@@ -77,24 +77,27 @@
                                 <thead>
                                     <tr>
                                         <th>Kode Akun</th>
-                                        <th>Uraian Belanja</th>
+                                        <th>Uraian & Detail Belanja</th>
                                         <th class="text-center">Vol</th>
                                         <th>Satuan</th>
                                         <th class="text-end">Harga Satuan</th>
                                         <th class="text-end">Total</th>
-                                        <th>Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($wp->budgetItems as $bi)
                                         <tr>
                                             <td>{{ $bi->account_code ?? '-' }}</td>
-                                            <td>{{ $bi->description }}</td>
+                                            <td>
+                                                {{ $bi->description }}
+                                                @if($bi->remarks)
+                                                    <div class="text-muted small mt-1">{{ $bi->remarks }}</div>
+                                                @endif
+                                            </td>
                                             <td class="text-center">{{ $bi->quantity }}</td>
                                             <td>{{ $bi->unit }}</td>
                                             <td class="text-end">Rp {{ number_format($bi->unit_price, 0, ',', '.') }}</td>
                                             <td class="text-end fw-semibold text-primary">Rp {{ number_format($bi->total_price, 0, ',', '.') }}</td>
-                                            <td><small class="text-muted">{{ $bi->remarks }}</small></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
