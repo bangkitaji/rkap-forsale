@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RkapBudgetItem extends Model
 {
@@ -30,6 +31,19 @@ class RkapBudgetItem extends Model
     public function workPlan(): BelongsTo
     {
         return $this->belongsTo(RkapWorkPlan::class, 'rkap_work_plan_id');
+    }
+
+    public function monthlies(): HasMany
+    {
+        return $this->hasMany(RkapBudgetItemMonthly::class)->orderBy('month');
+    }
+
+    /**
+     * Sum of all monthly allocation amounts for this budget item.
+     */
+    public function getMonthlyTotalAttribute(): float
+    {
+        return (float) $this->monthlies->sum('amount');
     }
 
     protected static function booted(): void

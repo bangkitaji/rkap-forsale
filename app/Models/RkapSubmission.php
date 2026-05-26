@@ -82,7 +82,7 @@ class RkapSubmission extends Model
 
     public function createVersion(string $changeType, ?string $changeReason = null): RkapVersion
     {
-        $snapshotData = $this->workPlans->load('budgetItems')->map(function ($wp) {
+        $snapshotData = $this->workPlans->load('budgetItems.monthlies')->map(function ($wp) {
             return [
                 'program_code' => $wp->program_code,
                 'program_name' => $wp->program_name,
@@ -100,6 +100,7 @@ class RkapSubmission extends Model
                         'unit_price' => $bi->unit_price,
                         'total_price' => $bi->total_price,
                         'remarks' => $bi->remarks,
+                        'monthly_distribution' => $bi->monthlies->pluck('amount', 'month')->toArray(),
                     ];
                 })->toArray(),
             ];

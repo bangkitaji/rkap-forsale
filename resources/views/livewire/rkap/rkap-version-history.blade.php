@@ -193,6 +193,20 @@
                                                                     @endif
                                                                 </td>
                                                             </tr>
+                                                            @if(!empty($bi['monthly_distribution']))
+                                                            <tr class="{{ $rowClass }}">
+                                                                <td colspan="4" class="p-0 border-top-0">
+                                                                    <div class="px-3 py-1">
+                                                                        <div class="d-flex flex-wrap gap-1">
+                                                                            @php $mNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des']; @endphp
+                                                                            @foreach($bi['monthly_distribution'] as $mo => $amt)
+                                                                            <span class="badge bg-label-secondary rounded-pill" style="font-size: 0.65rem;">{{ $mNames[(int)$mo] ?? $mo }}: Rp {{ number_format($amt, 0, ',', '.') }}</span>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            @endif
                                                         @endforeach
                                                     @else
                                                         @foreach($diffItem['item']['budget_items'] ?? [] as $bi)
@@ -207,6 +221,20 @@
                                                                 <td class="text-end">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
                                                                 <td class="text-end fw-semibold">Rp {{ number_format((float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0), 0, ',', '.') }}</td>
                                                             </tr>
+                                                            @if(!empty($bi['monthly_distribution']))
+                                                            <tr>
+                                                                <td colspan="4" class="p-0 border-top-0">
+                                                                    <div class="px-3 py-1">
+                                                                        <div class="d-flex flex-wrap gap-1">
+                                                                            @php $mNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des']; @endphp
+                                                                            @foreach($bi['monthly_distribution'] as $mo => $amt)
+                                                                            <span class="badge bg-label-secondary rounded-pill" style="font-size: 0.65rem;">{{ $mNames[(int)$mo] ?? $mo }}: Rp {{ number_format($amt, 0, ',', '.') }}</span>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            @endif
                                                         @endforeach
                                                     @endif
                                                 </tbody>
@@ -255,6 +283,33 @@
                                                             <td class="text-end">Rp {{ number_format($bi['unit_price'] ?? 0, 0, ',', '.') }}</td>
                                                             <td class="text-end fw-semibold">Rp {{ number_format((float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0), 0, ',', '.') }}</td>
                                                         </tr>
+                                                        @if(!empty($bi['monthly_distribution']))
+                                                        <tr>
+                                                            <td colspan="5" class="p-0 border-top-0">
+                                                                <div class="bg-light px-3 py-2" x-data="{ show: false }">
+                                                                    <div class="d-flex align-items-center gap-2 cursor-pointer" @click="show = !show">
+                                                                        <i class="bx bx-calendar text-primary" style="font-size: 0.85rem;"></i>
+                                                                        <span class="small fw-semibold text-primary">Distribusi Bulanan</span>
+                                                                        <span class="badge bg-label-primary rounded-pill small">{{ count($bi['monthly_distribution']) }} bulan</span>
+                                                                        <i class="bx ms-auto" :class="show ? 'bx-chevron-up' : 'bx-chevron-down'" style="font-size: 0.85rem;"></i>
+                                                                    </div>
+                                                                    <div x-show="show" x-collapse class="mt-2">
+                                                                        <div class="d-flex flex-wrap gap-2">
+                                                                            @php
+                                                                                $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                                                            @endphp
+                                                                            @foreach($bi['monthly_distribution'] as $month => $amount)
+                                                                            <div class="border rounded px-2 py-1 bg-white text-center" style="min-width: 80px;">
+                                                                                <div class="text-muted small" style="font-size: 0.7rem;">{{ $monthNames[(int)$month] ?? $month }}</div>
+                                                                                <div class="fw-semibold small text-dark">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+                                                                            </div>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        @endif
                                                     @endforeach
                                                 </tbody>
                                             </table>

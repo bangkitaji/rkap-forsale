@@ -20,7 +20,7 @@ class RkapReview extends Component
             'bureau.department.directorate',
             'period',
             'creator',
-            'workPlans.budgetItems',
+            'workPlans.budgetItems.monthlies',
             'versions.creator',
             'approvals.user',
             'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
@@ -50,7 +50,7 @@ class RkapReview extends Component
         }
 
         $this->reviewComments = '';
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', 'RKAP berhasil disetujui.');
     }
 
@@ -71,7 +71,7 @@ class RkapReview extends Component
 
         $this->revisionReason = '';
         $this->showRevisionForm = false;
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', 'Permintaan revisi berhasil dikirim.');
     }
 

@@ -27,10 +27,19 @@ class RkapSubmissionForm extends Component
     public ?RkapSubmission $submission = null;
     public ?RkapPeriod $period = null;
 
+    /**
+     * Month labels (Indonesian).
+     */
+    public const MONTH_LABELS = [
+        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+        5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
+        9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+    ];
+
     public function mount(?int $periodId = null, ?int $id = null): void
     {
         if ($id) {
-            $this->submission = RkapSubmission::with('workPlans.budgetItems')->findOrFail($id);
+            $this->submission = RkapSubmission::with('workPlans.budgetItems.monthlies')->findOrFail($id);
             $this->submissionId = $id;
             $this->periodId = $this->submission->rkap_period_id;
             $this->period = $this->submission->period;
@@ -63,16 +72,7 @@ class RkapSubmissionForm extends Component
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
             $idx = (int) $m[1];
             $this->workPlans[$idx]['activity_id'] = null;
-            $this->workPlans[$idx]['budget_items'] = [[
-                'id'           => null,
-                'coa_id'       => null,
-                'account_code' => '',
-                'description'  => '',
-                'unit'         => '',
-                'quantity'     => 1,
-                'unit_price'   => 0,
-                'remarks'      => '',
-            ]];
+            $this->workPlans[$idx]['budget_items'] = [$this->emptyBudgetItem()];
         }
 
         if (preg_match('/^workPlans\.(\d+)\.activity_id$/', $name, $m)) {
@@ -82,42 +82,38 @@ class RkapSubmissionForm extends Component
                 $activity = Activity::with('coas')->find($activityId);
                 if ($activity && $activity->coas->isNotEmpty()) {
                     $this->workPlans[$idx]['budget_items'] = $activity->coas->map(function ($coa) {
-                        return [
-                            'id'           => null,
+                        return array_merge($this->emptyBudgetItem(), [
                             'coa_id'       => $coa->id,
                             'account_code' => $coa->code,
                             'description'  => $coa->title,
-                            'unit'         => '',
-                            'quantity'     => 1,
-                            'unit_price'   => 0,
-                            'remarks'      => '',
-                        ];
+                        ]);
                     })->toArray();
                 } else {
-                    $this->workPlans[$idx]['budget_items'] = [[
-                        'id'           => null,
-                        'coa_id'       => null,
-                        'account_code' => '',
-                        'description'  => '',
-                        'unit'         => '',
-                        'quantity'     => 1,
-                        'unit_price'   => 0,
-                        'remarks'      => '',
-                    ]];
+                    $this->workPlans[$idx]['budget_items'] = [$this->emptyBudgetItem()];
                 }
             } else {
-                $this->workPlans[$idx]['budget_items'] = [[
-                    'id'           => null,
-                    'coa_id'       => null,
-                    'account_code' => '',
-                    'description'  => '',
-                    'unit'         => '',
-                    'quantity'     => 1,
-                    'unit_price'   => 0,
-                    'remarks'      => '',
-                ]];
+                $this->workPlans[$idx]['budget_items'] = [$this->emptyBudgetItem()];
             }
         }
+    }
+
+    /**
+     * Return a blank budget item array including monthly keys.
+     */
+    private function emptyBudgetItem(): array
+    {
+        return [
+            'id'                     => null,
+            'coa_id'                 => null,
+            'account_code'           => '',
+            'description'            => '',
+            'unit'                   => '',
+            'quantity'               => 1,
+            'unit_price'             => 0,
+            'remarks'                => '',
+            'monthly_distribution'   => [],
+            'distribution_months'    => [],
+        ];
     }
 
     /**
@@ -186,6 +182,73 @@ class RkapSubmissionForm extends Component
         return '';
     }
 
+    // ── Monthly Distribution Methods ──
+
+    /**
+     * Toggle a month on/off for a specific budget item.
+     */
+    public function toggleMonth(int $wpIdx, int $biIdx, int $month): void
+    {
+        $months = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['distribution_months'] ?? [];
+
+        if (in_array($month, $months)) {
+            $months = array_values(array_diff($months, [$month]));
+            // Also remove the amount for this month
+            unset($this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'][$month]);
+        } else {
+            $months[] = $month;
+            sort($months);
+            // Initialize with 0
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'][$month] = 0;
+        }
+
+        $this->workPlans[$wpIdx]['budget_items'][$biIdx]['distribution_months'] = array_values($months);
+    }
+
+    /**
+     * Distribute the total amount evenly across selected months.
+     */
+    public function distributeEvenly(int $wpIdx, int $biIdx): void
+    {
+        $bi = $this->workPlans[$wpIdx]['budget_items'][$biIdx];
+        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $months = $bi['distribution_months'] ?? [];
+
+        if (empty($months) || $total <= 0) {
+            return;
+        }
+
+        $count = count($months);
+        $perMonth = floor($total / $count);
+        $remainder = $total - ($perMonth * $count);
+
+        $distribution = [];
+        foreach ($months as $i => $month) {
+            // Add remainder to the last month to ensure exact match
+            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
+        }
+
+        $this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'] = $distribution;
+    }
+
+    /**
+     * Get the remaining (unallocated) amount for a budget item.
+     */
+    public function getMonthlyRemainder(int $wpIdx, int $biIdx): float
+    {
+        $bi = $this->workPlans[$wpIdx]['budget_items'][$biIdx] ?? null;
+        if (!$bi) {
+            return 0;
+        }
+
+        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $allocated = array_sum($bi['monthly_distribution'] ?? []);
+
+        return $total - $allocated;
+    }
+
+    // ── Work Plan / Budget Item Management ──
+
     private function loadWorkPlans(): void
     {
         $this->workPlans = $this->submission->workPlans->map(function ($wp) {
@@ -201,14 +264,16 @@ class RkapSubmissionForm extends Component
                 'budget_items'  => $wp->budgetItems->map(function ($bi) {
                     $coa = Coa::where('code', $bi->account_code)->first();
                     return [
-                        'id'           => $bi->id,
-                        'coa_id'       => $coa ? $coa->id : null,
-                        'account_code' => $bi->account_code ?? '',
-                        'description'  => $bi->description,
-                        'unit'         => $bi->unit ?? '',
-                        'quantity'     => $bi->quantity,
-                        'unit_price'   => $bi->unit_price,
-                        'remarks'      => $bi->remarks ?? '',
+                        'id'                     => $bi->id,
+                        'coa_id'                 => $coa ? $coa->id : null,
+                        'account_code'           => $bi->account_code ?? '',
+                        'description'            => $bi->description,
+                        'unit'                   => $bi->unit ?? '',
+                        'quantity'               => $bi->quantity,
+                        'unit_price'             => $bi->unit_price,
+                        'remarks'                => $bi->remarks ?? '',
+                        'monthly_distribution'   => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
+                        'distribution_months'    => $bi->monthlies->pluck('month')->toArray(),
                     ];
                 })->toArray(),
             ];
@@ -226,16 +291,7 @@ class RkapSubmissionForm extends Component
             'unit'          => '',
             'quantity'      => 1,
             'sort_order'    => count($this->workPlans),
-            'budget_items'  => [[
-                'id'           => null,
-                'coa_id'       => null,
-                'account_code' => '',
-                'description'  => '',
-                'unit'         => '',
-                'quantity'     => 1,
-                'unit_price'   => 0,
-                'remarks'      => '',
-            ]],
+            'budget_items'  => [$this->emptyBudgetItem()],
         ];
     }
 
@@ -247,16 +303,7 @@ class RkapSubmissionForm extends Component
 
     public function addBudgetItem(int $wpIndex): void
     {
-        $this->workPlans[$wpIndex]['budget_items'][] = [
-            'id'           => null,
-            'coa_id'       => null,
-            'account_code' => '',
-            'description'  => '',
-            'unit'         => '',
-            'quantity'     => 1,
-            'unit_price'   => 0,
-            'remarks'      => '',
-        ];
+        $this->workPlans[$wpIndex]['budget_items'][] = $this->emptyBudgetItem();
     }
 
     public function removeBudgetItem(int $wpIndex, int $biIndex): void
@@ -303,6 +350,7 @@ class RkapSubmissionForm extends Component
     {
         $this->validate();
         $this->validateBudgetItemsCoaMapping();
+        $this->validateMonthlyDistribution();
 
         $submission = $this->saveSubmission('draft');
 
@@ -330,6 +378,43 @@ class RkapSubmissionForm extends Component
                 if (!$activityId && !empty($coaId)) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'workPlans' => 'Activity harus dipilih jika COA telah dipilih pada salah satu baris.',
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validate that every budget item has monthly distribution that exactly equals its total.
+     * This validation is mandatory for submission (not for draft save).
+     */
+    private function validateMonthlyDistribution(): void
+    {
+        foreach ($this->workPlans as $wpIdx => $wpData) {
+            foreach ($wpData['budget_items'] as $biIdx => $biData) {
+                $total = (float) ($biData['quantity'] ?? 0) * (float) ($biData['unit_price'] ?? 0);
+                $months = $biData['distribution_months'] ?? [];
+                $distribution = $biData['monthly_distribution'] ?? [];
+
+                if (empty($months)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.budget_items.{$biIdx}.monthly" => 'Distribusi bulanan wajib diisi. Pilih minimal 1 bulan.',
+                    ]);
+                }
+
+                $allocated = 0;
+                foreach ($distribution as $month => $amount) {
+                    $allocated += (float) $amount;
+                }
+
+                // Must exactly equal (within floating point tolerance)
+                if (abs($total - $allocated) > 0.01) {
+                    $diff = $total - $allocated;
+                    $diffFormatted = number_format(abs($diff), 0, ',', '.');
+                    $direction = $diff > 0 ? "kurang Rp {$diffFormatted}" : "lebih Rp {$diffFormatted}";
+
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.budget_items.{$biIdx}.monthly" => "Total distribusi bulanan harus sama dengan total item (Rp " . number_format($total, 0, ',', '.') . "). Saat ini {$direction}.",
                     ]);
                 }
             }
@@ -392,7 +477,7 @@ class RkapSubmissionForm extends Component
 
                 foreach ($wpData['budget_items'] as $biData) {
                     $coa = Coa::find($biData['coa_id']);
-                    RkapBudgetItem::updateOrCreate(
+                    $budgetItem = RkapBudgetItem::updateOrCreate(
                         ['id' => $biData['id'] ?? null],
                         [
                             'rkap_work_plan_id' => $workPlan->id,
@@ -404,6 +489,18 @@ class RkapSubmissionForm extends Component
                             'remarks'       => $biData['remarks'] ?: null,
                         ]
                     );
+
+                    // Save monthly distribution
+                    $budgetItem->monthlies()->delete();
+                    $distribution = $biData['monthly_distribution'] ?? [];
+                    foreach ($distribution as $month => $amount) {
+                        if ((float) $amount > 0) {
+                            $budgetItem->monthlies()->create([
+                                'month'  => (int) $month,
+                                'amount' => (float) $amount,
+                            ]);
+                        }
+                    }
                 }
             }
 
@@ -418,6 +515,7 @@ class RkapSubmissionForm extends Component
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,
             'coaOptions'      => $this->coaOptions,
+            'monthLabels'     => self::MONTH_LABELS,
         ])->layout('layouts.contentNavbarLayout');
     }
 }
