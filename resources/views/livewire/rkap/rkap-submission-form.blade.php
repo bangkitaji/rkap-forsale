@@ -71,14 +71,15 @@
                     <div
                         x-data="{
                             open: false,
-                            search: '',
+                            search: '{{ $selectedWorkPlan ? $selectedWorkPlan->code . " — " . $selectedWorkPlan->title : "" }}',
                             get filtered() {
                                 const q = this.search.toLowerCase();
                                 return $refs.options ? [...$refs.options.querySelectorAll('option')].filter(o => o.value && o.text.toLowerCase().includes(q)) : [];
                             }
                         }"
                         class="position-relative flex-grow-1"
-                        style="max-width: 420px;">
+                        style="max-width: 420px;"
+                        wire:key="wp-{{ $wpIdx }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
                         {{-- Trigger input --}}
                         <div class="input-group input-group-sm">
                             <input
@@ -176,7 +177,8 @@
                                 search: '{{ $selectedActivity ? $selectedActivity->code . " — " . $selectedActivity->title : "" }}',
                             }"
                         class="position-relative"
-                        @click.outside="open = false">
+                        @click.outside="open = false"
+                        wire:key="wp-{{ $wpIdx }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $wp['activity_id'] ?? 'null' }}">
                         {{-- Trigger input --}}
                         <div class="input-group input-group-sm">
                             <input

@@ -14,6 +14,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     {{-- Stats Cards --}}
     <div class="row g-4 mb-4">
@@ -201,15 +207,30 @@
                 </div>
                 <div class="modal-body">
                     @forelse($activePeriods as $period)
-                        <button wire:click="selectPeriod({{ $period->id }})" class="btn btn-outline-primary w-100 mb-2 text-start">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ $period->title }}</strong>
-                                    <div class="small text-muted">{{ $period->year }} &bull; <span class="badge bg-label-success">{{ ucfirst($period->status) }}</span></div>
+                        @php
+                            $isSubmitted = in_array($period->id, $submittedPeriodIds);
+                        @endphp
+                        @if($isSubmitted)
+                            <button class="btn btn-outline-secondary w-100 mb-2 text-start" disabled>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $period->title }}</strong>
+                                        <div class="small text-muted">{{ $period->year }} &bull; <span class="badge bg-label-danger">Sudah Diinput</span></div>
+                                    </div>
+                                    <i class="bx bx-check-double text-success"></i>
                                 </div>
-                                <i class="bx bx-chevron-right"></i>
-                            </div>
-                        </button>
+                            </button>
+                        @else
+                            <button wire:click="selectPeriod({{ $period->id }})" class="btn btn-outline-primary w-100 mb-2 text-start">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $period->title }}</strong>
+                                        <div class="small text-muted">{{ $period->year }} &bull; <span class="badge bg-label-success">{{ ucfirst($period->status) }}</span></div>
+                                    </div>
+                                    <i class="bx bx-chevron-right"></i>
+                                </div>
+                            </button>
+                        @endif
                     @empty
                         <div class="text-center text-muted py-4">
                             <i class="bx bx-calendar-x bx-lg d-block mb-2"></i>

@@ -120,7 +120,7 @@
                                                 <small class="text-muted text-decoration-line-through">Rp {{ number_format($diffItem['old_total'], 0, ',', '.') }}</small>
                                                 <h6 class="mb-0 text-warning">Rp {{ number_format($diffItem['new_total'], 0, ',', '.') }}</h6>
                                             @else
-                                                <h6 class="mb-0">Rp {{ number_format(collect($diffItem['item']['budget_items'] ?? [])->sum(fn($bi) => $bi['quantity'] * $bi['unit_price']), 0, ',', '.') }}</h6>
+                                                <h6 class="mb-0">Rp {{ number_format(collect($diffItem['item']['budget_items'] ?? [])->sum(fn($bi) => (float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0)), 0, ',', '.') }}</h6>
                                             @endif
                                         </div>
                                     </div>
@@ -138,14 +138,77 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach($diffItem['item']['budget_items'] ?? [] as $bi)
-                                                        <tr>
-                                                            <td>{{ $bi['description'] }}</td>
-                                                            <td class="text-center">{{ $bi['quantity'] }} {{ $bi['unit'] ?? '' }}</td>
-                                                            <td class="text-end">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
-                                                            <td class="text-end fw-semibold">Rp {{ number_format($bi['quantity'] * $bi['unit_price'], 0, ',', '.') }}</td>
-                                                        </tr>
-                                                    @endforeach
+                                                    @if($diffItem['status'] === 'modified')
+                                                        @foreach($diffItem['budget_items_diff'] ?? [] as $biDiff)
+                                                            @php
+                                                                $rowClass = match($biDiff['status']) {
+                                                                    'added' => 'table-success',
+                                                                    'removed' => 'table-danger text-muted text-decoration-line-through',
+                                                                    'modified' => 'table-warning',
+                                                                    default => ''
+                                                                };
+                                                                $bi = $biDiff['item'];
+                                                            @endphp
+                                                            <tr class="{{ $rowClass }}">
+                                                                <td>
+                                                                    @if($biDiff['status'] === 'added')
+                                                                        <span class="badge bg-success me-1">+</span>
+                                                                    @elseif($biDiff['status'] === 'removed')
+                                                                        <span class="badge bg-danger me-1">-</span>
+                                                                    @elseif($biDiff['status'] === 'modified')
+                                                                        <span class="badge bg-warning me-1">Δ</span>
+                                                                    @endif
+                                                                    {{ $bi['description'] }}
+                                                                    @if(!empty($bi['account_code']))
+                                                                        <small class="text-muted d-block">{{ $bi['account_code'] }}</small>
+                                                                    @endif
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    @if($biDiff['status'] === 'modified' && ($biDiff['old']['quantity'] != $bi['quantity'] || ($biDiff['old']['unit'] ?? '') != ($bi['unit'] ?? '')))
+                                                                        <span class="text-muted text-decoration-line-through">{{ $biDiff['old']['quantity'] }} {{ $biDiff['old']['unit'] ?? '' }}</span>
+                                                                        <i class="bx bx-right-arrow-alt mx-1"></i>
+                                                                    @endif
+                                                                    {{ $bi['quantity'] }} {{ $bi['unit'] ?? '' }}
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    @if($biDiff['status'] === 'modified' && $biDiff['old']['unit_price'] != $bi['unit_price'])
+                                                                        <span class="text-muted text-decoration-line-through">Rp {{ number_format($biDiff['old']['unit_price'], 0, ',', '.') }}</span>
+                                                                        <i class="bx bx-right-arrow-alt mx-1"></i>
+                                                                    @endif
+                                                                    Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}
+                                                                </td>
+                                                                <td class="text-end fw-semibold">
+                                                                    @if($biDiff['status'] === 'modified')
+                                                                        @php
+                                                                            $oldTotal = (float)($biDiff['old']['quantity'] ?? 0) * (float)($biDiff['old']['unit_price'] ?? 0);
+                                                                            $newTotal = (float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0);
+                                                                        @endphp
+                                                                        @if($oldTotal != $newTotal)
+                                                                            <span class="text-muted text-decoration-line-through fw-normal">Rp {{ number_format($oldTotal, 0, ',', '.') }}</span>
+                                                                            <i class="bx bx-right-arrow-alt mx-1"></i>
+                                                                        @endif
+                                                                        Rp {{ number_format($newTotal, 0, ',', '.') }}
+                                                                    @else
+                                                                        Rp {{ number_format((float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0), 0, ',', '.') }}
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @else
+                                                        @foreach($diffItem['item']['budget_items'] ?? [] as $bi)
+                                                            <tr>
+                                                                <td>
+                                                                    {{ $bi['description'] }}
+                                                                    @if(!empty($bi['account_code']))
+                                                                        <small class="text-muted d-block">{{ $bi['account_code'] }}</small>
+                                                                    @endif
+                                                                </td>
+                                                                <td class="text-center">{{ $bi['quantity'] }} {{ $bi['unit'] ?? '' }}</td>
+                                                                <td class="text-end">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
+                                                                <td class="text-end fw-semibold">Rp {{ number_format((float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0), 0, ',', '.') }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
                                                 </tbody>
                                             </table>
                                         </div>
@@ -168,7 +231,7 @@
                                             <h6 class="mb-0 text-primary">{{ $wp['program_code'] ?? '-' }} - {{ $wp['program_name'] }}</h6>
                                         </div>
                                         <div class="text-end">
-                                            <strong class="text-dark">Rp {{ number_format(collect($wp['budget_items'] ?? [])->sum(fn($bi) => ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0)), 0, ',', '.') }}</strong>
+                                            <strong class="text-dark">Rp {{ number_format(collect($wp['budget_items'] ?? [])->sum(fn($bi) => (float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0)), 0, ',', '.') }}</strong>
                                         </div>
                                     </div>
                                     <div class="card-body p-0">
@@ -190,7 +253,7 @@
                                                             <td class="text-center">{{ $bi['quantity'] ?? 0 }}</td>
                                                             <td>{{ $bi['unit'] ?? '-' }}</td>
                                                             <td class="text-end">Rp {{ number_format($bi['unit_price'] ?? 0, 0, ',', '.') }}</td>
-                                                            <td class="text-end fw-semibold">Rp {{ number_format(($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0), 0, ',', '.') }}</td>
+                                                            <td class="text-end fw-semibold">Rp {{ number_format((float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0), 0, ',', '.') }}</td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>

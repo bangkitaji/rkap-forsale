@@ -242,4 +242,201 @@ class RkapSubmissionFormTest extends TestCase
         // Fallback to all COAs
         $this->assertCount(2, $options);
     }
+
+    public function test_can_edit_and_save_existing_submission_draft(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create an existing submission
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id'      => $this->user->bureau_id,
+            'created_by'     => $this->user->id,
+            'status'         => 'draft',
+            'notes'          => 'Initial notes',
+        ]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id'       => $this->workPlan->id,
+            'activity_id'        => $this->activityWithCoas->id,
+            'quantity'           => 1,
+            'sort_order'         => 0,
+        ]);
+
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $this->coa1->code,
+            'description'       => $this->coa1->title,
+            'quantity'          => 1,
+            'unit_price'        => 1000,
+        ]);
+
+        // Load submission form in edit mode
+        Livewire::test(RkapSubmissionForm::class, ['id' => $submission->id])
+            ->assertSet('notes', 'Initial notes')
+            ->set('notes', 'Updated notes')
+            ->call('saveDraft')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('rkap_submissions', [
+            'id'    => $submission->id,
+            'notes' => 'Updated notes',
+            'status'=> 'draft', // status must remain 'draft'
+        ]);
+    }
+
+    public function test_forbids_new_submission_if_already_exists_for_same_period(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create an existing submission for this period
+        \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id'      => $this->user->bureau_id,
+            'created_by'     => $this->user->id,
+            'status'         => 'draft',
+        ]);
+
+        // Attempting to load the form to create a new submission in the same period
+        $response = $this->get(route('rkap-submissions-create', $this->period->id));
+
+        // It should redirect to list with error flash message
+        $response->assertRedirect(route('rkap-submissions'));
+        $response->assertSessionHas('error', 'Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
+    }
+
+    public function test_version_history_diff_and_rendering(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create submission
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id'      => $this->user->bureau_id,
+            'created_by'     => $this->user->id,
+            'status'         => 'submitted',
+        ]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id'       => $this->workPlan->id,
+            'activity_id'        => $this->activityWithCoas->id,
+            'quantity'           => 1,
+            'sort_order'         => 0,
+        ]);
+
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $this->coa1->code,
+            'description'       => $this->coa1->title,
+            'quantity'          => 2,
+            'unit_price'        => 5000,
+        ]);
+
+        // Submit to create initial version
+        $submission->submit();
+
+        // Increment version to create a second version
+        $submission->revise();
+        $submission->submit();
+
+        // Test version history component
+        Livewire::test(\App\Livewire\Rkap\RkapVersionHistory::class, ['id' => $submission->id])
+            ->assertStatus(200)
+            ->call('compareToPrevious')
+            ->assertHasNoErrors();
+    }
+
+    public function test_version_history_diff_with_duplicate_budget_item_keys(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create submission
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id'      => $this->user->bureau_id,
+            'created_by'     => $this->user->id,
+            'status'         => 'submitted',
+        ]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id'       => $this->workPlan->id,
+            'activity_id'        => $this->activityWithCoas->id,
+            'quantity'           => 1,
+            'sort_order'         => 0,
+        ]);
+
+        // Version 1 has 2 identical duplicate items (same coa and description)
+        $bi1 = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $this->coa1->code,
+            'description'       => $this->coa1->title,
+            'quantity'          => 2,
+            'unit_price'        => 5000,
+        ]);
+
+        $bi2 = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $this->coa1->code,
+            'description'       => $this->coa1->title,
+            'quantity'          => 3,
+            'unit_price'        => 4000,
+        ]);
+
+        // Submit to create initial version (Version 1)
+        $submission->submit();
+
+        // Start a revision (Version 2)
+        $submission->revise();
+
+        // Delete the second duplicate item
+        $bi2->delete();
+
+        // Modify the first duplicate item (quantity 2 -> 5)
+        $bi1->update(['quantity' => 5]);
+
+        // Add a new duplicate item (different quantity/price)
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $this->coa1->code,
+            'description'       => $this->coa1->title,
+            'quantity'          => 1,
+            'unit_price'        => 10000,
+        ]);
+
+        // Submit version 2
+        $submission->submit();
+
+        // Load the version history component
+        $testComponent = Livewire::test(\App\Livewire\Rkap\RkapVersionHistory::class, ['id' => $submission->id])
+            ->assertStatus(200)
+            ->call('compareToPrevious');
+
+        $diff = $testComponent->instance()->diff;
+
+        $this->assertNotEmpty($diff);
+
+        // Find the modified work plan diff item
+        $wpDiff = collect($diff)->firstWhere('item.program_name', $this->workPlan->title);
+        $this->assertNotNull($wpDiff);
+        $this->assertEquals('modified', $wpDiff['status']);
+
+        $biDiffs = $wpDiff['budget_items_diff'];
+        $this->assertNotEmpty($biDiffs);
+
+        // We expect:
+        // - 1 modified item (bi1: quantity changed from 2 to 5)
+        // - 1 added item (new item: quantity 1, price 10000)
+        // - 1 removed item (bi2: deleted)
+
+        $modifiedCount = collect($biDiffs)->where('status', 'modified')->count();
+        $addedCount = collect($biDiffs)->where('status', 'added')->count();
+        $removedCount = collect($biDiffs)->where('status', 'removed')->count();
+
+        $this->assertEquals(1, $modifiedCount);
+        $this->assertEquals(1, $addedCount);
+        $this->assertEquals(1, $removedCount);
+    }
 }
