@@ -124,8 +124,35 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                        </tr>
-                                        @endif
+                                         </tr>
+                                         @endif
+                                         @if($bi->cashOuts->isNotEmpty())
+                                         <tr>
+                                             <td colspan="6" class="p-0 border-top-0">
+                                                 <div class="bg-light px-3 py-2 border-top" x-data="{ show: false }">
+                                                     <div class="d-flex align-items-center gap-2 cursor-pointer" @click="show = !show">
+                                                         <i class="bx bx-wallet text-primary" style="font-size: 0.85rem;"></i>
+                                                         <span class="small fw-semibold text-primary">Rencana Kas Keluar</span>
+                                                         <span class="badge bg-label-primary rounded-pill small">{{ $bi->cashOuts->count() }} bulan</span>
+                                                         <i class="bx ms-auto" :class="show ? 'bx-chevron-up' : 'bx-chevron-down'" style="font-size: 0.85rem;"></i>
+                                                     </div>
+                                                     <div x-show="show" x-collapse class="mt-2">
+                                                         <div class="d-flex flex-wrap gap-2">
+                                                             @php
+                                                                 $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                                             @endphp
+                                                             @foreach($bi->cashOuts as $cashOut)
+                                                             <div class="border rounded px-2 py-1 bg-white text-center" style="min-width: 80px;">
+                                                                 <div class="text-muted small" style="font-size: 0.7rem;">{{ $monthNames[$cashOut->month] ?? $cashOut->month }}</div>
+                                                                 <div class="fw-semibold small text-dark">Rp {{ number_format($cashOut->amount, 0, ',', '.') }}</div>
+                                                             </div>
+                                                             @endforeach
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </td>
+                                         </tr>
+                                         @endif
                                     @endforeach
                                 </tbody>
                             </table>

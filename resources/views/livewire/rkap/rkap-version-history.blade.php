@@ -207,6 +207,21 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
+                                                            @if(!empty($bi['cash_out_distribution']))
+                                                            <tr class="{{ $rowClass }}">
+                                                                <td colspan="4" class="p-0 border-top-0">
+                                                                    <div class="px-3 py-1 border-top">
+                                                                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                                                                            <span class="text-muted fw-semibold" style="font-size: 0.65rem;">Kas Keluar:</span>
+                                                                            @php $mNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des']; @endphp
+                                                                            @foreach($bi['cash_out_distribution'] as $mo => $amt)
+                                                                            <span class="badge bg-label-primary rounded-pill" style="font-size: 0.65rem;">{{ $mNames[(int)$mo] ?? $mo }}: Rp {{ number_format($amt, 0, ',', '.') }}</span>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            @endif
                                                         @endforeach
                                                     @else
                                                         @foreach($diffItem['item']['budget_items'] ?? [] as $bi)
@@ -235,6 +250,21 @@
                                                                 </td>
                                                             </tr>
                                                             @endif
+                                                             @if(!empty($bi['cash_out_distribution']))
+                                                             <tr>
+                                                                 <td colspan="4" class="p-0 border-top-0">
+                                                                     <div class="px-3 py-1 border-top">
+                                                                         <div class="d-flex flex-wrap gap-1 align-items-center">
+                                                                             <span class="text-muted fw-semibold" style="font-size: 0.65rem;">Kas Keluar:</span>
+                                                                             @php $mNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des']; @endphp
+                                                                             @foreach($bi['cash_out_distribution'] as $mo => $amt)
+                                                                             <span class="badge bg-label-primary rounded-pill" style="font-size: 0.65rem;">{{ $mNames[(int)$mo] ?? $mo }}: Rp {{ number_format($amt, 0, ',', '.') }}</span>
+                                                                             @endforeach
+                                                                         </div>
+                                                                     </div>
+                                                                 </td>
+                                                             </tr>
+                                                             @endif
                                                         @endforeach
                                                     @endif
                                                 </tbody>
@@ -299,6 +329,33 @@
                                                                                 $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                                                                             @endphp
                                                                             @foreach($bi['monthly_distribution'] as $month => $amount)
+                                                                            <div class="border rounded px-2 py-1 bg-white text-center" style="min-width: 80px;">
+                                                                                <div class="text-muted small" style="font-size: 0.7rem;">{{ $monthNames[(int)$month] ?? $month }}</div>
+                                                                                <div class="fw-semibold small text-dark">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+                                                                            </div>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        @endif
+                                                        @if(!empty($bi['cash_out_distribution']))
+                                                        <tr>
+                                                            <td colspan="5" class="p-0 border-top-0">
+                                                                <div class="bg-light px-3 py-2 border-top" x-data="{ show: false }">
+                                                                    <div class="d-flex align-items-center gap-2 cursor-pointer" @click="show = !show">
+                                                                        <i class="bx bx-wallet text-primary" style="font-size: 0.85rem;"></i>
+                                                                        <span class="small fw-semibold text-primary">Rencana Kas Keluar</span>
+                                                                        <span class="badge bg-label-primary rounded-pill small">{{ count($bi['cash_out_distribution']) }} bulan</span>
+                                                                        <i class="bx ms-auto" :class="show ? 'bx-chevron-up' : 'bx-chevron-down'" style="font-size: 0.85rem;"></i>
+                                                                    </div>
+                                                                    <div x-show="show" x-collapse class="mt-2">
+                                                                        <div class="d-flex flex-wrap gap-2">
+                                                                            @php
+                                                                                $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                                                            @endphp
+                                                                            @foreach($bi['cash_out_distribution'] as $month => $amount)
                                                                             <div class="border rounded px-2 py-1 bg-white text-center" style="min-width: 80px;">
                                                                                 <div class="text-muted small" style="font-size: 0.7rem;">{{ $monthNames[(int)$month] ?? $month }}</div>
                                                                                 <div class="fw-semibold small text-dark">Rp {{ number_format($amount, 0, ',', '.') }}</div>

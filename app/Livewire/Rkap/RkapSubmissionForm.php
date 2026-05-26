@@ -39,7 +39,7 @@ class RkapSubmissionForm extends Component
     public function mount(?int $periodId = null, ?int $id = null): void
     {
         if ($id) {
-            $this->submission = RkapSubmission::with('workPlans.budgetItems.monthlies')->findOrFail($id);
+            $this->submission = RkapSubmission::with(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts'])->findOrFail($id);
             $this->submissionId = $id;
             $this->periodId = $this->submission->rkap_period_id;
             $this->period = $this->submission->period;
@@ -113,6 +113,8 @@ class RkapSubmissionForm extends Component
             'remarks'                => '',
             'monthly_distribution'   => [],
             'distribution_months'    => [],
+            'cash_out_distribution'  => [],
+            'cash_out_months'        => [],
         ];
     }
 
@@ -247,6 +249,71 @@ class RkapSubmissionForm extends Component
         return $total - $allocated;
     }
 
+    // ── Cash Out Plan Methods ──
+
+    /**
+     * Toggle a month on/off for a specific budget item's cash out plan.
+     */
+    public function toggleCashOutMonth(int $wpIdx, int $biIdx, int $month): void
+    {
+        $months = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] ?? [];
+
+        if (in_array($month, $months)) {
+            $months = array_values(array_diff($months, [$month]));
+            // Also remove the amount for this month
+            unset($this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'][$month]);
+        } else {
+            $months[] = $month;
+            sort($months);
+            // Initialize with 0
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'][$month] = 0;
+        }
+
+        $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] = array_values($months);
+    }
+
+    /**
+     * Distribute the total amount evenly across selected cash out months.
+     */
+    public function distributeCashOutEvenly(int $wpIdx, int $biIdx): void
+    {
+        $bi = $this->workPlans[$wpIdx]['budget_items'][$biIdx];
+        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $months = $bi['cash_out_months'] ?? [];
+
+        if (empty($months) || $total <= 0) {
+            return;
+        }
+
+        $count = count($months);
+        $perMonth = floor($total / $count);
+        $remainder = $total - ($perMonth * $count);
+
+        $distribution = [];
+        foreach ($months as $i => $month) {
+            // Add remainder to the last month to ensure exact match
+            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
+        }
+
+        $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'] = $distribution;
+    }
+
+    /**
+     * Get the remaining (unallocated) cash out amount for a budget item.
+     */
+    public function getCashOutRemainder(int $wpIdx, int $biIdx): float
+    {
+        $bi = $this->workPlans[$wpIdx]['budget_items'][$biIdx] ?? null;
+        if (!$bi) {
+            return 0;
+        }
+
+        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $allocated = array_sum($bi['cash_out_distribution'] ?? []);
+
+        return $total - $allocated;
+    }
+
     // ── Work Plan / Budget Item Management ──
 
     private function loadWorkPlans(): void
@@ -274,6 +341,8 @@ class RkapSubmissionForm extends Component
                         'remarks'                => $bi->remarks ?? '',
                         'monthly_distribution'   => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                         'distribution_months'    => $bi->monthlies->pluck('month')->toArray(),
+                        'cash_out_distribution'  => $bi->cashOuts->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
+                        'cash_out_months'        => $bi->cashOuts->pluck('month')->toArray(),
                     ];
                 })->toArray(),
             ];
@@ -351,6 +420,7 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateBudgetItemsCoaMapping();
         $this->validateMonthlyDistribution();
+        $this->validateCashOutPlan();
 
         $submission = $this->saveSubmission('draft');
 
@@ -415,6 +485,48 @@ class RkapSubmissionForm extends Component
 
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         "workPlans.{$wpIdx}.budget_items.{$biIdx}.monthly" => "Total distribusi bulanan harus sama dengan total item (Rp " . number_format($total, 0, ',', '.') . "). Saat ini {$direction}.",
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Validate that every budget item has cash out plan that does not exceed its total.
+     * This validation is mandatory for submission (not for draft save).
+     */
+    private function validateCashOutPlan(): void
+    {
+        foreach ($this->workPlans as $wpIdx => $wpData) {
+            foreach ($wpData['budget_items'] as $biIdx => $biData) {
+                $total = (float) ($biData['quantity'] ?? 0) * (float) ($biData['unit_price'] ?? 0);
+                $months = $biData['cash_out_months'] ?? [];
+                $distribution = $biData['cash_out_distribution'] ?? [];
+
+                if (empty($months)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.budget_items.{$biIdx}.cash_out" => 'Rencana kas keluar wajib diisi. Pilih minimal 1 bulan.',
+                    ]);
+                }
+
+                $allocated = 0;
+                foreach ($distribution as $month => $amount) {
+                    $allocated += (float) $amount;
+                }
+
+                // Must be less than or equal to total price (with small floating point tolerance)
+                if ($allocated - $total > 0.01) {
+                    $diff = $allocated - $total;
+                    $diffFormatted = number_format($diff, 0, ',', '.');
+
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.budget_items.{$biIdx}.cash_out" => "Total rencana kas keluar tidak boleh melebihi total item (Rp " . number_format($total, 0, ',', '.') . "). Saat ini lebih Rp {$diffFormatted}.",
+                    ]);
+                }
+
+                if ($allocated <= 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.budget_items.{$biIdx}.cash_out" => "Jumlah rencana kas keluar harus lebih besar dari Rp 0.",
                     ]);
                 }
             }
@@ -496,6 +608,18 @@ class RkapSubmissionForm extends Component
                     foreach ($distribution as $month => $amount) {
                         if ((float) $amount > 0) {
                             $budgetItem->monthlies()->create([
+                                'month'  => (int) $month,
+                                'amount' => (float) $amount,
+                            ]);
+                        }
+                    }
+
+                    // Save cash out plan
+                    $budgetItem->cashOuts()->delete();
+                    $cashOutDistribution = $biData['cash_out_distribution'] ?? [];
+                    foreach ($cashOutDistribution as $month => $amount) {
+                        if ((float) $amount > 0) {
+                            $budgetItem->cashOuts()->create([
                                 'month'  => (int) $month,
                                 'amount' => (float) $amount,
                             ]);

@@ -46,6 +46,19 @@ class RkapBudgetItem extends Model
         return (float) $this->monthlies->sum('amount');
     }
 
+    public function cashOuts(): HasMany
+    {
+        return $this->hasMany(RkapBudgetItemCashOut::class)->orderBy('month');
+    }
+
+    /**
+     * Sum of all cash out plan amounts for this budget item.
+     */
+    public function getCashOutTotalAttribute(): float
+    {
+        return (float) $this->cashOuts->sum('amount');
+    }
+
     protected static function booted(): void
     {
         static::saving(function (RkapBudgetItem $item) {

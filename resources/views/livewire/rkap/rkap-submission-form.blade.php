@@ -395,7 +395,7 @@
                         {{-- Monthly Distribution Panel --}}
                         <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-monthly">
                             <td colspan="6" class="p-0 border-top-0">
-                                <div x-data="{ expanded: {{ !empty($selectedMonths) ? 'true' : 'false' }} }" class="bg-light">
+                                <div x-data="{ expanded: {{ !empty($selectedMonths) ? 'true' : 'false' }} }" class="border-top" style="background-color: #fafbfc;">
                                     {{-- Toggle bar --}}
                                     <div class="d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer border-bottom"
                                          @click="expanded = !expanded"
@@ -487,6 +487,115 @@
                                                 </span>
                                                 <span class="{{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }} fw-semibold">
                                                     Sisa: Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}
+                                                </span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {{-- Cash Out Plan Panel --}}
+                        @php
+                            $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                            $cashOutRemainder = $biTotal - $cashOutAllocated;
+                            $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                        @endphp
+                        <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-cashout">
+                            <td colspan="6" class="p-0 border-top-0">
+                                <div x-data="{ expanded: {{ !empty($selectedCashOutMonths) ? 'true' : 'false' }} }" class="border-top" style="background-color: #f1f3f5;">
+                                    {{-- Toggle bar --}}
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer border-bottom"
+                                         @click="expanded = !expanded"
+                                         style="user-select: none;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bx bx-wallet text-primary"></i>
+                                            <span class="small fw-semibold text-primary">Rencana Kas Keluar</span>
+                                            @if(!empty($selectedCashOutMonths))
+                                                <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }} bulan</span>
+                                            @endif
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            @if($biTotal > 0)
+                                                @if(abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
+                                                    <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                                                @elseif($cashOutRemainder < 0)
+                                                    <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
+                                                @elseif(!empty($selectedCashOutMonths))
+                                                    <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}</span>
+                                                @endif
+                                            @endif
+                                            <i class="bx" :class="expanded ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+                                        </div>
+                                    </div>
+
+                                    {{-- Expandable content --}}
+                                    <div x-show="expanded" x-collapse>
+                                        <div class="px-3 py-3">
+                                            @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.cash_out')
+                                            <div class="alert alert-danger small py-2 mb-3">
+                                                <i class="bx bx-error-circle me-1"></i>{{ $message }}
+                                            </div>
+                                            @enderror
+
+                                            {{-- Month toggles --}}
+                                            <div class="mb-3">
+                                                <label class="form-label small text-muted mb-2">Pilih Bulan Pembayaran:</label>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @foreach($monthLabels as $monthNum => $monthLabel)
+                                                    <button type="button"
+                                                        wire:click="toggleCashOutMonth({{ $wpIdx }}, {{ $biIdx }}, {{ $monthNum }})"
+                                                        class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
+                                                        style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                                                        {{ $monthLabel }}
+                                                    </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+
+                                            @if(!empty($selectedCashOutMonths))
+                                            {{-- Action buttons --}}
+                                            <div class="mb-3">
+                                                <button type="button"
+                                                    wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $biIdx }})"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    @if($biTotal <= 0) disabled @endif>
+                                                    <i class="bx bx-equalizer me-1"></i> Bagi Rata
+                                                </button>
+                                            </div>
+
+                                            {{-- Monthly amount inputs --}}
+                                            <div class="row g-2">
+                                                @foreach($monthLabels as $monthNum => $monthLabel)
+                                                    @if(in_array($monthNum, $selectedCashOutMonths))
+                                                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                                                        <label class="form-label small text-muted mb-1">{{ $monthLabel }}</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">Rp</span>
+                                                            <input type="number"
+                                                                class="form-control form-control-sm"
+                                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
+                                                                min="0"
+                                                                step="1000"
+                                                                placeholder="0"
+                                                                style="font-size: 0.8rem;">
+                                                        </div>
+                                                    </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+
+                                            {{-- Remaining indicator --}}
+                                            <div class="mt-3 d-flex justify-content-between align-items-center small border-top pt-2">
+                                                <span class="text-muted">
+                                                    Total Item: <strong>Rp {{ number_format($biTotal, 0, ',', '.') }}</strong>
+                                                </span>
+                                                <span class="text-muted">
+                                                    Teralokasi: <strong>Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}</strong>
+                                                </span>
+                                                <span class="{{ $cashOutRemainder < 0 ? 'text-danger' : (abs($cashOutRemainder) < 0.01 ? 'text-success' : 'text-warning') }} fw-semibold">
+                                                    Sisa: Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
                                                 </span>
                                             </div>
                                             @endif
