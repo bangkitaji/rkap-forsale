@@ -408,7 +408,8 @@
                                     <button type="button"
                                         class="btn btn-sm btn-icon btn-outline-primary"
                                         title="More Details"
-                                        @click="openModal('{{ $modalKey }}')">
+                                        @click="openModal('{{ $modalKey }}')"
+                                        @disabled($biTotal <=0)>
                                         <i class="bx bx-detail"></i>
                                     </button>
                                     @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
