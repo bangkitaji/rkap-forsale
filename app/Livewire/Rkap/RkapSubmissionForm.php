@@ -85,6 +85,13 @@ class RkapSubmissionForm extends Component
             }
         }
 
+        if (preg_match('/^workPlans\.(\d+)\.budget_items\.(\d+)\.coa_id$/', $name, $m)) {
+            $wpIdx = (int) $m[1];
+            $biIdx = (int) $m[2];
+            $coaId = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['coa_id'] ?? null;
+            $this->updateGroupCoa($wpIdx, $biIdx, $coaId);
+        }
+
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
             $idx = (int) $m[1];
             $this->workPlans[$idx]['activity_id'] = null;
@@ -408,6 +415,55 @@ class RkapSubmissionForm extends Component
         ]);
         
         array_splice($this->workPlans[$wpIndex]['budget_items'], $biIndex + 1, 0, [$newItem]);
+    }
+
+    public function updateGroupCoa(int $wpIndex, int $biIndex, ?int $coaId): void
+    {
+        $oldCoaId = $this->workPlans[$wpIndex]['budget_items'][$biIndex]['coa_id'] ?? null;
+        
+        $coa = null;
+        if ($coaId) {
+            $coa = Coa::find($coaId);
+        }
+        
+        $code = $coa ? $coa->code : '';
+        $title = $coa ? $coa->title : '';
+        
+        if ($oldCoaId === null) {
+            $this->workPlans[$wpIndex]['budget_items'][$biIndex]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['budget_items'][$biIndex]['account_code'] = $code;
+            $this->workPlans[$wpIndex]['budget_items'][$biIndex]['description'] = $title;
+            return;
+        }
+        
+        // Propagate forward
+        $idx = $biIndex;
+        while ($idx < count($this->workPlans[$wpIndex]['budget_items']) && 
+               ($this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId) {
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['account_code'] = $code;
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['description'] = $title;
+            $idx++;
+        }
+        
+        // Propagate backward
+        $idx = $biIndex - 1;
+        while ($idx >= 0 && 
+               ($this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId) {
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['account_code'] = $code;
+            $this->workPlans[$wpIndex]['budget_items'][$idx]['description'] = $title;
+            $idx--;
+        }
+    }
+
+    public function removeGroup(int $wpIndex, array $indices): void
+    {
+        rsort($indices);
+        foreach ($indices as $idx) {
+            unset($this->workPlans[$wpIndex]['budget_items'][$idx]);
+        }
+        $this->workPlans[$wpIndex]['budget_items'] = array_values($this->workPlans[$wpIndex]['budget_items']);
     }
 
     public function getGrandTotalProperty(): float
