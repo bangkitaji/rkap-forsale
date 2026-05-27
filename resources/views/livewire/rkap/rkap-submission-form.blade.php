@@ -425,7 +425,13 @@
                                     </div>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="text-nowrap text-center">
+                                    <button type="button"
+                                        wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
+                                        class="btn btn-sm btn-icon btn-text-primary rounded-pill"
+                                        title="Tambah rincian untuk akun ini">
+                                        <i class="bx bx-plus-circle"></i>
+                                    </button>
                                     @if(count($wp['budget_items']) > 1)
                                     <button type="button"
                                         wire:click="removeBudgetItem({{ $wpIdx }}, {{ $biIdx }})"

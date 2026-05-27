@@ -79,8 +79,8 @@ class RkapVersionHistory extends Component
                     $aBis = $aItem['budget_items'] ?? [];
                     $bBis = $bItem['budget_items'] ?? [];
 
-                    // Map by a key: try account_code, fallback to description with prefix
-                    $getBiKey = fn($bi) => !empty($bi['account_code']) ? $bi['account_code'] : 'desc:' . ($bi['description'] ?? '');
+                    // Map by a key: try id, try account_code, fallback to description with prefix
+                    $getBiKey = fn($bi) => !empty($bi['id']) ? 'id:' . $bi['id'] : (!empty($bi['account_code']) ? $bi['account_code'] : 'desc:' . ($bi['description'] ?? ''));
 
                     // Index items in A by key
                     $aUnmatched = [];

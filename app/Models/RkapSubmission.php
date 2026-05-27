@@ -21,6 +21,10 @@ class RkapSubmission extends Model
         'notes',
     ];
 
+    protected $attributes = [
+        'current_version' => 1,
+    ];
+
     protected function casts(): array
     {
         return [
@@ -93,6 +97,7 @@ class RkapSubmission extends Model
                 'sort_order' => $wp->sort_order,
                 'budget_items' => $wp->budgetItems->map(function ($bi) {
                     return [
+                        'id' => $bi->id,
                         'account_code' => $bi->account_code,
                         'description' => $bi->description,
                         'unit' => $bi->unit,

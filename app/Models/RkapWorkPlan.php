@@ -55,5 +55,25 @@ class RkapWorkPlan extends Model
     {
         return (float) $this->budgetItems->sum('total_price');
     }
+
+    protected static function booted(): void
+    {
+        static::saving(function (RkapWorkPlan $rkapWorkPlan) {
+            if (empty($rkapWorkPlan->program_name)) {
+                if ($rkapWorkPlan->activity_id) {
+                    $rkapWorkPlan->program_name = $rkapWorkPlan->activity->title ?? null;
+                } elseif ($rkapWorkPlan->work_plan_id) {
+                    $rkapWorkPlan->program_name = $rkapWorkPlan->workPlan->title ?? null;
+                }
+            }
+            if (empty($rkapWorkPlan->program_code)) {
+                if ($rkapWorkPlan->activity_id) {
+                    $rkapWorkPlan->program_code = $rkapWorkPlan->activity->code ?? null;
+                } elseif ($rkapWorkPlan->work_plan_id) {
+                    $rkapWorkPlan->program_code = $rkapWorkPlan->workPlan->code ?? null;
+                }
+            }
+        });
+    }
 }
 

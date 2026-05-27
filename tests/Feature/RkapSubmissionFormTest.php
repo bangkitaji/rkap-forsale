@@ -260,6 +260,7 @@ class RkapSubmissionFormTest extends TestCase
             'rkap_submission_id' => $submission->id,
             'work_plan_id'       => $this->workPlan->id,
             'activity_id'        => $this->activityWithCoas->id,
+            'program_name'       => $this->workPlan->title,
             'quantity'           => 1,
             'sort_order'         => 0,
         ]);
@@ -322,6 +323,7 @@ class RkapSubmissionFormTest extends TestCase
             'rkap_submission_id' => $submission->id,
             'work_plan_id'       => $this->workPlan->id,
             'activity_id'        => $this->activityWithCoas->id,
+            'program_name'       => $this->workPlan->title,
             'quantity'           => 1,
             'sort_order'         => 0,
         ]);
@@ -364,6 +366,7 @@ class RkapSubmissionFormTest extends TestCase
             'rkap_submission_id' => $submission->id,
             'work_plan_id'       => $this->workPlan->id,
             'activity_id'        => $this->activityWithCoas->id,
+            'program_name'       => $this->workPlan->title,
             'quantity'           => 1,
             'sort_order'         => 0,
         ]);
@@ -438,5 +441,32 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertEquals(1, $modifiedCount);
         $this->assertEquals(1, $addedCount);
         $this->assertEquals(1, $removedCount);
+    }
+
+    public function test_can_duplicate_budget_item_under_same_coa(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            // Assert that there are initially 2 budget items
+            ->assertCount('workPlans.0.budget_items', 2)
+            ->assertSet('workPlans.0.budget_items.0.coa_id', $this->coa1->id)
+            
+            // Duplicate the first budget item (index 0)
+            ->call('duplicateBudgetItem', 0, 0)
+            
+            // Assert that we now have 3 budget items
+            ->assertCount('workPlans.0.budget_items', 3)
+            
+            // Assert the duplicated item is placed right next to it (index 1) with same COA parameters
+            ->assertSet('workPlans.0.budget_items.1.coa_id', $this->coa1->id)
+            ->assertSet('workPlans.0.budget_items.1.account_code', $this->coa1->code)
+            ->assertSet('workPlans.0.budget_items.1.description', $this->coa1->title)
+            
+            // But quantity and unit price should be empty/default
+            ->assertSet('workPlans.0.budget_items.1.quantity', 1)
+            ->assertSet('workPlans.0.budget_items.1.unit_price', 0);
     }
 }

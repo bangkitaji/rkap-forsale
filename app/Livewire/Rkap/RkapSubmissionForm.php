@@ -381,6 +381,19 @@ class RkapSubmissionForm extends Component
         $this->workPlans[$wpIndex]['budget_items'] = array_values($this->workPlans[$wpIndex]['budget_items']);
     }
 
+    public function duplicateBudgetItem(int $wpIndex, int $biIndex): void
+    {
+        $sourceItem = $this->workPlans[$wpIndex]['budget_items'][$biIndex];
+        
+        $newItem = array_merge($this->emptyBudgetItem(), [
+            'coa_id'       => $sourceItem['coa_id'] ?? null,
+            'account_code' => $sourceItem['account_code'] ?? '',
+            'description'  => $sourceItem['description'] ?? '',
+        ]);
+        
+        array_splice($this->workPlans[$wpIndex]['budget_items'], $biIndex + 1, 0, [$newItem]);
+    }
+
     public function getGrandTotalProperty(): float
     {
         $total = 0;
