@@ -69,6 +69,22 @@ class RkapSubmissionForm extends Component
      */
     public function updated(string $name): void
     {
+        // Sanitize unit_price: reset null/empty to 0, strip leading zeros
+        if (preg_match('/^workPlans\.(\d+)\.budget_items\.(\d+)\.unit_price$/', $name, $m)) {
+            $wpIdx = (int) $m[1];
+            $biIdx = (int) $m[2];
+            $val   = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['unit_price'] ?? null;
+
+            if ($val === null || $val === '') {
+                $this->workPlans[$wpIdx]['budget_items'][$biIdx]['unit_price'] = 0;
+            } else {
+                // Strip leading zeros (e.g. "0500" -> 500), but keep a lone "0" as 0
+                $cleaned = ltrim((string) $val, '0');
+                $this->workPlans[$wpIdx]['budget_items'][$biIdx]['unit_price'] =
+                    ($cleaned === '' || $cleaned === '.') ? 0 : (int) $cleaned;
+            }
+        }
+
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
             $idx = (int) $m[1];
             $this->workPlans[$idx]['activity_id'] = null;

@@ -1,8 +1,8 @@
 <div x-data="{ isDirty: false, isSubmitting: false }"
-     @input="isDirty = true"
-     @change="isDirty = true"
-     @form-saved.window="isDirty = false"
-     @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
+    @input="isDirty = true"
+    @change="isDirty = true"
+    @form-saved.window="isDirty = false"
+    @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
     <div class="py-3 mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="mb-0">
@@ -292,26 +292,26 @@
                         <tbody>
                             @foreach($wp['budget_items'] as $biIdx => $bi)
                             @php
-                                $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
-                                $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
-                                $monthlyRemainder = $biTotal - $monthlyAllocated;
-                                $selectedMonths = $bi['distribution_months'] ?? [];
-                                $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
-                                $cashOutRemainder = $biTotal - $cashOutAllocated;
-                                $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
-                                $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
-                                $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
-                                $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
-                                $filteredCoasOrdered = $filteredCoas;
-                                if ($bi['coa_id'] ?? null) {
-                                    $filteredCoasOrdered = $filteredCoas->sortBy(fn($c) => ($c->id === $bi['coa_id']) ? 0 : 1)->values();
-                                }
-                                $searchLabel = '';
-                                if ($selectedCoa) {
-                                    $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
-                                } elseif (!empty($bi['account_code']) || !empty($bi['description'])) {
-                                    $searchLabel = trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
-                                }
+                            $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
+                            $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
+                            $monthlyRemainder = $biTotal - $monthlyAllocated;
+                            $selectedMonths = $bi['distribution_months'] ?? [];
+                            $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                            $cashOutRemainder = $biTotal - $cashOutAllocated;
+                            $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                            $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                            $selectedCoa = $coaOptions->firstWhere('id', $bi['coa_id']);
+                            $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
+                            $filteredCoasOrdered = $filteredCoas;
+                            if ($bi['coa_id'] ?? null) {
+                            $filteredCoasOrdered = $filteredCoas->sortBy(fn($c) => ($c->id === $bi['coa_id']) ? 0 : 1)->values();
+                            }
+                            $searchLabel = '';
+                            if ($selectedCoa) {
+                            $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
+                            } elseif (!empty($bi['account_code']) || !empty($bi['description'])) {
+                            $searchLabel = trim(($bi['account_code'] ?? '') . (!empty($bi['description']) ? ' — ' . ($bi['description'] ?? '') : ''));
+                            }
                             @endphp
                             <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}">
                                 <td
@@ -390,14 +390,16 @@
                                 <td>
                                     <input type="number"
                                         class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
-                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity"
+                                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity"
                                         min="1">
                                 </td>
                                 <td>
                                     <input type="number"
                                         class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
-                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price"
-                                        min="0" step="1000">
+                                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price"
+                                        min="0" step="1000"
+                                        oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
+                                        onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }">
                                 </td>
                                 <td class="text-end text-nowrap">
                                     <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
@@ -412,21 +414,21 @@
                                     @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
                                     <div class="mt-1">
                                         @if(!empty($selectedMonths))
-                                            @if(abs($monthlyRemainder) < 0.01)
-                                                <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Dist</span>
+                                        @if(abs($monthlyRemainder) < 0.01)
+                                            <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Dist</span>
                                             @else
-                                                <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
+                                            <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
                                             @endif
-                                        @endif
-                                        @if(!empty($selectedMonths) && !empty($selectedCashOutMonths))
-                                        @endif
-                                        @if(!empty($selectedCashOutMonths))
+                                            @endif
+                                            @if(!empty($selectedMonths) && !empty($selectedCashOutMonths))
+                                            @endif
+                                            @if(!empty($selectedCashOutMonths))
                                             @if(abs($cashOutRemainder) < 0.01)
                                                 <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Kas</span>
-                                            @else
+                                                @else
                                                 <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
-                                            @endif
-                                        @endif
+                                                @endif
+                                                @endif
                                     </div>
                                     @endif
                                 </td>
@@ -455,16 +457,16 @@
                 {{-- MODALS — outside the overflow container --}}
                 @foreach($wp['budget_items'] as $biIdx => $bi)
                 @php
-                    $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
-                    $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
-                    $monthlyRemainder = $biTotal - $monthlyAllocated;
-                    $selectedMonths = $bi['distribution_months'] ?? [];
-                    $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
-                    $cashOutRemainder = $biTotal - $cashOutAllocated;
-                    $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
-                    $allMonths = array_unique(array_merge($selectedMonths, $selectedCashOutMonths));
-                    sort($allMonths);
-                    $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
+                $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
+                $monthlyRemainder = $biTotal - $monthlyAllocated;
+                $selectedMonths = $bi['distribution_months'] ?? [];
+                $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                $cashOutRemainder = $biTotal - $cashOutAllocated;
+                $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                $allMonths = array_unique(array_merge($selectedMonths, $selectedCashOutMonths));
+                sort($allMonths);
+                $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
                 @endphp
                 <div
                     wire:key="modal-{{ $wpIdx }}-{{ $biIdx }}"
@@ -508,26 +510,26 @@
                                         <i class="bx bx-calendar text-primary"></i>
                                         <span class="fw-semibold text-primary small">Distribusi Bulanan</span>
                                         @if(!empty($selectedMonths))
-                                            <span class="badge bg-label-primary rounded-pill">{{ count($selectedMonths) }} bulan</span>
+                                        <span class="badge bg-label-primary rounded-pill">{{ count($selectedMonths) }} bulan</span>
                                         @endif
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         @if($biTotal > 0)
-                                            @if(abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
-                                                <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                                        @if(abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
+                                            <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
                                             @elseif($monthlyRemainder < 0)
                                                 <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($monthlyRemainder), 0, ',', '.') }}</span>
-                                            @elseif(!empty($selectedMonths))
+                                                @elseif(!empty($selectedMonths))
                                                 <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}</span>
-                                            @endif
-                                        @endif
-                                        <button type="button"
-                                            wire:click="distributeEvenly({{ $wpIdx }}, {{ $biIdx }})"
-                                            class="btn btn-xs btn-outline-primary py-0 px-2"
-                                            style="font-size:0.72rem;"
-                                            @if($biTotal <= 0) disabled @endif>
-                                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                                        </button>
+                                                @endif
+                                                @endif
+                                                <button type="button"
+                                                    wire:click="distributeEvenly({{ $wpIdx }}, {{ $biIdx }})"
+                                                    class="btn btn-xs btn-outline-primary py-0 px-2"
+                                                    style="font-size:0.72rem;"
+                                                    @if($biTotal <=0) disabled @endif>
+                                                    <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                                                </button>
                                     </div>
                                 </div>
                                 <label class="form-label small text-muted mb-1">Pilih Bulan Distribusi Beban:</label>
@@ -552,26 +554,26 @@
                                         <i class="bx bx-wallet text-primary"></i>
                                         <span class="fw-semibold text-primary small">Rencana Kas Keluar</span>
                                         @if(!empty($selectedCashOutMonths))
-                                            <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }} bulan</span>
+                                        <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }} bulan</span>
                                         @endif
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         @if($biTotal > 0)
-                                            @if(abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
-                                                <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                                        @if(abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
+                                            <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
                                             @elseif($cashOutRemainder < 0)
                                                 <span class="badge bg-danger rounded-pill small">Lebih Rp {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
-                                            @elseif(!empty($selectedCashOutMonths))
+                                                @elseif(!empty($selectedCashOutMonths))
                                                 <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}</span>
-                                            @endif
-                                        @endif
-                                        <button type="button"
-                                            wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $biIdx }})"
-                                            class="btn btn-xs btn-outline-primary py-0 px-2"
-                                            style="font-size:0.72rem;"
-                                            @if($biTotal <= 0) disabled @endif>
-                                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                                        </button>
+                                                @endif
+                                                @endif
+                                                <button type="button"
+                                                    wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $biIdx }})"
+                                                    class="btn btn-xs btn-outline-primary py-0 px-2"
+                                                    style="font-size:0.72rem;"
+                                                    @if($biTotal <=0) disabled @endif>
+                                                    <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                                                </button>
                                     </div>
                                 </div>
                                 <label class="form-label small text-muted mb-1">Pilih Bulan Pembayaran:</label>
@@ -602,43 +604,43 @@
                                     </thead>
                                     <tbody>
                                         @foreach($monthLabels as $monthNum => $monthLabel)
-                                            @php
-                                                $isDistribMonth = in_array($monthNum, $selectedMonths);
-                                                $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
-                                            @endphp
-                                            @if($isDistribMonth || $isCashOutMonth)
-                                            <tr>
-                                                <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
-                                                <td class="text-end">
-                                                    @if($isDistribMonth)
-                                                    <div class="input-group input-group-sm justify-content-end">
-                                                        <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
-                                                        <input type="number"
-                                                            class="form-control form-control-sm text-end"
-                                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
-                                                            min="0" step="1000" placeholder="0"
-                                                            style="font-size:0.8rem;max-width:180px;">
-                                                    </div>
-                                                    @else
-                                                    <span class="text-muted small">—</span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    @if($isCashOutMonth)
-                                                    <div class="input-group input-group-sm justify-content-end">
-                                                        <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
-                                                        <input type="number"
-                                                            class="form-control form-control-sm text-end"
-                                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
-                                                            min="0" step="1000" placeholder="0"
-                                                            style="font-size:0.8rem;max-width:180px;">
-                                                    </div>
-                                                    @else
-                                                    <span class="text-muted small">—</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                            @endif
+                                        @php
+                                        $isDistribMonth = in_array($monthNum, $selectedMonths);
+                                        $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
+                                        @endphp
+                                        @if($isDistribMonth || $isCashOutMonth)
+                                        <tr>
+                                            <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
+                                            <td class="text-end">
+                                                @if($isDistribMonth)
+                                                <div class="input-group input-group-sm justify-content-end">
+                                                    <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
+                                                    <input type="number"
+                                                        class="form-control form-control-sm text-end"
+                                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
+                                                        min="0" step="1000" placeholder="0"
+                                                        style="font-size:0.8rem;max-width:180px;">
+                                                </div>
+                                                @else
+                                                <span class="text-muted small">—</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-end">
+                                                @if($isCashOutMonth)
+                                                <div class="input-group input-group-sm justify-content-end">
+                                                    <span class="input-group-text" style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
+                                                    <input type="number"
+                                                        class="form-control form-control-sm text-end"
+                                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
+                                                        min="0" step="1000" placeholder="0"
+                                                        style="font-size:0.8rem;max-width:180px;">
+                                                </div>
+                                                @else
+                                                <span class="text-muted small">—</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @endif
                                         @endforeach
                                     </tbody>
                                     <tfoot class="table-light">

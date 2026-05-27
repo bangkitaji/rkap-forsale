@@ -493,4 +493,32 @@ class RkapSubmissionFormTest extends TestCase
             ->assertSet('workPlans.0.budget_items.1.quantity', 1)
             ->assertSet('workPlans.0.budget_items.1.unit_price', 0);
     }
+
+    public function test_budget_item_unit_price_leading_zeros_and_empty_clear_are_sanitized(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+
+            // Leading zeros must be stripped
+            ->set('workPlans.0.budget_items.0.unit_price', '05000')
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 5000)
+
+            // Lone zero stays 0
+            ->set('workPlans.0.budget_items.0.unit_price', '0')
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+
+            // Multiple zeros collapse to 0
+            ->set('workPlans.0.budget_items.0.unit_price', '00')
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+
+            // Empty/null is reset to 0 (prevents validation error)
+            ->set('workPlans.0.budget_items.0.unit_price', '')
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+
+            ->set('workPlans.0.budget_items.0.unit_price', null)
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 0);
+    }
 }
