@@ -65,6 +65,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/organization/directorates', \App\Livewire\Settings\OrganizationDirectorates::class)->name('settings-organization-directorates');
         Route::get('/settings/organization/departments', \App\Livewire\Settings\OrganizationDepartments::class)->name('settings-organization-departments');
         Route::get('/settings/organization/bureaus', \App\Livewire\Settings\OrganizationBureaus::class)->name('settings-organization-bureaus');
+
+        Route::get('/settings/satuans', \App\Livewire\Settings\Satuans::class)
+            ->name('settings-satuans')
+            ->middleware('permission:settings.satuan.manage');
     });
 
     // RKAP routes

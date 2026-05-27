@@ -21,6 +21,7 @@ class RoleAndUserSeeder extends Seeder
 
         // create permissions
         $permSettingsShow = Permission::firstOrCreate(['name' => 'settings.show', 'guard_name' => 'web']);
+        $permSettingsSatuanManage = Permission::firstOrCreate(['name' => 'settings.satuan.manage', 'guard_name' => 'web']);
         $permMasterDataShow = Permission::firstOrCreate(['name' => 'masterdata.show', 'guard_name' => 'web']);
         $permMasterDataWorkplanManage = Permission::firstOrCreate(['name' => 'masterdata.workplan.manage', 'guard_name' => 'web']);
         $permMasterDataActivityManage = Permission::firstOrCreate(['name' => 'masterdata.activity.manage', 'guard_name' => 'web']);
@@ -33,6 +34,7 @@ class RoleAndUserSeeder extends Seeder
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
             $permSettingsShow,
+            $permSettingsSatuanManage,
             $permMasterDataShow,
             $permMasterDataWorkplanManage,
             $permMasterDataActivityManage,

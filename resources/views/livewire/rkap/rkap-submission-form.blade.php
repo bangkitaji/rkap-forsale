@@ -5,11 +5,13 @@
     @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
     <style>
         .bg-group-alt {
-            background-color: #f0f4f8 !important;
+            background-color: #fdeff2 !important;
         }
+
         .bg-group-alt td {
             background-color: inherit !important;
         }
+
         .table-group-header {
             font-weight: 600;
         }
@@ -289,113 +291,113 @@
                 {{-- Table --}}
                 <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
                     <table class="table table-sm table-bordered align-middle mb-2">
-                        <thead class="table-light">
+                        <thead class="table-primary text-white fw-semibold">
                             <tr>
-                                <th style="width:40%">Uraian & Detail Belanja <span class="text-danger">*</span></th>
-                                <th style="width:80px">Satuan</th>
-                                <th style="width:70px">Vol <span class="text-danger">*</span></th>
-                                <th style="width:140px">Harga Satuan (Rp) <span class="text-danger">*</span></th>
-                                <th style="width:160px">Total (Rp)</th>
-                                <th style="width:120px">Detail</th>
-                                <th style="width:60px" class="text-center">Action</th>
+                                <th style="width:30%">Uraian & Detail Belanja <span class="text-warning">*</span></th>
+                                <th style="width:12%">Satuan</th>
+                                <th style="width:8%" class="text-center">Vol <span class="text-warning">*</span></th>
+                                <th style="width:140px" class="text-end">Harga Satuan (Rp) <span class="text-warning">*</span></th>
+                                <th style="width:160px" class="text-end"></i>Total (Rp)</th>
+                                <th style="width:120px" class="text-center">Detail</th>
+                                <th style="width:2%" class="text-center"><i class="bx bx-menu"></i></th>
                             </tr>
                         </thead>
                         <tbody>
                             @php
-                                $groups = [];
-                                $currentGroup = null;
-                                foreach ($wp['budget_items'] as $biIdx => $bi) {
-                                    $coaId = $bi['coa_id'] ?? null;
-                                    if ($coaId !== null && $currentGroup !== null && $currentGroup['coa_id'] === $coaId) {
-                                        $currentGroup['items'][] = ['index' => $biIdx, 'item' => $bi];
-                                    } else {
-                                        if ($currentGroup !== null) {
-                                            $groups[] = $currentGroup;
-                                        }
-                                        $currentGroup = [
-                                            'coa_id' => $coaId,
-                                            'items' => [
-                                                ['index' => $biIdx, 'item' => $bi]
-                                            ]
-                                        ];
-                                    }
-                                }
-                                if ($currentGroup !== null) {
-                                    $groups[] = $currentGroup;
-                                }
+                            $groups = [];
+                            $currentGroup = null;
+                            foreach ($wp['budget_items'] as $biIdx => $bi) {
+                            $coaId = $bi['coa_id'] ?? null;
+                            if ($coaId !== null && $currentGroup !== null && $currentGroup['coa_id'] === $coaId) {
+                            $currentGroup['items'][] = ['index' => $biIdx, 'item' => $bi];
+                            } else {
+                            if ($currentGroup !== null) {
+                            $groups[] = $currentGroup;
+                            }
+                            $currentGroup = [
+                            'coa_id' => $coaId,
+                            'items' => [
+                            ['index' => $biIdx, 'item' => $bi]
+                            ]
+                            ];
+                            }
+                            }
+                            if ($currentGroup !== null) {
+                            $groups[] = $currentGroup;
+                            }
                             @endphp
 
                             @foreach($groups as $gIdx => $group)
-                                @php
-                                    $itemCount = count($group['items']);
-                                    $firstIdx = $group['items'][0]['index'];
-                                    $firstBi = $group['items'][0]['item'];
-                                    $selectedCoa = $coaOptions->firstWhere('id', $firstBi['coa_id']);
-                                    $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
-                                    $filteredCoasOrdered = $filteredCoas;
-                                    if ($firstBi['coa_id'] ?? null) {
-                                        $filteredCoasOrdered = $filteredCoas->sortBy(fn($c) => ($c->id === $firstBi['coa_id']) ? 0 : 1)->values();
-                                    }
-                                    $searchLabel = '';
-                                    if ($selectedCoa) {
-                                        $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
-                                    } elseif (!empty($firstBi['account_code']) || !empty($firstBi['description'])) {
-                                        $searchLabel = trim(($firstBi['account_code'] ?? '') . (!empty($firstBi['description']) ? ' — ' . ($firstBi['description'] ?? '') : ''));
-                                    }
-                                @endphp
+                            @php
+                            $itemCount = count($group['items']);
+                            $firstIdx = $group['items'][0]['index'];
+                            $firstBi = $group['items'][0]['item'];
+                            $selectedCoa = $coaOptions->firstWhere('id', $firstBi['coa_id']);
+                            $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
+                            $filteredCoasOrdered = $filteredCoas;
+                            if ($firstBi['coa_id'] ?? null) {
+                            $filteredCoasOrdered = $filteredCoas->sortBy(fn($c) => ($c->id === $firstBi['coa_id']) ? 0 : 1)->values();
+                            }
+                            $searchLabel = '';
+                            if ($selectedCoa) {
+                            $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
+                            } elseif (!empty($firstBi['account_code']) || !empty($firstBi['description'])) {
+                            $searchLabel = trim(($firstBi['account_code'] ?? '') . (!empty($firstBi['description']) ? ' — ' . ($firstBi['description'] ?? '') : ''));
+                            }
+                            @endphp
 
-                                <tr wire:key="wp-{{ $wpIdx }}-group-{{ $gIdx }}-coa" class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
-                                    <td colspan="6"
-                                        wire:key="coa-cell-{{ $wpIdx }}-g{{ $gIdx }}-{{ $firstBi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
-                                        x-data="{
+                            <tr wire:key="wp-{{ $wpIdx }}-group-{{ $gIdx }}-coa" class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
+                                <td colspan="6"
+                                    wire:key="coa-cell-{{ $wpIdx }}-g{{ $gIdx }}-{{ $firstBi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
+                                    x-data="{
                                             open: false,
                                             search: @js($searchLabel),
                                             currentLabel: @js($searchLabel),
                                         }"
-                                        x-effect="if (!open && search !== currentLabel) search = currentLabel"
-                                        :style="open ? 'position: relative; z-index: 1060;' : ''"
-                                        @click.outside="open = false; $dispatch('coa-dropdown-close')"
-                                        class="border-bottom-0">
-                                        <div class="position-relative">
-                                            <div class="input-group input-group-sm">
-                                                <input
-                                                    type="text"
-                                                    class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$firstIdx.'.coa_id') is-invalid @enderror"
-                                                    placeholder="Cari akun/belanja..."
-                                                    x-model="search"
-                                                    @focus="open = true; $dispatch('coa-dropdown-open')"
-                                                    @input="open = true; $dispatch('coa-dropdown-open')"
-                                                    autocomplete="off">
-                                                @if($firstBi['coa_id'])
-                                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                    wire:click="updateGroupCoa({{ $wpIdx }}, {{ $firstIdx }}, null)"
-                                                    @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
-                                                    title="Hapus pilihan">
-                                                    <i class="bx bx-x"></i>
-                                                </button>
-                                                @endif
-                                            </div>
-                                            @error('workPlans.'.$wpIdx.'.budget_items.'.$firstIdx.'.coa_id')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
-                                            <select
-                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $firstIdx }}.coa_id"
-                                                class="d-none">
-                                                <option value=""></option>
-                                                @foreach($filteredCoasOrdered as $coa)
-                                                <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
-                                                @endforeach
-                                            </select>
+                                    x-effect="if (!open && search !== currentLabel) search = currentLabel"
+                                    :style="open ? 'position: relative; z-index: 1060;' : ''"
+                                    @click.outside="open = false; $dispatch('coa-dropdown-close')"
+                                    class="border-bottom-0">
+                                    <div class="position-relative">
+                                        <div class="input-group input-group-sm">
+                                            <input
+                                                type="text"
+                                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$firstIdx.'.coa_id') is-invalid @enderror"
+                                                placeholder="Cari akun/belanja..."
+                                                x-model="search"
+                                                @focus="open = true; $dispatch('coa-dropdown-open')"
+                                                @input="open = true; $dispatch('coa-dropdown-open')"
+                                                autocomplete="off">
+                                            @if($firstBi['coa_id'])
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                wire:click="updateGroupCoa({{ $wpIdx }}, {{ $firstIdx }}, null)"
+                                                @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
+                                                title="Hapus pilihan">
+                                                <i class="bx bx-x"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                        @error('workPlans.'.$wpIdx.'.budget_items.'.$firstIdx.'.coa_id')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                        <select
+                                            wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $firstIdx }}.coa_id"
+                                            class="d-none">
+                                            <option value=""></option>
+                                            @foreach($filteredCoasOrdered as $coa)
+                                            <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div
+                                            x-show="open"
+                                            x-cloak
+                                            class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                            style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                                            @forelse($filteredCoasOrdered as $coa)
                                             <div
-                                                x-show="open"
-                                                x-cloak
-                                                class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                                                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                                                @forelse($filteredCoasOrdered as $coa)
-                                                <div
-                                                    class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
-                                                    x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
-                                                    @click="
+                                                class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
+                                                x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
+                                                @click="
                                                         $wire.call('updateGroupCoa', {{ $wpIdx }}, {{ $firstIdx }}, {{ $coa->id }});
                                                         currentLabel = '{{ $coa->code }} — {{ $coa->title }}';
                                                         search = currentLabel;
@@ -403,125 +405,161 @@
                                                         $dispatch('coa-dropdown-close');
                                                         isDirty = true;
                                                     ">
-                                                    <span class="fw-semibold text-primary">{{ $coa->code }}</span>
-                                                    <span class="ms-1">{{ $coa->title }}</span>
-                                                </div>
-                                                @empty
-                                                <div class="px-3 py-2 text-muted small">Tidak ada data COA.</div>
-                                                @endforelse
+                                                <span class="fw-semibold text-primary">{{ $coa->code }}</span>
+                                                <span class="ms-1">{{ $coa->title }}</span>
                                             </div>
+                                            @empty
+                                            <div class="px-3 py-2 text-muted small">Tidak ada data COA.</div>
+                                            @endforelse
                                         </div>
-                                    </td>
-                                    <td rowspan="{{ 1 + $itemCount }}" class="text-center align-middle border-bottom-0">
-                                        @php
-                                            $totalItemsCount = count($wp['budget_items']);
-                                            $indices = array_column($group['items'], 'index');
-                                            $indicesJson = json_encode($indices);
-                                        @endphp
-                                        <button type="button"
-                                            wire:click="removeGroup({{ $wpIdx }}, {{ $indicesJson }})"
-                                            @click="isDirty = true"
-                                            class="btn btn-sm btn-icon btn-text-danger rounded-pill"
-                                            title="Hapus grup akun belanja"
-                                            @if($totalItemsCount <= $itemCount) disabled @endif>
-                                            <i class="bx bx-minus-circle fs-4"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                @foreach($group['items'] as $itemIdx => $itemInfo)
+                                    </div>
+                                </td>
+                                <td rowspan="{{ 1 + $itemCount }}" class="text-center align-middle border-bottom-0">
                                     @php
-                                        $biIdx = $itemInfo['index'];
-                                        $bi = $itemInfo['item'];
-                                        $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
-                                        $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
-                                        $monthlyRemainder = $biTotal - $monthlyAllocated;
-                                        $selectedMonths = $bi['distribution_months'] ?? [];
-                                        $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
-                                        $cashOutRemainder = $biTotal - $cashOutAllocated;
-                                        $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
-                                        $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                                    $totalItemsCount = count($wp['budget_items']);
+                                    $indices = array_column($group['items'], 'index');
+                                    $indicesJson = json_encode($indices);
                                     @endphp
-                                    <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-detail" class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
-                                        <td class="border-top-0">
-                                            <input type="text" class="form-control form-control-sm"
-                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks"
-                                                placeholder="Detail Belanja / Ket...">
-                                        </td>
-                                        <td class="border-top-0">
-                                            <input type="text" class="form-control form-control-sm"
-                                                wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit"
-                                                placeholder="Bh, Paket">
-                                        </td>
-                                        <td class="border-top-0">
-                                            <input type="number"
-                                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
-                                                wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity"
-                                                min="1">
-                                        </td>
-                                        <td class="border-top-0">
-                                            <input type="number"
-                                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
-                                                wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price"
-                                                min="0" step="1000"
-                                                oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
-                                                onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }">
-                                        </td>
-                                        <td class="text-end text-nowrap border-top-0">
-                                            <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
-                                        </td>
-                                        <td class="text-center text-nowrap border-top-0">
-                                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                                <button type="button"
-                                                    class="btn btn-sm btn-icon btn-outline-primary"
-                                                    title="More Details"
-                                                    @click="openModal('{{ $modalKey }}')"
-                                                    @disabled($biTotal <= 0)>
-                                                    <i class="bx bx-detail"></i>
-                                                </button>
+                                    <button type="button"
+                                        wire:click="removeGroup({{ $wpIdx }}, {{ $indicesJson }})"
+                                        @click="isDirty = true"
+                                        class="btn btn-sm btn-icon btn-text-danger rounded-pill"
+                                        title="Hapus grup akun belanja"
+                                        @if($totalItemsCount <=$itemCount) disabled @endif>
+                                        <i class="bx bx-minus-circle fs-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
 
-                                                @if($itemCount > 1)
-                                                <button type="button"
-                                                    wire:click="removeBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
-                                                    @click="isDirty = true"
-                                                    class="btn btn-sm btn-icon btn-outline-danger"
-                                                    title="Hapus detail rincian ini">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                                @endif
+                            @foreach($group['items'] as $itemIdx => $itemInfo)
+                            @php
+                            $biIdx = $itemInfo['index'];
+                            $bi = $itemInfo['item'];
+                            $biTotal = ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0);
+                            $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
+                            $monthlyRemainder = $biTotal - $monthlyAllocated;
+                            $selectedMonths = $bi['distribution_months'] ?? [];
+                            $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
+                            $cashOutRemainder = $biTotal - $cashOutAllocated;
+                            $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                            $modalKey = 'wp' . $wpIdx . '-bi' . $biIdx;
+                            @endphp
+                            <tr wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-detail" class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
+                                <td class="border-top-0">
+                                    <input type="text" class="form-control form-control-sm"
+                                        wire:model.live="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.remarks"
+                                        placeholder="Detail Belanja / Ket...">
+                                </td>
+                                <td class="border-top-0" style="position: relative;">
+                                    <div
+                                        x-data="{
+                                            open: false,
+                                            search: '{{ $bi['unit'] ?? '' }}',
+                                        }"
+                                        class="position-relative"
+                                        @click.outside="open = false"
+                                        wire:key="wp-{{ $wpIdx }}-bi-{{ $biIdx }}-unit-{{ $bi['unit'] ?? 'empty' }}">
 
-                                                @if($itemIdx === $itemCount - 1)
-                                                <button type="button"
-                                                    wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
-                                                    @click="isDirty = true"
-                                                    class="btn btn-sm btn-icon btn-outline-success"
-                                                    title="Tambah detail rincian untuk akun ini">
-                                                    <i class="bx bx-plus"></i>
-                                                </button>
-                                                @endif
+                                        <input
+                                            type="text"
+                                            class="form-control form-control-sm"
+                                            placeholder="Satuan..."
+                                            x-model="search"
+                                            @focus="open = true; $dispatch('coa-dropdown-open');"
+                                            @input="open = true; $dispatch('coa-dropdown-open'); $wire.set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit', search);"
+                                            autocomplete="off">
+
+                                        <div
+                                            x-show="open"
+                                            x-cloak
+                                            class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                            style="z-index: 1055; max-height: 180px; overflow-y: auto;">
+                                            @foreach($this->satuanOptions as $satuanOpt)
+                                            <div
+                                                class="px-2 py-1_5 cursor-pointer dropdown-item small {{ ($bi['unit'] ?? '') == $satuanOpt->name ? 'bg-primary text-white' : '' }}"
+                                                x-show="'{{ strtolower($satuanOpt->name) }}'.includes(search.toLowerCase())"
+                                                @click="
+                                                    $wire.set('workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit', '{{ $satuanOpt->name }}');
+                                                    search = '{{ $satuanOpt->name }}';
+                                                    open = false;
+                                                    $dispatch('coa-dropdown-close');
+                                                    isDirty = true;
+                                                ">
+                                                {{ $satuanOpt->name }}
                                             </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="border-top-0">
+                                    <input type="number"
+                                        class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.quantity') is-invalid @enderror"
+                                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.quantity"
+                                        min="1">
+                                </td>
+                                <td class="border-top-0">
+                                    <input type="number"
+                                        class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.budget_items.'.$biIdx.'.unit_price') is-invalid @enderror"
+                                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.budget_items.{{ $biIdx }}.unit_price"
+                                        min="0" step="1000"
+                                        oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
+                                        onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }">
+                                </td>
+                                <td class="text-end text-nowrap border-top-0">
+                                    <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
+                                </td>
+                                <td class="text-center text-nowrap border-top-0">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <button type="button"
+                                            class="btn btn-sm btn-icon btn-outline-primary"
+                                            title="More Details"
+                                            @click="openModal('{{ $modalKey }}')"
+                                            @disabled($biTotal <=0)>
+                                            <i class="bx bx-detail"></i>
+                                        </button>
 
-                                            @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
-                                            <div class="mt-1">
-                                                @if(!empty($selectedMonths))
-                                                    @if(abs($monthlyRemainder) < 0.01)
-                                                    <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Dist</span>
-                                                    @else
-                                                    <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
-                                                    @endif
-                                                @endif
-                                                @if(!empty($selectedCashOutMonths))
-                                                    @if(abs($cashOutRemainder) < 0.01)
-                                                    <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Kas</span>
-                                                    @else
-                                                    <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
-                                                    @endif
-                                                @endif
-                                            </div>
+                                        @if($itemCount > 1)
+                                        <button type="button"
+                                            wire:click="removeBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
+                                            @click="isDirty = true"
+                                            class="btn btn-sm btn-icon btn-outline-danger"
+                                            title="Hapus detail rincian ini">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                        @endif
+
+                                        @if($itemIdx === $itemCount - 1)
+                                        <button type="button"
+                                            wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
+                                            @click="isDirty = true"
+                                            class="btn btn-sm btn-icon btn-outline-success"
+                                            title="Tambah detail rincian untuk akun ini">
+                                            <i class="bx bx-plus"></i>
+                                        </button>
+                                        @endif
+                                    </div>
+
+                                    @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
+                                    <div class="mt-1">
+                                        @if(!empty($selectedMonths))
+                                        @if(abs($monthlyRemainder) < 0.01)
+                                            <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Dist</span>
+                                            @else
+                                            <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
                                             @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                            @endif
+                                            @if(!empty($selectedCashOutMonths))
+                                            @if(abs($cashOutRemainder) < 0.01)
+                                                <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i class="bx bx-check"></i> Kas</span>
+                                                @else
+                                                <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
+                                                @endif
+                                                @endif
+                                    </div>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
                             @endforeach
                         </tbody>
                     </table>
@@ -605,7 +643,15 @@
                                                 </button>
                                     </div>
                                 </div>
-                                <label class="form-label small text-muted mb-1">Pilih Bulan Distribusi Beban:</label>
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="form-label small text-muted mb-0">Pilih Bulan Distribusi Beban:</label>
+                                    <button type="button"
+                                        wire:click="selectAllMonths({{ $wpIdx }}, {{ $biIdx }})"
+                                        class="btn btn-xs btn-link p-0 text-decoration-none"
+                                        style="font-size: 0.72rem;">
+                                        {{ count($selectedMonths) === 12 ? 'Deselect All' : 'Select All' }}
+                                    </button>
+                                </div>
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     @foreach($monthLabels as $monthNum => $monthLabel)
                                     <button type="button"
@@ -649,7 +695,15 @@
                                                 </button>
                                     </div>
                                 </div>
-                                <label class="form-label small text-muted mb-1">Pilih Bulan Pembayaran:</label>
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="form-label small text-muted mb-0">Pilih Bulan Pembayaran:</label>
+                                    <button type="button"
+                                        wire:click="selectAllCashOutMonths({{ $wpIdx }}, {{ $biIdx }})"
+                                        class="btn btn-xs btn-link p-0 text-decoration-none"
+                                        style="font-size: 0.72rem;">
+                                        {{ count($selectedCashOutMonths) === 12 ? 'Deselect All' : 'Select All' }}
+                                    </button>
+                                </div>
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     @foreach($monthLabels as $monthNum => $monthLabel)
                                     <button type="button"

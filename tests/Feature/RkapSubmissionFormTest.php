@@ -521,4 +521,74 @@ class RkapSubmissionFormTest extends TestCase
             ->set('workPlans.0.budget_items.0.unit_price', null)
             ->assertSet('workPlans.0.budget_items.0.unit_price', 0);
     }
+
+    public function test_can_select_and_deselect_all_months(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            
+            // Initially no months selected
+            ->assertSet('workPlans.0.budget_items.0.distribution_months', [])
+            ->assertSet('workPlans.0.budget_items.0.cash_out_months', [])
+            
+            // Select all months
+            ->call('selectAllMonths', 0, 0)
+            ->assertCount('workPlans.0.budget_items.0.distribution_months', 12)
+            
+            // Select all cash out months
+            ->call('selectAllCashOutMonths', 0, 0)
+            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 12)
+            
+            // Deselect all months (toggles off when already 12 are selected)
+            ->call('selectAllMonths', 0, 0)
+            ->assertCount('workPlans.0.budget_items.0.distribution_months', 0)
+            
+            // Deselect all cash out months
+            ->call('selectAllCashOutMonths', 0, 0)
+            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 0);
+    }
+
+    public function test_clearing_coa_clears_budget_item_details(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            
+            // Populate some details
+            ->set('workPlans.0.budget_items.0.unit', 'Bh')
+            ->set('workPlans.0.budget_items.0.quantity', 5)
+            ->set('workPlans.0.budget_items.0.unit_price', 10000)
+            ->set('workPlans.0.budget_items.0.remarks', 'Sewa printer')
+            ->call('selectAllMonths', 0, 0)
+            ->call('selectAllCashOutMonths', 0, 0)
+            
+            // Assert values are set
+            ->assertSet('workPlans.0.budget_items.0.unit', 'Bh')
+            ->assertSet('workPlans.0.budget_items.0.quantity', 5)
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 10000)
+            ->assertSet('workPlans.0.budget_items.0.remarks', 'Sewa printer')
+            ->assertCount('workPlans.0.budget_items.0.distribution_months', 12)
+            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 12)
+            
+            // Clear the COA
+            ->call('updateGroupCoa', 0, 0, null)
+            
+            // Assert the COA fields are cleared
+            ->assertSet('workPlans.0.budget_items.0.coa_id', null)
+            ->assertSet('workPlans.0.budget_items.0.account_code', '')
+            ->assertSet('workPlans.0.budget_items.0.description', '')
+            
+            // Assert detail belanja child fields are cleared/reset
+            ->assertSet('workPlans.0.budget_items.0.unit', '')
+            ->assertSet('workPlans.0.budget_items.0.quantity', 1)
+            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+            ->assertSet('workPlans.0.budget_items.0.remarks', '')
+            ->assertCount('workPlans.0.budget_items.0.distribution_months', 0)
+            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 0);
+    }
 }

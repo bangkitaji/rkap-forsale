@@ -99,6 +99,13 @@
         "settings-organization-bureaus"
       ],
       "permission": "settings.show"
+    },
+    {
+      "url": "settings/satuans",
+      "icon": "menu-icon icon-base bx bx-coin",
+      "name": "Satuan",
+      "slug": "settings-satuans",
+      "permission": "settings.satuan.manage"
     }
   ]
 }

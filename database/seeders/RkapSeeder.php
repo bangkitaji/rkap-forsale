@@ -48,6 +48,8 @@ class RkapSeeder extends Seeder
             'organization.manage',
             // Comment
             'rkap.comment',
+            // Settings Satuan
+            'settings.satuan.manage',
         ];
 
         foreach ($permissions as $perm) {

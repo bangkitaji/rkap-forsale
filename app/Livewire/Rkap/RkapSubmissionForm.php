@@ -158,6 +158,14 @@ class RkapSubmissionForm extends Component
     }
 
     /**
+     * All available Satuans for the Budget Item select.
+     */
+    public function getSatuanOptionsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\Satuan::orderBy('name')->get();
+    }
+
+    /**
      * Activities filtered by the selected work_plan_id for a given row index.
      */
     public function getActivitiesForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
@@ -231,6 +239,28 @@ class RkapSubmissionForm extends Component
     }
 
     /**
+     * Toggle all 12 months on/off for a specific budget item.
+     */
+    public function selectAllMonths(int $wpIdx, int $biIdx): void
+    {
+        $months = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['distribution_months'] ?? [];
+        if (count($months) === 12) {
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['distribution_months'] = [];
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'] = [];
+        } else {
+            $allMonths = range(1, 12);
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['distribution_months'] = $allMonths;
+            $distribution = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'] ?? [];
+            foreach ($allMonths as $month) {
+                if (!isset($distribution[$month])) {
+                    $distribution[$month] = 0;
+                }
+            }
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['monthly_distribution'] = $distribution;
+        }
+    }
+
+    /**
      * Distribute the total amount evenly across selected months.
      */
     public function distributeEvenly(int $wpIdx, int $biIdx): void
@@ -293,6 +323,28 @@ class RkapSubmissionForm extends Component
         }
 
         $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] = array_values($months);
+    }
+
+    /**
+     * Toggle all 12 months on/off for a specific budget item's cash out plan.
+     */
+    public function selectAllCashOutMonths(int $wpIdx, int $biIdx): void
+    {
+        $months = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] ?? [];
+        if (count($months) === 12) {
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] = [];
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'] = [];
+        } else {
+            $allMonths = range(1, 12);
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_months'] = $allMonths;
+            $distribution = $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'] ?? [];
+            foreach ($allMonths as $month) {
+                if (!isset($distribution[$month])) {
+                    $distribution[$month] = 0;
+                }
+            }
+            $this->workPlans[$wpIdx]['budget_items'][$biIdx]['cash_out_distribution'] = $distribution;
+        }
     }
 
     /**
@@ -433,6 +485,9 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['budget_items'][$biIndex]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['budget_items'][$biIndex]['account_code'] = $code;
             $this->workPlans[$wpIndex]['budget_items'][$biIndex]['description'] = $title;
+            if ($coaId === null) {
+                $this->clearBudgetItemDetails($wpIndex, $biIndex);
+            }
             return;
         }
         
@@ -443,6 +498,9 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['budget_items'][$idx]['description'] = $title;
+            if ($coaId === null) {
+                $this->clearBudgetItemDetails($wpIndex, $idx);
+            }
             $idx++;
         }
         
@@ -453,8 +511,23 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['budget_items'][$idx]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['budget_items'][$idx]['description'] = $title;
+            if ($coaId === null) {
+                $this->clearBudgetItemDetails($wpIndex, $idx);
+            }
             $idx--;
         }
+    }
+
+    private function clearBudgetItemDetails(int $wpIndex, int $biIndex): void
+    {
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['unit'] = '';
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['quantity'] = 1;
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['unit_price'] = 0;
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['remarks'] = '';
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['monthly_distribution'] = [];
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['distribution_months'] = [];
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['cash_out_distribution'] = [];
+        $this->workPlans[$wpIndex]['budget_items'][$biIndex]['cash_out_months'] = [];
     }
 
     public function removeGroup(int $wpIndex, array $indices): void

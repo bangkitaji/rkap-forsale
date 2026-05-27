@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndUserSeeder::class,
             RkapSeeder::class,
+            SatuanSeeder::class,
         ]);
     }
 }
