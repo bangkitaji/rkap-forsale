@@ -426,6 +426,7 @@ class RkapSubmissionForm extends Component
         $this->validateBudgetItemsCoaMapping();
         $this->saveSubmission('draft');
         session()->flash('message', 'Draft RKAP berhasil disimpan.');
+        $this->dispatch('form-saved');
     }
 
     public function submitForReview(): void

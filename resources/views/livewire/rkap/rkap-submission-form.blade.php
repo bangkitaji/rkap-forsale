@@ -1,4 +1,8 @@
-<div>
+<div x-data="{ isDirty: false, isSubmitting: false }"
+     @input="isDirty = true"
+     @change="isDirty = true"
+     @form-saved.window="isDirty = false"
+     @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
     <div class="py-3 mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="mb-0">
@@ -258,6 +262,7 @@
                 </div>
             </div>
 
+            @if(!empty($wp['work_plan_id']) && !empty($wp['activity_id']))
             {{-- Budget Items — wrapped in Alpine for modal state --}}
             <div
                 x-data="{
@@ -399,10 +404,10 @@
                                 </td>
                                 <td class="text-center text-nowrap">
                                     <button type="button"
-                                        class="btn btn-xs btn-outline-primary py-0 px-1"
-                                        style="font-size:0.7rem;"
+                                        class="btn btn-sm btn-icon btn-outline-primary"
+                                        title="More Details"
                                         @click="openModal('{{ $modalKey }}')">
-                                        <i class="bx bx-detail me-1"></i>More Details
+                                        <i class="bx bx-detail"></i>
                                     </button>
                                     @if(!empty($selectedMonths) || !empty($selectedCashOutMonths))
                                     <div class="mt-1">
@@ -425,7 +430,7 @@
                                     </div>
                                     @endif
                                 </td>
-                                <td class="text-nowrap text-center">
+                                <td>
                                     <button type="button"
                                         wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $biIdx }})"
                                         class="btn btn-sm btn-icon btn-text-primary rounded-pill"
@@ -679,6 +684,14 @@
                 </button>
 
             </div>{{-- end Alpine x-data budget section --}}
+            @else
+            <div class="alert alert-info d-flex align-items-center mb-0 mt-3">
+                <i class="bx bx-info-circle me-2 fs-4"></i>
+                <div>
+                    Silakan pilih <strong>Program Kerja</strong> dan <strong>Nama Kegiatan</strong> terlebih dahulu untuk mengisi detail anggaran belanja.
+                </div>
+            </div>
+            @endif
         </div>{{-- end card-body --}}
     </div>{{-- end card --}}
     @endforeach
@@ -696,11 +709,11 @@
                 <i class="bx bx-arrow-back me-1"></i> Kembali
             </a>
             <div class="d-flex gap-2">
-                <button wire:click="saveDraft()" wire:loading.attr="disabled" class="btn btn-label-primary">
+                <button wire:click="saveDraft()" @click="isSubmitting = true" wire:loading.attr="disabled" class="btn btn-label-primary">
                     <span wire:loading.remove wire:target="saveDraft"><i class="bx bx-save me-1"></i> Simpan Draft</span>
                     <span wire:loading wire:target="saveDraft"><span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...</span>
                 </button>
-                <button wire:click="submitForReview()" wire:loading.attr="disabled"
+                <button wire:click="submitForReview()" @click="isSubmitting = true" wire:loading.attr="disabled"
                     wire:confirm="Yakin mengajukan RKAP ini untuk review? Pastikan data sudah lengkap."
                     class="btn btn-primary">
                     <span wire:loading.remove wire:target="submitForReview"><i class="bx bx-send me-1"></i> Ajukan untuk Review</span>

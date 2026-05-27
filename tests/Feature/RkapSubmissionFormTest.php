@@ -109,6 +109,30 @@ class RkapSubmissionFormTest extends TestCase
         $response->assertSee('Buat RKAP');
     }
 
+    public function test_budget_items_section_is_hidden_by_default_and_shown_after_selection(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            // Initially, since work plan and activity are null, it should show the notice
+            ->assertSee('Silakan pilih')
+            ->assertSee('detail anggaran belanja')
+            ->assertDontSee('Uraian')
+            ->assertDontSee('Tambah Item Belanja')
+
+            // Set WorkPlan (still no activity selected, should still show notice)
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->assertSee('Silakan pilih')
+            ->assertSee('detail anggaran belanja')
+            ->assertDontSee('Uraian')
+
+            // Set Activity with COAs (both are set now, so notice should be gone and budget items table/button shown)
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->assertDontSee('Silakan pilih')
+            ->assertSee('Uraian')
+            ->assertSee('Tambah Item Belanja');
+    }
+
     public function test_budget_items_are_populated_when_activity_with_coas_is_selected(): void
     {
         $this->actingAs($this->user);
