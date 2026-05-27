@@ -86,18 +86,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($wp->budgetItems as $bi)
+                                @foreach($wp->budgetItems->groupBy('account_code') as $accountCode => $items)
+                                @php
+                                $firstItem = $items->first();
+                                @endphp
+                                <tr class="table-light fw-semibold">
+                                    <td colspan="7" class="text-dark bg-lighter py-2">
+                                        <i class="bx bx-subdirectory-right text-primary me-1"></i>
+                                        <strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem->description }}
+                                    </td>
+                                </tr>
+                                @foreach($items as $bi)
                                 @php
                                 $allocationModalId = 'allocationDetailModal-' . $bi->id;
                                 $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                                 @endphp
                                 <tr>
-                                    <td>{{ $bi->account_code ?? '-' }}</td>
+                                    <td class="text-center text-muted">
+                                        <span class="ps-2">•</span>
+                                    </td>
                                     <td>
-                                        {{ $bi->description }}
-                                        @if($bi->remarks)
-                                        <div class="text-muted small mt-1">{{ $bi->remarks }}</div>
-                                        @endif
+                                        {{ $bi->remarks ?: $bi->description }}
                                     </td>
                                     <td class="text-center">{{ $bi->quantity }}</td>
                                     <td>{{ $bi->unit }}</td>
@@ -251,7 +260,7 @@
                                         @endif
                                     </td>
                                 </tr>
-
+                                @endforeach
                                 @endforeach
                             </tbody>
                         </table>
