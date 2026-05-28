@@ -118,7 +118,7 @@
                                         @if($bi->monthlies->isNotEmpty() || $bi->cashOuts->isNotEmpty())
                                         <div class="d-flex justify-content-center">
                                             <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#{{ $allocationModalId }}" title="Detail Alokasi">
-                                                <i class="bx bx-info-circle me-1"></i>Detail Alokasi
+                                                <i class="bx bx-detail"></i>
                                             </button>
 
                                             <!-- Modal Detail Alokasi (Merged) -->
