@@ -106,6 +106,13 @@
       "name": "Satuan",
       "slug": "settings-satuans",
       "permission": "settings.satuan.manage"
+    },
+    {
+      "url": "settings/data-migration-upload",
+      "icon": "menu-icon icon-base bx bx-upload",
+      "name": "Upload Data Migration",
+      "slug": "settings-data-migration-upload",
+      "permission": "settings.show"
     }
   ]
 }

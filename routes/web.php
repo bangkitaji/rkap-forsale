@@ -69,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/satuans', \App\Livewire\Settings\Satuans::class)
             ->name('settings-satuans')
             ->middleware('permission:settings.satuan.manage');
+
+        Route::get('/settings/data-migration-upload', \App\Livewire\Settings\DataMigrationUpload::class)
+            ->name('settings-data-migration-upload')
+            ->middleware('permission:settings.show');
     });
 
     // RKAP routes
