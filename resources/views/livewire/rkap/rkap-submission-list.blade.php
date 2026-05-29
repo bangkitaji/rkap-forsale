@@ -221,15 +221,24 @@
                         </div>
                     </button>
                     @else
-                    <button wire:click="selectPeriod({{ $period->id }})" class="btn btn-outline-primary w-100 mb-2 text-start">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div class="border rounded p-3 mb-2 bg-lighter">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
                                 <strong>{{ $period->title }}</strong>
                                 <div class="small text-muted">{{ $period->year }} &bull; <span class="badge bg-label-success">{{ ucfirst($period->status) }}</span></div>
                             </div>
-                            <i class="bx bx-chevron-right"></i>
                         </div>
-                    </button>
+                        <div class="d-flex gap-2">
+                            <button wire:click="selectPeriod({{ $period->id }})" class="btn btn-sm btn-primary flex-grow-1">
+                                <i class="bx bx-plus me-1"></i> Input Baru
+                            </button>
+                            @if(count($previousSubmissions) > 0)
+                            <button wire:click="openDuplicateModal({{ $period->id }})" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <i class="bx bx-copy me-1"></i> Duplikasi
+                            </button>
+                            @endif
+                        </div>
+                    </div>
                     @endif
                     @empty
                     <div class="text-center text-muted py-4">
@@ -241,6 +250,57 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-label-secondary" wire:click="closePeriodSelector">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Duplication Modal --}}
+    @if($showDuplicateModal)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-copy me-2"></i>Duplikasi Pengajuan RKAP</h5>
+                    <button type="button" class="btn-close" wire:click="closeDuplicateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Pilih pengajuan sebelumnya yang ingin diduplikasi ke periode baru.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Pengajuan Sumber</label>
+                        <select class="form-select" wire:model.live="selectedSourceSubmissionId">
+                            <option value="">-- Pilih Pengajuan Sumber --</option>
+                            @foreach($previousSubmissions as $prev)
+                            <option value="{{ $prev->id }}">
+                                {{ $prev->period->title }} (v{{ $prev->current_version }} - Rp {{ number_format($prev->total_budget, 0, ',', '.') }})
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    @if($selectedSourceSubmissionId)
+                        @php
+                            $selectedSource = collect($previousSubmissions)->firstWhere('id', $selectedSourceSubmissionId);
+                        @endphp
+                        @if($selectedSource)
+                        <div class="alert alert-info py-2 px-3 small mb-0">
+                            <div class="fw-semibold">Detail Pengajuan Sumber:</div>
+                            <ul class="mb-0 ps-3 mt-1">
+                                <li>Versi: v{{ $selectedSource->current_version }}</li>
+                                <li>Total Rencana Kerja: {{ $selectedSource->workPlans()->count() }}</li>
+                                <li>Total Anggaran: Rp {{ number_format($selectedSource->total_budget, 0, ',', '.') }}</li>
+                            </ul>
+                        </div>
+                        @endif
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" wire:click="closeDuplicateModal">Batal</button>
+                    <button type="button" class="btn btn-primary" wire:click="duplicateSubmission" @if(!$selectedSourceSubmissionId) disabled @endif>
+                        <i class="bx bx-copy me-1"></i> Mulai Duplikasi
+                    </button>
                 </div>
             </div>
         </div>

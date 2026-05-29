@@ -6,7 +6,10 @@ use Livewire\Component;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
+use App\Models\RkapWorkPlan;
+use App\Models\RkapBudgetItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RkapSubmissionList extends Component
 {
@@ -16,6 +19,10 @@ class RkapSubmissionList extends Component
     public string $filterStatus = '';
     public ?int $filterPeriod = null;
     public bool $showPeriodSelector = false;
+
+    public bool $showDuplicateModal = false;
+    public ?int $selectedDestinationPeriodId = null;
+    public ?int $selectedSourceSubmissionId = null;
 
     public function openPeriodSelector(): void
     {
@@ -30,6 +37,128 @@ class RkapSubmissionList extends Component
     public function selectPeriod(int $periodId): void
     {
         $this->redirectRoute('rkap-submissions-create', ['periodId' => $periodId]);
+    }
+
+    public function openDuplicateModal(int $destinationPeriodId): void
+    {
+        $this->selectedDestinationPeriodId = $destinationPeriodId;
+        $this->showDuplicateModal = true;
+        $this->showPeriodSelector = false;
+    }
+
+    public function closeDuplicateModal(): void
+    {
+        $this->showDuplicateModal = false;
+        $this->selectedDestinationPeriodId = null;
+        $this->selectedSourceSubmissionId = null;
+    }
+
+    public function duplicateSubmission(): void
+    {
+        $user = Auth::user();
+        if (!$user || !$user->bureau_id) {
+            session()->flash('error', 'Anda harus terasosiasi dengan Biro untuk menduplikasi pengajuan.');
+            $this->closeDuplicateModal();
+            return;
+        }
+
+        if (!$this->selectedDestinationPeriodId) {
+            session()->flash('error', 'Periode tujuan belum dipilih.');
+            $this->closeDuplicateModal();
+            return;
+        }
+
+        if (!$this->selectedSourceSubmissionId) {
+            session()->flash('error', 'Silakan pilih pengajuan sumber yang ingin diduplikasi.');
+            return;
+        }
+
+        $destinationPeriod = RkapPeriod::findOrFail($this->selectedDestinationPeriodId);
+        if (!$destinationPeriod->isOpen()) {
+            session()->flash('error', 'Periode tujuan harus berstatus Open.');
+            $this->closeDuplicateModal();
+            return;
+        }
+
+        $sourceSubmission = RkapSubmission::findOrFail($this->selectedSourceSubmissionId);
+        if ($sourceSubmission->bureau_id !== $user->bureau_id) {
+            session()->flash('error', 'Anda hanya dapat menduplikasi pengajuan milik Biro Anda.');
+            $this->closeDuplicateModal();
+            return;
+        }
+
+        if ($sourceSubmission->rkap_period_id === $destinationPeriod->id) {
+            session()->flash('error', 'Tidak dapat menduplikasi ke periode yang sama.');
+            return;
+        }
+
+        $alreadyExists = RkapSubmission::where('rkap_period_id', $destinationPeriod->id)
+            ->where('bureau_id', $user->bureau_id)
+            ->exists();
+        if ($alreadyExists) {
+            session()->flash('error', 'Biro Anda sudah memiliki pengajuan untuk periode tersebut.');
+            $this->closeDuplicateModal();
+            return;
+        }
+
+        DB::transaction(function () use ($sourceSubmission, $destinationPeriod, $user) {
+            $newSubmission = RkapSubmission::create([
+                'rkap_period_id' => $destinationPeriod->id,
+                'bureau_id' => $user->bureau_id,
+                'created_by' => $user->id,
+                'current_version' => 1,
+                'status' => 'draft',
+                'total_budget' => 0,
+                'notes' => 'Duplikasi dari periode: ' . $sourceSubmission->period->title,
+            ]);
+
+            foreach ($sourceSubmission->workPlans as $wp) {
+                $newWp = RkapWorkPlan::create([
+                    'rkap_submission_id' => $newSubmission->id,
+                    'work_plan_id' => $wp->work_plan_id,
+                    'activity_id' => $wp->activity_id,
+                    'program_code' => $wp->program_code,
+                    'program_name' => $wp->program_name,
+                    'description' => $wp->description,
+                    'output_target' => $wp->output_target,
+                    'unit' => $wp->unit,
+                    'quantity' => $wp->quantity,
+                    'sort_order' => $wp->sort_order,
+                ]);
+
+                foreach ($wp->budgetItems as $bi) {
+                    $newBi = RkapBudgetItem::create([
+                        'rkap_work_plan_id' => $newWp->id,
+                        'account_code' => $bi->account_code,
+                        'description' => $bi->description,
+                        'unit' => $bi->unit,
+                        'quantity' => $bi->quantity,
+                        'unit_price' => $bi->unit_price,
+                        'total_price' => $bi->total_price,
+                        'remarks' => $bi->remarks,
+                    ]);
+
+                    foreach ($bi->monthlies as $monthly) {
+                        $newBi->monthlies()->create([
+                            'month' => $monthly->month,
+                            'amount' => $monthly->amount,
+                        ]);
+                    }
+
+                    foreach ($bi->cashOuts as $cashOut) {
+                        $newBi->cashOuts()->create([
+                            'month' => $cashOut->month,
+                            'amount' => $cashOut->amount,
+                        ]);
+                    }
+                }
+            }
+
+            $newSubmission->calculateTotalBudget();
+
+            session()->flash('message', 'Pengajuan berhasil diduplikasi ke periode baru.');
+            $this->redirectRoute('rkap-submissions-edit', ['id' => $newSubmission->id]);
+        });
     }
 
     public function render()
@@ -74,18 +203,25 @@ class RkapSubmissionList extends Component
         $activePeriods = RkapPeriod::active()->orderByDesc('year')->get();
 
         $submittedPeriodIds = [];
+        $previousSubmissions = [];
         if ($user->bureau_id) {
             $submittedPeriodIds = RkapSubmission::where('bureau_id', $user->bureau_id)
                 ->pluck('rkap_period_id')
                 ->toArray();
+
+            $previousSubmissions = RkapSubmission::with('period')
+                ->where('bureau_id', $user->bureau_id)
+                ->orderByDesc('updated_at')
+                ->get();
         }
 
         return view('livewire.rkap.rkap-submission-list', [
-            'submissions'        => $submissions,
-            'periods'            => $periods,
-            'activePeriods'      => $activePeriods,
-            'stats'              => $stats,
-            'submittedPeriodIds' => $submittedPeriodIds,
+            'submissions'         => $submissions,
+            'periods'             => $periods,
+            'activePeriods'       => $activePeriods,
+            'stats'               => $stats,
+            'submittedPeriodIds'  => $submittedPeriodIds,
+            'previousSubmissions' => $previousSubmissions,
         ])->layout('layouts.contentNavbarLayout');
     }
 }
