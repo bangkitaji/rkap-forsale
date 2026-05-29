@@ -20,7 +20,7 @@
       @endif
 
       <div class="d-flex justify-content-between align-items-center mb-4 gap-3 flex-wrap">
-        <div class="position-relative" style="min-width: 40%;">
+        <div class="position-relative" style="min-width: 60%;">
           <label class="form-label fw-semibold">Activity</label>
           <input
             type="text"
@@ -30,11 +30,11 @@
             autocomplete="off" />
 
           @if (!empty($activitySearch))
-          <div class="border rounded bg-white position-absolute w-100 mt-1 z-3" style="max-height: 260px; overflow:auto;">
+          <div class="dropdown-menu w-100 position-absolute mt-1 z-3 show" style="max-height: 260px; overflow:auto; top: 100%;">
             @forelse($activities as $activity)
             <button
               type="button"
-              class="btn btn-light w-100 text-start px-3 py-2 border-0 border-bottom"
+              class="dropdown-item"
               wire:click="selectActivity({{ $activity->id }})">
               <strong>{{ $activity->code }}</strong> - {{ $activity->title }}
             </button>
