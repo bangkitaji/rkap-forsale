@@ -177,6 +177,13 @@
                                 <a href="{{ route('rkap-submissions-versions', $submission->id) }}" class="btn btn-sm btn-icon btn-text-info rounded-pill" title="Riwayat Versi">
                                     <i class="bx bx-history"></i>
                                 </a>
+                                <button
+                                    type="button"
+                                    wire:click="exportExcel({{ $submission->id }})"
+                                    class="btn btn-sm btn-icon btn-text-warning rounded-pill"
+                                    title="Export Excel">
+                                    <i class="bx bx-download"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -267,7 +274,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small">Pilih pengajuan sebelumnya yang ingin diduplikasi ke periode baru.</p>
-                    
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Pilih Pengajuan Sumber</label>
                         <select class="form-select" wire:model.live="selectedSourceSubmissionId">
@@ -281,19 +288,19 @@
                     </div>
 
                     @if($selectedSourceSubmissionId)
-                        @php
-                            $selectedSource = collect($previousSubmissions)->firstWhere('id', $selectedSourceSubmissionId);
-                        @endphp
-                        @if($selectedSource)
-                        <div class="alert alert-info py-2 px-3 small mb-0">
-                            <div class="fw-semibold">Detail Pengajuan Sumber:</div>
-                            <ul class="mb-0 ps-3 mt-1">
-                                <li>Versi: v{{ $selectedSource->current_version }}</li>
-                                <li>Total Rencana Kerja: {{ $selectedSource->workPlans()->count() }}</li>
-                                <li>Total Anggaran: Rp {{ number_format($selectedSource->total_budget, 0, ',', '.') }}</li>
-                            </ul>
-                        </div>
-                        @endif
+                    @php
+                    $selectedSource = collect($previousSubmissions)->firstWhere('id', $selectedSourceSubmissionId);
+                    @endphp
+                    @if($selectedSource)
+                    <div class="alert alert-info py-2 px-3 small mb-0">
+                        <div class="fw-semibold">Detail Pengajuan Sumber:</div>
+                        <ul class="mb-0 ps-3 mt-1">
+                            <li>Versi: v{{ $selectedSource->current_version }}</li>
+                            <li>Total Rencana Kerja: {{ $selectedSource->workPlans()->count() }}</li>
+                            <li>Total Anggaran: Rp {{ number_format($selectedSource->total_budget, 0, ',', '.') }}</li>
+                        </ul>
+                    </div>
+                    @endif
                     @endif
                 </div>
                 <div class="modal-footer">

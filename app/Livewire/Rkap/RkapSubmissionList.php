@@ -10,6 +10,8 @@ use App\Models\RkapWorkPlan;
 use App\Models\RkapBudgetItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\RkapSubmissionExport;
 
 class RkapSubmissionList extends Component
 {
@@ -159,6 +161,33 @@ class RkapSubmissionList extends Component
             session()->flash('message', 'Pengajuan berhasil diduplikasi ke periode baru.');
             $this->redirectRoute('rkap-submissions-edit', ['id' => $newSubmission->id]);
         });
+    }
+
+    public function exportExcel(int $submissionId)
+    {
+        $user = Auth::user();
+
+        $query = RkapSubmission::query()->where('id', $submissionId);
+
+        if ($user->isKepalaBiro()) {
+            $query->where('bureau_id', $user->bureau_id);
+        } elseif ($user->isKepalaDepartemen()) {
+            $query->whereHas('bureau', fn($b) => $b->where('department_id', $user->department_id));
+        } elseif ($user->isDireksi()) {
+            $query->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
+        }
+        // Verifikator and Admin see all
+
+        $submission = $query->first();
+
+        if (!$submission) {
+            session()->flash('error', 'Pengajuan tidak ditemukan atau Anda tidak memiliki akses.');
+            return null;
+        }
+
+        $filename = 'rkap-export-' . ($submission->period->year ?? date('Y')) . '-submission-' . $submission->id . '.xlsx';
+
+        return Excel::download(new RkapSubmissionExport($submission), $filename);
     }
 
     public function render()
