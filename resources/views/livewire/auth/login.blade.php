@@ -187,7 +187,7 @@
         }
 
         .form-brand__name {
-            font-size: 1.4rem;
+            font-size: 3.0rem;
             font-weight: 800;
             color: #0f172a;
             letter-spacing: -0.5px;
@@ -466,12 +466,12 @@
 
             <div class="login-hero__brand">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="login-hero__logo">
+                    <!-- <div class="login-hero__logo">
                         <img src="{{ asset('assets/img/kcic/logo_whoosh.png') }}" alt="WHOOSH Logo" />
-                    </div>
-                    <h1 class="login-hero__title">
+                    </div> -->
+                    <!-- <h1 class="login-hero__title">
                         RKAP<span>.</span>
-                    </h1>
+                    </h1> -->
                 </div>
                 <p class="login-hero__subtitle">Sistem Rencana Kerja &amp; Anggaran Perusahaan</p>
             </div>
@@ -486,18 +486,18 @@
                     <div class="form-brand__header">
                         <img
                             class="form-brand__logo"
-                            src="{{ asset('assets/img/kcic/logo_whoosh.png') }}"
+                            src="{{ asset('assets/img/kcic/logo_kcic.png') }}"
                             alt="WHOOSH" />
                         <div class="form-brand__name">
                             RKAP<span>.</span>
                         </div>
                     </div>
-                    <div class="form-brand__tagline">Rencana Kerja &amp; Anggaran Perusahaan</div>
+                    <!-- <div class="form-brand__tagline">Rencana Kerja &amp; Anggaran Perusahaan</div> -->
                 </div>
 
                 {{-- Card --}}
                 <div class="login-card">
-                    <h2 class="login-card__heading">Selamat datang! 👋</h2>
+                    <h2 class="login-card__heading">Selamat datang!</h2>
                     <p class="login-card__sub">Silakan masuk ke akun Anda untuk melanjutkan.</p>
 
                     <div class="login-divider"></div>
