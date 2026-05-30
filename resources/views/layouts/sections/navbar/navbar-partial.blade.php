@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Route;
 @if(isset($navbarFull))
 <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4">
     <a href="{{url('/')}}" class="app-brand-link gap-2">
-        <span class="app-brand-logo demo">@include('_partials.macros')</span>
+        <!-- <span class="app-brand-logo">
+            <img src="{{ asset('assets/img/kcic/logo_kcic.png') }}" alt="KCIC Logo" class="img-fluid" style="height: 40px;">
+        </span> -->
+        <img class="app-brand-logo" width="30%" src="{{ asset('assets/img/kcic/logo_kcic.png') }}" />
         <span class="app-brand-text demo menu-text fw-bold text-heading">{{config('variables.templateName')}}</span>
     </a>
 </div>
@@ -33,9 +36,9 @@ use Illuminate\Support\Facades\Route;
     <!-- /Search -->
     <ul class="navbar-nav flex-row align-items-center ms-auto">
         <!-- Place this tag where you want the button to render. -->
-        <li class="nav-item lh-1 me-4">
+        <!-- <li class="nav-item lh-1 me-4">
             <a class="github-button" href="{{config('variables.repository')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star themeselection/sneat-html-laravel-admin-template-free on GitHub">Star</a>
-        </li>
+        </li> -->
 
         <!-- User -->
         <li class="nav-item navbar-dropdown dropdown-user dropdown">
@@ -73,14 +76,14 @@ use Illuminate\Support\Facades\Route;
                         <i class="icon-base bx bx-cog icon-md me-3"></i><span>Settings</span>
                     </a>
                 </li>
-                <li>
+                <!-- <li>
                     <a class="dropdown-item" href="javascript:void(0);">
                         <span class="d-flex align-items-center align-middle">
                             <i class="flex-shrink-0 icon-base bx bx-credit-card icon-md me-3"></i><span class="flex-grow-1 align-middle">Billing Plan</span>
                             <span class="flex-shrink-0 badge rounded-pill bg-danger">4</span>
                         </span>
                     </a>
-                </li>
+                </li> -->
                 <li>
                     <div class="dropdown-divider my-1"></div>
                 </li>

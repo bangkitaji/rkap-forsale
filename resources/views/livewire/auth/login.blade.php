@@ -4,11 +4,18 @@
     @section('page-style')
     <style>
         /* ─── Reset & Base ─── */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-        html, body {
+        html,
+        body {
             height: 100%;
             overflow: hidden;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -31,7 +38,9 @@
         }
 
         @media (min-width: 900px) {
-            .login-hero { display: block; }
+            .login-hero {
+                display: block;
+            }
         }
 
         .login-hero__image {
@@ -46,12 +55,10 @@
         .login-hero__overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(
-                135deg,
-                rgba(10, 20, 60, 0.72) 0%,
-                rgba(10, 20, 60, 0.28) 60%,
-                rgba(180, 20, 30, 0.30) 100%
-            );
+            background: linear-gradient(135deg,
+                    rgba(10, 20, 60, 0.72) 0%,
+                    rgba(10, 20, 60, 0.28) 60%,
+                    rgba(180, 20, 30, 0.30) 100%);
         }
 
         /* Branding block bottom-left */
@@ -63,11 +70,23 @@
             color: #fff;
         }
 
+        .login-hero__kcic-logo {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 32px;
+        }
+
+        .login-hero__kcic-logo img {
+            height: 56px;
+            filter: brightness(0) invert(1);
+            object-fit: contain;
+        }
+
         .login-hero__logo {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 0;
         }
 
         .login-hero__logo img {
@@ -83,6 +102,9 @@
             line-height: 1.15;
             color: #fff;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .login-hero__title span {
@@ -153,6 +175,14 @@
         .form-brand__logo {
             height: 40px;
             object-fit: contain;
+            margin-bottom: 0;
+        }
+
+        .form-brand__header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
             margin-bottom: 12px;
         }
 
@@ -252,7 +282,9 @@
             transition: color 0.2s;
         }
 
-        .input-toggle:hover { color: #475569; }
+        .input-toggle:hover {
+            color: #475569;
+        }
 
         .form-input-rkap {
             width: 100%;
@@ -274,8 +306,13 @@
             box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.12);
         }
 
-        .form-input-rkap::placeholder { color: #cbd5e1; }
-        .form-input-rkap.has-toggle { padding-right: 44px; }
+        .form-input-rkap::placeholder {
+            color: #cbd5e1;
+        }
+
+        .form-input-rkap.has-toggle {
+            padding-right: 44px;
+        }
 
         .form-input-rkap.is-error {
             border-color: #ED1C24;
@@ -382,14 +419,16 @@
         .btn-spinner {
             width: 18px;
             height: 18px;
-            border: 2px solid rgba(255,255,255,0.4);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* ─── Footer ─── */
@@ -406,7 +445,9 @@
 
         /* ─── Responsive ─── */
         @media (max-width: 480px) {
-            .login-card { padding: 28px 20px; }
+            .login-card {
+                padding: 28px 20px;
+            }
         }
     </style>
     @endsection
@@ -418,19 +459,20 @@
             <img
                 class="login-hero__image"
                 src="{{ asset('assets/img/kcic/login_hero_train.png') }}"
-                alt="WHOOSH High-Speed Train"
-            />
+                alt="WHOOSH High-Speed Train" />
             <div class="login-hero__overlay"></div>
 
             <div class="login-hero__badge">PT. Kereta Cepat Indonesia China</div>
 
             <div class="login-hero__brand">
-                <div class="login-hero__logo">
-                    <img src="{{ asset('assets/img/kcic/logo_whoosh.png') }}" alt="WHOOSH Logo" />
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="login-hero__logo">
+                        <img src="{{ asset('assets/img/kcic/logo_whoosh.png') }}" alt="WHOOSH Logo" />
+                    </div>
+                    <h1 class="login-hero__title">
+                        RKAP<span>.</span>
+                    </h1>
                 </div>
-                <h1 class="login-hero__title">
-                    RKAP<span>.</span>
-                </h1>
                 <p class="login-hero__subtitle">Sistem Rencana Kerja &amp; Anggaran Perusahaan</p>
             </div>
         </div>
@@ -441,13 +483,14 @@
 
                 {{-- Brand header --}}
                 <div class="form-brand">
-                    <img
-                        class="form-brand__logo"
-                        src="{{ asset('assets/img/kcic/logo_whoosh.png') }}"
-                        alt="WHOOSH"
-                    />
-                    <div class="form-brand__name">
-                        RKAP<span>.</span>
+                    <div class="form-brand__header">
+                        <img
+                            class="form-brand__logo"
+                            src="{{ asset('assets/img/kcic/logo_whoosh.png') }}"
+                            alt="WHOOSH" />
+                        <div class="form-brand__name">
+                            RKAP<span>.</span>
+                        </div>
                     </div>
                     <div class="form-brand__tagline">Rencana Kerja &amp; Anggaran Perusahaan</div>
                 </div>
@@ -463,10 +506,10 @@
 
                         {{-- General error --}}
                         @if (session()->has('error'))
-                            <div class="login-alert">
-                                <i class="bx bx-error-circle" style="font-size:1.1rem;"></i>
-                                {{ session('error') }}
-                            </div>
+                        <div class="login-alert">
+                            <i class="bx bx-error-circle" style="font-size:1.1rem;"></i>
+                            {{ session('error') }}
+                        </div>
                         @endif
 
                         {{-- Email --}}
@@ -483,13 +526,12 @@
                                     class="form-input-rkap @error('email') is-error @enderror"
                                     placeholder="nama@kcic.co.id"
                                     autofocus
-                                    autocomplete="email"
-                                />
+                                    autocomplete="email" />
                             </div>
                             @error('email')
-                                <div class="input-error">
-                                    <i class="bx bx-error-circle"></i> {{ $message }}
-                                </div>
+                            <div class="input-error">
+                                <i class="bx bx-error-circle"></i> {{ $message }}
+                            </div>
                             @enderror
                         </div>
 
@@ -506,21 +548,19 @@
                                     wire:model="password"
                                     class="form-input-rkap has-toggle @error('password') is-error @enderror"
                                     placeholder="••••••••••••"
-                                    autocomplete="current-password"
-                                />
+                                    autocomplete="current-password" />
                                 <button
                                     type="button"
                                     class="input-toggle"
                                     id="togglePassword"
-                                    aria-label="Toggle password visibility"
-                                >
+                                    aria-label="Toggle password visibility">
                                     <i class="bx bx-hide" id="togglePasswordIcon"></i>
                                 </button>
                             </div>
                             @error('password')
-                                <div class="input-error">
-                                    <i class="bx bx-error-circle"></i> {{ $message }}
-                                </div>
+                            <div class="input-error">
+                                <i class="bx bx-error-circle"></i> {{ $message }}
+                            </div>
                             @enderror
                         </div>
 
@@ -537,8 +577,8 @@
                             <span wire:loading.remove wire:target="login">
                                 Masuk
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="5" y1="12" x2="19" y2="12"/>
-                                    <polyline points="12 5 19 12 12 19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
                                 </svg>
                             </span>
                             <span wire:loading wire:target="login">
@@ -561,9 +601,9 @@
 
     <script>
         // Password visibility toggle
-        document.getElementById('togglePassword').addEventListener('click', function () {
+        document.getElementById('togglePassword').addEventListener('click', function() {
             const input = document.getElementById('password');
-            const icon  = document.getElementById('togglePasswordIcon');
+            const icon = document.getElementById('togglePasswordIcon');
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.replace('bx-hide', 'bx-show');

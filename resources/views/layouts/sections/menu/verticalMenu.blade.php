@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\Route;
     <!-- ! Hide app brand if navbar-full -->
     <div class="app-brand demo">
         <a href="{{url('/')}}" class="app-brand-link">
-            <span class="app-brand-logo demo">@include('_partials.macros')</span>
-            <span class="app-brand-text demo menu-text fw-bold ms-2">{{config('variables.templateName')}}</span>
+            <img src="{{ asset('assets/img/kcic/logo_rkap.png') }}" alt="KCIC Logo" style="height: 50px; max-width: 100%;">
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -24,9 +23,9 @@ use Illuminate\Support\Facades\Route;
 
         {{-- permission guard --}}
         @if (isset($menu->permission))
-            @cannot($menu->permission)
-                @continue
-            @endcannot
+        @cannot($menu->permission)
+        @continue
+        @endcannot
         @endif
 
         {{-- menu headers --}}
