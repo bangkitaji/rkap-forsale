@@ -4,7 +4,9 @@ namespace App\Livewire\Rkap;
 
 use Livewire\Component;
 use App\Models\RkapSubmission;
+use App\Models\RkapBudgetItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RkapReview extends Component
 {
@@ -96,9 +98,52 @@ class RkapReview extends Component
         return $this->submission->canBeReviewedBy($user);
     }
 
+    /**
+     * Build a lookup map of the most recent prior approved submission
+     * for the same bureau: [work_plan_id][account_code] => total_price
+     */
+    private function buildPreviousMap(): array
+    {
+        $bureauId = $this->submission->bureau_id;
+        $currentPeriodYear = $this->submission->period?->year ?? 0;
+
+        // Find the most recent prior approved submission for this bureau
+        $prevSubmission = RkapSubmission::with([
+                'workPlans.budgetItems',
+                'period',
+            ])
+            ->where('bureau_id', $bureauId)
+            ->where('id', '!=', $this->submission->id)
+            ->where('status', 'approved')
+            ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
+            ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
+            ->first();
+
+        if (!$prevSubmission) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($prevSubmission->workPlans as $wp) {
+            $wpKey = $wp->work_plan_id;
+            if (!$wpKey) continue;
+            foreach ($wp->budgetItems as $bi) {
+                $code = $bi->account_code;
+                if (!$code) continue;
+                $map[$wpKey][$code] = ($map[$wpKey][$code] ?? 0) + (float) $bi->total_price;
+            }
+        }
+
+        return [
+            'map'    => $map,
+            'period' => $prevSubmission->period?->title ?? '-',
+        ];
+    }
+
     public function render()
     {
-        return view('livewire.rkap.rkap-review')
-            ->layout('layouts.contentNavbarLayout');
+        return view('livewire.rkap.rkap-review', [
+            'prevData' => $this->buildPreviousMap(),
+        ])->layout('layouts.contentNavbarLayout');
     }
 }

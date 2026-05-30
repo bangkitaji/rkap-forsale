@@ -89,11 +89,39 @@
                                 @foreach($wp->budgetItems->groupBy('account_code') as $accountCode => $items)
                                 @php
                                 $firstItem = $items->first();
+                                $coaGroupSubtotal = $items->sum('total_price');
+                                $prevWpId   = $wp->work_plan_id ?? null;
+                                $prevCode   = $accountCode;
+                                $prevAmount = ($prevWpId && $prevCode && !empty($prevData['map'][$prevWpId][$prevCode]))
+                                    ? $prevData['map'][$prevWpId][$prevCode]
+                                    : null;
+                                $prevPeriod = $prevData['period'] ?? null;
                                 @endphp
                                 <tr class="table-light fw-semibold">
-                                    <td colspan="7" class="text-dark bg-lighter py-2">
-                                        <i class="bx bx-subdirectory-right text-primary me-1"></i>
-                                        <strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem->description }}
+                                    <td colspan="7" class="text-dark bg-lighter py-2 px-3">
+                                        <div class="d-flex justify-content-between align-items-center gap-2">
+                                            <div class="d-flex align-items-center gap-1 min-w-0">
+                                                <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
+                                                <span class="text-truncate"><strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem->description }}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3 flex-shrink-0 text-end">
+                                                @if($prevAmount !== null && $prevPeriod)
+                                                <div style="font-size:0.72rem; line-height:1.2;">
+                                                    <div class="text-muted" style="white-space:nowrap;">
+                                                        <i class="bx bx-history me-1"></i>{{ $prevPeriod }}
+                                                    </div>
+                                                    <div class="fw-semibold" style="color:#92400e; white-space:nowrap;">
+                                                        Rp {{ number_format($prevAmount, 0, ',', '.') }}
+                                                    </div>
+                                                </div>
+                                                <div class="vr opacity-25 align-self-stretch"></div>
+                                                @endif
+                                                <div style="font-size:0.78rem; line-height:1.2;">
+                                                    <div class="text-muted" style="white-space:nowrap; font-size:0.68rem;">Sub-total</div>
+                                                    <div class="fw-bold text-primary" style="white-space:nowrap;">Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                                 @foreach($items as $bi)

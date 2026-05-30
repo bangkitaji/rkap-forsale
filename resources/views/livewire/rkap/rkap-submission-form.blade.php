@@ -358,6 +358,18 @@
                                     :style="open ? 'position: relative; z-index: 1060;' : ''"
                                     @click.outside="open = false; $dispatch('coa-dropdown-close')"
                                     class="border-bottom-0">
+                                    @php
+                                        $groupSubtotal = collect($group['items'])->sum(fn($info) =>
+                                            ($info['item']['quantity'] ?? 0) * ($info['item']['unit_price'] ?? 0)
+                                        );
+                                        // Previous period lookup
+                                        $prevWpId  = $wp['work_plan_id'] ?? null;
+                                        $prevCode  = $selectedCoa?->code ?? ($firstBi['account_code'] ?? null);
+                                        $prevAmount = ($prevWpId && $prevCode && !empty($prevData['map'][$prevWpId][$prevCode]))
+                                            ? $prevData['map'][$prevWpId][$prevCode]
+                                            : null;
+                                        $prevPeriod = $prevData['period'] ?? null;
+                                    @endphp
                                     <div class="position-relative">
                                         <div class="input-group input-group-sm">
                                             <input
@@ -375,6 +387,22 @@
                                                 title="Hapus pilihan">
                                                 <i class="bx bx-x"></i>
                                             </button>
+                                            @endif
+                                            {{-- COA Group Subtotal --}}
+                                            <span class="input-group-text px-2 fw-semibold text-nowrap"
+                                                  style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;"
+                                                  title="Sub-total akun ini">
+                                                <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
+                                                Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
+                                            </span>
+                                            {{-- Previous Period Amount --}}
+                                            @if($prevAmount !== null && $prevPeriod)
+                                            <span class="input-group-text px-2 text-nowrap"
+                                                  style="font-size:0.72rem; background:#fffbeb; border-color:#fcd34d; color:#92400e;"
+                                                  title="Realisasi periode sebelumnya: {{ $prevPeriod }}">
+                                                <i class="bx bx-history me-1" style="font-size:0.8rem;"></i>
+                                                {{ $prevPeriod }}: Rp {{ number_format($prevAmount, 0, ',', '.') }}
+                                            </span>
                                             @endif
                                         </div>
                                         @error('workPlans.'.$wpIdx.'.budget_items.'.$firstIdx.'.coa_id')
@@ -414,6 +442,7 @@
                                         </div>
                                     </div>
                                 </td>
+
                                 <td rowspan="{{ 1 + $itemCount }}" class="text-center align-middle border-bottom-0">
                                     @php
                                     $totalItemsCount = count($wp['budget_items']);

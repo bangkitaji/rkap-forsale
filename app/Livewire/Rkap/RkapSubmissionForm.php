@@ -793,12 +793,59 @@ class RkapSubmissionForm extends Component
         });
     }
 
+    /**
+     * Build a lookup map of the most recent prior approved submission
+     * for the same bureau: [work_plan_id][account_code] => total_price
+     * Used to show historical amounts alongside current budget items.
+     */
+    public function buildPreviousMap(): array
+    {
+        $user = Auth::user();
+        $bureauId = $user->bureau_id;
+        $currentPeriodYear = $this->period?->year ?? 0;
+
+        if (!$bureauId || !$currentPeriodYear) {
+            return [];
+        }
+
+        $prevSubmission = RkapSubmission::with([
+                'workPlans.budgetItems',
+                'period',
+            ])
+            ->where('bureau_id', $bureauId)
+            ->where('status', 'approved')
+            ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
+            ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
+            ->first();
+
+        if (!$prevSubmission) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($prevSubmission->workPlans as $wp) {
+            $wpKey = $wp->work_plan_id;
+            if (!$wpKey) continue;
+            foreach ($wp->budgetItems as $bi) {
+                $code = $bi->account_code;
+                if (!$code) continue;
+                $map[$wpKey][$code] = ($map[$wpKey][$code] ?? 0) + (float) $bi->total_price;
+            }
+        }
+
+        return [
+            'map'    => $map,
+            'period' => $prevSubmission->period?->title ?? '-',
+        ];
+    }
+
     public function render()
     {
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,
             'coaOptions'      => $this->coaOptions,
             'monthLabels'     => self::MONTH_LABELS,
+            'prevData'        => $this->buildPreviousMap(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }
