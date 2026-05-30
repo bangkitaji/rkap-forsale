@@ -34,6 +34,13 @@
       "slug": "rkap-submissions"
     },
     {
+      "url": "rkap/compilation",
+      "icon": "menu-icon icon-base bx bx-layer",
+      "name": "Kompilasi RKAP",
+      "slug": "rkap-submissions-compilation",
+      "permission": "rkap.compilation.dept"
+    },
+    {
       "url": "rkap/periods",
       "icon": "menu-icon icon-base bx bx-calendar",
       "name": "Periode RKAP",

@@ -50,6 +50,10 @@ class RkapSeeder extends Seeder
             'rkap.comment',
             // Settings Satuan
             'settings.satuan.manage',
+            // Compilation — scoped from narrowest to widest
+            'rkap.compilation.dept', // see own dept/bureau submissions
+            'rkap.compilation.dir',  // see own directorate submissions
+            'rkap.compilation.all',  // see all directorates
         ];
 
         foreach ($permissions as $perm) {
@@ -66,6 +70,7 @@ class RkapSeeder extends Seeder
             'rkap.submit',
             'rkap.view.own',
             'rkap.comment',
+            'rkap.compilation.dept', // can see their own department compilation
         ]);
 
         $roleKepalaDept->syncPermissions([
@@ -73,6 +78,7 @@ class RkapSeeder extends Seeder
             'rkap.review.dept',
             'rkap.approve.dept',
             'rkap.comment',
+            'rkap.compilation.dept', // can see their own department compilation
         ]);
 
         $roleDireksi->syncPermissions([
@@ -80,6 +86,8 @@ class RkapSeeder extends Seeder
             'rkap.review.dir',
             'rkap.approve.dir',
             'rkap.comment',
+            'rkap.compilation.dept', // inherits dept scope
+            'rkap.compilation.dir',  // can see their own directorate compilation
         ]);
 
         $roleVerifikator->syncPermissions([
@@ -87,6 +95,9 @@ class RkapSeeder extends Seeder
             'rkap.review.final',
             'rkap.approve.final',
             'rkap.comment',
+            'rkap.compilation.dept', // inherits
+            'rkap.compilation.dir',  // inherits
+            'rkap.compilation.all',  // can see all directorates
         ]);
 
         // ── 4. Sample Organization ──

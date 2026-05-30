@@ -1,11 +1,18 @@
 <div>
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Pengajuan RKAP</h4>
-        @can('rkap.create')
-        <button wire:click="openPeriodSelector" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> Buat Pengajuan
-        </button>
-        @endcan
+        <div class="d-flex gap-2 align-items-center">
+            @canany(['rkap.compilation.dept', 'rkap.compilation.dir', 'rkap.compilation.all'])
+            <a href="{{ route('rkap-submissions-compilation') }}" class="btn btn-outline-info d-flex align-items-center gap-1">
+                <i class="bx bx-layer me-1"></i> Kompilasi RKAP
+            </a>
+            @endcanany
+            @can('rkap.create')
+            <button wire:click="openPeriodSelector" class="btn btn-primary">
+                <i class="bx bx-plus me-1"></i> Buat Pengajuan
+            </button>
+            @endcan
+        </div>
     </div>
 
     @if (session()->has('message'))

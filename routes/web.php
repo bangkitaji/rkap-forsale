@@ -86,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/submissions/{id}/edit', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-edit');
         Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');
         Route::get('/submissions/{id}/versions', \App\Livewire\Rkap\RkapVersionHistory::class)->name('rkap-submissions-versions');
+        Route::get('/compilation', \App\Livewire\Rkap\RkapSubmissionCompilation::class)
+            ->middleware('permission:rkap.compilation.dept')
+            ->name('rkap-submissions-compilation');
     });
 
     // Master Data Group
