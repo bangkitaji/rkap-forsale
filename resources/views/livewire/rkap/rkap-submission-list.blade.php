@@ -1,4 +1,8 @@
-<div>
+<div x-data="{
+    showToast: @js(session()->has('message') || session()->has('error')),
+    toastMessage: @js(session('message') ?: session('error') ?: ''),
+    toastType: @js(session()->has('error') ? 'danger' : 'success')
+}" x-init="if (showToast) { setTimeout(() => showToast = false, 5000); }">
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Pengajuan RKAP</h4>
         <div class="d-flex gap-2 align-items-center">
@@ -15,18 +19,29 @@
         </div>
     </div>
 
-    @if (session()->has('message'))
-    <div class="alert alert-success alert-dismissible" role="alert">
-        {{ session('message') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    {{-- Toast Notification --}}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+        <div x-show="showToast"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-2"
+             class="bs-toast toast show text-white"
+             :class="'bg-' + toastType"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true"
+             style="display: none;">
+            <div class="toast-header text-white" :class="'bg-' + toastType">
+                <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-x-circle'"></i>
+                <div class="me-auto fw-semibold" x-text="toastType === 'success' ? 'Berhasil' : 'Error'"></div>
+                <button type="button" class="btn-close btn-close-white" @click="showToast = false" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" x-text="toastMessage"></div>
+        </div>
     </div>
-    @endif
-    @if (session()->has('error'))
-    <div class="alert alert-danger alert-dismissible" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
 
     {{-- Stats Cards --}}
     <div class="row g-4 mb-4">

@@ -570,8 +570,8 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateBudgetItemsCoaMapping();
         $this->saveSubmission('draft');
-        session()->flash('message', 'Draft RKAP berhasil disimpan.');
-        $this->dispatch('form-saved');
+        session()->flash('message', 'Draf RKAP berhasil disimpan.');
+        $this->dispatch('form-saved', message: 'Draf RKAP berhasil disimpan.');
     }
 
     public function submitForReview(): void
@@ -587,7 +587,7 @@ class RkapSubmissionForm extends Component
             $submission->submit();
         }
 
-        session()->flash('message', 'RKAP berhasil diajukan untuk review.');
+        session()->flash('message', 'RKAP berhasil diajukan untuk peninjauan (review).');
         $this->redirectRoute('rkap-submissions');
     }
 

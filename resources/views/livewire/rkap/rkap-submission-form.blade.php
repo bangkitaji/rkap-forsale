@@ -1,7 +1,7 @@
-<div x-data="{ isDirty: false, isSubmitting: false }"
+<div x-data="{ isDirty: false, isSubmitting: false, showToast: false, toastMessage: '', toastType: 'success' }"
     @input="isDirty = true"
     @change="isDirty = true"
-    @form-saved.window="isDirty = false"
+    @form-saved.window="toastMessage = $event.detail.message || 'Draf RKAP berhasil disimpan.'; toastType = 'success'; showToast = true; isDirty = false; setTimeout(() => showToast = false, 5000)"
     @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
     <style>
         .bg-group-alt {
@@ -30,19 +30,59 @@
         </div>
     </div>
 
-    @if (session()->has('message'))
-    <div class="alert alert-success alert-dismissible" role="alert">
-        {{ session('message') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    {{-- Success/Notification Toast --}}
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+        <div x-show="showToast"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+            class="bs-toast toast show text-white"
+            :class="'bg-' + toastType"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            style="display: none;">
+            <div class="toast-header text-white" :class="'bg-' + toastType">
+                <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-info-circle'"></i>
+                <div class="me-auto fw-semibold">Berhasil</div>
+                <button type="button" class="btn-close btn-close-white" @click="showToast = false" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" x-text="toastMessage"></div>
+        </div>
     </div>
-    @endif
+    {{-- Error Toast --}}
     @if ($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;" wire:key="error-toast-container-{{ microtime(true) }}">
+        <div x-data="{ show: true }"
+            x-show="show"
+            x-init="setTimeout(() => show = false, 7000)"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+            class="bs-toast toast show bg-danger text-white"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            style="display: none;">
+            <div class="toast-header bg-danger text-white">
+                <i class="bx bx-x-circle me-2 text-white"></i>
+                <div class="me-auto fw-semibold">Gagal Menyimpan</div>
+                <button type="button" class="btn-close btn-close-white" @click="show = false" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
     </div>
     @endif
 
@@ -359,16 +399,16 @@
                                     @click.outside="open = false; $dispatch('coa-dropdown-close')"
                                     class="border-bottom-0">
                                     @php
-                                        $groupSubtotal = collect($group['items'])->sum(fn($info) =>
-                                            ($info['item']['quantity'] ?? 0) * ($info['item']['unit_price'] ?? 0)
-                                        );
-                                        // Previous period lookup
-                                        $prevWpId  = $wp['work_plan_id'] ?? null;
-                                        $prevCode  = $selectedCoa?->code ?? ($firstBi['account_code'] ?? null);
-                                        $prevAmount = ($prevWpId && $prevCode && !empty($prevData['map'][$prevWpId][$prevCode]))
-                                            ? $prevData['map'][$prevWpId][$prevCode]
-                                            : null;
-                                        $prevPeriod = $prevData['period'] ?? null;
+                                    $groupSubtotal = collect($group['items'])->sum(fn($info) =>
+                                    ($info['item']['quantity'] ?? 0) * ($info['item']['unit_price'] ?? 0)
+                                    );
+                                    // Previous period lookup
+                                    $prevWpId = $wp['work_plan_id'] ?? null;
+                                    $prevCode = $selectedCoa?->code ?? ($firstBi['account_code'] ?? null);
+                                    $prevAmount = ($prevWpId && $prevCode && !empty($prevData['map'][$prevWpId][$prevCode]))
+                                    ? $prevData['map'][$prevWpId][$prevCode]
+                                    : null;
+                                    $prevPeriod = $prevData['period'] ?? null;
                                     @endphp
                                     <div class="position-relative">
                                         <div class="input-group input-group-sm">
@@ -390,16 +430,16 @@
                                             @endif
                                             {{-- COA Group Subtotal --}}
                                             <span class="input-group-text px-2 fw-semibold text-nowrap"
-                                                  style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;"
-                                                  title="Sub-total akun ini">
+                                                style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;"
+                                                title="Sub-total akun ini">
                                                 <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
                                                 Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
                                             </span>
                                             {{-- Previous Period Amount --}}
                                             @if($prevAmount !== null && $prevPeriod)
                                             <span class="input-group-text px-2 text-nowrap"
-                                                  style="font-size:0.72rem; background:#fffbeb; border-color:#fcd34d; color:#92400e;"
-                                                  title="Realisasi periode sebelumnya: {{ $prevPeriod }}">
+                                                style="font-size:0.72rem; background:#fffbeb; border-color:#fcd34d; color:#92400e;"
+                                                title="Realisasi periode sebelumnya: {{ $prevPeriod }}">
                                                 <i class="bx bx-history me-1" style="font-size:0.8rem;"></i>
                                                 {{ $prevPeriod }}: Rp {{ number_format($prevAmount, 0, ',', '.') }}
                                             </span>
