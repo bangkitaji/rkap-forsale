@@ -100,6 +100,21 @@ Route::middleware(['auth'])->group(function () {
         Route::get('coas', \App\Livewire\MasterData\Coas::class)->name('coas')->middleware('can:masterdata.coa.manage');
         Route::get('activity-coa-mapping', \App\Livewire\MasterData\ActivityCoaMapping::class)->name('activity-coa-mapping')->middleware('can:masterdata.activity.manage');
     });
+
+    // Template downloads
+    Route::get('templates/download/workplan', function () {
+        return response()->download(
+            public_path('templates/workplan_template.xlsx'),
+            'workplan_template.xlsx'
+        );
+    })->name('download-workplan-template')->middleware('can:masterdata.workplan.manage');
+
+    Route::get('templates/download/activity', function () {
+        return response()->download(
+            public_path('templates/activity_template.xlsx'),
+            'activity_template.xlsx'
+        );
+    })->name('download-activity-template')->middleware('can:masterdata.activity.manage');
 });
 
 

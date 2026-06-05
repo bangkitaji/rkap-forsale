@@ -3,14 +3,17 @@
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Activity;
 use App\Models\WorkPlan;
+use App\Imports\ActivityImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
 
 class Activities extends Component
 {
-    use WithCustomPagination;
+    use WithCustomPagination, WithFileUploads;
 
     public $search = '';
     public $activityId = null;
@@ -18,9 +21,13 @@ class Activities extends Component
     public $code = '';
     public $title = '';
     public $description = '';
+    public $uploadedFile = null;
 
     public $isEditMode = false;
     public $isModalOpen = false;
+    public $isUploadModalOpen = false;
+    public $importMessage = '';
+    public $importStatus = '';
 
     public function updatingSearch()
     {
@@ -103,6 +110,60 @@ class Activities extends Component
     {
         $this->isModalOpen = false;
         $this->resetInputFields();
+    }
+
+    public function openUploadModal()
+    {
+        $this->isUploadModalOpen = true;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function closeUploadModal()
+    {
+        $this->isUploadModalOpen = false;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function importExcel()
+    {
+        $this->validate([
+            'uploadedFile' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            $import = new ActivityImport();
+            Excel::import($import, $this->uploadedFile);
+
+            $results = $import->getResults();
+            $this->importStatus = 'success';
+            $this->importMessage = "Import completed! Success: {$results['success']}, Failed: {$results['failed']}";
+
+            if (!empty($results['errors'])) {
+                $this->importMessage .= "\n\nErrors:\n" . implode("\n", array_slice($results['errors'], 0, 10));
+                if (count($results['errors']) > 10) {
+                    $this->importMessage .= "\n... and " . (count($results['errors']) - 10) . " more errors";
+                }
+            }
+
+            session()->flash('message', "Activities imported successfully! {$results['success']} records imported.");
+            $this->closeUploadModal();
+        } catch (\Exception $e) {
+            $this->importStatus = 'error';
+            $this->importMessage = 'Import failed: ' . $e->getMessage();
+            session()->flash('error', $this->importMessage);
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        return response()->download(
+            public_path('templates/activity_template.xlsx'),
+            'activity_template.xlsx'
+        );
     }
 
     private function resetInputFields()
