@@ -15,7 +15,7 @@ return [
   "support" => "https://themeselection.com/support/",
   "adminTemplates" => "https://themeselection.com/item/category/admin-templates/",
   "bootstrapDashboard" => "https://themeselection.com/item/category/bootstrap-admin-templates/",
-  "ogTitle" => "Sneat Bootstrap 5 HTML + Laravel Admin Template by ThemeSelection",
+  "ogTitle" => "RKAP - Sistem Rencana Kerja & Anggaran Perusahaan :: PT. Kereta Cepat Indonesia China",
   "ogImage" => "https://ts-assets.b-cdn.net/ts-assets/sneat/sneat-bootstrap-laravel-admin-template-free/marketing/sneat-bootstrap-laravel-admin-template-free-smm.png",
   "ogType" => "product",
   "documentation" => "https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation",

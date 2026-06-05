@@ -402,38 +402,32 @@ class RkapSeeder extends Seeder
 
         // ── 6. Sample Master Data (WorkPlans, Activities, COAs) ──
         $wp1 = \App\Models\WorkPlan::firstOrCreate(
-            ['code' => 'PK-01'],
-            ['title' => 'TRAINING']
+            ['code' => '1000000001'],
+            ['title' => 'Penyusutan Langsung']
         );
         $wp2 = \App\Models\WorkPlan::firstOrCreate(
-            ['code' => 'PK-02'],
-            ['title' => 'LISENSI']
+            ['code' => '1000000002'],
+            ['title' => 'Penyusutan Tidak Langsung']
         );
         $wp3 = \App\Models\WorkPlan::firstOrCreate(
-            ['code' => 'PK-03'],
-            ['title' => 'SERVER']
+            ['code' => '1000000003'],
+            ['title' => 'Pelaporan Keuangan']
         );
         $wp4 = \App\Models\WorkPlan::firstOrCreate(
-            ['code' => 'PK-04'],
-            ['title' => 'IMPLEMENTASI SISTEM']
+            ['code' => '1000000004'],
+            ['title' => 'Pelaporan Pajak']
         );
 
         $workPlanMap = [
-            'PK-01' => $wp1->id,
-            'PK-02' => $wp2->id,
-            'PK-03' => $wp3->id,
-            'PK-04' => $wp4->id,
+            '1000000001' => $wp1->id,
+            '1000000002' => $wp2->id,
+            '1000000003' => $wp3->id,
+            '1000000004' => $wp4->id,
         ];
 
         $activities = [
-            ['work_plan_code' => 'PK-01', 'code' => 'PK-01-01', 'title' => 'Training Business Analysis'],
-            ['work_plan_code' => 'PK-01', 'code' => 'PK-01-02', 'title' => 'Traning IT'],
-            ['work_plan_code' => 'PK-02', 'code' => 'PK-02-01', 'title' => 'RISE with SAP S/4 HANA, Private Cloud Premium Edition - Year 2 License (ex VAT)'],
-            ['work_plan_code' => 'PK-02', 'code' => 'PK-02-02', 'title' => 'SAP Learning Hub, S4 HAN Cloud - Year 2 License (ex VAT)'],
-            ['work_plan_code' => 'PK-03', 'code' => 'PK-03-01', 'title' => 'Virtual Private Server Cloud'],
-            ['work_plan_code' => 'PK-04', 'code' => 'PK-04-01', 'title' => 'SAP MM Module Implementation'],
-            ['work_plan_code' => 'PK-04', 'code' => 'PK-04-02', 'title' => 'SAP MM Module Custom'],
-            ['work_plan_code' => 'PK-04', 'code' => 'PK-04-03', 'title' => 'SAP Managed Service'],
+            ['work_plan_code' => '1000000001', 'code' => '2000000001', 'title' => 'Penyusutan Langsung'],
+            ['work_plan_code' => '1000000002', 'code' => '2000000002', 'title' => 'Penyusutan Tidak Langsung'],
         ];
 
         $seededActivities = [];
@@ -454,38 +448,38 @@ class RkapSeeder extends Seeder
             );
         }
 
-        $coa1 = \App\Models\Coa::firstOrCreate(
-            ['code' => '660000001'],
-            [
-                'title' => 'Training and Development',
-                'description' => 'COA SAP - Training and Development.'
-            ]
-        );
-        $coa2 = \App\Models\Coa::firstOrCreate(
-            ['code' => '610000030'],
-            [
-                'title' => 'Licensing Expenses',
-                'description' => 'COA SAP - Licensing Expenses.'
-            ]
-        );
-        $coa3 = \App\Models\Coa::firstOrCreate(
-            ['code' => '670000001'],
-            [
-                'title' => 'Teknologi Informasi',
-                'description' => 'COA SAP - Teknologi Informasi.'
-            ]
-        );
+        // $coa1 = \App\Models\Coa::firstOrCreate(
+        //     ['code' => '660000001'],
+        //     [
+        //         'title' => 'Training and Development',
+        //         'description' => 'COA SAP - Training and Development.'
+        //     ]
+        // );
+        // $coa2 = \App\Models\Coa::firstOrCreate(
+        //     ['code' => '610000030'],
+        //     [
+        //         'title' => 'Licensing Expenses',
+        //         'description' => 'COA SAP - Licensing Expenses.'
+        //     ]
+        // );
+        // $coa3 = \App\Models\Coa::firstOrCreate(
+        //     ['code' => '670000001'],
+        //     [
+        //         'title' => 'Teknologi Informasi',
+        //         'description' => 'COA SAP - Teknologi Informasi.'
+        //     ]
+        // );
 
         // Sync some initial mappings for available seeded activities
-        if (isset($seededActivities['PK-01-01'])) {
-            $seededActivities['PK-01-01']->coas()->syncWithoutDetaching([$coa1->id, $coa2->id]);
-        }
-        if (isset($seededActivities['PK-02-01'])) {
-            $seededActivities['PK-02-01']->coas()->syncWithoutDetaching([$coa2->id, $coa3->id]);
-        }
-        if (isset($seededActivities['PK-03-01'])) {
-            $seededActivities['PK-03-01']->coas()->syncWithoutDetaching([$coa3->id]);
-        }
+        // if (isset($seededActivities['PK-01-01'])) {
+        //     $seededActivities['PK-01-01']->coas()->syncWithoutDetaching([$coa1->id, $coa2->id]);
+        // }
+        // if (isset($seededActivities['PK-02-01'])) {
+        //     $seededActivities['PK-02-01']->coas()->syncWithoutDetaching([$coa2->id, $coa3->id]);
+        // }
+        // if (isset($seededActivities['PK-03-01'])) {
+        //     $seededActivities['PK-03-01']->coas()->syncWithoutDetaching([$coa3->id]);
+        // }
 
         $this->command->info('RKAP Seeder completed: roles, permissions, org structure, sample users, and master data created.');
     }
