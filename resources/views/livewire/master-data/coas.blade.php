@@ -7,17 +7,17 @@
         <div class="card-body">
 
             @if (session()->has('message'))
-                <div class="alert alert-success alert-dismissible" role="alert">
-                    {{ session('message') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible" role="alert">
+                {{ session('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             @if (session()->has('error'))
-                <div class="alert alert-danger alert-dismissible" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -35,6 +35,9 @@
                     </div>
                     <button wire:click="create()" class="btn btn-primary btn-sm">
                         <i class="bx bx-plus me-1"></i> Add COA
+                    </button>
+                    <button wire:click="openUploadModal()" class="btn btn-info btn-sm">
+                        <i class="bx bx-upload me-1"></i> Import Excel
                     </button>
                 </div>
             </div>
@@ -114,6 +117,43 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">Close</button>
                         <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Upload Modal --}}
+    @if($isUploadModalOpen)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import COAs from Excel</h5>
+                    <button type="button" class="btn-close" wire:click="closeUploadModal()"></button>
+                </div>
+                <form wire:submit.prevent="importExcel">
+                    <div class="modal-body">
+                        <p class="mb-3">Upload an Excel file to import COAs. <a href="{{ route('download-coa-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
+
+                        <div class="mb-3">
+                            <label for="uploadedFile" class="form-label">Excel File</label>
+                            <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
+                            @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                        </div>
+
+                        @if($importMessage)
+                        <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
+                            <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
+                        </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">Close</button>
+                        <button type="submit" class="btn btn-primary" @if($uploadedFile===null) disabled @endif>
+                            <i class="bx bx-upload me-1"></i> Import
+                        </button>
                     </div>
                 </form>
             </div>

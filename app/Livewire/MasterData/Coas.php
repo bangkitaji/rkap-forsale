@@ -3,22 +3,29 @@
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Coa;
+use App\Imports\CoaImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
 
 class Coas extends Component
 {
-    use WithCustomPagination;
+    use WithCustomPagination, WithFileUploads;
 
     public $search = '';
     public $coaId = null;
     public $code = '';
     public $title = '';
     public $description = '';
+    public $uploadedFile = null;
 
     public $isEditMode = false;
     public $isModalOpen = false;
+    public $isUploadModalOpen = false;
+    public $importMessage = '';
+    public $importStatus = '';
 
     public function updatingSearch()
     {
@@ -98,6 +105,60 @@ class Coas extends Component
     {
         $this->isModalOpen = false;
         $this->resetInputFields();
+    }
+
+    public function openUploadModal()
+    {
+        $this->isUploadModalOpen = true;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function closeUploadModal()
+    {
+        $this->isUploadModalOpen = false;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function importExcel()
+    {
+        $this->validate([
+            'uploadedFile' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            $import = new CoaImport();
+            Excel::import($import, $this->uploadedFile);
+
+            $results = $import->getResults();
+            $this->importStatus = 'success';
+            $this->importMessage = "Import completed! Success: {$results['success']}, Failed: {$results['failed']}";
+
+            if (!empty($results['errors'])) {
+                $this->importMessage .= "\n\nErrors:\n" . implode("\n", array_slice($results['errors'], 0, 10));
+                if (count($results['errors']) > 10) {
+                    $this->importMessage .= "\n... and " . (count($results['errors']) - 10) . " more errors";
+                }
+            }
+
+            session()->flash('message', "COAs imported successfully! {$results['success']} records imported.");
+            $this->closeUploadModal();
+        } catch (\Exception $e) {
+            $this->importStatus = 'error';
+            $this->importMessage = 'Import failed: ' . $e->getMessage();
+            session()->flash('error', $this->importMessage);
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        return response()->download(
+            public_path('templates/coa_template.xlsx'),
+            'coa_template.xlsx'
+        );
     }
 
     private function resetInputFields()

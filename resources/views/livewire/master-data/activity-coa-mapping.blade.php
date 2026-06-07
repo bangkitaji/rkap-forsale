@@ -71,6 +71,9 @@
           <button wire:click="save" class="btn btn-primary btn-sm" @disabled(empty($activityId))>
             <i class="bx bx-save me-1"></i> Save Mapping
           </button>
+          <button wire:click="openUploadModal()" class="btn btn-info btn-sm">
+            <i class="bx bx-upload me-1"></i> Import Excel
+          </button>
         </div>
       </div>
 
@@ -132,4 +135,41 @@
       </div>
     </div>
   </div>
+
+  {{-- Upload Modal --}}
+  @if($isUploadModalOpen)
+  <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Import Activity-COA Mappings from Excel</h5>
+          <button type="button" class="btn-close" wire:click="closeUploadModal()"></button>
+        </div>
+        <form wire:submit.prevent="importExcel">
+          <div class="modal-body">
+            <p class="mb-3">Upload an Excel file to import activity-COA mappings. <a href="{{ route('download-activity-coa-mapping-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
+
+            <div class="mb-3">
+              <label for="uploadedFile" class="form-label">Excel File</label>
+              <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
+              @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            </div>
+
+            @if($importMessage)
+            <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
+              <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
+            </div>
+            @endif
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">Close</button>
+            <button type="submit" class="btn btn-primary" @if($uploadedFile===null) disabled @endif>
+              <i class="bx bx-upload me-1"></i> Import
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  @endif
 </div>

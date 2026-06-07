@@ -115,6 +115,20 @@ Route::middleware(['auth'])->group(function () {
             'activity_template.xlsx'
         );
     })->name('download-activity-template')->middleware('can:masterdata.activity.manage');
+
+    Route::get('templates/download/coa', function () {
+        return response()->download(
+            public_path('templates/coa_template.xlsx'),
+            'coa_template.xlsx'
+        );
+    })->name('download-coa-template')->middleware('can:masterdata.coa.manage');
+
+    Route::get('templates/download/activity-coa-mapping', function () {
+        return response()->download(
+            public_path('templates/activity_coa_mapping_template.xlsx'),
+            'activity_coa_mapping_template.xlsx'
+        );
+    })->name('download-activity-coa-mapping-template')->middleware('can:masterdata.activity.manage');
 });
 
 

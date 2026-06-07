@@ -3,15 +3,22 @@
 namespace App\Livewire\MasterData;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Activity;
 use App\Models\Coa;
+use App\Imports\ActivityCoaMappingImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ActivityCoaMapping extends Component
 {
-    use WithCustomPagination;
+    use WithCustomPagination, WithFileUploads;
 
     public $activityId = null;
+    public $uploadedFile = null;
+    public $isUploadModalOpen = false;
+    public $importMessage = '';
+    public $importStatus = '';
 
     public string $activitySearch = '';
     public string $coaSearch = '';
@@ -86,6 +93,60 @@ class ActivityCoaMapping extends Component
         $activity->coas()->sync($coaIds);
 
         session()->flash('message', 'Activity ↔ COA mapping saved successfully.');
+    }
+
+    public function openUploadModal(): void
+    {
+        $this->isUploadModalOpen = true;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function closeUploadModal(): void
+    {
+        $this->isUploadModalOpen = false;
+        $this->uploadedFile = null;
+        $this->importMessage = '';
+        $this->importStatus = '';
+    }
+
+    public function importExcel(): void
+    {
+        $this->validate([
+            'uploadedFile' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            $import = new ActivityCoaMappingImport();
+            Excel::import($import, $this->uploadedFile);
+
+            $results = $import->getResults();
+            $this->importStatus = 'success';
+            $this->importMessage = "Import completed! Success: {$results['success']}, Failed: {$results['failed']}";
+
+            if (!empty($results['errors'])) {
+                $this->importMessage .= "\n\nErrors:\n" . implode("\n", array_slice($results['errors'], 0, 10));
+                if (count($results['errors']) > 10) {
+                    $this->importMessage .= "\n... and " . (count($results['errors']) - 10) . " more errors";
+                }
+            }
+
+            session()->flash('message', "Activity-COA mappings imported successfully! {$results['success']} records imported.");
+            $this->closeUploadModal();
+        } catch (\Exception $e) {
+            $this->importStatus = 'error';
+            $this->importMessage = 'Import failed: ' . $e->getMessage();
+            session()->flash('error', $this->importMessage);
+        }
+    }
+
+    public function downloadTemplate(): void
+    {
+        response()->download(
+            public_path('templates/activity_coa_mapping_template.xlsx'),
+            'activity_coa_mapping_template.xlsx'
+        )->send();
     }
 
     public function render()
