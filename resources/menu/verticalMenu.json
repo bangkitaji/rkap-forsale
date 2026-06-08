@@ -1,37 +1,29 @@
 {
   "menu": [
     {
-      "url": "/",
-      "name": "Dashboards",
+      "url": "/analytics",
+      "name": "Analytics",
       "icon": "menu-icon icon-base bx bx-home-smile",
-      "slug": "dashboard",
-      "permission": "dashboard.show",
-      "badge": [
-        "success",
-        "0"
-      ],
-      "submenu": [
-        {
-          "url": "/",
-          "name": "Analytics",
-          "slug": "dashboard-analytics"
-        }
-      ]
+      "slug": "dashboard-analytics",
+      "permission": "dashboard.show"
     },
     {
-      "menuHeader": "RKAP"
+      "menuHeader": "RKAP",
+      "permission": "rkap.show"
     },
     {
-      "url": "rkap/dashboard",
+      "url": "rkap/dashboard-rkap",
       "icon": "menu-icon icon-base bx bx-bar-chart-alt-2",
       "name": "Dashboard RKAP",
-      "slug": "rkap-dashboard"
+      "slug": "rkap-dashboard",
+      "permission": "rkap.show"
     },
     {
       "url": "rkap/submissions",
       "icon": "menu-icon icon-base bx bx-file",
       "name": "Pengajuan RKAP",
-      "slug": "rkap-submissions"
+      "slug": "rkap-submissions",
+      "permission": "rkap.submissions.dept"
     },
     {
       "url": "rkap/compilation",

@@ -20,12 +20,17 @@ class RoleAndUserSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
+        $permDashboardShow = Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']);
         $permSettingsShow = Permission::firstOrCreate(['name' => 'settings.show', 'guard_name' => 'web']);
         $permSettingsSatuanManage = Permission::firstOrCreate(['name' => 'settings.satuan.manage', 'guard_name' => 'web']);
         $permMasterDataShow = Permission::firstOrCreate(['name' => 'masterdata.show', 'guard_name' => 'web']);
         $permMasterDataWorkplanManage = Permission::firstOrCreate(['name' => 'masterdata.workplan.manage', 'guard_name' => 'web']);
         $permMasterDataActivityManage = Permission::firstOrCreate(['name' => 'masterdata.activity.manage', 'guard_name' => 'web']);
         $permMasterDataCoaManage = Permission::firstOrCreate(['name' => 'masterdata.coa.manage', 'guard_name' => 'web']);
+        $permRkapShow = Permission::firstOrCreate(['name' => 'rkap.show', 'guard_name' => 'web']);
+        $permRkapSubmissionsDept = Permission::firstOrCreate(['name' => 'rkap.submissions.dept', 'guard_name' => 'web']);
+
+
 
         // create role
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -33,12 +38,15 @@ class RoleAndUserSeeder extends Seeder
 
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
+            $permDashboardShow,
             $permSettingsShow,
             $permSettingsSatuanManage,
             $permMasterDataShow,
             $permMasterDataWorkplanManage,
             $permMasterDataActivityManage,
             $permMasterDataCoaManage,
+            $permRkapShow,
+            $permRkapSubmissionsDept,
         ]);
 
         // create admin user

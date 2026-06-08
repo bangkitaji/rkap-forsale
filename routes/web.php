@@ -46,7 +46,7 @@ use App\Http\Controllers\tables\Basic as TablesBasic;
 
 // Main Page Route
 Route::middleware(['auth'])->group(function () {
-    // Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
+    Route::get('/analytics', [Analytics::class, 'index'])->name('dashboard-analytics');
     Route::get('/', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
 
     Route::post('/logout', function () {
@@ -79,7 +79,7 @@ Route::middleware(['auth'])->group(function () {
 
     // RKAP routes
     Route::prefix('rkap')->group(function () {
-        Route::get('/dashboard', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
+        Route::get('/dashboard-rkap', \App\Livewire\Rkap\RkapDashboard::class)->name('dashboard-rkap');
         Route::get('/periods', \App\Livewire\Rkap\RkapPeriodManagement::class)
             ->middleware('permission:rkap.manage.period')
             ->name('rkap-periods');
