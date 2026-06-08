@@ -110,19 +110,21 @@
 
     {{-- Resolve display labels --}}
     @php
+    $rowWorkPlanOptions = $this->getWorkPlanOptionsForIndex($wpIdx);
     $selectedWorkPlan = $workPlanOptions->firstWhere('id', $wp['work_plan_id']);
-    $selectedActivity = $selectedWorkPlan
-    ? $selectedWorkPlan->activities->firstWhere('id', $wp['activity_id'])
-    : null;
+    $selectedActivity = $wp['activity_id'] ? \App\Models\Activity::find($wp['activity_id']) : null;
     @endphp
 
     <div class="card mb-3 border-start border-primary border-3" wire:key="wp-card-{{ $wpIdx }}">
-        {{-- ===== Card Header: Program Kerja searchable select ===== --}}
+        {{-- ===== Card Header: Program Kerja & Nama Kegiatan searchable selects ===== --}}
         <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center gap-3">
-                <div class="d-flex align-items-center gap-2 flex-grow-1">
-                    <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
-                    <strong class="text-nowrap">Program Kerja {{ $wpIdx + 1 }}</strong>
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                {{-- Left: Program Kerja --}}
+                <div class="d-flex flex-column gap-1" style="min-width: 0; flex: 1 1 auto;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
+                        <strong class="text-nowrap">Program Kerja {{ $wpIdx + 1 }}</strong>
+                    </div>
 
                     {{-- Searchable Program Kerja select (Alpine.js) --}}
                     <div
@@ -134,14 +136,14 @@
                                 return $refs.options ? [...$refs.options.querySelectorAll('option')].filter(o => o.value && o.text.toLowerCase().includes(q)) : [];
                             }
                         }"
-                        class="position-relative flex-grow-1"
-                        style="max-width: 420px;"
+                        class="position-relative"
+                        style="max-width: 60%;"
                         wire:key="wp-{{ $wpIdx }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
                         {{-- Trigger input --}}
-                        <div class="input-group input-group-sm">
+                        <div class="input-group">
                             <input
                                 type="text"
-                                class="form-control form-control-sm @error(" workPlans.$wpIdx.work_plan_id") is-invalid @enderror"
+                                class="form-control @error(" workPlans.$wpIdx.work_plan_id") is-invalid @enderror"
                                 placeholder="Cari program kerja..."
                                 x-model="search"
                                 @focus="open = true"
@@ -151,7 +153,7 @@
                                 autocomplete="off"
                                 id="wp-search-{{ $wpIdx }}">
                             @if($wp['work_plan_id'])
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                            <button type="button" class="btn btn-outline-secondary"
                                 wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)"
                                 @click="search = ''"
                                 title="Hapus pilihan">
@@ -170,7 +172,7 @@
                             class="d-none"
                             id="wp-select-{{ $wpIdx }}">
                             <option value=""></option>
-                            @foreach($workPlanOptions as $wpo)
+                            @foreach($rowWorkPlanOptions as $wpo)
                             <option value="{{ $wpo->id }}">{{ $wpo->code }} — {{ $wpo->title }}</option>
                             @endforeach
                         </select>
@@ -181,7 +183,7 @@
                             x-cloak
                             class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
                             style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                            @forelse($workPlanOptions as $wpo)
+                            @forelse($rowWorkPlanOptions as $wpo)
                             <div
                                 class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
                                 x-show="'{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
@@ -200,31 +202,12 @@
                     </div>
                 </div>
 
-                {{-- Subtotal + delete --}}
-                <div class="d-flex align-items-center gap-3 flex-shrink-0">
-                    <span class="text-muted small">
-                        Subtotal: <strong class="text-dark">Rp {{ number_format(collect($wp['budget_items'])->sum(fn($bi) => ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0)), 0, ',', '.') }}</strong>
-                    </span>
-                    @if(count($workPlans) > 1)
-                    <button type="button" wire:click="removeWorkPlan({{ $wpIdx }})" class="btn btn-sm btn-text-danger rounded-pill" title="Hapus program kerja">
-                        <i class="bx bx-trash"></i>
-                    </button>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <div class="card-body">
-            <div class="row g-3 mb-4">
-
-                {{-- ===== Nama Kegiatan: searchable select filtered by selected work_plan_id ===== --}}
-                <div class="col-md-12">
-                    <label class="form-label small">Nama Kegiatan <span class="text-danger">*</span></label>
-                    @if(!$wp['work_plan_id'])
-                    <div class="form-control form-control-sm bg-light text-muted">
-                        <i class="bx bx-info-circle me-1"></i> Pilih Program Kerja terlebih dahulu
+                {{-- Middle: Nama Kegiatan --}}
+                <div class="d-flex flex-column gap-1" style="min-width: 0; flex: 1 1 auto;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
+                        <strong class="text-nowrap">Nama Kegiatan</strong>
                     </div>
-                    @else
                     @php
                     $activities = $this->getActivitiesForIndex($wpIdx);
                     @endphp
@@ -235,12 +218,13 @@
                             }"
                         class="position-relative"
                         @click.outside="open = false"
+                        style="max-width: 60%;"
                         wire:key="wp-{{ $wpIdx }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $wp['activity_id'] ?? 'null' }}">
                         {{-- Trigger input --}}
-                        <div class="input-group input-group-sm">
+                        <div class="input-group">
                             <input
                                 type="text"
-                                class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.activity_id') is-invalid @enderror"
+                                class="form-control @error('workPlans.'.$wpIdx.'.activity_id') is-invalid @enderror"
                                 placeholder="Cari kegiatan..."
                                 x-model="search"
                                 @focus="open = true"
@@ -248,7 +232,7 @@
                                 autocomplete="off"
                                 id="act-search-{{ $wpIdx }}">
                             @if($wp['activity_id'])
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                            <button type="button" class="btn btn-outline-secondary"
                                 wire:click="$set('workPlans.{{ $wpIdx }}.activity_id', null)"
                                 @click="search = ''"
                                 title="Hapus pilihan">
@@ -290,12 +274,28 @@
                                 <span class="ms-1">{{ $act->title }}</span>
                             </div>
                             @empty
-                            <div class="px-3 py-2 text-muted small">Tidak ada kegiatan untuk program ini.</div>
+                            <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
                             @endforelse
                         </div>
                     </div>
+                </div>
+
+                {{-- Right: Subtotal + delete --}}
+                <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-auto">
+                    <span class="text-muted small">
+                        Subtotal: <strong class="text-dark">Rp {{ number_format(collect($wp['budget_items'])->sum(fn($bi) => ($bi['quantity'] ?? 0) * ($bi['unit_price'] ?? 0)), 0, ',', '.') }}</strong>
+                    </span>
+                    @if(count($workPlans) > 1)
+                    <button type="button" wire:click="removeWorkPlan({{ $wpIdx }})" class="btn btn-sm btn-text-danger rounded-pill" title="Hapus program kerja">
+                        <i class="bx bx-trash"></i>
+                    </button>
                     @endif
                 </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3 mb-4">
 
                 <div class="col-md-12">
                     <label class="form-label small">Deskripsi / Tujuan</label>

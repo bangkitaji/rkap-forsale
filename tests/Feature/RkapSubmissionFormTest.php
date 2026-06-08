@@ -591,4 +591,61 @@ class RkapSubmissionFormTest extends TestCase
             ->assertCount('workPlans.0.budget_items.0.distribution_months', 0)
             ->assertCount('workPlans.0.budget_items.0.cash_out_months', 0);
     }
+
+    public function test_activities_can_be_retrieved_without_work_plan_selected(): void
+    {
+        $this->actingAs($this->user);
+
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id]);
+
+        // When work_plan_id is null, it should return all activities
+        $component->assertSet('workPlans.0.work_plan_id', null);
+        $activities = $component->instance()->getActivitiesForIndex(0);
+        
+        $this->assertCount(2, $activities);
+        $this->assertTrue($activities->contains($this->activityWithCoas));
+        $this->assertTrue($activities->contains($this->activityWithoutCoas));
+    }
+
+    public function test_work_plan_is_automatically_selected_when_activity_is_selected(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->assertSet('workPlans.0.work_plan_id', null)
+            ->assertSet('workPlans.0.activity_id', null)
+            
+            // Set activity
+            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            
+            // Assert that the work plan was auto-populated
+            ->assertSet('workPlans.0.work_plan_id', $this->workPlan->id);
+    }
+
+    public function test_work_plan_options_are_filtered_when_activity_is_selected(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create a second work plan for comparison
+        $secondWorkPlan = WorkPlan::create([
+            'code' => 'WP002',
+            'title' => 'Second Work Plan',
+        ]);
+
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id]);
+
+        // When no activity is selected, should return all work plans
+        $options = $component->instance()->getWorkPlanOptionsForIndex(0);
+        $this->assertCount(2, $options);
+        $this->assertTrue($options->contains($this->workPlan));
+        $this->assertTrue($options->contains($secondWorkPlan));
+
+        // When an activity is selected, should return only its mapped work plan
+        $component->set('workPlans.0.activity_id', $this->activityWithCoas->id);
+        $options = $component->instance()->getWorkPlanOptionsForIndex(0);
+        
+        $this->assertCount(1, $options);
+        $this->assertTrue($options->contains($this->workPlan));
+        $this->assertFalse($options->contains($secondWorkPlan));
+    }
 }

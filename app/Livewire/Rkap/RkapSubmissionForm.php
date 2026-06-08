@@ -103,6 +103,12 @@ class RkapSubmissionForm extends Component
             $activityId = $this->workPlans[$idx]['activity_id'] ?? null;
             if ($activityId) {
                 $activity = Activity::with('coas')->find($activityId);
+                
+                // Set the work plan ID associated with this activity if not already set or different
+                if ($activity && $activity->work_plan_id) {
+                    $this->workPlans[$idx]['work_plan_id'] = $activity->work_plan_id;
+                }
+
                 if ($activity && $activity->coas->isNotEmpty()) {
                     $this->workPlans[$idx]['budget_items'] = $activity->coas->map(function ($coa) {
                         return array_merge($this->emptyBudgetItem(), [
@@ -150,6 +156,25 @@ class RkapSubmissionForm extends Component
     }
 
     /**
+     * Get Work Plans filtered by the selected activity_id for a given row index.
+     */
+    public function getWorkPlanOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
+    {
+        $activityId = $this->workPlans[$wpIndex]['activity_id'] ?? null;
+
+        if (!$activityId) {
+            return WorkPlan::orderBy('code')->get();
+        }
+
+        $activity = Activity::find($activityId);
+        if ($activity && $activity->work_plan_id) {
+            return WorkPlan::where('id', $activity->work_plan_id)->orderBy('code')->get();
+        }
+
+        return WorkPlan::orderBy('code')->get();
+    }
+
+    /**
      * All available COAs for the Budget Item select.
      */
     public function getCoaOptionsProperty(): \Illuminate\Database\Eloquent\Collection
@@ -173,7 +198,7 @@ class RkapSubmissionForm extends Component
         $workPlanId = $this->workPlans[$wpIndex]['work_plan_id'] ?? null;
 
         if (!$workPlanId) {
-            return collect();
+            return Activity::orderBy('code')->get();
         }
 
         return Activity::where('work_plan_id', $workPlanId)->orderBy('code')->get();
