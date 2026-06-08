@@ -118,167 +118,171 @@
     <div class="card mb-3 border-start border-primary border-3" wire:key="wp-card-{{ $wpIdx }}">
         {{-- ===== Card Header: Program Kerja & Nama Kegiatan searchable selects ===== --}}
         <div class="card-header">
-            <div class="d-flex justify-content-between align-items-start gap-2">
-                {{-- Left: Program Kerja --}}
-                <div class="d-flex flex-column gap-1" style="min-width: 0; flex: 1 1 auto;">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
-                        <strong class="text-nowrap">Program Kerja {{ $wpIdx + 1 }}</strong>
-                    </div>
+            <div class="d-flex align-items-start gap-3">
 
-                    {{-- Searchable Program Kerja select (Alpine.js) --}}
-                    <div
-                        x-data="{
-                            open: false,
-                            search: '{{ $selectedWorkPlan ? $selectedWorkPlan->code . " — " . $selectedWorkPlan->title : "" }}',
-                            get filtered() {
-                                const q = this.search.toLowerCase();
-                                return $refs.options ? [...$refs.options.querySelectorAll('option')].filter(o => o.value && o.text.toLowerCase().includes(q)) : [];
-                            }
-                        }"
-                        class="position-relative"
-                        style="max-width: 60%;"
-                        wire:key="wp-{{ $wpIdx }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
-                        {{-- Trigger input --}}
-                        <div class="input-group">
-                            <input
-                                type="text"
-                                class="form-control @error(" workPlans.$wpIdx.work_plan_id") is-invalid @enderror"
-                                placeholder="Cari program kerja..."
-                                x-model="search"
-                                @focus="open = true"
-                                @click.outside="open = false"
-                                @input="open = true"
-                                value="{{ $selectedWorkPlan ? $selectedWorkPlan->code . ' — ' . $selectedWorkPlan->title : '' }}"
-                                autocomplete="off"
-                                id="wp-search-{{ $wpIdx }}">
-                            @if($wp['work_plan_id'])
-                            <button type="button" class="btn btn-outline-secondary"
-                                wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)"
-                                @click="search = ''"
-                                title="Hapus pilihan">
-                                <i class="bx bx-x"></i>
-                            </button>
-                            @endif
+                {{-- Left group: Program Kerja + Nama Kegiatan (80% wide, equal columns, close together) --}}
+                <div class="d-flex gap-2" style="width: 60%; min-width: 0;">
+
+                    {{-- Program Kerja --}}
+                    <div class="d-flex flex-column gap-1" style="flex: 1 1 0; min-width: 0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
+                            <strong class="text-nowrap">Program Kerja {{ $wpIdx + 1 }}</strong>
                         </div>
-                        @error("workPlans.$wpIdx.work_plan_id")
-                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
 
-                        {{-- Hidden select for Livewire binding --}}
-                        <select
-                            x-ref="options"
-                            wire:model.live="workPlans.{{ $wpIdx }}.work_plan_id"
-                            class="d-none"
-                            id="wp-select-{{ $wpIdx }}">
-                            <option value=""></option>
-                            @foreach($rowWorkPlanOptions as $wpo)
-                            <option value="{{ $wpo->id }}">{{ $wpo->code }} — {{ $wpo->title }}</option>
-                            @endforeach
-                        </select>
-
-                        {{-- Dropdown list --}}
+                        {{-- Searchable Program Kerja select (Alpine.js) --}}
                         <div
-                            x-show="open"
-                            x-cloak
-                            class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                            style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                            @forelse($rowWorkPlanOptions as $wpo)
-                            <div
-                                class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
-                                x-show="'{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
-                                @click="
-                                        $wire.set('workPlans.{{ $wpIdx }}.work_plan_id', {{ $wpo->id }});
-                                        search = '{{ $wpo->code }} — {{ $wpo->title }}';
-                                        open = false;
-                                    ">
-                                <span class="fw-semibold text-primary">{{ $wpo->code }}</span>
-                                <span class="ms-1">{{ $wpo->title }}</span>
-                            </div>
-                            @empty
-                            <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Middle: Nama Kegiatan --}}
-                <div class="d-flex flex-column gap-1" style="min-width: 0; flex: 1 1 auto;">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
-                        <strong class="text-nowrap">Nama Kegiatan</strong>
-                    </div>
-                    @php
-                    $activities = $this->getActivitiesForIndex($wpIdx);
-                    @endphp
-                    <div
-                        x-data="{
+                            x-data="{
                                 open: false,
-                                search: '{{ $selectedActivity ? $selectedActivity->code . " — " . $selectedActivity->title : "" }}',
+                                search: '{{ $selectedWorkPlan ? $selectedWorkPlan->code . " — " . $selectedWorkPlan->title : "" }}',
+                                get filtered() {
+                                    const q = this.search.toLowerCase();
+                                    return $refs.options ? [...$refs.options.querySelectorAll('option')].filter(o => o.value && o.text.toLowerCase().includes(q)) : [];
+                                }
                             }"
-                        class="position-relative"
-                        @click.outside="open = false"
-                        style="max-width: 60%;"
-                        wire:key="wp-{{ $wpIdx }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $wp['activity_id'] ?? 'null' }}">
-                        {{-- Trigger input --}}
-                        <div class="input-group">
-                            <input
-                                type="text"
-                                class="form-control @error('workPlans.'.$wpIdx.'.activity_id') is-invalid @enderror"
-                                placeholder="Cari kegiatan..."
-                                x-model="search"
-                                @focus="open = true"
-                                @input="open = true"
-                                autocomplete="off"
-                                id="act-search-{{ $wpIdx }}">
-                            @if($wp['activity_id'])
-                            <button type="button" class="btn btn-outline-secondary"
-                                wire:click="$set('workPlans.{{ $wpIdx }}.activity_id', null)"
-                                @click="search = ''"
-                                title="Hapus pilihan">
-                                <i class="bx bx-x"></i>
-                            </button>
-                            @endif
-                        </div>
-                        @error('workPlans.'.$wpIdx.'.activity_id')
-                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
+                            class="position-relative"
+                            wire:key="wp-{{ $wpIdx }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
+                            {{-- Trigger input --}}
+                            <div class="input-group">
+                                <input
+                                    type="text"
+                                    class="form-control @error(" workPlans.$wpIdx.work_plan_id") is-invalid @enderror"
+                                    placeholder="Cari program kerja..."
+                                    x-model="search"
+                                    @focus="open = true"
+                                    @click.outside="open = false"
+                                    @input="open = true"
+                                    value="{{ $selectedWorkPlan ? $selectedWorkPlan->code . ' — ' . $selectedWorkPlan->title : '' }}"
+                                    autocomplete="off"
+                                    id="wp-search-{{ $wpIdx }}">
+                                @if($wp['work_plan_id'])
+                                <button type="button" class="btn btn-outline-secondary"
+                                    wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)"
+                                    @click="search = ''"
+                                    title="Hapus pilihan">
+                                    <i class="bx bx-x"></i>
+                                </button>
+                                @endif
+                            </div>
+                            @error("workPlans.$wpIdx.work_plan_id")
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
 
-                        {{-- Hidden select for Livewire binding --}}
-                        <select
-                            wire:model.live="workPlans.{{ $wpIdx }}.activity_id"
-                            class="d-none"
-                            id="act-select-{{ $wpIdx }}">
-                            <option value=""></option>
-                            @foreach($activities as $act)
-                            <option value="{{ $act->id }}">{{ $act->code }} — {{ $act->title }}</option>
-                            @endforeach
-                        </select>
+                            {{-- Hidden select for Livewire binding --}}
+                            <select
+                                x-ref="options"
+                                wire:model.live="workPlans.{{ $wpIdx }}.work_plan_id"
+                                class="d-none"
+                                id="wp-select-{{ $wpIdx }}">
+                                <option value=""></option>
+                                @foreach($rowWorkPlanOptions as $wpo)
+                                <option value="{{ $wpo->id }}">{{ $wpo->code }} — {{ $wpo->title }}</option>
+                                @endforeach
+                            </select>
 
-                        {{-- Dropdown list --}}
-                        <div
-                            x-show="open"
-                            x-cloak
-                            class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                            style="z-index: 1050; max-height: 220px; overflow-y: auto;">
-                            @forelse($activities as $act)
+                            {{-- Dropdown list --}}
                             <div
-                                class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['activity_id'] == $act->id ? 'bg-primary text-white' : '' }}"
-                                x-show="'{{ strtolower($act->code . ' ' . $act->title) }}'.includes(search.toLowerCase())"
-                                @click="
-                                            $wire.set('workPlans.{{ $wpIdx }}.activity_id', {{ $act->id }});
-                                            search = '{{ $act->code }} — {{ $act->title }}';
+                                x-show="open"
+                                x-cloak
+                                class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                                @forelse($rowWorkPlanOptions as $wpo)
+                                <div
+                                    class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
+                                    x-show="'{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
+                                    @click="
+                                            $wire.set('workPlans.{{ $wpIdx }}.work_plan_id', {{ $wpo->id }});
+                                            search = '{{ $wpo->code }} — {{ $wpo->title }}';
                                             open = false;
                                         ">
-                                <span class="fw-semibold text-primary">{{ $act->code }}</span>
-                                <span class="ms-1">{{ $act->title }}</span>
+                                    <span class="fw-semibold text-primary">{{ $wpo->code }}</span>
+                                    <span class="ms-1">{{ $wpo->title }}</span>
+                                </div>
+                                @empty
+                                <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                                @endforelse
                             </div>
-                            @empty
-                            <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
-                            @endforelse
                         </div>
                     </div>
-                </div>
+
+                    {{-- Nama Kegiatan --}}
+                    <div class="d-flex flex-column gap-1" style="flex: 1 1 0; min-width: 0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
+                            <strong class="text-nowrap">Nama Kegiatan</strong>
+                        </div>
+                        @php
+                        $activities = $this->getActivitiesForIndex($wpIdx);
+                        @endphp
+                        <div
+                            x-data="{
+                                    open: false,
+                                    search: '{{ $selectedActivity ? $selectedActivity->code . " — " . $selectedActivity->title : "" }}',
+                                }"
+                            class="position-relative"
+                            @click.outside="open = false"
+                            wire:key="wp-{{ $wpIdx }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $wp['activity_id'] ?? 'null' }}">
+                            {{-- Trigger input --}}
+                            <div class="input-group">
+                                <input
+                                    type="text"
+                                    class="form-control @error('workPlans.'.$wpIdx.'.activity_id') is-invalid @enderror"
+                                    placeholder="Cari kegiatan..."
+                                    x-model="search"
+                                    @focus="open = true"
+                                    @input="open = true"
+                                    autocomplete="off"
+                                    id="act-search-{{ $wpIdx }}">
+                                @if($wp['activity_id'])
+                                <button type="button" class="btn btn-outline-secondary"
+                                    wire:click="$set('workPlans.{{ $wpIdx }}.activity_id', null)"
+                                    @click="search = ''"
+                                    title="Hapus pilihan">
+                                    <i class="bx bx-x"></i>
+                                </button>
+                                @endif
+                            </div>
+                            @error('workPlans.'.$wpIdx.'.activity_id')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+
+                            {{-- Hidden select for Livewire binding --}}
+                            <select
+                                wire:model.live="workPlans.{{ $wpIdx }}.activity_id"
+                                class="d-none"
+                                id="act-select-{{ $wpIdx }}">
+                                <option value=""></option>
+                                @foreach($activities as $act)
+                                <option value="{{ $act->id }}">{{ $act->code }} — {{ $act->title }}</option>
+                                @endforeach
+                            </select>
+
+                            {{-- Dropdown list --}}
+                            <div
+                                x-show="open"
+                                x-cloak
+                                class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                                @forelse($activities as $act)
+                                <div
+                                    class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['activity_id'] == $act->id ? 'bg-primary text-white' : '' }}"
+                                    x-show="'{{ strtolower($act->code . ' ' . $act->title) }}'.includes(search.toLowerCase())"
+                                    @click="
+                                                $wire.set('workPlans.{{ $wpIdx }}.activity_id', {{ $act->id }});
+                                                search = '{{ $act->code }} — {{ $act->title }}';
+                                                open = false;
+                                            ">
+                                    <span class="fw-semibold text-primary">{{ $act->code }}</span>
+                                    <span class="ms-1">{{ $act->title }}</span>
+                                </div>
+                                @empty
+                                <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                </div>{{-- end 80% group --}}
 
                 {{-- Right: Subtotal + delete --}}
                 <div class="d-flex align-items-center gap-3 flex-shrink-0 ms-auto">
@@ -293,6 +297,7 @@
                 </div>
             </div>
         </div>
+
 
         <div class="card-body">
             <div class="row g-3 mb-4">
