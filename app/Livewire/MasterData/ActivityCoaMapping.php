@@ -95,6 +95,37 @@ class ActivityCoaMapping extends Component
         session()->flash('message', 'Activity ↔ COA mapping saved successfully.');
     }
 
+    public function selectAll(): void
+    {
+        // Add all COAs on the current page to the selection
+        $pageIds = Coa::search('code|title|description', $this->coaSearch)
+            ->orderBy('code')
+            ->paginate($this->perPage)
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        $this->selectedCoaIds = array_values(array_unique(
+            array_merge(array_map('intval', $this->selectedCoaIds), $pageIds)
+        ));
+    }
+
+    public function deselectAll(): void
+    {
+        // Remove all COAs on the current page from the selection
+        $pageIds = Coa::search('code|title|description', $this->coaSearch)
+            ->orderBy('code')
+            ->paginate($this->perPage)
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        $this->selectedCoaIds = array_values(array_filter(
+            array_map('intval', $this->selectedCoaIds),
+            fn($id) => !in_array($id, $pageIds, true)
+        ));
+    }
+
     public function openUploadModal(): void
     {
         $this->isUploadModalOpen = true;

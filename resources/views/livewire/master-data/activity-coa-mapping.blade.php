@@ -1,160 +1,340 @@
-<div>
-  <h4 class="py-3 mb-4">
-    <span class="text-muted fw-light">Master Data /</span> Activity ↔ COA Mapping
-  </h4>
+<div x-data="{ isDirty: false }" @change="isDirty = true">
 
-  <div class="card">
-    <div class="card-body">
-      @if (session()->has('message'))
-      <div class="alert alert-success alert-dismissible" role="alert">
-        {{ session('message') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-      @endif
+  {{-- Page Header --}}
+  <div class="py-3 mb-4 d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">
+      <span class="text-muted fw-light">Master Data /</span> Activity ↔ COA Mapping
+    </h4>
+    <button wire:click="openUploadModal()" class="btn btn-outline-info btn-sm">
+      <i class="bx bx-upload me-1"></i> Import Excel
+    </button>
+  </div>
 
-      @if (session()->has('error'))
-      <div class="alert alert-danger alert-dismissible" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-      @endif
+  {{-- Flash Messages --}}
+  @if (session()->has('message'))
+  <div class="alert alert-success alert-dismissible mb-4" role="alert">
+    <i class="bx bx-check-circle me-2"></i>{{ session('message') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  @endif
+  @if (session()->has('error'))
+  <div class="alert alert-danger alert-dismissible mb-4" role="alert">
+    <i class="bx bx-x-circle me-2"></i>{{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  @endif
 
-      <div class="d-flex justify-content-between align-items-center mb-4 gap-3 flex-wrap">
-        <div class="position-relative" style="min-width: 60%;">
-          <label class="form-label fw-semibold">Activity</label>
-          <input
-            type="text"
-            class="form-control"
-            wire:model.live.debounce.300ms="activitySearch"
-            placeholder="Search activity by code/title..."
-            autocomplete="off" />
+  <div class="row g-4 align-items-start">
 
-          @if (!empty($activitySearch))
-          <div class="dropdown-menu w-100 position-absolute mt-1 z-3 show" style="max-height: 260px; overflow:auto; top: 100%;">
-            @forelse($activities as $activity)
-            <button
-              type="button"
-              class="dropdown-item"
-              wire:click="selectActivity({{ $activity->id }})">
-              <strong>{{ $activity->code }}</strong> - {{ $activity->title }}
+    {{-- ═══════════════════════════════════════════════
+         LEFT PANEL — Activity Selector
+    ═══════════════════════════════════════════════ --}}
+    <div class="col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bx bx-task text-primary fs-5"></i>
+          <strong class="fs-6">Pilih Kegiatan</strong>
+        </div>
+        <div class="card-body p-3">
+
+          {{-- Search box --}}
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bx bx-search text-muted"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0 ps-0"
+              wire:model.live.debounce.300ms="activitySearch"
+              placeholder="Cari kegiatan..."
+              autocomplete="off">
+            @if(!empty($activitySearch))
+            <button class="btn btn-outline-secondary border" wire:click="$set('activitySearch', '')" type="button">
+              <i class="bx bx-x"></i>
             </button>
-            @empty
-            <div class="px-3 py-2 text-muted small">No activity found.</div>
-            @endforelse
+            @endif
+          </div>
+
+          {{-- Selected badge --}}
+          @if ($selectedActivity)
+          <div class="alert alert-primary py-2 px-3 mb-3 d-flex align-items-start gap-2" style="border-left: 4px solid var(--bs-primary);">
+            <i class="bx bx-check-circle text-primary mt-1 flex-shrink-0"></i>
+            <div class="flex-grow-1 min-width-0">
+              <div class="fw-semibold small" style="line-height:1.3;">{{ $selectedActivity->code }}</div>
+              <div class="text-muted" style="font-size:0.78rem; word-break:break-word;">{{ $selectedActivity->title }}</div>
+              @if($selectedActivity->workPlan)
+              <div class="mt-1">
+                <span class="badge bg-label-secondary" style="font-size:0.7rem;">{{ $selectedActivity->workPlan->code }}</span>
+              </div>
+              @endif
+            </div>
+            <button type="button" class="btn btn-xs btn-icon btn-text-danger flex-shrink-0" wire:click="clearActivity" title="Batalkan pilihan">
+              <i class="bx bx-x"></i>
+            </button>
           </div>
           @endif
 
-          <div class="mt-2 d-flex align-items-left gap-2 flex-wrap">
-            <span class="text-muted small">
-              Selected:
-              @if ($selectedActivity)
-              <span class="badge bg-label-primary">
-                <strong>{{ $selectedActivity->code }}</strong> - {{ $selectedActivity->title }}
-              </span>
-              @else
-              <strong>None</strong>
-              @endif
-            </span>
-
-            @if (!empty($activityId))
+          {{-- Activity list --}}
+          <div style="max-height: 460px; overflow-y: auto;">
+            @forelse($activities as $activity)
             <button
               type="button"
-              class="btn btn-outline-secondary btn-xs"
-              wire:click="clearActivity">
-              Clear
+              wire:click="selectActivity({{ $activity->id }})"
+              @click="isDirty = false"
+              class="w-100 text-start border rounded-2 mb-2 px-3 py-2 d-flex align-items-start gap-2 position-relative
+                     {{ $activityId == $activity->id
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-body border-light-subtle hover-bg-light' }}"
+              style="transition: all 0.15s ease; cursor: pointer;">
+              <i class="bx bx-task mt-1 flex-shrink-0 {{ $activityId == $activity->id ? 'text-white' : 'text-primary' }}"></i>
+              <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold small lh-sm">{{ $activity->code }}</div>
+                <div class="small {{ $activityId == $activity->id ? 'text-white opacity-75' : 'text-muted' }}"
+                     style="font-size:0.78rem; white-space:normal; word-break:break-word;">
+                  {{ $activity->title }}
+                </div>
+                @if($activity->workPlan)
+                <div class="mt-1">
+                  <span class="badge {{ $activityId == $activity->id ? 'bg-white text-primary' : 'bg-label-secondary' }}" style="font-size:0.65rem;">
+                    {{ $activity->workPlan->code }}
+                  </span>
+                </div>
+                @endif
+              </div>
+              @if($activityId == $activity->id)
+              <i class="bx bx-check-circle text-white mt-1 flex-shrink-0"></i>
+              @endif
             </button>
+            @empty
+            <div class="text-center text-muted py-4">
+              <i class="bx bx-search-alt bx-lg d-block mb-2 opacity-50"></i>
+              <small>Tidak ada kegiatan ditemukan.</small>
+            </div>
+            @endforelse
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════════════
+         RIGHT PANEL — COA Mapping
+    ═══════════════════════════════════════════════ --}}
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+
+        {{-- Panel Header --}}
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bx bx-link-alt text-primary fs-5"></i>
+              <strong class="fs-6">Pemetaan COA</strong>
+              @if($activityId)
+              <span class="badge bg-primary rounded-pill">{{ count($selectedCoaIds) }} dipilih</span>
+              @endif
+            </div>
+            @if($activityId)
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              {{-- Select all toggle --}}
+              @php
+                $allCoaIds  = $coas->pluck('id')->map(fn($id) => (int)$id)->all();
+                $allChecked = count($allCoaIds) > 0 && count(array_intersect($allCoaIds, array_map('intval', $selectedCoaIds))) === count($allCoaIds);
+              @endphp
+              <button type="button"
+                wire:click="{{ $allChecked ? 'deselectAll' : 'selectAll' }}"
+                class="btn btn-sm {{ $allChecked ? 'btn-outline-secondary' : 'btn-outline-primary' }}">
+                <i class="bx {{ $allChecked ? 'bx-minus-circle' : 'bx-select-multiple' }} me-1"></i>
+                {{ $allChecked ? 'Batal Semua' : 'Pilih Semua' }}
+              </button>
+              <button wire:click="save"
+                @click="isDirty = false"
+                class="btn btn-primary btn-sm">
+                <span wire:loading.remove wire:target="save">
+                  <i class="bx bx-save me-1"></i> Simpan Mapping
+                </span>
+                <span wire:loading wire:target="save">
+                  <span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...
+                </span>
+              </button>
+            </div>
             @endif
           </div>
         </div>
 
-        <div class="d-flex gap-2">
-          <button wire:click="save" class="btn btn-primary btn-sm" @disabled(empty($activityId))>
-            <i class="bx bx-save me-1"></i> Save Mapping
-          </button>
-          <button wire:click="openUploadModal()" class="btn btn-info btn-sm">
-            <i class="bx bx-upload me-1"></i> Import Excel
-          </button>
-        </div>
-      </div>
+        <div class="card-body p-3">
+          @if(!$activityId)
+          {{-- Empty state --}}
+          <div class="text-center py-5 text-muted">
+            <i class="bx bx-left-arrow-alt bx-lg d-block mb-3 opacity-40"></i>
+            <p class="mb-1 fw-semibold">Pilih kegiatan terlebih dahulu</p>
+            <small>Klik salah satu kegiatan di panel kiri untuk mulai mengatur pemetaan COA.</small>
+          </div>
+          @else
 
-      <div class="mb-3">
-        <div class="flex-grow-1" style="max-width: 40%;">
-          <div class="input-group">
-            <span class="input-group-text"><i class="bx bx-search"></i></span>
+          {{-- COA search --}}
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bx bx-search text-muted"></i>
+            </span>
             <input
               type="text"
-              class="form-control"
+              class="form-control border-start-0 ps-0"
               wire:model.live.debounce.300ms="coaSearch"
-              placeholder="Search COA by code/title/description...">
+              placeholder="Cari COA (kode / judul / deskripsi)...">
+            @if(!empty($coaSearch))
+            <button class="btn btn-outline-secondary border" wire:click="$set('coaSearch', '')" type="button">
+              <i class="bx bx-x"></i>
+            </button>
+            @endif
           </div>
-        </div>
 
-        <div class="text-muted small mt-2">
-          Selected COAs: <strong>{{ count($selected ?? []) }}</strong>
-        </div>
-      </div>
+          {{-- Mapped COAs section (pinned to top) --}}
+          @php
+            $mappedCoas   = $coas->filter(fn($c) => in_array((int)$c->id, array_map('intval', $selectedCoaIds)));
+            $unmappedCoas = $coas->reject(fn($c) => in_array((int)$c->id, array_map('intval', $selectedCoaIds)));
+          @endphp
 
-      <div class="table-responsive text-nowrap">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th style="width: 60px;">Select</th>
-              <th>COA Code</th>
-              <th>Title</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody class="table-border-bottom-0">
-            @forelse($coas as $coa)
-            <tr>
-              <td>
+          @if($mappedCoas->isNotEmpty())
+          <div class="mb-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-success">
+                <i class="bx bx-check me-1"></i>Dipetakan ({{ $mappedCoas->count() }})
+              </span>
+              <div class="flex-grow-1 border-bottom"></div>
+            </div>
+            <div class="rounded-2 overflow-hidden border border-success border-opacity-25">
+              @foreach($mappedCoas as $coa)
+              <label for="coa_{{ $coa->id }}"
+                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer bg-success bg-opacity-10
+                       {{ !$loop->last ? 'border-bottom border-success border-opacity-10' : '' }}"
+                style="transition: background 0.1s;">
                 <input
                   type="checkbox"
-                  class="form-check-input"
+                  class="form-check-input flex-shrink-0 mt-0"
                   value="{{ $coa->id }}"
                   wire:model.live="selectedCoaIds"
-                  id="coa_{{ $coa->id }}">
-              </td>
-              <td><strong>{{ $coa->code }}</strong></td>
-              <td>{{ $coa->title }}</td>
-              <td class="text-wrap" style="max-width: 300px;">
-                {{ $coa->description ?? '-' }}
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="4" class="text-center">No COA records found.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+                  id="coa_{{ $coa->id }}"
+                  style="width:1.1em; height:1.1em;">
+                <div class="flex-grow-1 min-width-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-success fw-semibold" style="font-size:0.75rem;">{{ $coa->code }}</span>
+                    <span class="fw-semibold small text-success-emphasis">{{ $coa->title }}</span>
+                  </div>
+                  @if($coa->description)
+                  <div class="text-muted mt-1" style="font-size:0.75rem;">{{ Str::limit($coa->description, 80) }}</div>
+                  @endif
+                </div>
+                <i class="bx bx-check-circle text-success fs-5 flex-shrink-0"></i>
+              </label>
+              @endforeach
+            </div>
+          </div>
+          @endif
 
-      <div class="mt-3">
-        {{ $coas->links() }}
+          {{-- Unmapped COAs --}}
+          @if($unmappedCoas->isNotEmpty())
+          <div class="mb-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-label-secondary text-muted">
+                Belum dipetakan ({{ $unmappedCoas->count() }})
+              </span>
+              <div class="flex-grow-1 border-bottom"></div>
+            </div>
+            <div class="rounded-2 overflow-hidden border">
+              @foreach($unmappedCoas as $coa)
+              <label for="coa_{{ $coa->id }}"
+                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer
+                       {{ !$loop->last ? 'border-bottom' : '' }}"
+                style="transition: background 0.12s; cursor: pointer;">
+                <input
+                  type="checkbox"
+                  class="form-check-input flex-shrink-0 mt-0"
+                  value="{{ $coa->id }}"
+                  wire:model.live="selectedCoaIds"
+                  id="coa_{{ $coa->id }}"
+                  style="width:1.1em; height:1.1em;">
+                <div class="flex-grow-1 min-width-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-label-secondary fw-semibold" style="font-size:0.75rem;">{{ $coa->code }}</span>
+                    <span class="small">{{ $coa->title }}</span>
+                  </div>
+                  @if($coa->description)
+                  <div class="text-muted mt-1" style="font-size:0.75rem;">{{ Str::limit($coa->description, 80) }}</div>
+                  @endif
+                </div>
+              </label>
+              @endforeach
+            </div>
+          </div>
+          @endif
+
+          @if($mappedCoas->isEmpty() && $unmappedCoas->isEmpty())
+          <div class="text-center text-muted py-4">
+            <i class="bx bx-search-alt bx-lg d-block mb-2 opacity-50"></i>
+            <small>Tidak ada COA ditemukan.</small>
+          </div>
+          @endif
+
+          {{-- Pagination --}}
+          <div class="mt-3">
+            {{ $coas->links() }}
+          </div>
+
+          @endif {{-- end if $activityId --}}
+        </div>
+
+        {{-- Sticky save footer (only shown when activity is selected and there are changes) --}}
+        @if($activityId)
+        <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center"
+             x-show="isDirty"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0">
+          <span class="text-warning small">
+            <i class="bx bx-error-circle me-1"></i> Ada perubahan yang belum disimpan.
+          </span>
+          <button wire:click="save" @click="isDirty = false" class="btn btn-primary btn-sm">
+            <span wire:loading.remove wire:target="save">
+              <i class="bx bx-save me-1"></i> Simpan Sekarang
+            </span>
+            <span wire:loading wire:target="save">
+              <span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...
+            </span>
+          </button>
+        </div>
+        @endif
+
       </div>
     </div>
-  </div>
 
-  {{-- Upload Modal --}}
+  </div>{{-- end .row --}}
+
+  {{-- ═══════════════ Upload Modal ═══════════════ --}}
   @if($isUploadModalOpen)
   <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Import Activity-COA Mappings from Excel</h5>
+          <h5 class="modal-title">
+            <i class="bx bx-upload me-2 text-info"></i>Import Activity-COA Mappings
+          </h5>
           <button type="button" class="btn-close" wire:click="closeUploadModal()"></button>
         </div>
         <form wire:submit.prevent="importExcel">
           <div class="modal-body">
-            <p class="mb-3">Upload an Excel file to import activity-COA mappings. <a href="{{ route('download-activity-coa-mapping-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
-
+            <p class="mb-3 text-muted small">
+              Upload file Excel untuk mengimport mapping activity-COA.
+              <a href="{{ route('download-activity-coa-mapping-template') }}" class="btn btn-sm btn-link p-0">
+                <i class="bx bx-download me-1"></i>Download template
+              </a>
+            </p>
             <div class="mb-3">
-              <label for="uploadedFile" class="form-label">Excel File</label>
-              <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
+              <label for="uploadedFile" class="form-label">File Excel</label>
+              <input type="file" id="uploadedFile"
+                class="form-control @error('uploadedFile') is-invalid @enderror"
+                wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
               @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
             </div>
-
             @if($importMessage)
             <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
               <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
@@ -162,7 +342,7 @@
             @endif
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">Close</button>
+            <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">Batal</button>
             <button type="submit" class="btn btn-primary" @if($uploadedFile===null) disabled @endif>
               <i class="bx bx-upload me-1"></i> Import
             </button>
@@ -172,4 +352,5 @@
     </div>
   </div>
   @endif
+
 </div>
