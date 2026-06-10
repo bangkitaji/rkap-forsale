@@ -45,9 +45,30 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Work Plan</th>
-                            <th>Code</th>
-                            <th>Title</th>
+                            <th wire:click="sort('work_plan')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                                Work Plan
+                                @if($sortBy === 'work_plan')
+                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                @else
+                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                @endif
+                            </th>
+                            <th wire:click="sort('code')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                                Code
+                                @if($sortBy === 'code')
+                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                @else
+                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                @endif
+                            </th>
+                            <th wire:click="sort('title')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                                Title
+                                @if($sortBy === 'title')
+                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                @else
+                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                @endif
+                            </th>
                             <th>Description</th>
                             <th>Actions</th>
                         </tr>

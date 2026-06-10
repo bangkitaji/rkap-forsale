@@ -21,6 +21,9 @@ class Coas extends Component
     public $description = '';
     public $uploadedFile = null;
 
+    public $sortBy  = 'code';
+    public $sortDir = 'asc';
+
     public $isEditMode = false;
     public $isModalOpen = false;
     public $isUploadModalOpen = false;
@@ -29,6 +32,17 @@ class Coas extends Component
 
     public function updatingSearch()
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy  = $column;
+            $this->sortDir = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -173,7 +187,7 @@ class Coas extends Component
     public function render()
     {
         $coas = Coa::search('code|title|description', $this->search)
-            ->orderBy('code')
+            ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
         return view('livewire.master-data.coas', [

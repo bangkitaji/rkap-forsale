@@ -20,6 +20,9 @@ class WorkPlans extends Component
     public $title = '';
     public $uploadedFile = null;
 
+    public $sortBy  = 'code';
+    public $sortDir = 'asc';
+
     public $isEditMode = false;
     public $isModalOpen = false;
     public $isUploadModalOpen = false;
@@ -28,6 +31,17 @@ class WorkPlans extends Component
 
     public function updatingSearch()
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy  = $column;
+            $this->sortDir = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -168,7 +182,7 @@ class WorkPlans extends Component
     public function render()
     {
         $workPlans = WorkPlan::search('code|title', $this->search)
-            ->orderBy('code')
+            ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
         return view('livewire.master-data.work-plans', [

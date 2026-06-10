@@ -23,6 +23,9 @@ class Activities extends Component
     public $description = '';
     public $uploadedFile = null;
 
+    public $sortBy  = 'code';
+    public $sortDir = 'asc';
+
     public $isEditMode = false;
     public $isModalOpen = false;
     public $isUploadModalOpen = false;
@@ -31,6 +34,17 @@ class Activities extends Component
 
     public function updatingSearch()
     {
+        $this->resetPage();
+    }
+
+    public function sort(string $column): void
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy  = $column;
+            $this->sortDir = 'asc';
+        }
         $this->resetPage();
     }
 
@@ -178,14 +192,23 @@ class Activities extends Component
 
     public function render()
     {
+        // Map sortable column keys to actual DB columns
+        $sortColumn = match ($this->sortBy) {
+            'work_plan' => 'work_plans.code',
+            'title'     => 'activities.title',
+            default     => 'activities.code',
+        };
+
         $activities = Activity::with('workPlan')
+            ->leftJoin('work_plans', 'activities.work_plan_id', '=', 'work_plans.id')
+            ->select('activities.*')
             ->search('code|title|workPlan.title|workPlan.code', $this->search)
-            ->orderBy('code')
+            ->orderBy($sortColumn, $this->sortDir)
             ->paginate($this->perPage);
 
         return view('livewire.master-data.activities', [
             'activities' => $activities,
-            'workPlans' => WorkPlan::orderBy('code')->get()
+            'workPlans'  => WorkPlan::orderBy('code')->get()
         ])->layout('layouts.contentNavbarLayout');
     }
 }
