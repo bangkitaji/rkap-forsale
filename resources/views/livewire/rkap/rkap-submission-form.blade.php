@@ -145,7 +145,7 @@
                         class="position-relative"
                         wire:key="wp-{{ $wpIdx }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
                         
-                        <div class="input-group input-group-merge">
+                        <div class="input-group">
                             <input
                                 type="text"
                                 class="form-control @error('workPlans.'.$wpIdx.'.work_plan_id') is-invalid @enderror"
@@ -263,7 +263,7 @@
                             @click.outside="open = false"
                             wire:key="wp-{{ $wpIdx }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $actIdx }}-{{ $act['activity_id'] ?? 'null' }}">
                             
-                            <div class="input-group input-group-merge">
+                            <div class="input-group">
                                 <input
                                     type="text"
                                     class="form-control form-control-sm @error('workPlans.'.$wpIdx.'.activities.'.$actIdx.'.activity_id') is-invalid @enderror"
