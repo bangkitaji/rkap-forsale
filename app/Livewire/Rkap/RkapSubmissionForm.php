@@ -31,9 +31,18 @@ class RkapSubmissionForm extends Component
      * Month labels (Indonesian).
      */
     public const MONTH_LABELS = [
-        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
-        5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
-        9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        1 => 'Jan',
+        2 => 'Feb',
+        3 => 'Mar',
+        4 => 'Apr',
+        5 => 'Mei',
+        6 => 'Jun',
+        7 => 'Jul',
+        8 => 'Agu',
+        9 => 'Sep',
+        10 => 'Okt',
+        11 => 'Nov',
+        12 => 'Des',
     ];
 
     public function mount(?int $periodId = null, ?int $id = null): void
@@ -71,10 +80,10 @@ class RkapSubmissionForm extends Component
     {
         // Sanitize unit_price: reset null/empty to 0, strip leading zeros
         if (preg_match('/^workPlans\.(\d+)\.activities\.(\d+)\.budget_items\.(\d+)\.unit_price$/', $name, $m)) {
-            $wpIdx  = (int) $m[1];
+            $wpIdx = (int) $m[1];
             $actIdx = (int) $m[2];
-            $biIdx  = (int) $m[3];
-            $val    = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['unit_price'] ?? null;
+            $biIdx = (int) $m[3];
+            $val = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['unit_price'] ?? null;
 
             if ($val === null || $val === '') {
                 $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['unit_price'] = 0;
@@ -87,16 +96,28 @@ class RkapSubmissionForm extends Component
 
         // COA change in a budget item
         if (preg_match('/^workPlans\.(\d+)\.activities\.(\d+)\.budget_items\.(\d+)\.coa_id$/', $name, $m)) {
-            $wpIdx  = (int) $m[1];
+            $wpIdx = (int) $m[1];
             $actIdx = (int) $m[2];
-            $biIdx  = (int) $m[3];
-            $coaId  = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['coa_id'] ?? null;
+            $biIdx = (int) $m[3];
+            $coaId = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['coa_id'] ?? null;
             $this->updateGroupCoa($wpIdx, $actIdx, $biIdx, $coaId);
         }
 
         // Work plan selection changes
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
-            $wpIdx = (int) $m[1];
+            $wpIdx    = (int) $m[1];
+            $newWpId  = $this->workPlans[$wpIdx]['work_plan_id'] ?? null;
+
+            // Reject duplicate: if another card already uses this work_plan_id, clear it
+            if ($newWpId) {
+                $usedByOthers = $this->getUsedWorkPlanIds(excludeIndex: $wpIdx);
+                if (in_array((int) $newWpId, $usedByOthers, true)) {
+                    $this->workPlans[$wpIdx]['work_plan_id'] = null;
+                    $this->dispatch('work-plan-duplicate-rejected');
+                    return;
+                }
+            }
+
             // Reset activities list when work plan changes
             foreach ($this->workPlans[$wpIdx]['activities'] as $actIdx => $act) {
                 $this->workPlans[$wpIdx]['activities'][$actIdx]['activity_id'] = null;
@@ -106,13 +127,24 @@ class RkapSubmissionForm extends Component
 
         // Activity selection changes within a work plan
         if (preg_match('/^workPlans\.(\d+)\.activities\.(\d+)\.activity_id$/', $name, $m)) {
-            $wpIdx  = (int) $m[1];
-            $actIdx = (int) $m[2];
+            $wpIdx      = (int) $m[1];
+            $actIdx     = (int) $m[2];
             $activityId = $this->workPlans[$wpIdx]['activities'][$actIdx]['activity_id'] ?? null;
+
+            // Reject duplicate: if another slot in the same work plan already uses this activity, clear it
+            if ($activityId) {
+                $usedByOthers = $this->getUsedActivityIds($wpIdx, excludeActIndex: $actIdx);
+                if (in_array((int) $activityId, $usedByOthers, true)) {
+                    $this->workPlans[$wpIdx]['activities'][$actIdx]['activity_id'] = null;
+                    $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = [$this->emptyBudgetItem()];
+                    $this->dispatch('activity-duplicate-rejected');
+                    return;
+                }
+            }
 
             if ($activityId) {
                 $activity = Activity::with('coas')->find($activityId);
-                
+
                 // Auto-populate work_plan_id on the parent card if not set
                 if ($activity && $activity->work_plan_id && empty($this->workPlans[$wpIdx]['work_plan_id'])) {
                     $this->workPlans[$wpIdx]['work_plan_id'] = $activity->work_plan_id;
@@ -121,9 +153,9 @@ class RkapSubmissionForm extends Component
                 if ($activity && $activity->coas->isNotEmpty()) {
                     $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = $activity->coas->map(function ($coa) {
                         return array_merge($this->emptyBudgetItem(), [
-                            'coa_id'       => $coa->id,
+                            'coa_id' => $coa->id,
                             'account_code' => $coa->code,
-                            'description'  => $coa->title,
+                            'description' => $coa->title,
                         ]);
                     })->toArray();
                 } else {
@@ -141,18 +173,18 @@ class RkapSubmissionForm extends Component
     private function emptyBudgetItem(): array
     {
         return [
-            'id'                     => null,
-            'coa_id'                 => null,
-            'account_code'           => '',
-            'description'            => '',
-            'unit'                   => '',
-            'quantity'               => 1,
-            'unit_price'             => 0,
-            'remarks'                => '',
-            'monthly_distribution'   => [],
-            'distribution_months'    => [],
-            'cash_out_distribution'  => [],
-            'cash_out_months'        => [],
+            'id' => null,
+            'coa_id' => null,
+            'account_code' => '',
+            'description' => '',
+            'unit' => '',
+            'quantity' => 1,
+            'unit_price' => 0,
+            'remarks' => '',
+            'monthly_distribution' => [],
+            'distribution_months' => [],
+            'cash_out_distribution' => [],
+            'cash_out_months' => [],
         ];
     }
 
@@ -162,14 +194,14 @@ class RkapSubmissionForm extends Component
     private function emptyActivityBlock(int $sortOrder): array
     {
         return [
-            'id'            => null,
-            'activity_id'   => null,
-            'description'   => '',
+            'id' => null,
+            'activity_id' => null,
+            'description' => '',
             'output_target' => '',
-            'unit'          => '',
-            'quantity'      => 1,
-            'sort_order'    => $sortOrder,
-            'budget_items'  => [$this->emptyBudgetItem()],
+            'unit' => '',
+            'quantity' => 1,
+            'sort_order' => $sortOrder,
+            'budget_items' => [$this->emptyBudgetItem()],
         ];
     }
 
@@ -182,10 +214,26 @@ class RkapSubmissionForm extends Component
     }
 
     /**
-     * Get Work Plans for a specific index.
+     * Collect all work_plan_ids currently selected across all cards (excluding a given index).
+     */
+    public function getUsedWorkPlanIds(int $excludeIndex = -1): array
+    {
+        $used = [];
+        foreach ($this->workPlans as $idx => $wp) {
+            if ($idx !== $excludeIndex && !empty($wp['work_plan_id'])) {
+                $used[] = (int) $wp['work_plan_id'];
+            }
+        }
+        return $used;
+    }
+
+    /**
+     * Get Work Plans for a specific index, excluding already-used ones in other cards.
      */
     public function getWorkPlanOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
     {
+        $usedIds = $this->getUsedWorkPlanIds(excludeIndex: $wpIndex);
+
         $activityId = null;
         foreach (($this->workPlans[$wpIndex]['activities'] ?? []) as $act) {
             if (!empty($act['activity_id'])) {
@@ -195,15 +243,22 @@ class RkapSubmissionForm extends Component
         }
 
         if (!$activityId) {
-            return WorkPlan::orderBy('code')->get();
+            return WorkPlan::orderBy('code')
+                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
+                ->get();
         }
 
         $activity = Activity::find($activityId);
         if ($activity && $activity->work_plan_id) {
-            return WorkPlan::where('id', $activity->work_plan_id)->orderBy('code')->get();
+            return WorkPlan::where('id', $activity->work_plan_id)
+                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
+                ->orderBy('code')
+                ->get();
         }
 
-        return WorkPlan::orderBy('code')->get();
+        return WorkPlan::orderBy('code')
+            ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
+            ->get();
     }
 
     /**
@@ -223,17 +278,37 @@ class RkapSubmissionForm extends Component
     }
 
     /**
-     * Activities filtered by parent work plan.
+     * Collect all activity_ids already selected within a work plan, optionally excluding one slot.
      */
-    public function getActivitiesForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
+    public function getUsedActivityIds(int $wpIndex, int $excludeActIndex = -1): array
+    {
+        $used = [];
+        foreach (($this->workPlans[$wpIndex]['activities'] ?? []) as $idx => $act) {
+            if ($idx !== $excludeActIndex && !empty($act['activity_id'])) {
+                $used[] = (int) $act['activity_id'];
+            }
+        }
+        return $used;
+    }
+
+    /**
+     * Activities filtered by parent work plan, excluding already-selected ones in other slots.
+     */
+    public function getActivitiesForIndex(int $wpIndex, int $excludeActIndex = -1): \Illuminate\Database\Eloquent\Collection
     {
         $workPlanId = $this->workPlans[$wpIndex]['work_plan_id'] ?? null;
+        $usedIds    = $this->getUsedActivityIds($wpIndex, excludeActIndex: $excludeActIndex);
 
         if (!$workPlanId) {
-            return Activity::orderBy('code')->get();
+            return Activity::orderBy('code')
+                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
+                ->get();
         }
 
-        return Activity::where('work_plan_id', $workPlanId)->orderBy('code')->get();
+        return Activity::where('work_plan_id', $workPlanId)
+            ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
+            ->orderBy('code')
+            ->get();
     }
 
     public function getCoaOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
@@ -417,28 +492,28 @@ class RkapSubmissionForm extends Component
             $activities = [];
             foreach ($rkapWorkPlans as $wp) {
                 $activities[] = [
-                    'id'            => $wp->id,
-                    'activity_id'   => $wp->activity_id,
-                    'description'   => $wp->description ?? '',
+                    'id' => $wp->id,
+                    'activity_id' => $wp->activity_id,
+                    'description' => $wp->description ?? '',
                     'output_target' => $wp->output_target ?? '',
-                    'unit'          => $wp->unit ?? '',
-                    'quantity'      => $wp->quantity,
-                    'sort_order'    => $wp->sort_order,
-                    'budget_items'  => $wp->budgetItems->map(function ($bi) {
+                    'unit' => $wp->unit ?? '',
+                    'quantity' => $wp->quantity,
+                    'sort_order' => $wp->sort_order,
+                    'budget_items' => $wp->budgetItems->map(function ($bi) {
                         $coa = Coa::where('code', $bi->account_code)->first();
                         return [
-                            'id'                     => $bi->id,
-                            'coa_id'                 => $coa ? $coa->id : null,
-                            'account_code'           => $bi->account_code ?? '',
-                            'description'            => $bi->description,
-                            'unit'                   => $bi->unit ?? '',
-                            'quantity'               => $bi->quantity,
-                            'unit_price'             => $bi->unit_price,
-                            'remarks'                => $bi->remarks ?? '',
-                            'monthly_distribution'   => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
-                            'distribution_months'    => $bi->monthlies->pluck('month')->toArray(),
-                            'cash_out_distribution'  => $bi->cashOuts->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
-                            'cash_out_months'        => $bi->cashOuts->pluck('month')->toArray(),
+                            'id' => $bi->id,
+                            'coa_id' => $coa ? $coa->id : null,
+                            'account_code' => $bi->account_code ?? '',
+                            'description' => $bi->description,
+                            'unit' => $bi->unit ?? '',
+                            'quantity' => $bi->quantity,
+                            'unit_price' => $bi->unit_price,
+                            'remarks' => $bi->remarks ?? '',
+                            'monthly_distribution' => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
+                            'distribution_months' => $bi->monthlies->pluck('month')->toArray(),
+                            'cash_out_distribution' => $bi->cashOuts->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
+                            'cash_out_months' => $bi->cashOuts->pluck('month')->toArray(),
                         ];
                     })->toArray(),
                 ];
@@ -446,7 +521,7 @@ class RkapSubmissionForm extends Component
 
             $this->workPlans[] = [
                 'work_plan_id' => $wpId,
-                'activities'   => $activities,
+                'activities' => $activities,
             ];
         }
 
@@ -457,6 +532,13 @@ class RkapSubmissionForm extends Component
 
     public function addWorkPlan(): void
     {
+        // Don't allow adding more work plan cards than there are available work plans
+        $usedIds   = $this->getUsedWorkPlanIds();
+        $totalPlans = WorkPlan::count();
+        if (count($this->workPlans) >= $totalPlans) {
+            return;
+        }
+
         $this->workPlans[] = [
             'work_plan_id'  => null,
             'activities'    => [
@@ -473,6 +555,12 @@ class RkapSubmissionForm extends Component
 
     public function addActivity(int $wpIndex): void
     {
+        // Forbid adding more activity slots than there are available (unselected) activities
+        $availableActivities = $this->getActivitiesForIndex($wpIndex);
+        if ($availableActivities->count() <= 0) {
+            return;
+        }
+
         $sortOrder = count($this->workPlans[$wpIndex]['activities']);
         $this->workPlans[$wpIndex]['activities'][] = $this->emptyActivityBlock($sortOrder);
     }
@@ -501,28 +589,28 @@ class RkapSubmissionForm extends Component
     public function duplicateBudgetItem(int $wpIndex, int $actIndex, int $biIndex): void
     {
         $sourceItem = $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex];
-        
+
         $newItem = array_merge($this->emptyBudgetItem(), [
-            'coa_id'       => $sourceItem['coa_id'] ?? null,
+            'coa_id' => $sourceItem['coa_id'] ?? null,
             'account_code' => $sourceItem['account_code'] ?? '',
-            'description'  => $sourceItem['description'] ?? '',
+            'description' => $sourceItem['description'] ?? '',
         ]);
-        
+
         array_splice($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'], $biIndex + 1, 0, [$newItem]);
     }
 
     public function updateGroupCoa(int $wpIndex, int $actIndex, int $biIndex, ?int $coaId): void
     {
         $oldCoaId = $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_id'] ?? null;
-        
+
         $coa = null;
         if ($coaId) {
             $coa = Coa::find($coaId);
         }
-        
+
         $code = $coa ? $coa->code : '';
         $title = $coa ? $coa->title : '';
-        
+
         if ($oldCoaId === null) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['account_code'] = $code;
@@ -532,10 +620,12 @@ class RkapSubmissionForm extends Component
             }
             return;
         }
-        
+
         $idx = $biIndex;
-        while ($idx < count($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items']) && 
-               ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId) {
+        while (
+            $idx < count($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items']) &&
+            ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId
+        ) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
@@ -544,10 +634,12 @@ class RkapSubmissionForm extends Component
             }
             $idx++;
         }
-        
+
         $idx = $biIndex - 1;
-        while ($idx >= 0 && 
-               ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId) {
+        while (
+            $idx >= 0 &&
+            ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId
+        ) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] = $coaId;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
@@ -585,7 +677,7 @@ class RkapSubmissionForm extends Component
         foreach ($this->workPlans as $wp) {
             foreach (($wp['activities'] ?? []) as $act) {
                 foreach (($act['budget_items'] ?? []) as $bi) {
-                    $total += (float)($bi['quantity'] ?? 0) * (float)($bi['unit_price'] ?? 0);
+                    $total += (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
                 }
             }
         }
@@ -595,22 +687,24 @@ class RkapSubmissionForm extends Component
     protected function rules(): array
     {
         return [
-            'notes'                                                                  => 'nullable|string',
-            'workPlans'                                                              => 'required|array|min:1',
-            'workPlans.*.work_plan_id'                                               => 'required|integer|exists:work_plans,id',
-            'workPlans.*.activities'                                                 => 'required|array|min:1',
-            'workPlans.*.activities.*.activity_id'                                   => 'nullable|integer|exists:activities,id',
-            'workPlans.*.activities.*.quantity'                                      => 'required|integer|min:1',
-            'workPlans.*.activities.*.budget_items'                                  => 'required|array|min:1',
-            'workPlans.*.activities.*.budget_items.*.coa_id'                         => 'required|integer|exists:coas,id',
-            'workPlans.*.activities.*.budget_items.*.quantity'                       => 'required|integer|min:1',
-            'workPlans.*.activities.*.budget_items.*.unit_price'                     => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
+            'workPlans' => 'required|array|min:1',
+            'workPlans.*.work_plan_id' => 'required|integer|exists:work_plans,id',
+            'workPlans.*.activities' => 'required|array|min:1',
+            'workPlans.*.activities.*.activity_id' => 'nullable|integer|exists:activities,id',
+            'workPlans.*.activities.*.quantity' => 'required|integer|min:1',
+            'workPlans.*.activities.*.budget_items' => 'required|array|min:1',
+            'workPlans.*.activities.*.budget_items.*.coa_id' => 'required|integer|exists:coas,id',
+            'workPlans.*.activities.*.budget_items.*.quantity' => 'required|integer|min:1',
+            'workPlans.*.activities.*.budget_items.*.unit_price' => 'required|numeric|min:0',
         ];
     }
 
     public function saveDraft(): void
     {
         $this->validate();
+        $this->validateNoDuplicateWorkPlans();
+        $this->validateNoDuplicateActivities();
         $this->validateBudgetItemsCoaMapping();
         $this->saveSubmission('draft');
         session()->flash('message', 'Draf RKAP berhasil disimpan.');
@@ -620,6 +714,8 @@ class RkapSubmissionForm extends Component
     public function submitForReview(): void
     {
         $this->validate();
+        $this->validateNoDuplicateWorkPlans();
+        $this->validateNoDuplicateActivities();
         $this->validateBudgetItemsCoaMapping();
         $this->validateMonthlyDistribution();
         $this->validateCashOutPlan();
@@ -632,6 +728,42 @@ class RkapSubmissionForm extends Component
 
         session()->flash('message', 'RKAP berhasil diajukan untuk peninjauan (review).');
         $this->redirectRoute('rkap-submissions');
+    }
+
+    private function validateNoDuplicateWorkPlans(): void
+    {
+        $seen = [];
+        foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
+            $wpId = $wpData['work_plan_id'] ?? null;
+            if (!$wpId) {
+                continue;
+            }
+            if (in_array((int) $wpId, $seen, true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "workPlans.{$wpIdx}.work_plan_id" => 'Program Kerja yang sama tidak boleh dipilih lebih dari satu kali dalam satu pengajuan RKAP.',
+                ]);
+            }
+            $seen[] = (int) $wpId;
+        }
+    }
+
+    private function validateNoDuplicateActivities(): void
+    {
+        foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
+            $seen = [];
+            foreach (($wpData['activities'] ?? []) as $actIdx => $actData) {
+                $actId = $actData['activity_id'] ?? null;
+                if (!$actId) {
+                    continue;
+                }
+                if (in_array((int) $actId, $seen, true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.activities.{$actIdx}.activity_id" => 'Kegiatan yang sama tidak boleh dipilih lebih dari satu kali dalam Program Kerja yang sama.',
+                    ]);
+                }
+                $seen[] = (int) $actId;
+            }
+        }
     }
 
     private function validateBudgetItemsCoaMapping(): void
@@ -733,9 +865,9 @@ class RkapSubmissionForm extends Component
 
             $data = [
                 'rkap_period_id' => $this->periodId,
-                'bureau_id'      => $user->bureau_id,
-                'created_by'     => $user->id,
-                'notes'          => $this->notes ?: null,
+                'bureau_id' => $user->bureau_id,
+                'created_by' => $user->id,
+                'notes' => $this->notes ?: null,
             ];
 
             if (!$this->submissionId) {
@@ -776,14 +908,14 @@ class RkapSubmissionForm extends Component
                         ['id' => $actData['id'] ?? null],
                         [
                             'rkap_submission_id' => $submission->id,
-                            'work_plan_id'       => $workPlanId ?: null,
-                            'activity_id'        => $actData['activity_id'] ?: null,
-                            'program_name'       => $programName,
-                            'description'        => $actData['description'] ?: null,
-                            'output_target'      => $actData['output_target'] ?: null,
-                            'unit'               => $actData['unit'] ?: null,
-                            'quantity'           => $actData['quantity'],
-                            'sort_order'         => $sortIdx++,
+                            'work_plan_id' => $workPlanId ?: null,
+                            'activity_id' => $actData['activity_id'] ?: null,
+                            'program_name' => $programName,
+                            'description' => $actData['description'] ?: null,
+                            'output_target' => $actData['output_target'] ?: null,
+                            'unit' => $actData['unit'] ?: null,
+                            'quantity' => $actData['quantity'],
+                            'sort_order' => $sortIdx++,
                         ]
                     );
 
@@ -796,12 +928,12 @@ class RkapSubmissionForm extends Component
                             ['id' => $biData['id'] ?? null],
                             [
                                 'rkap_work_plan_id' => $workPlan->id,
-                                'account_code'  => $coa ? $coa->code : null,
-                                'description'   => $coa ? $coa->title : '',
-                                'unit'          => $biData['unit'] ?: null,
-                                'quantity'      => $biData['quantity'],
-                                'unit_price'    => $biData['unit_price'],
-                                'remarks'       => $biData['remarks'] ?: null,
+                                'account_code' => $coa ? $coa->code : null,
+                                'description' => $coa ? $coa->title : '',
+                                'unit' => $biData['unit'] ?: null,
+                                'quantity' => $biData['quantity'],
+                                'unit_price' => $biData['unit_price'],
+                                'remarks' => $biData['remarks'] ?: null,
                             ]
                         );
 
@@ -811,7 +943,7 @@ class RkapSubmissionForm extends Component
                         foreach ($distribution as $month => $amount) {
                             if ((float) $amount > 0) {
                                 $budgetItem->monthlies()->create([
-                                    'month'  => (int) $month,
+                                    'month' => (int) $month,
                                     'amount' => (float) $amount,
                                 ]);
                             }
@@ -823,7 +955,7 @@ class RkapSubmissionForm extends Component
                         foreach ($cashOutDistribution as $month => $amount) {
                             if ((float) $amount > 0) {
                                 $budgetItem->cashOuts()->create([
-                                    'month'  => (int) $month,
+                                    'month' => (int) $month,
                                     'amount' => (float) $amount,
                                 ]);
                             }
@@ -853,9 +985,9 @@ class RkapSubmissionForm extends Component
         }
 
         $prevSubmission = RkapSubmission::with([
-                'workPlans.budgetItems',
-                'period',
-            ])
+            'workPlans.budgetItems',
+            'period',
+        ])
             ->where('bureau_id', $bureauId)
             ->where('status', 'approved')
             ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
@@ -869,16 +1001,18 @@ class RkapSubmissionForm extends Component
         $map = [];
         foreach ($prevSubmission->workPlans as $wp) {
             $wpKey = $wp->work_plan_id;
-            if (!$wpKey) continue;
+            if (!$wpKey)
+                continue;
             foreach ($wp->budgetItems as $bi) {
                 $code = $bi->account_code;
-                if (!$code) continue;
+                if (!$code)
+                    continue;
                 $map[$wpKey][$code] = ($map[$wpKey][$code] ?? 0) + (float) $bi->total_price;
             }
         }
 
         return [
-            'map'    => $map,
+            'map' => $map,
             'period' => $prevSubmission->period?->title ?? '-',
         ];
     }
@@ -887,9 +1021,9 @@ class RkapSubmissionForm extends Component
     {
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,
-            'coaOptions'      => $this->coaOptions,
-            'monthLabels'     => self::MONTH_LABELS,
-            'prevData'        => $this->buildPreviousMap(),
+            'coaOptions' => $this->coaOptions,
+            'monthLabels' => self::MONTH_LABELS,
+            'prevData' => $this->buildPreviousMap(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }
