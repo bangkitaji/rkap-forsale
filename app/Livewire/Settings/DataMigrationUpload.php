@@ -255,8 +255,10 @@ class DataMigrationUpload extends Component
 
       foreach ($rows as $row) {
         $submissionKey = $row['submission_key'];
+        // Use composite submission key to differentiate submissions by period and bureau in case keys are reused
+        $compositeSubmissionKey = $submissionKey . '::' . $row['rkap_period_id'] . '::' . $row['bureau_id'];
 
-        if (!isset($submissionMap[$submissionKey])) {
+        if (!isset($submissionMap[$compositeSubmissionKey])) {
           $submission = RkapSubmission::firstOrCreate(
             [
               'rkap_period_id' => (int) $row['rkap_period_id'],
@@ -270,7 +272,7 @@ class DataMigrationUpload extends Component
             ]
           );
 
-          $submissionMap[$submissionKey] = $submission;
+          $submissionMap[$compositeSubmissionKey] = $submission;
 
           // Only count genuinely new submissions
           if ($submission->wasRecentlyCreated) {
@@ -279,11 +281,11 @@ class DataMigrationUpload extends Component
         }
 
         /** @var \App\Models\RkapSubmission $submission */
-        $submission = $submissionMap[$submissionKey];
+        $submission = $submissionMap[$compositeSubmissionKey];
         $workPlanKey = $row['work_plan_key'];
 
-        // Prefix with submission_key to prevent cross-submission collisions
-        $compositeWpKey = $submissionKey . '::' . $workPlanKey;
+        // Prefix with composite submission key to prevent cross-submission collisions
+        $compositeWpKey = $compositeSubmissionKey . '::' . $workPlanKey;
 
         if (!isset($workPlanMap[$compositeWpKey])) {
           $masterWorkPlan = WorkPlan::withTrashed()->find((int) $row['work_plan_id']);
