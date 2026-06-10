@@ -127,7 +127,7 @@ class RkapSubmissionFormTest extends TestCase
             ->assertDontSee('Uraian')
 
             // Set Activity with COAs (both are set now, so notice should be gone and budget items table/button shown)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
             ->assertDontSee('Silakan pilih')
             ->assertSee('Uraian')
             ->assertSee('Tambah Item Belanja');
@@ -139,24 +139,24 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->assertSet('workPlans.0.work_plan_id', null)
-            ->assertSet('workPlans.0.activity_id', null)
-            // First workPlan has 1 default empty budget item
-            ->assertCount('workPlans.0.budget_items', 1)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', null)
+            ->assertSet('workPlans.0.activities.0.activity_id', null)
+            // First workPlan first activity has 1 default empty budget item
+            ->assertCount('workPlans.0.activities.0.budget_items', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', null)
 
             // Set WorkPlan
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             // Set Activity with COAs
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
 
             // Should now show 2 budget items corresponding to the mapped COAs
-            ->assertCount('workPlans.0.budget_items', 2)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', $this->coa1->id)
-            ->assertSet('workPlans.0.budget_items.0.account_code', $this->coa1->code)
-            ->assertSet('workPlans.0.budget_items.0.description', $this->coa1->title)
-            ->assertSet('workPlans.0.budget_items.1.coa_id', $this->coa2->id)
-            ->assertSet('workPlans.0.budget_items.1.account_code', $this->coa2->code)
-            ->assertSet('workPlans.0.budget_items.1.description', $this->coa2->title);
+            ->assertCount('workPlans.0.activities.0.budget_items', 2)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.account_code', $this->coa1->code)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.description', $this->coa1->title)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.coa_id', $this->coa2->id)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.account_code', $this->coa2->code)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.description', $this->coa2->title);
     }
 
     public function test_budget_items_show_one_empty_item_when_activity_without_coas_is_selected(): void
@@ -166,16 +166,16 @@ class RkapSubmissionFormTest extends TestCase
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             // Set Activity with COAs first to populate budget items
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
-            ->assertCount('workPlans.0.budget_items', 2)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->assertCount('workPlans.0.activities.0.budget_items', 2)
 
             // Switch to Activity without COAs
-            ->set('workPlans.0.activity_id', $this->activityWithoutCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithoutCoas->id)
             // Should reset to 1 empty budget item
-            ->assertCount('workPlans.0.budget_items', 1)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', null)
-            ->assertSet('workPlans.0.budget_items.0.account_code', '')
-            ->assertSet('workPlans.0.budget_items.0.description', '');
+            ->assertCount('workPlans.0.activities.0.budget_items', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', null)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.account_code', '')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.description', '');
     }
 
     public function test_budget_items_reset_to_one_empty_item_when_activity_is_cleared(): void
@@ -185,14 +185,14 @@ class RkapSubmissionFormTest extends TestCase
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             // Set Activity with COAs to populate budget items
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
-            ->assertCount('workPlans.0.budget_items', 2)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->assertCount('workPlans.0.activities.0.budget_items', 2)
 
             // Clear Activity
-            ->set('workPlans.0.activity_id', null)
+            ->set('workPlans.0.activities.0.activity_id', null)
             // Should reset to 1 empty budget item
-            ->assertCount('workPlans.0.budget_items', 1)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', null);
+            ->assertCount('workPlans.0.activities.0.budget_items', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', null);
     }
 
     public function test_budget_items_reset_to_one_empty_item_when_work_plan_is_changed(): void
@@ -202,15 +202,15 @@ class RkapSubmissionFormTest extends TestCase
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             // Set Activity with COAs to populate budget items
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
-            ->assertCount('workPlans.0.budget_items', 2)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->assertCount('workPlans.0.activities.0.budget_items', 2)
 
             // Change WorkPlan ID to something else or clear it
             ->set('workPlans.0.work_plan_id', null)
             // Should clear activity and reset budget items to 1 empty item
-            ->assertSet('workPlans.0.activity_id', null)
-            ->assertCount('workPlans.0.budget_items', 1)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', null);
+            ->assertSet('workPlans.0.activities.0.activity_id', null)
+            ->assertCount('workPlans.0.activities.0.budget_items', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', null);
     }
 
     public function test_can_save_budget_item_coa_not_mapped_to_selected_activity(): void
@@ -220,8 +220,8 @@ class RkapSubmissionFormTest extends TestCase
         // Activity without COAs -> should allow COA selection now based on updated rules
         $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithoutCoas->id)
-            ->set('workPlans.0.budget_items.0.coa_id', $this->coa1->id);
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithoutCoas->id)
+            ->set('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id);
 
         $component->call('saveDraft')
             ->assertHasNoErrors();
@@ -234,8 +234,8 @@ class RkapSubmissionFormTest extends TestCase
         // COA selected but Activity is null -> should throw validation errors
         $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', null)
-            ->set('workPlans.0.budget_items.0.coa_id', $this->coa1->id);
+            ->set('workPlans.0.activities.0.activity_id', null)
+            ->set('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id);
 
         $component->call('saveDraft')
             ->assertHasErrors();
@@ -253,7 +253,7 @@ class RkapSubmissionFormTest extends TestCase
 
         // Select activity with coas
         $component->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id);
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id);
 
         $options = $component->instance()->getCoaOptionsForIndex(0);
         $this->assertCount(2, $options);
@@ -261,7 +261,7 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertTrue($options->contains($this->coa2));
 
         // Select activity without coas
-        $component->set('workPlans.0.activity_id', $this->activityWithoutCoas->id);
+        $component->set('workPlans.0.activities.0.activity_id', $this->activityWithoutCoas->id);
         $options = $component->instance()->getCoaOptionsForIndex(0);
         // Fallback to all COAs
         $this->assertCount(2, $options);
@@ -473,25 +473,25 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
             // Assert that there are initially 2 budget items
-            ->assertCount('workPlans.0.budget_items', 2)
-            ->assertSet('workPlans.0.budget_items.0.coa_id', $this->coa1->id)
+            ->assertCount('workPlans.0.activities.0.budget_items', 2)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id)
             
             // Duplicate the first budget item (index 0)
-            ->call('duplicateBudgetItem', 0, 0)
+            ->call('duplicateBudgetItem', 0, 0, 0)
             
             // Assert that we now have 3 budget items
-            ->assertCount('workPlans.0.budget_items', 3)
+            ->assertCount('workPlans.0.activities.0.budget_items', 3)
             
             // Assert the duplicated item is placed right next to it (index 1) with same COA parameters
-            ->assertSet('workPlans.0.budget_items.1.coa_id', $this->coa1->id)
-            ->assertSet('workPlans.0.budget_items.1.account_code', $this->coa1->code)
-            ->assertSet('workPlans.0.budget_items.1.description', $this->coa1->title)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.coa_id', $this->coa1->id)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.account_code', $this->coa1->code)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.description', $this->coa1->title)
             
             // But quantity and unit price should be empty/default
-            ->assertSet('workPlans.0.budget_items.1.quantity', 1)
-            ->assertSet('workPlans.0.budget_items.1.unit_price', 0);
+            ->assertSet('workPlans.0.activities.0.budget_items.1.quantity', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.1.unit_price', 0);
     }
 
     public function test_budget_item_unit_price_leading_zeros_and_empty_clear_are_sanitized(): void
@@ -500,26 +500,26 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
 
             // Leading zeros must be stripped
-            ->set('workPlans.0.budget_items.0.unit_price', '05000')
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 5000)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', '05000')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 5000)
 
             // Lone zero stays 0
-            ->set('workPlans.0.budget_items.0.unit_price', '0')
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', '0')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 0)
 
             // Multiple zeros collapse to 0
-            ->set('workPlans.0.budget_items.0.unit_price', '00')
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', '00')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 0)
 
             // Empty/null is reset to 0 (prevents validation error)
-            ->set('workPlans.0.budget_items.0.unit_price', '')
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', '')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 0)
 
-            ->set('workPlans.0.budget_items.0.unit_price', null)
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 0);
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', null)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 0);
     }
 
     public function test_can_select_and_deselect_all_months(): void
@@ -528,27 +528,27 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
             
             // Initially no months selected
-            ->assertSet('workPlans.0.budget_items.0.distribution_months', [])
-            ->assertSet('workPlans.0.budget_items.0.cash_out_months', [])
+            ->assertSet('workPlans.0.activities.0.budget_items.0.distribution_months', [])
+            ->assertSet('workPlans.0.activities.0.budget_items.0.cash_out_months', [])
             
             // Select all months
-            ->call('selectAllMonths', 0, 0)
-            ->assertCount('workPlans.0.budget_items.0.distribution_months', 12)
+            ->call('selectAllMonths', 0, 0, 0)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.distribution_months', 12)
             
             // Select all cash out months
-            ->call('selectAllCashOutMonths', 0, 0)
-            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 12)
+            ->call('selectAllCashOutMonths', 0, 0, 0)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.cash_out_months', 12)
             
             // Deselect all months (toggles off when already 12 are selected)
-            ->call('selectAllMonths', 0, 0)
-            ->assertCount('workPlans.0.budget_items.0.distribution_months', 0)
+            ->call('selectAllMonths', 0, 0, 0)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.distribution_months', 0)
             
             // Deselect all cash out months
-            ->call('selectAllCashOutMonths', 0, 0)
-            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 0);
+            ->call('selectAllCashOutMonths', 0, 0, 0)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.cash_out_months', 0);
     }
 
     public function test_clearing_coa_clears_budget_item_details(): void
@@ -557,39 +557,39 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
             
             // Populate some details
-            ->set('workPlans.0.budget_items.0.unit', 'Bh')
-            ->set('workPlans.0.budget_items.0.quantity', 5)
-            ->set('workPlans.0.budget_items.0.unit_price', 10000)
-            ->set('workPlans.0.budget_items.0.remarks', 'Sewa printer')
-            ->call('selectAllMonths', 0, 0)
-            ->call('selectAllCashOutMonths', 0, 0)
+            ->set('workPlans.0.activities.0.budget_items.0.unit', 'Bh')
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 5)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 10000)
+            ->set('workPlans.0.activities.0.budget_items.0.remarks', 'Sewa printer')
+            ->call('selectAllMonths', 0, 0, 0)
+            ->call('selectAllCashOutMonths', 0, 0, 0)
             
             // Assert values are set
-            ->assertSet('workPlans.0.budget_items.0.unit', 'Bh')
-            ->assertSet('workPlans.0.budget_items.0.quantity', 5)
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 10000)
-            ->assertSet('workPlans.0.budget_items.0.remarks', 'Sewa printer')
-            ->assertCount('workPlans.0.budget_items.0.distribution_months', 12)
-            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 12)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit', 'Bh')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.quantity', 5)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 10000)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.remarks', 'Sewa printer')
+            ->assertCount('workPlans.0.activities.0.budget_items.0.distribution_months', 12)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.cash_out_months', 12)
             
             // Clear the COA
-            ->call('updateGroupCoa', 0, 0, null)
+            ->call('updateGroupCoa', 0, 0, 0, null)
             
             // Assert the COA fields are cleared
-            ->assertSet('workPlans.0.budget_items.0.coa_id', null)
-            ->assertSet('workPlans.0.budget_items.0.account_code', '')
-            ->assertSet('workPlans.0.budget_items.0.description', '')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.coa_id', null)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.account_code', '')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.description', '')
             
             // Assert detail belanja child fields are cleared/reset
-            ->assertSet('workPlans.0.budget_items.0.unit', '')
-            ->assertSet('workPlans.0.budget_items.0.quantity', 1)
-            ->assertSet('workPlans.0.budget_items.0.unit_price', 0)
-            ->assertSet('workPlans.0.budget_items.0.remarks', '')
-            ->assertCount('workPlans.0.budget_items.0.distribution_months', 0)
-            ->assertCount('workPlans.0.budget_items.0.cash_out_months', 0);
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit', '')
+            ->assertSet('workPlans.0.activities.0.budget_items.0.quantity', 1)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.unit_price', 0)
+            ->assertSet('workPlans.0.activities.0.budget_items.0.remarks', '')
+            ->assertCount('workPlans.0.activities.0.budget_items.0.distribution_months', 0)
+            ->assertCount('workPlans.0.activities.0.budget_items.0.cash_out_months', 0);
     }
 
     public function test_activities_can_be_retrieved_without_work_plan_selected(): void
@@ -613,10 +613,10 @@ class RkapSubmissionFormTest extends TestCase
 
         Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->assertSet('workPlans.0.work_plan_id', null)
-            ->assertSet('workPlans.0.activity_id', null)
+            ->assertSet('workPlans.0.activities.0.activity_id', null)
             
             // Set activity
-            ->set('workPlans.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
             
             // Assert that the work plan was auto-populated
             ->assertSet('workPlans.0.work_plan_id', $this->workPlan->id);
@@ -641,7 +641,7 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertTrue($options->contains($secondWorkPlan));
 
         // When an activity is selected, should return only its mapped work plan
-        $component->set('workPlans.0.activity_id', $this->activityWithCoas->id);
+        $component->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id);
         $options = $component->instance()->getWorkPlanOptionsForIndex(0);
         
         $this->assertCount(1, $options);
