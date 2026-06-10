@@ -113,24 +113,24 @@ class RkapSubmissionFormTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
-            // Initially, since work plan and activity are null, it should show the notice
-            ->assertSee('Silakan pilih')
-            ->assertSee('detail anggaran belanja')
-            ->assertDontSee('Uraian')
-            ->assertDontSee('Tambah Item Belanja')
+        $t = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id]);
+        // Initially, since work plan and activity are null, it should show the notice
+        $t->assertSee('Silakan pilih');
+        $t->assertSee('detail anggaran belanja');
+        $t->assertDontSee('Uraian');
+        $t->assertDontSee('Tambah Item Belanja');
 
-            // Set WorkPlan (still no activity selected, should still show notice)
-            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
-            ->assertSee('Silakan pilih')
-            ->assertSee('detail anggaran belanja')
-            ->assertDontSee('Uraian')
+        // Set WorkPlan (still no activity selected, should still show notice)
+        $t->set('workPlans.0.work_plan_id', $this->workPlan->id);
+        $t->assertSee('Silakan pilih');
+        $t->assertSee('detail anggaran belanja');
+        $t->assertDontSee('Uraian');
 
-            // Set Activity with COAs (both are set now, so notice should be gone and budget items table/button shown)
-            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
-            ->assertDontSee('Silakan pilih')
-            ->assertSee('Uraian')
-            ->assertSee('Tambah Item Belanja');
+        // Set Activity with COAs (both are set now, so notice should be gone and budget items table/button shown)
+        $t->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id);
+        $t->assertDontSee('detail anggaran belanja');
+        $t->assertSee('Uraian');
+        $t->assertSee('Tambah Item Belanja');
     }
 
     public function test_budget_items_are_populated_when_activity_with_coas_is_selected(): void

@@ -135,16 +135,17 @@
             </div>
             @if($activityId)
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              {{-- Select all toggle --}}
-              @php
-                $allCoaIds  = $coas->pluck('id')->map(fn($id) => (int)$id)->all();
-                $allChecked = count($allCoaIds) > 0 && count(array_intersect($allCoaIds, array_map('intval', $selectedCoaIds))) === count($allCoaIds);
-              @endphp
+              @if(!empty($selectedCoaIds))
               <button type="button"
-                wire:click="{{ $allChecked ? 'deselectAll' : 'selectAll' }}"
-                class="btn btn-sm {{ $allChecked ? 'btn-outline-secondary' : 'btn-outline-primary' }}">
-                <i class="bx {{ $allChecked ? 'bx-minus-circle' : 'bx-select-multiple' }} me-1"></i>
-                {{ $allChecked ? 'Batal Semua' : 'Pilih Semua' }}
+                wire:click="deselectAll"
+                class="btn btn-sm btn-outline-danger">
+                <i class="bx bx-minus-circle me-1"></i>Kosongkan Pilihan
+              </button>
+              @endif
+              <button type="button"
+                wire:click="selectAll"
+                class="btn btn-sm btn-outline-primary">
+                <i class="bx bx-select-multiple me-1"></i>Pilih Semua Halaman Ini
               </button>
               <button wire:click="save"
                 @click="isDirty = false"
@@ -190,8 +191,8 @@
 
           {{-- Mapped COAs section (pinned to top) --}}
           @php
-            $mappedCoas   = $coas->filter(fn($c) => in_array((int)$c->id, array_map('intval', $selectedCoaIds)));
-            $unmappedCoas = $coas->reject(fn($c) => in_array((int)$c->id, array_map('intval', $selectedCoaIds)));
+            // $mappedCoas is passed directly from the component to ensure mapped COAs are pinned globally.
+            // $coas contains the paginated list of unmapped COAs.
           @endphp
 
           @if($mappedCoas->isNotEmpty())
@@ -232,16 +233,16 @@
           @endif
 
           {{-- Unmapped COAs --}}
-          @if($unmappedCoas->isNotEmpty())
+          @if($coas->isNotEmpty())
           <div class="mb-3">
             <div class="d-flex align-items-center gap-2 mb-2">
               <span class="badge bg-label-secondary text-muted">
-                Belum dipetakan ({{ $unmappedCoas->count() }})
+                Belum dipetakan ({{ $coas->total() }})
               </span>
               <div class="flex-grow-1 border-bottom"></div>
             </div>
             <div class="rounded-2 overflow-hidden border">
-              @foreach($unmappedCoas as $coa)
+              @foreach($coas as $coa)
               <label for="coa_{{ $coa->id }}"
                 class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer
                        {{ !$loop->last ? 'border-bottom' : '' }}"
@@ -268,7 +269,7 @@
           </div>
           @endif
 
-          @if($mappedCoas->isEmpty() && $unmappedCoas->isEmpty())
+          @if($mappedCoas->isEmpty() && $coas->isEmpty())
           <div class="text-center text-muted py-4">
             <i class="bx bx-search-alt bx-lg d-block mb-2 opacity-50"></i>
             <small>Tidak ada COA ditemukan.</small>

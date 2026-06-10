@@ -19,14 +19,21 @@
             <div class="mb-3">
               <label class="form-label">File Excel / CSV</label>
               <input type="file" class="form-control" wire:model="file"
+                wire:loading.attr="disabled" wire:target="file, uploadAndImport"
                 accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
               @error('file')
               <div class="text-danger mt-1">{{ $message }}</div>
               @enderror
             </div>
 
-            <button type="submit" class="btn btn-primary">
-              Upload & Import
+            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="file, uploadAndImport">
+              <span wire:loading.remove wire:target="file, uploadAndImport">
+                Upload & Import
+              </span>
+              <span wire:loading wire:target="file, uploadAndImport">
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                Processing...
+              </span>
             </button>
           </form>
 

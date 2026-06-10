@@ -97,8 +97,9 @@ class ActivityCoaMapping extends Component
 
     public function selectAll(): void
     {
-        // Add all COAs on the current page to the selection
+        // Add all unmapped COAs on the current page to the selection
         $pageIds = Coa::search('code|title|description', $this->coaSearch)
+            ->whereNotIn('id', array_map('intval', $this->selectedCoaIds))
             ->orderBy('code')
             ->paginate($this->perPage)
             ->pluck('id')
@@ -112,18 +113,8 @@ class ActivityCoaMapping extends Component
 
     public function deselectAll(): void
     {
-        // Remove all COAs on the current page from the selection
-        $pageIds = Coa::search('code|title|description', $this->coaSearch)
-            ->orderBy('code')
-            ->paginate($this->perPage)
-            ->pluck('id')
-            ->map(fn($id) => (int) $id)
-            ->all();
-
-        $this->selectedCoaIds = array_values(array_filter(
-            array_map('intval', $this->selectedCoaIds),
-            fn($id) => !in_array($id, $pageIds, true)
-        ));
+        // Clear all selected COAs
+        $this->selectedCoaIds = [];
     }
 
     public function openUploadModal(): void
@@ -192,16 +183,29 @@ class ActivityCoaMapping extends Component
             ->limit(10)
             ->get();
 
-        $coas = Coa::search('code|title|description', $this->coaSearch)
+        $selectedActivity = $this->activityId ? Activity::with('workPlan')->find($this->activityId) : null;
+
+        $mappedCoas = collect();
+        if ($this->activityId && !empty($this->selectedCoaIds)) {
+            $mappedCoas = Coa::whereIn('id', array_map('intval', $this->selectedCoaIds))
+                ->when(!empty($this->coaSearch), function($q) {
+                    $q->search('code|title|description', $this->coaSearch);
+                })
+                ->orderBy('code')
+                ->get();
+        }
+
+        $unmappedCoas = Coa::search('code|title|description', $this->coaSearch)
+            ->whereNotIn('id', array_map('intval', $this->selectedCoaIds))
             ->orderBy('code')
             ->paginate($this->perPage);
 
         $selected = array_flip(array_map('intval', $this->selectedCoaIds));
-        $selectedActivity = $this->activityId ? Activity::with('workPlan')->find($this->activityId) : null;
 
         return view('livewire.master-data.activity-coa-mapping', [
             'activities' => $activities,
-            'coas' => $coas,
+            'coas' => $unmappedCoas, // pass unmappedCoas as $coas to match the paginator in the view
+            'mappedCoas' => $mappedCoas,
             'selected' => $selected,
             'selectedActivity' => $selectedActivity,
         ])->layout('layouts.contentNavbarLayout');
