@@ -48,7 +48,11 @@ class RkapSubmissionForm extends Component
     public function mount(?int $periodId = null, ?int $id = null): void
     {
         if ($id) {
-            $this->submission = RkapSubmission::with(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts'])->findOrFail($id);
+            $this->submission = RkapSubmission::with([
+                'workPlans.budgetItems.monthlies',
+                'workPlans.budgetItems.cashOuts',
+                'workPlans.budgetItems.realizations',
+            ])->findOrFail($id);
             $this->submissionId = $id;
             $this->periodId = $this->submission->rkap_period_id;
             $this->period = $this->submission->period;
@@ -173,18 +177,20 @@ class RkapSubmissionForm extends Component
     private function emptyBudgetItem(): array
     {
         return [
-            'id' => null,
-            'coa_id' => null,
-            'account_code' => '',
-            'description' => '',
-            'unit' => '',
-            'quantity' => 1,
-            'unit_price' => 0,
-            'remarks' => '',
-            'monthly_distribution' => [],
-            'distribution_months' => [],
-            'cash_out_distribution' => [],
-            'cash_out_months' => [],
+            'id'                        => null,
+            'coa_id'                    => null,
+            'account_code'              => '',
+            'description'               => '',
+            'unit'                      => '',
+            'quantity'                  => 1,
+            'unit_price'                => 0,
+            'remarks'                   => '',
+            'monthly_distribution'      => [],
+            'distribution_months'       => [],
+            'cash_out_distribution'     => [],
+            'cash_out_months'           => [],
+            'realization_distribution'  => [],
+            'realization_months'        => [],
         ];
     }
 
@@ -475,8 +481,80 @@ class RkapSubmissionForm extends Component
             return 0;
         }
 
-        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $total     = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
         $allocated = array_sum($bi['cash_out_distribution'] ?? []);
+
+        return $total - $allocated;
+    }
+
+    // ── Realization Methods ──
+
+    public function toggleRealizationMonth(int $wpIdx, int $actIdx, int $biIdx, int $month): void
+    {
+        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] ?? [];
+
+        if (in_array($month, $months)) {
+            $months = array_values(array_diff($months, [$month]));
+            unset($this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'][$month]);
+        } else {
+            $months[] = $month;
+            sort($months);
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'][$month] = 0;
+        }
+
+        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] = array_values($months);
+    }
+
+    public function selectAllRealizationMonths(int $wpIdx, int $actIdx, int $biIdx): void
+    {
+        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] ?? [];
+        if (count($months) === 12) {
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months']      = [];
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = [];
+        } else {
+            $allMonths    = range(1, 12);
+            $distribution = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] ?? [];
+            foreach ($allMonths as $month) {
+                if (! isset($distribution[$month])) {
+                    $distribution[$month] = 0;
+                }
+            }
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months']      = $allMonths;
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = $distribution;
+        }
+    }
+
+    public function distributeRealizationEvenly(int $wpIdx, int $actIdx, int $biIdx): void
+    {
+        $bi     = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
+        $total  = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $months = $bi['realization_months'] ?? [];
+
+        if (empty($months) || $total <= 0) {
+            return;
+        }
+
+        $count     = count($months);
+        $perMonth  = floor($total / $count);
+        $remainder = $total - ($perMonth * $count);
+
+        $distribution = [];
+        foreach ($months as $i => $month) {
+            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
+        }
+
+        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = $distribution;
+    }
+
+    public function getRealizationRemainder(int $wpIdx, int $actIdx, int $biIdx): float
+    {
+        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx] ?? null;
+        if (! $bi) {
+            return 0;
+        }
+
+        $total     = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $allocated = array_sum($bi['realization_distribution'] ?? []);
 
         return $total - $allocated;
     }
@@ -502,18 +580,20 @@ class RkapSubmissionForm extends Component
                     'budget_items' => $wp->budgetItems->map(function ($bi) {
                         $coa = Coa::where('code', $bi->account_code)->first();
                         return [
-                            'id' => $bi->id,
-                            'coa_id' => $coa ? $coa->id : null,
-                            'account_code' => $bi->account_code ?? '',
-                            'description' => $bi->description,
-                            'unit' => $bi->unit ?? '',
-                            'quantity' => $bi->quantity,
-                            'unit_price' => $bi->unit_price,
-                            'remarks' => $bi->remarks ?? '',
-                            'monthly_distribution' => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
-                            'distribution_months' => $bi->monthlies->pluck('month')->toArray(),
-                            'cash_out_distribution' => $bi->cashOuts->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
-                            'cash_out_months' => $bi->cashOuts->pluck('month')->toArray(),
+                            'id'                       => $bi->id,
+                            'coa_id'                   => $coa ? $coa->id : null,
+                            'account_code'             => $bi->account_code ?? '',
+                            'description'              => $bi->description,
+                            'unit'                     => $bi->unit ?? '',
+                            'quantity'                 => $bi->quantity,
+                            'unit_price'               => $bi->unit_price,
+                            'remarks'                  => $bi->remarks ?? '',
+                            'monthly_distribution'     => $bi->monthlies->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'distribution_months'      => $bi->monthlies->pluck('month')->toArray(),
+                            'cash_out_distribution'    => $bi->cashOuts->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'cash_out_months'          => $bi->cashOuts->pluck('month')->toArray(),
+                            'realization_distribution' => $bi->realizations->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'realization_months'       => $bi->realizations->pluck('month')->toArray(),
                         ];
                     })->toArray(),
                 ];
@@ -652,14 +732,16 @@ class RkapSubmissionForm extends Component
 
     private function clearBudgetItemDetails(int $wpIndex, int $actIndex, int $biIndex): void
     {
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit'] = '';
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['quantity'] = 1;
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit_price'] = 0;
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['remarks'] = '';
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['monthly_distribution'] = [];
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['distribution_months'] = [];
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cash_out_distribution'] = [];
-        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cash_out_months'] = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit']                      = '';
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['quantity']                  = 1;
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit_price']                = 0;
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['remarks']                   = '';
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['monthly_distribution']      = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['distribution_months']       = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cash_out_distribution']     = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cash_out_months']           = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['realization_distribution']  = [];
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['realization_months']        = [];
     }
 
     public function removeGroup(int $wpIndex, int $actIndex, array $indices): void
@@ -943,7 +1025,7 @@ class RkapSubmissionForm extends Component
                         foreach ($distribution as $month => $amount) {
                             if ((float) $amount > 0) {
                                 $budgetItem->monthlies()->create([
-                                    'month' => (int) $month,
+                                    'month'  => (int) $month,
                                     'amount' => (float) $amount,
                                 ]);
                             }
@@ -955,9 +1037,25 @@ class RkapSubmissionForm extends Component
                         foreach ($cashOutDistribution as $month => $amount) {
                             if ((float) $amount > 0) {
                                 $budgetItem->cashOuts()->create([
-                                    'month' => (int) $month,
+                                    'month'  => (int) $month,
                                     'amount' => (float) $amount,
                                 ]);
+                            }
+                        }
+
+                        // Save realization
+                        $budgetItem->realizations()->delete();
+                        $realizationDistribution = $biData['realization_distribution'] ?? [];
+                        foreach ($realizationDistribution as $month => $amount) {
+                            if ((float) $amount >= 0 && isset($month)) {
+                                $budgetItem->realizations()->updateOrCreate(
+                                    ['month' => (int) $month],
+                                    [
+                                        'amount'      => (float) $amount,
+                                        'uploaded_by' => auth()->id(),
+                                        'uploaded_at' => now(),
+                                    ]
+                                );
                             }
                         }
                     }

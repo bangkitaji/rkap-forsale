@@ -23,20 +23,24 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
         $rows[] = array_merge(
             ['Direktorat', 'Departemen', 'Biro', 'COA SAP', 'COA SAP Desc', 'Kode Program Kerja', 'Program Kerja', 'Kode Kegiatan', 'Nama Kegiatan'],
             ['Budget', '', '', '', '', '', '', '', '', '', '', '', ''],
-            ['Kas Keluar', '', '', '', '', '', '', '', '', '', '', '', '']
+            ['Kas Keluar', '', '', '', '', '', '', '', '', '', '', '', ''],
+            ['Realisasi', '', '', '', '', '', '', '', '', '', '', '', '']
         );
 
         // Row 2 — month sub-headers
         $rows[] = array_merge(
             ['', '', '', '', '', '', '', '', ''],
             $this->monthHeaders('Budget'),
-            $this->monthHeaders('Kas Keluar')
+            $this->monthHeaders('Kas Keluar'),
+            $this->monthHeaders('Realisasi')
         );
 
         $grandBudgetByMonth  = array_fill(1, 12, 0);
         $grandCashByMonth    = array_fill(1, 12, 0);
+        $grandRealByMonth    = array_fill(1, 12, 0);
         $grandBudgetTotal    = 0;
         $grandCashTotal      = 0;
+        $grandRealTotal      = 0;
 
         foreach ($this->submissions as $submission) {
             $submission->loadMissing([
@@ -45,6 +49,7 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 'workPlans.workPlan',
                 'workPlans.budgetItems.monthlies',
                 'workPlans.budgetItems.cashOuts',
+                'workPlans.budgetItems.realizations',
             ]);
 
             $dirName  = $submission->bureau?->department?->directorate?->name ?? '-';
@@ -55,6 +60,7 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 foreach ($wp->budgetItems as $bi) {
                     $budgetByMonth  = array_fill(1, 12, 0);
                     $cashOutByMonth = array_fill(1, 12, 0);
+                    $realByMonth    = array_fill(1, 12, 0);
 
                     foreach ($bi->monthlies as $monthly) {
                         $budgetByMonth[(int) $monthly->month] = (float) $monthly->amount;
@@ -62,17 +68,23 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                     foreach ($bi->cashOuts as $cashOut) {
                         $cashOutByMonth[(int) $cashOut->month] = (float) $cashOut->amount;
                     }
+                    foreach ($bi->realizations as $realization) {
+                        $realByMonth[(int) $realization->month] = (float) $realization->amount;
+                    }
 
                     $budgetTotal  = array_sum($budgetByMonth);
                     $cashTotal    = array_sum($cashOutByMonth);
+                    $realTotal    = array_sum($realByMonth);
 
                     // accumulate grand totals
                     for ($m = 1; $m <= 12; $m++) {
                         $grandBudgetByMonth[$m] += $budgetByMonth[$m];
                         $grandCashByMonth[$m]   += $cashOutByMonth[$m];
+                        $grandRealByMonth[$m]   += $realByMonth[$m];
                     }
                     $grandBudgetTotal += $budgetTotal;
                     $grandCashTotal   += $cashTotal;
+                    $grandRealTotal   += $realTotal;
 
                     $rows[] = array_merge(
                         [
@@ -89,7 +101,9 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                         array_values($budgetByMonth),
                         [$budgetTotal],
                         array_values($cashOutByMonth),
-                        [$cashTotal]
+                        [$cashTotal],
+                        array_values($realByMonth),
+                        [$realTotal]
                     );
                 }
             }
@@ -101,7 +115,9 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
             array_values($grandBudgetByMonth),
             [$grandBudgetTotal],
             array_values($grandCashByMonth),
-            [$grandCashTotal]
+            [$grandCashTotal],
+            array_values($grandRealByMonth),
+            [$grandRealTotal]
         );
 
         return $rows;
@@ -118,21 +134,27 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                     $sheet->mergeCells("{$col}1:{$col}2");
                 }
 
-                // Group headers: Budget (J-V) and Kas Keluar (W-AI)
+                // Group headers: Budget (J-V), Kas Keluar (W-AI), Realisasi (AJ-AV)
                 $sheet->mergeCells('J1:V1');
                 $sheet->mergeCells('W1:AI1');
+                $sheet->mergeCells('AJ1:AV1');
 
                 // Header styling
-                $sheet->getStyle('A1:AI2')->applyFromArray([
+                $sheet->getStyle('A1:AV2')->applyFromArray([
                     'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill'      => ['fillType' => 'solid', 'startColor' => ['rgb' => '1A3C6E']],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center', 'wrapText' => true],
                     'borders'   => ['allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => '000000']]],
                 ]);
 
+                // Realisasi header — green for distinction
+                $sheet->getStyle('AJ1:AV2')->applyFromArray([
+                    'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1E6B3C']],
+                ]);
+
                 // Grand total row styling
                 $highestRow = $sheet->getHighestRow();
-                $sheet->getStyle("A{$highestRow}:AI{$highestRow}")->applyFromArray([
+                $sheet->getStyle("A{$highestRow}:AV{$highestRow}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'C00000']],
                 ]);
@@ -141,13 +163,13 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 if ($highestRow >= 3) {
                     $dataEnd = $highestRow - 1;
                     if ($dataEnd >= 3) {
-                        $sheet->getStyle("A3:AI{$dataEnd}")->applyFromArray([
+                        $sheet->getStyle("A3:AV{$dataEnd}")->applyFromArray([
                             'borders'   => ['allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => 'D9D9D9']]],
                             'alignment' => ['vertical' => 'top'],
                         ]);
                     }
                     // Number format for numeric columns
-                    $sheet->getStyle("J3:AI{$highestRow}")
+                    $sheet->getStyle("J3:AV{$highestRow}")
                         ->getNumberFormat()
                         ->setFormatCode('#,##0');
                 }

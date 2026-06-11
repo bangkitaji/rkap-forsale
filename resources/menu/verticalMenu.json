@@ -33,6 +33,13 @@
       "permission": "rkap.compilation.dept"
     },
     {
+      "url": "rkap/realization-upload",
+      "icon": "menu-icon icon-base bx bx-trending-up",
+      "name": "Realisasi",
+      "slug": "rkap-realization-upload",
+      "permission": "rkap.realization.upload"
+    },
+    {
       "url": "rkap/periods",
       "icon": "menu-icon icon-base bx bx-calendar",
       "name": "Periode RKAP",

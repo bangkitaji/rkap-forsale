@@ -54,6 +54,7 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dept', // see own dept/bureau submissions
             'rkap.compilation.dir',  // see own directorate submissions
             'rkap.compilation.all',  // see all directorates
+            'rkap.realization.upload',
         ];
 
         foreach ($permissions as $perm) {
@@ -98,6 +99,7 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dept', // inherits
             'rkap.compilation.dir',  // inherits
             'rkap.compilation.all',  // can see all directorates
+            'rkap.realization.upload',
         ]);
 
         // ── 4. Sample Organization ──

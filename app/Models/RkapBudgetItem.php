@@ -59,6 +59,19 @@ class RkapBudgetItem extends Model
         return (float) $this->cashOuts->sum('amount');
     }
 
+    public function realizations(): HasMany
+    {
+        return $this->hasMany(RkapBudgetItemRealization::class)->orderBy('month');
+    }
+
+    /**
+     * Sum of all realization amounts for this budget item.
+     */
+    public function getRealizationTotalAttribute(): float
+    {
+        return (float) $this->realizations->sum('amount');
+    }
+
     protected static function booted(): void
     {
         static::saving(function (RkapBudgetItem $item) {

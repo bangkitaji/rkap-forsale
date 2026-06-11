@@ -29,12 +29,16 @@ class RoleAndUserSeeder extends Seeder
         $permMasterDataCoaManage = Permission::firstOrCreate(['name' => 'masterdata.coa.manage', 'guard_name' => 'web']);
         $permRkapShow = Permission::firstOrCreate(['name' => 'rkap.show', 'guard_name' => 'web']);
         $permRkapSubmissionsDept = Permission::firstOrCreate(['name' => 'rkap.submissions.dept', 'guard_name' => 'web']);
+        $permRkapCompilationDept = Permission::firstOrCreate(['name' => 'rkap.compilation.dept', 'guard_name' => 'web']);
+        $permRkapManagePeriod = Permission::firstOrCreate(['name' => 'rkap.manage.period', 'guard_name' => 'web']);
+        $permRkapRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
 
 
 
-        // create role
+        // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleUser = Role::firstOrCreate(['name' => 'user']);
+        $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
 
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
@@ -47,6 +51,15 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataCoaManage,
             $permRkapShow,
             $permRkapSubmissionsDept,
+            $permRkapCompilationDept,
+            $permRkapManagePeriod,
+            $permRkapRealizationUpload,
+        ]);
+
+        $roleVerifikator->givePermissionTo([
+            $permRkapShow,
+            $permRkapSubmissionsDept,
+            $permRkapRealizationUpload,
         ]);
 
         // create admin user

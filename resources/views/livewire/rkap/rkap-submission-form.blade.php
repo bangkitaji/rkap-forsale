@@ -513,6 +513,8 @@
                           $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
                           $cashOutRemainder = $biTotal - $cashOutAllocated;
                           $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
+                          $realizationAllocated = array_sum($bi['realization_distribution'] ?? []);
+                          $selectedRealizationMonths = $bi['realization_months'] ?? [];
                           $modalKey = 'wp' . $wpIdx . '-act' . $actIdx . '-bi' . $biIdx;
                         @endphp
                         <tr
@@ -599,7 +601,7 @@
                               @endif
                             </div>
 
-                            @if (!empty($selectedMonths) || !empty($selectedCashOutMonths))
+                            @if (!empty($selectedMonths) || !empty($selectedCashOutMonths) || !empty($selectedRealizationMonths))
                               <div class="mt-1">
                                 @if (!empty($selectedMonths))
                                   @if (abs($monthlyRemainder) < 0.01)
@@ -615,6 +617,14 @@
                                         class="bx bx-check"></i> Kas</span>
                                   @else
                                     <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
+                                  @endif
+                                @endif
+                                @if (!empty($selectedRealizationMonths))
+                                  @if ($realizationAllocated > 0)
+                                    <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i
+                                        class="bx bx-trending-up"></i> Real</span>
+                                  @else
+                                    <span class="badge bg-secondary rounded-pill" style="font-size:0.6rem;">Real</span>
                                   @endif
                                 @endif
                               </div>
@@ -637,7 +647,10 @@
                   $cashOutAllocated = array_sum($bi['cash_out_distribution'] ?? []);
                   $cashOutRemainder = $biTotal - $cashOutAllocated;
                   $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
-                  $allMonths = array_unique(array_merge($selectedMonths, $selectedCashOutMonths));
+                  $realizationAllocated = array_sum($bi['realization_distribution'] ?? []);
+                  $realizationRemainder = $biTotal - $realizationAllocated;
+                  $selectedRealizationMonths = $bi['realization_months'] ?? [];
+                  $allMonths = array_unique(array_merge($selectedMonths, $selectedCashOutMonths, $selectedRealizationMonths));
                   sort($allMonths);
                   $modalKey = 'wp' . $wpIdx . '-act' . $actIdx . '-bi' . $biIdx;
                 @endphp
@@ -786,15 +799,63 @@
                               class="bx bx-error-circle me-1"></i>{{ $message }}</div>
                         @enderror
                       </div>
-                      {{-- 3-column summary table --}}
+                      {{-- Realisasi --}}
+                      <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <div class="d-flex align-items-center gap-2">
+                            <i class="bx bx-trending-up text-success"></i>
+                            <span class="fw-semibold text-success small">Realisasi</span>
+                            @if (!empty($selectedRealizationMonths))
+                              <span class="badge bg-label-success rounded-pill">{{ count($selectedRealizationMonths) }} bulan</span>
+                            @endif
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            @if ($biTotal > 0)
+                              @if (abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths))
+                                <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
+                              @elseif($realizationRemainder < 0)
+                                <span class="badge bg-danger rounded-pill small">Melebihi Rp {{ number_format(abs($realizationRemainder), 0, ',', '.') }}</span>
+                              @elseif(!empty($selectedRealizationMonths))
+                                <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($realizationRemainder, 0, ',', '.') }}</span>
+                              @endif
+                            @endif
+                            <button type="button"
+                              wire:click="distributeRealizationEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                              class="btn btn-xs btn-outline-success py-0 px-2" style="font-size:0.72rem;"
+                              @if ($biTotal <= 0) disabled @endif>
+                              <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                            </button>
+                          </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                          <label class="form-label small text-muted mb-0">Pilih Bulan Realisasi:</label>
+                          <button type="button"
+                            wire:click="selectAllRealizationMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                            class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;">
+                            {{ count($selectedRealizationMonths) === 12 ? 'Deselect All' : 'Select All' }}
+                          </button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                          @foreach ($monthLabels as $monthNum => $monthLabel)
+                            <button type="button"
+                              wire:click="toggleRealizationMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
+                              class="btn btn-sm {{ in_array($monthNum, $selectedRealizationMonths) ? 'btn-success' : 'btn-outline-secondary' }}"
+                              style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                              {{ $monthLabel }}
+                            </button>
+                          @endforeach
+                        </div>
+                      </div>
+                      {{-- 4-column summary table --}}
                       @if (!empty($allMonths))
                         <div class="border rounded-2 table-responsive">
                           <table class="table table-sm table-bordered mb-0" style="min-width: 600px;">
                             <thead class="table-primary">
                               <tr>
-                                <th class="text-center" style="width:110px;">Bulan</th>
+                                <th class="text-center" style="width:90px;">Bulan</th>
                                 <th class="text-end">Distribusi Beban (Rp)</th>
                                 <th class="text-end">Rencana Kas Keluar (Rp)</th>
+                                <th class="text-end">Realisasi (Rp)</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -802,8 +863,9 @@
                                 @php
                                   $isDistribMonth = in_array($monthNum, $selectedMonths);
                                   $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
+                                  $isRealizationMonth = in_array($monthNum, $selectedRealizationMonths);
                                 @endphp
-                                @if ($isDistribMonth || $isCashOutMonth)
+                                @if ($isDistribMonth || $isCashOutMonth || $isRealizationMonth)
                                   <tr>
                                     <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
                                     <td class="text-end">
@@ -834,6 +896,20 @@
                                         <span class="text-muted small">—</span>
                                       @endif
                                     </td>
+                                    <td class="text-end">
+                                      @if ($isRealizationMonth)
+                                        <div class="input-group input-group-sm justify-content-end">
+                                          <span class="input-group-text"
+                                            style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
+                                          <input type="number" class="form-control form-control-sm text-end"
+                                            wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.realization_distribution.{{ $monthNum }}"
+                                            min="0" step="1000" placeholder="0"
+                                            style="font-size:0.8rem;max-width:180px;">
+                                        </div>
+                                      @else
+                                        <span class="text-muted small">—</span>
+                                      @endif
+                                    </td>
                                   </tr>
                                 @endif
                               @endforeach
@@ -841,24 +917,26 @@
                             <tfoot class="table-light">
                               <tr>
                                 <th class="text-center small">Total</th>
-                                <th
-                                  class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                <th class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($monthlyAllocated, 0, ',', '.') }}
                                 </th>
-                                <th
-                                  class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}
+                                </th>
+                                <th class="text-end small {{ abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths) ? 'text-success' : ($realizationRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                  Rp {{ number_format($realizationAllocated, 0, ',', '.') }}
                                 </th>
                               </tr>
                               <tr>
                                 <th class="text-center small text-muted">Sisa</th>
-                                <th
-                                  class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                <th class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($monthlyRemainder, 0, ',', '.') }}
                                 </th>
-                                <th
-                                  class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
+                                </th>
+                                <th class="text-end small {{ abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths) ? 'text-success' : ($realizationRemainder < 0 ? 'text-danger' : 'text-warning') }}">
+                                  Rp {{ number_format($realizationRemainder, 0, ',', '.') }}
                                 </th>
                               </tr>
                             </tfoot>

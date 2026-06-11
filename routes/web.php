@@ -91,6 +91,29 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/compilation', \App\Livewire\Rkap\RkapSubmissionCompilation::class)
             ->middleware('permission:rkap.compilation.dept')
             ->name('rkap-submissions-compilation');
+        Route::get('/realization-upload', \App\Livewire\Rkap\RkapRealizationUpload::class)
+            ->middleware('permission:rkap.realization.upload')
+            ->name('rkap-realization-upload');
+        Route::get('/realization-template/download', function () {
+            $periodId = request('period_id') ? (int) request('period_id') : null;
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\RkapRealizationTemplateExport($periodId),
+                'realization_template.xlsx'
+            );
+        })
+            ->middleware('permission:rkap.realization.upload')
+            ->name('rkap-realization-template-download');
+
+        Route::get('/realization-template/download-csv', function () {
+            $periodId = request('period_id') ? (int) request('period_id') : null;
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\RkapRealizationTemplateExport($periodId),
+                'realization_template.csv',
+                \Maatwebsite\Excel\Excel::CSV
+            );
+        })
+            ->middleware('permission:rkap.realization.upload')
+            ->name('rkap-realization-template-download-csv');
     });
 
     // Master Data Group

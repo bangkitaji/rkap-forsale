@@ -18,13 +18,15 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
     $rows[] = array_merge(
       ['COA SAP', 'COA SAP Desc', 'Dept', 'Biro', 'Kode Program kerja', 'Program Kerja', 'Kode Program Kegiatan', 'Nama Kegiatan'],
       ['Budget', '', '', '', '', '', '', '', '', '', '', '', ''],
-      ['Kas Keluar', '', '', '', '', '', '', '', '', '', '', '', '']
+      ['Kas Keluar', '', '', '', '', '', '', '', '', '', '', '', ''],
+      ['Realisasi', '', '', '', '', '', '', '', '', '', '', '', '']
     );
 
     $rows[] = array_merge(
       ['', '', '', '', '', '', '', ''],
       $this->monthHeaders('Budget Month'),
-      $this->monthHeaders('Kas Keluar Month')
+      $this->monthHeaders('Kas Keluar Month'),
+      $this->monthHeaders('Realisasi Month')
     );
 
     $this->submission->load([
@@ -33,6 +35,7 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
       'workPlans.workPlan',
       'workPlans.budgetItems.monthlies',
       'workPlans.budgetItems.cashOuts',
+      'workPlans.budgetItems.realizations',
     ]);
 
     foreach ($this->submission->workPlans as $wp) {
@@ -47,8 +50,14 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
           $cashOutByMonth[(int) $cashOut->month] = (float) $cashOut->amount;
         }
 
-        $budgetTotal = array_sum($budgetByMonth);
-        $cashOutTotal = array_sum($cashOutByMonth);
+        $realizationByMonth = array_fill(1, 12, 0);
+        foreach ($bi->realizations as $realization) {
+          $realizationByMonth[(int) $realization->month] = (float) $realization->amount;
+        }
+
+        $budgetTotal      = array_sum($budgetByMonth);
+        $cashOutTotal     = array_sum($cashOutByMonth);
+        $realizationTotal = array_sum($realizationByMonth);
 
         $rows[] = array_merge(
           [
@@ -90,6 +99,21 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
             $cashOutByMonth[11],
             $cashOutByMonth[12],
             $cashOutTotal,
+          ],
+          [
+            $realizationByMonth[1],
+            $realizationByMonth[2],
+            $realizationByMonth[3],
+            $realizationByMonth[4],
+            $realizationByMonth[5],
+            $realizationByMonth[6],
+            $realizationByMonth[7],
+            $realizationByMonth[8],
+            $realizationByMonth[9],
+            $realizationByMonth[10],
+            $realizationByMonth[11],
+            $realizationByMonth[12],
+            $realizationTotal,
           ]
         );
       }
@@ -109,12 +133,13 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
           $sheet->mergeCells("{$col}1:{$col}2");
         }
 
-        // Group merge for Budget (I-U) and Kas Keluar (V-AH)
+        // Group merge: Budget (I-U), Kas Keluar (V-AH), Realisasi (AI-AU)
         $sheet->mergeCells('I1:U1');
         $sheet->mergeCells('V1:AH1');
+        $sheet->mergeCells('AI1:AU1');
 
         // Header styles
-        $sheet->getStyle('A1:AH2')->applyFromArray([
+        $sheet->getStyle('A1:AU2')->applyFromArray([
           'font' => [
             'bold' => true,
             'color' => ['rgb' => 'FFFFFF'],
@@ -136,10 +161,18 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
           ],
         ]);
 
+        // Realisasi header — different color for distinction
+        $sheet->getStyle('AI1:AU2')->applyFromArray([
+          'fill' => [
+            'fillType' => 'solid',
+            'startColor' => ['rgb' => '1E6B3C'],
+          ],
+        ]);
+
         // Data styles
         $highestRow = $sheet->getHighestRow();
         if ($highestRow >= 3) {
-          $sheet->getStyle("A3:AH{$highestRow}")->applyFromArray([
+          $sheet->getStyle("A3:AU{$highestRow}")->applyFromArray([
             'borders' => [
               'allBorders' => [
                 'borderStyle' => 'thin',
@@ -151,8 +184,8 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
             ],
           ]);
 
-          // Number format for Budget + Kas Keluar months and totals
-          $sheet->getStyle("I3:AH{$highestRow}")
+          // Number format for Budget + Kas Keluar + Realisasi months and totals
+          $sheet->getStyle("I3:AU{$highestRow}")
             ->getNumberFormat()
             ->setFormatCode('#,##0');
         }
@@ -178,7 +211,8 @@ class RkapSubmissionExport implements FromArray, WithEvents, ShouldAutoSize
       "{$prefix} 10",
       "{$prefix} 11",
       "{$prefix} 12",
-      str_contains($prefix, 'Kas Keluar') ? 'Kas Keluar Total' : 'Budget Total',
+      str_contains($prefix, 'Kas Keluar') ? 'Kas Keluar Total' : (str_contains($prefix, 'Realisasi') ? 'Realisasi Total' : 'Budget Total'),
     ];
   }
 }
+
