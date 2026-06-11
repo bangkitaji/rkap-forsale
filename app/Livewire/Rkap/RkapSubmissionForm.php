@@ -48,14 +48,17 @@ class RkapSubmissionForm extends Component
     public function mount(?int $periodId = null, ?int $id = null): void
     {
         if ($id) {
-            $this->submission = RkapSubmission::with([
-                'workPlans.budgetItems.monthlies',
-                'workPlans.budgetItems.cashOuts',
-                'workPlans.budgetItems.realizations',
-            ])->findOrFail($id);
+            $this->submission = RkapSubmission::findOrFail($id);
             $this->submissionId = $id;
             $this->periodId = $this->submission->rkap_period_id;
             $this->period = $this->submission->period;
+
+            // Eager-load relations; scope realizations to this period explicitly
+            $this->submission->load([
+                'workPlans.budgetItems.monthlies',
+                'workPlans.budgetItems.cashOuts',
+                'workPlans.budgetItems.realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
+            ]);
             $this->notes = $this->submission->notes ?? '';
             $this->loadWorkPlans();
         } elseif ($periodId) {
@@ -1043,17 +1046,23 @@ class RkapSubmissionForm extends Component
                             }
                         }
 
-                        // Save realization
-                        $budgetItem->realizations()->delete();
+                        // Save realization — scoped to this period
+                        $budgetItem->realizations()
+                            ->where('rkap_period_id', $this->periodId)
+                            ->delete();
                         $realizationDistribution = $biData['realization_distribution'] ?? [];
                         foreach ($realizationDistribution as $month => $amount) {
                             if ((float) $amount >= 0 && isset($month)) {
                                 $budgetItem->realizations()->updateOrCreate(
-                                    ['month' => (int) $month],
                                     [
-                                        'amount'      => (float) $amount,
-                                        'uploaded_by' => auth()->id(),
-                                        'uploaded_at' => now(),
+                                        'month'          => (int) $month,
+                                        'rkap_period_id' => $this->periodId,
+                                    ],
+                                    [
+                                        'amount'         => (float) $amount,
+                                        'rkap_period_id' => $this->periodId,
+                                        'uploaded_by'    => auth()->id(),
+                                        'uploaded_at'    => now(),
                                     ]
                                 );
                             }

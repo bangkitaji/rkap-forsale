@@ -12,9 +12,9 @@ use Maatwebsite\Excel\Events\AfterSheet;
  * Generates the realization upload template (.xlsx / .csv).
  *
  * Columns:
- *   budget_item_id | month | bureaus_name | workplan_code | workplan_name |
+ *   budget_item_id | bureaus_name | workplan_code | workplan_name |
  *   activity_code | activity_name | coa_code | coa_desc | budget_item_desc |
- *   amount_of_rkap | sum_of_uploaded_realization | notes | amount
+ *   amount_of_rkap | sum_of_uploaded_realization | notes | month | amount
  */
 class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAutoSize
 {
@@ -29,7 +29,6 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
     {
         $headers = [
             'budget_item_id',
-            'month',
             'bureaus_name',
             'workplan_code',
             'workplan_name',
@@ -41,12 +40,12 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
             'amount_of_rkap',
             'sum_of_uploaded_realization',
             'notes',
+            'month',
             'amount',
         ];
 
         $hints = [
             '(integer)',
-            '(1–12)',
             '(otomatis diabaikan)',
             '(otomatis diabaikan)',
             '(otomatis diabaikan)',
@@ -58,6 +57,7 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
             '(otomatis diabaikan)',
             '(otomatis diabaikan)',
             '(opsional)',
+            '(1–12)',
             '(numeric ≥ 0)',
         ];
 
@@ -71,7 +71,8 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 'workPlan.submission.bureau',
                 'workPlan.activity',
                 'workPlan.workPlan',
-                'realizations',
+                // Eager-load only realizations for this specific period
+                'realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
             ])
             ->get();
 
@@ -90,31 +91,29 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 // Map current realizations by month to easily fetch
                 $realizationsMap = $item->realizations->pluck('amount', 'month')->toArray();
 
-                for ($month = 1; $month <= 12; $month++) {
-                    $currentAmount = isset($realizationsMap[$month]) ? (float) $realizationsMap[$month] : 0.0;
+                $currentMonth = (int) date('n');
 
-                    $rows[] = [
-                        $item->id,
-                        $month,
-                        $bureauName,
-                        $wpCode,
-                        $wpName,
-                        $activityCode,
-                        $activityName,
-                        $coaCode,
-                        $coaDesc,
-                        $biDesc,
-                        $amountRkap,
-                        $sumRealization,
-                        '', // notes starts empty
-                        $currentAmount,
-                    ];
-                }
+                $rows[] = [
+                    $item->id,
+                    $bureauName,
+                    $wpCode,
+                    $wpName,
+                    $activityCode,
+                    $activityName,
+                    $coaCode,
+                    $coaDesc,
+                    $biDesc,
+                    $amountRkap,
+                    $sumRealization,
+                    '', // notes starts empty
+                    $currentMonth,
+                    0,
+                ];
             }
         } else {
+            $currentMonth = (int) date('n');
             // Sample data row when no period is selected
             $rows[] = [
-                1,
                 1,
                 'Biro TI',
                 'WP001',
@@ -126,8 +125,9 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 'Laptop developer',
                 15000000,
                 0,
-                'Realisasi Jan',
-                5000000,
+                'Realisasi ' . date('M'),
+                $currentMonth,
+                0,
             ];
         }
 
@@ -204,16 +204,20 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                         ],
                     ]);
 
-                    // Number formats for amount_of_rkap (K), sum_of_uploaded_realization (L), amount (N)
+                    // Number formats for amount_of_rkap (J), sum_of_uploaded_realization (K)
+                    // J & K are informational — formatted with thousands separator for readability
+                    $sheet->getStyle("J3:J{$highestRow}")
+                        ->getNumberFormat()
+                        ->setFormatCode('#,##0');
                     $sheet->getStyle("K3:K{$highestRow}")
                         ->getNumberFormat()
                         ->setFormatCode('#,##0');
-                    $sheet->getStyle("L3:L{$highestRow}")
-                        ->getNumberFormat()
-                        ->setFormatCode('#,##0');
+                    // amount (N) — plain integer format, NO thousand separators.
+                    // Using '#,##0' here would render "1.000.000" in Indonesian locale,
+                    // causing (float) cast to truncate at the first dot on import.
                     $sheet->getStyle("N3:N{$highestRow}")
                         ->getNumberFormat()
-                        ->setFormatCode('#,##0');
+                        ->setFormatCode('0');
                 }
 
                 // Row heights
@@ -222,18 +226,18 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
 
                 // Column widths (manual override after auto-size)
                 $sheet->getColumnDimension('A')->setWidth(18); // budget_item_id
-                $sheet->getColumnDimension('B')->setWidth(8);  // month
-                $sheet->getColumnDimension('C')->setWidth(25); // bureaus_name
-                $sheet->getColumnDimension('D')->setWidth(18); // workplan_code
-                $sheet->getColumnDimension('E')->setWidth(30); // workplan_name
-                $sheet->getColumnDimension('F')->setWidth(18); // activity_code
-                $sheet->getColumnDimension('G')->setWidth(30); // activity_name
-                $sheet->getColumnDimension('H')->setWidth(12); // coa_code
-                $sheet->getColumnDimension('I')->setWidth(30); // coa_desc
-                $sheet->getColumnDimension('J')->setWidth(30); // budget_item_desc
-                $sheet->getColumnDimension('K')->setWidth(18); // amount_of_rkap
-                $sheet->getColumnDimension('L')->setWidth(25); // sum_of_uploaded_realization
-                $sheet->getColumnDimension('M')->setWidth(25); // notes
+                $sheet->getColumnDimension('B')->setWidth(25); // bureaus_name
+                $sheet->getColumnDimension('C')->setWidth(18); // workplan_code
+                $sheet->getColumnDimension('D')->setWidth(30); // workplan_name
+                $sheet->getColumnDimension('E')->setWidth(18); // activity_code
+                $sheet->getColumnDimension('F')->setWidth(30); // activity_name
+                $sheet->getColumnDimension('G')->setWidth(12); // coa_code
+                $sheet->getColumnDimension('H')->setWidth(30); // coa_desc
+                $sheet->getColumnDimension('I')->setWidth(30); // budget_item_desc
+                $sheet->getColumnDimension('J')->setWidth(18); // amount_of_rkap
+                $sheet->getColumnDimension('K')->setWidth(25); // sum_of_uploaded_realization
+                $sheet->getColumnDimension('L')->setWidth(25); // notes
+                $sheet->getColumnDimension('M')->setWidth(8);  // month
                 $sheet->getColumnDimension('N')->setWidth(18); // amount
 
                 // Add a comment on budget_item_id header
@@ -243,14 +247,14 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                     "Harus termasuk dalam periode RKAP yang dipilih saat upload."
                 );
 
-                // Add a comment on month header
-                $monthComment = $sheet->getComment('B1');
+                // Add a comment on month header (column M)
+                $monthComment = $sheet->getComment('M1');
                 $monthComment->getText()->createTextRun(
                     "month: Bulan dalam angka 1–12.\n" .
                     "1 = Januari, 12 = Desember."
                 );
 
-                // Add a comment on amount header (last column)
+                // Add a comment on amount header (column N)
                 $amountComment = $sheet->getComment('N1');
                 $amountComment->getText()->createTextRun(
                     "amount: Jumlah realisasi anggaran untuk bulan tersebut.\n" .

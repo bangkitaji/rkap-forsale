@@ -55,7 +55,7 @@
             {{-- Period selector --}}
             <div class="mb-3">
               <label class="form-label fw-semibold" for="periodSelect">Periode RKAP <span class="text-danger">*</span></label>
-              <select id="periodSelect" class="form-select" wire:model="periodId"
+              <select id="periodSelect" class="form-select" wire:model.live="periodId"
                 wire:loading.attr="disabled" wire:target="uploadAndImport">
                 <option value="">— Pilih Periode —</option>
                 @foreach ($periodOptions as $period)
@@ -127,7 +127,6 @@
               </thead>
               <tbody>
                 <tr><td><code>budget_item_id</code></td><td><span class="badge bg-danger">Ya</span></td><td>ID dari tabel rkap_budget_items (harus termasuk periode terpilih)</td></tr>
-                <tr><td><code>month</code></td><td><span class="badge bg-danger">Ya</span></td><td>Bulan angka 1–12</td></tr>
                 <tr><td><code>bureaus_name</code></td><td><span class="badge bg-secondary">Tidak</span></td><td>Nama biro (diabaikan otomatis saat import)</td></tr>
                 <tr><td><code>workplan_code</code></td><td><span class="badge bg-secondary">Tidak</span></td><td>Kode program kerja (diabaikan otomatis saat import)</td></tr>
                 <tr><td><code>workplan_name</code></td><td><span class="badge bg-secondary">Tidak</span></td><td>Nama program kerja (diabaikan otomatis saat import)</td></tr>
@@ -139,6 +138,7 @@
                 <tr><td><code>amount_of_rkap</code></td><td><span class="badge bg-secondary">Tidak</span></td><td>Total anggaran RKAP (diabaikan otomatis saat import)</td></tr>
                 <tr><td><code>sum_of_uploaded_realization</code></td><td><span class="badge bg-secondary">Tidak</span></td><td>Total realisasi terunggah sebelumnya (diabaikan otomatis saat import)</td></tr>
                 <tr><td><code>notes</code></td><td><span class="badge bg-secondary">Opsional</span></td><td>Catatan (tidak disimpan ke database, hanya untuk referensi)</td></tr>
+                <tr><td><code>month</code></td><td><span class="badge bg-danger">Ya</span></td><td>Bulan angka 1–12</td></tr>
                 <tr><td><code>amount</code></td><td><span class="badge bg-danger">Ya</span></td><td>Jumlah realisasi bulan ini (angka ≥ 0)</td></tr>
               </tbody>
             </table>

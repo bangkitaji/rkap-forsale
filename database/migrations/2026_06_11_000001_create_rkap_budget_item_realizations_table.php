@@ -13,6 +13,9 @@ return new class extends Migration
             $table->foreignId('rkap_budget_item_id')
                 ->constrained('rkap_budget_items')
                 ->cascadeOnDelete();
+            $table->foreignId('rkap_period_id')
+                ->constrained('rkap_periods')
+                ->cascadeOnDelete();
             $table->tinyInteger('month'); // 1–12
             $table->decimal('amount', 18, 2)->default(0);
             $table->foreignId('uploaded_by')
@@ -22,7 +25,11 @@ return new class extends Migration
             $table->timestamp('uploaded_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['rkap_budget_item_id', 'month'], 'rkap_realization_item_month_unique');
+            // Unique per budget item + month + period (period-separated)
+            $table->unique(
+                ['rkap_budget_item_id', 'month', 'rkap_period_id'],
+                'rkap_realization_item_month_period_unique'
+            );
         });
     }
 
@@ -31,3 +38,4 @@ return new class extends Migration
         Schema::dropIfExists('rkap_budget_item_realizations');
     }
 };
+

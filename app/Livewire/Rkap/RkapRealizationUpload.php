@@ -209,7 +209,8 @@ class RkapRealizationUpload extends Component
             }
 
             // Amount must be >= 0
-            $amount = (float) ($row['amount'] ?? -1);
+            $rawAmount = $row['amount'] ?? '';
+            $amount = $this->sanitizeAmount($rawAmount);
             if ($amount < 0) {
                 $this->errorsList[] = "Baris {$rowNo}: amount tidak boleh negatif.";
             }
@@ -233,24 +234,29 @@ class RkapRealizationUpload extends Component
             $updated = 0;
 
             foreach ($rows as $row) {
-                $biId   = (int) $row['budget_item_id'];
-                $month  = (int) $row['month'];
-                $amount = (float) $row['amount'];
+                $biId     = (int) $row['budget_item_id'];
+                $month    = (int) $row['month'];
+                $amount   = $this->sanitizeAmount($row['amount'] ?? '0');
+                $periodId = $this->periodId;
 
+                // Scope lookup to the selected period to ensure period separation
                 $existing = RkapBudgetItemRealization::where('rkap_budget_item_id', $biId)
+                    ->where('rkap_period_id', $periodId)
                     ->where('month', $month)
                     ->first();
 
                 if ($existing) {
                     $existing->update([
-                        'amount'      => $amount,
-                        'uploaded_by' => auth()->id(),
-                        'uploaded_at' => now(),
+                        'amount'         => $amount,
+                        'rkap_period_id' => $periodId,
+                        'uploaded_by'    => auth()->id(),
+                        'uploaded_at'    => now(),
                     ]);
                     $updated++;
                 } else {
                     RkapBudgetItemRealization::create([
                         'rkap_budget_item_id' => $biId,
+                        'rkap_period_id'      => $periodId,
                         'month'               => $month,
                         'amount'              => $amount,
                         'uploaded_by'         => auth()->id(),
@@ -275,5 +281,61 @@ class RkapRealizationUpload extends Component
         return view('livewire.rkap.rkap-realization-upload', [
             'periodOptions' => $this->periodOptions,
         ])->layout('layouts.contentNavbarLayout');
+    }
+
+    /**
+     * Sanitize a raw amount string coming from the imported file.
+     *
+     * Handles locale-specific thousand separators so that both
+     * "1.000.000" (Indonesian/German dot) and "1,000,000" (en-US comma)
+     * are correctly parsed to 1000000.0.
+     *
+     * Logic:
+     *   - If the string contains BOTH a dot and a comma, the one that
+     *     appears last is the decimal separator.
+     *   - If it contains only dots and more than one, they are thousand
+     *     separators (e.g. "1.000.000" → strip dots → 1000000).
+     *   - If it contains only commas and more than one, they are thousand
+     *     separators (e.g. "1,000,000" → strip commas → 1000000).
+     *   - A single dot or single comma is treated as a decimal separator.
+     */
+    private function sanitizeAmount(string $raw): float
+    {
+        $s = trim($raw);
+
+        if ($s === '' || $s === '-') {
+            return 0.0;
+        }
+
+        $dotCount   = substr_count($s, '.');
+        $commaCount = substr_count($s, ',');
+
+        if ($dotCount > 0 && $commaCount > 0) {
+            // Both separators present: whichever comes last is the decimal.
+            $lastDot   = strrpos($s, '.');
+            $lastComma = strrpos($s, ',');
+
+            if ($lastDot > $lastComma) {
+                // e.g. "1,000.50" — comma is thousands, dot is decimal
+                $s = str_replace(',', '', $s);
+            } else {
+                // e.g. "1.000,50" — dot is thousands, comma is decimal
+                $s = str_replace('.', '', $s);
+                $s = str_replace(',', '.', $s);
+            }
+        } elseif ($dotCount > 1) {
+            // Multiple dots → all are thousand separators, e.g. "1.000.000"
+            $s = str_replace('.', '', $s);
+        } elseif ($commaCount > 1) {
+            // Multiple commas → all are thousand separators, e.g. "1,000,000"
+            $s = str_replace(',', '', $s);
+        } elseif ($commaCount === 1 && $dotCount === 0) {
+            // Single comma could be decimal (e.g. "1000,50") or thousands (e.g. "1,000")
+            // Treat as decimal separator (safer for amounts input by hand).
+            $s = str_replace(',', '.', $s);
+        }
+        // Single dot with dotCount === 1: treat as decimal separator — no change needed.
+
+        return (float) $s;
     }
 }

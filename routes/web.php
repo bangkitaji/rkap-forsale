@@ -96,9 +96,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('rkap-realization-upload');
         Route::get('/realization-template/download', function () {
             $periodId = request('period_id') ? (int) request('period_id') : null;
+            $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.xlsx';
             return \Maatwebsite\Excel\Facades\Excel::download(
                 new \App\Exports\RkapRealizationTemplateExport($periodId),
-                'realization_template.xlsx'
+                $filename
             );
         })
             ->middleware('permission:rkap.realization.upload')
@@ -106,9 +107,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/realization-template/download-csv', function () {
             $periodId = request('period_id') ? (int) request('period_id') : null;
+            $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.csv';
             return \Maatwebsite\Excel\Facades\Excel::download(
                 new \App\Exports\RkapRealizationTemplateExport($periodId),
-                'realization_template.csv',
+                $filename,
                 \Maatwebsite\Excel\Excel::CSV
             );
         })
