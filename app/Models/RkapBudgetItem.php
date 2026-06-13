@@ -14,6 +14,8 @@ class RkapBudgetItem extends Model
         'description',
         'unit',
         'quantity',
+        'unit_2',
+        'quantity_2',
         'unit_price',
         'total_price',
         'remarks',
@@ -23,6 +25,7 @@ class RkapBudgetItem extends Model
     {
         return [
             'quantity' => 'integer',
+            'quantity_2' => 'integer',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
         ];
@@ -75,7 +78,11 @@ class RkapBudgetItem extends Model
     protected static function booted(): void
     {
         static::saving(function (RkapBudgetItem $item) {
-            $item->total_price = $item->quantity * $item->unit_price;
+            if (!empty($item->unit_2)) {
+                $item->total_price = $item->quantity * ($item->quantity_2 ?? 1) * $item->unit_price;
+            } else {
+                $item->total_price = $item->quantity * $item->unit_price;
+            }
         });
     }
 }

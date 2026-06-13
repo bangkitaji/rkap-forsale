@@ -69,14 +69,14 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
             $budgetItems = RkapBudgetItem::whereHas('workPlan.submission', function ($q) {
                 $q->where('rkap_period_id', $this->periodId);
             })
-            ->with([
-                'workPlan.submission.bureau',
-                'workPlan.activity',
-                'workPlan.workPlan',
-                // Eager-load only realizations for this specific period
-                'realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
-            ])
-            ->get();
+                ->with([
+                    'workPlan.submission.bureau',
+                    'workPlan.activity',
+                    'workPlan.workPlan',
+                    // Eager-load only realizations for this specific period
+                    'realizations' => fn($q) => $q->where('rkap_period_id', $this->periodId),
+                ])
+                ->get();
 
             foreach ($budgetItems as $item) {
                 $bureauName = $item->workPlan->submission->bureau->name ?? '';
@@ -109,7 +109,7 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                     $sumRealization,
                     '', // notes starts empty
                     $currentMonth,
-                    0,
+                    '0',
                 ];
             }
         } else {
@@ -246,21 +246,21 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 $comment = $sheet->getComment('A1');
                 $comment->getText()->createTextRun(
                     "budget_item_id: ID dari tabel rkap_budget_items.\n" .
-                    "Harus termasuk dalam periode RKAP yang dipilih saat upload."
+                        "Harus termasuk dalam periode RKAP yang dipilih saat upload."
                 );
 
                 // Add a comment on month header (column M)
                 $monthComment = $sheet->getComment('M1');
                 $monthComment->getText()->createTextRun(
                     "month: Bulan dalam angka 1–12.\n" .
-                    "1 = Januari, 12 = Desember."
+                        "1 = Januari, 12 = Desember."
                 );
 
                 // Add a comment on amount header (column N)
                 $amountComment = $sheet->getComment('N1');
                 $amountComment->getText()->createTextRun(
                     "amount: Jumlah realisasi anggaran untuk bulan tersebut.\n" .
-                    "Masukkan angka lebih besar atau sama dengan 0."
+                        "Masukkan angka lebih besar atau sama dengan 0."
                 );
 
                 // Sheet title

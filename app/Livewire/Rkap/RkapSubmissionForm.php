@@ -186,6 +186,8 @@ class RkapSubmissionForm extends Component
             'description'               => '',
             'unit'                      => '',
             'quantity'                  => 1,
+            'unit_2'                    => '',
+            'quantity_2'                => null,
             'unit_price'                => 0,
             'remarks'                   => '',
             'monthly_distribution'      => [],
@@ -386,7 +388,8 @@ class RkapSubmissionForm extends Component
     public function distributeEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
         $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $months = $bi['distribution_months'] ?? [];
 
         if (empty($months) || $total <= 0) {
@@ -412,7 +415,8 @@ class RkapSubmissionForm extends Component
             return 0;
         }
 
-        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $allocated = array_sum($bi['monthly_distribution'] ?? []);
 
         return $total - $allocated;
@@ -458,7 +462,8 @@ class RkapSubmissionForm extends Component
     public function distributeCashOutEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
         $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $total = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $months = $bi['cash_out_months'] ?? [];
 
         if (empty($months) || $total <= 0) {
@@ -484,7 +489,8 @@ class RkapSubmissionForm extends Component
             return 0;
         }
 
-        $total     = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total     = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $allocated = array_sum($bi['cash_out_distribution'] ?? []);
 
         return $total - $allocated;
@@ -530,7 +536,8 @@ class RkapSubmissionForm extends Component
     public function distributeRealizationEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
         $bi     = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $total  = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total  = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $months = $bi['realization_months'] ?? [];
 
         if (empty($months) || $total <= 0) {
@@ -556,7 +563,8 @@ class RkapSubmissionForm extends Component
             return 0;
         }
 
-        $total     = (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+        $total     = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
         $allocated = array_sum($bi['realization_distribution'] ?? []);
 
         return $total - $allocated;
@@ -589,6 +597,8 @@ class RkapSubmissionForm extends Component
                             'description'              => $bi->description,
                             'unit'                     => $bi->unit ?? '',
                             'quantity'                 => $bi->quantity,
+                            'unit_2'                   => $bi->unit_2 ?? '',
+                            'quantity_2'               => $bi->quantity_2,
                             'unit_price'               => $bi->unit_price,
                             'remarks'                  => $bi->remarks ?? '',
                             'monthly_distribution'     => $bi->monthlies->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
@@ -737,6 +747,8 @@ class RkapSubmissionForm extends Component
     {
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit']                      = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['quantity']                  = 1;
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit_2']                    = '';
+        $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['quantity_2']                  = null;
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['unit_price']                = 0;
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['remarks']                   = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['monthly_distribution']      = [];
@@ -762,7 +774,8 @@ class RkapSubmissionForm extends Component
         foreach ($this->workPlans as $wp) {
             foreach (($wp['activities'] ?? []) as $act) {
                 foreach (($act['budget_items'] ?? []) as $bi) {
-                    $total += (float) ($bi['quantity'] ?? 0) * (float) ($bi['unit_price'] ?? 0);
+                    $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+                    $total += (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
                 }
             }
         }
@@ -781,6 +794,8 @@ class RkapSubmissionForm extends Component
             'workPlans.*.activities.*.budget_items' => 'required|array|min:1',
             'workPlans.*.activities.*.budget_items.*.coa_id' => 'required|integer|exists:coas,id',
             'workPlans.*.activities.*.budget_items.*.quantity' => 'required|integer|min:1',
+            'workPlans.*.activities.*.budget_items.*.unit_2' => 'nullable|string',
+            'workPlans.*.activities.*.budget_items.*.quantity_2' => 'nullable|integer|min:1',
             'workPlans.*.activities.*.budget_items.*.unit_price' => 'required|numeric|min:0',
         ];
     }
@@ -875,7 +890,8 @@ class RkapSubmissionForm extends Component
         foreach ($this->workPlans as $wpIdx => $wpData) {
             foreach ($wpData['activities'] as $actIdx => $actData) {
                 foreach ($actData['budget_items'] as $biIdx => $biData) {
-                    $total = (float) ($biData['quantity'] ?? 0) * (float) ($biData['unit_price'] ?? 0);
+                    $qty2 = (!empty($biData['unit_2'])) ? (float) ($biData['quantity_2'] ?? 1) : 1;
+                    $total = (float) ($biData['quantity'] ?? 0) * $qty2 * (float) ($biData['unit_price'] ?? 0);
                     $months = $biData['distribution_months'] ?? [];
                     $distribution = $biData['monthly_distribution'] ?? [];
 
@@ -909,7 +925,8 @@ class RkapSubmissionForm extends Component
         foreach ($this->workPlans as $wpIdx => $wpData) {
             foreach ($wpData['activities'] as $actIdx => $actData) {
                 foreach ($actData['budget_items'] as $biIdx => $biData) {
-                    $total = (float) ($biData['quantity'] ?? 0) * (float) ($biData['unit_price'] ?? 0);
+                    $qty2 = (!empty($biData['unit_2'])) ? (float) ($biData['quantity_2'] ?? 1) : 1;
+                    $total = (float) ($biData['quantity'] ?? 0) * $qty2 * (float) ($biData['unit_price'] ?? 0);
                     $months = $biData['cash_out_months'] ?? [];
                     $distribution = $biData['cash_out_distribution'] ?? [];
 
@@ -1017,6 +1034,8 @@ class RkapSubmissionForm extends Component
                                 'description' => $coa ? $coa->title : '',
                                 'unit' => $biData['unit'] ?: null,
                                 'quantity' => $biData['quantity'],
+                                'unit_2' => $biData['unit_2'] ?: null,
+                                'quantity_2' => $biData['quantity_2'] !== null && $biData['quantity_2'] !== '' ? (int) $biData['quantity_2'] : null,
                                 'unit_price' => $biData['unit_price'],
                                 'remarks' => $biData['remarks'] ?: null,
                             ]

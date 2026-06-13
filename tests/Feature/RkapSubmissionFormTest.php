@@ -648,4 +648,59 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertTrue($options->contains($this->workPlan));
         $this->assertFalse($options->contains($secondWorkPlan));
     }
+
+    public function test_second_unit_and_volume_math_and_validation(): void
+    {
+        $this->actingAs($this->user);
+
+        // Instantiate component and set up a budget item
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            // Item 1: Vol 1 = 2, Harga = 50000, no Satuan 2
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 2)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 50000)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_2', '')
+            ->set('workPlans.0.activities.0.budget_items.0.quantity_2', null);
+
+        // Grand total should be 2 * 50000 = 100000
+        $this->assertEquals(100000, $component->get('grandTotal'));
+
+        // Now set Satuan 2 to "Box" and Vol 2 to 3
+        $component->set('workPlans.0.activities.0.budget_items.0.unit_2', 'Box')
+            ->set('workPlans.0.activities.0.budget_items.0.quantity_2', 3);
+
+        // Grand total should update to 2 * 3 * 50000 = 300000
+        $this->assertEquals(300000, $component->get('grandTotal'));
+
+        // Distribute evenly over 3 months
+        $component->call('toggleMonth', 0, 0, 0, 1) // Jan
+            ->call('toggleMonth', 0, 0, 0, 2) // Feb
+            ->call('toggleMonth', 0, 0, 0, 3) // Mar
+            ->call('distributeEvenly', 0, 0, 0);
+
+        $distribution = $component->get('workPlans.0.activities.0.budget_items.0.monthly_distribution');
+        $this->assertEquals(100000, $distribution[1]);
+        $this->assertEquals(100000, $distribution[2]);
+        $this->assertEquals(100000, $distribution[3]);
+
+        // Validation test: quantity_2 = -1 should fail
+        $component->set('workPlans.0.activities.0.budget_items.0.quantity_2', -1)
+            ->call('saveDraft')
+            ->assertHasErrors(['workPlans.0.activities.0.budget_items.0.quantity_2']);
+
+        // Set valid volume 2 again and save draft
+        $component->set('workPlans.0.activities.0.budget_items.0.quantity_2', 3)
+            ->call('saveDraft')
+            ->assertHasNoErrors();
+
+        // Check database contents
+        $this->assertDatabaseHas('rkap_budget_items', [
+            'account_code' => $this->coa1->code,
+            'unit_2' => 'Box',
+            'quantity_2' => 3,
+            'total_price' => 300000.00,
+        ]);
+    }
 }
+

@@ -71,6 +71,7 @@ class RkapSeeder extends Seeder
             'rkap.submit',
             'rkap.view.own',
             'rkap.comment',
+            'rkap.show',
             'rkap.compilation.dept', // can see their own department compilation
         ]);
 
@@ -79,6 +80,7 @@ class RkapSeeder extends Seeder
             'rkap.review.dept',
             'rkap.approve.dept',
             'rkap.comment',
+            'rkap.show',
             'rkap.compilation.dept', // can see their own department compilation
         ]);
 

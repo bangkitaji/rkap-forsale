@@ -23,7 +23,7 @@
       "icon": "menu-icon icon-base bx bx-file",
       "name": "Pengajuan RKAP",
       "slug": "rkap-submissions",
-      "permission": "rkap.submissions.dept"
+      "permission": "rkap.show"
     },
     {
       "url": "rkap/compilation",
