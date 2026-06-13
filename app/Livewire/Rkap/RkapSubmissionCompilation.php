@@ -104,6 +104,81 @@ class RkapSubmissionCompilation extends Component
             ->orderBy('bureau_id')
             ->get();
 
+        // Build map of previous approved submission totals and realizations for all levels
+        $prevDataMap = [
+            'submissions' => [],
+            'departments' => [],
+            'directorates' => [],
+            'grand_total' => [
+                'budget' => 0.0,
+                'realization' => 0.0,
+                'period_title' => null,
+            ],
+        ];
+
+        foreach ($submissions as $sub) {
+            $bureauId = $sub->bureau_id;
+            $year = $sub->period?->year ?? 0;
+
+            $prevSubmission = RkapSubmission::with([
+                    'workPlans.budgetItems.realizations',
+                    'period',
+                ])
+                ->where('bureau_id', $bureauId)
+                ->where('id', '!=', $sub->id)
+                ->where('status', 'approved')
+                ->whereHas('period', fn($q) => $q->where('year', '<', $year))
+                ->orderByDesc(\Illuminate\Support\Facades\DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
+                ->first();
+
+            if ($prevSubmission) {
+                $totalRealization = 0;
+                foreach ($prevSubmission->workPlans as $wp) {
+                    foreach ($wp->budgetItems as $bi) {
+                        $totalRealization += (float) $bi->realizations->sum('amount');
+                    }
+                }
+
+                $prevDataMap['submissions'][$sub->id] = [
+                    'period_title' => $prevSubmission->period->title,
+                    'budget' => (float) $prevSubmission->total_budget,
+                    'realization' => $totalRealization,
+                ];
+
+                // Add to department total
+                $deptKey = $sub->bureau?->department?->name ?? 'Lainnya';
+                if (!isset($prevDataMap['departments'][$deptKey])) {
+                    $prevDataMap['departments'][$deptKey] = [
+                        'budget' => 0.0,
+                        'realization' => 0.0,
+                        'period_title' => $prevSubmission->period->title,
+                    ];
+                }
+                $prevDataMap['departments'][$deptKey]['budget'] += (float) $prevSubmission->total_budget;
+                $prevDataMap['departments'][$deptKey]['realization'] += $totalRealization;
+
+                // Add to directorate total
+                $dirKey = $sub->bureau?->department?->directorate?->name ?? 'Lainnya';
+                if (!isset($prevDataMap['directorates'][$dirKey])) {
+                    $prevDataMap['directorates'][$dirKey] = [
+                        'budget' => 0.0,
+                        'realization' => 0.0,
+                        'period_title' => $prevSubmission->period->title,
+                    ];
+                }
+                $prevDataMap['directorates'][$dirKey]['budget'] += (float) $prevSubmission->total_budget;
+                $prevDataMap['directorates'][$dirKey]['realization'] += $totalRealization;
+            }
+        }
+
+        foreach ($prevDataMap['submissions'] as $subData) {
+            $prevDataMap['grand_total']['budget'] += $subData['budget'];
+            $prevDataMap['grand_total']['realization'] += $subData['realization'];
+            if (!$prevDataMap['grand_total']['period_title']) {
+                $prevDataMap['grand_total']['period_title'] = $subData['period_title'];
+            }
+        }
+
         // Stats
         $grandTotal     = $submissions->sum('total_budget');
         $bureauCount    = $submissions->pluck('bureau_id')->unique()->count();
@@ -133,6 +208,7 @@ class RkapSubmissionCompilation extends Component
             'selectedPeriod' => $selectedPeriod,
             'canSeeAll'      => $canSeeAll,
             'canSeeDir'      => $canSeeDir,
+            'prevDataMap'    => $prevDataMap,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

@@ -27,6 +27,62 @@
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
       border-color: #cbd5e1;
     }
+
+    /* Custom CSS Tooltip styling */
+    .has-tooltip {
+      position: relative;
+      cursor: help;
+    }
+    .custom-tooltip-content {
+      visibility: hidden;
+      width: 250px;
+      background-color: #2f3349;
+      color: #ffffff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1080;
+      top: 110%; /* Position below the element */
+      bottom: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      font-size: 0.72rem;
+      line-height: 1.4;
+      pointer-events: none; /* Make sure it doesn't block mouse movements */
+      font-weight: normal;
+    }
+    .custom-tooltip-content::after {
+      content: "";
+      position: absolute;
+      bottom: 100%; /* At the top of the tooltip */
+      top: auto;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent #2f3349 transparent;
+    }
+    .has-tooltip:hover .custom-tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+    .tooltip-align-right {
+      right: 0 !important;
+      left: auto !important;
+      transform: none !important;
+    }
+    .tooltip-align-right::after {
+      left: auto !important;
+      right: 15px !important;
+      margin-left: 0 !important;
+    }
+    .table-responsive, .card, .card-header {
+      overflow: visible !important;
+    }
   </style>
   <div class="py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
@@ -202,7 +258,31 @@
           }
           @endphp
           <span class="text-muted small fw-semibold mb-1">Subtotal Program</span>
-          <span class="text-muted small fw-bold text-primary fs-6">Rp {{ number_format($wpSubtotal, 0, ',', '.') }}</span>
+          <span class="text-muted small fw-bold text-primary fs-6 has-tooltip">
+            Rp {{ number_format($wpSubtotal, 0, ',', '.') }}
+            <span class="custom-tooltip-content tooltip-align-right">
+              @php
+                $prevWpId = $wp['work_plan_id'] ?? null;
+                $prevProgramData = ($prevWpId && isset($prevData['map']['programs'][$prevWpId])) ? $prevData['map']['programs'][$prevWpId] : null;
+                $prevPeriod = $prevData['period'] ?? '-';
+              @endphp
+              @if ($prevProgramData)
+                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                <div class="row text-center">
+                  <div class="col-6 border-end">
+                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                    <div class="fw-bold text-white">Rp {{ number_format($prevProgramData['budget'], 0, ',', '.') }}</div>
+                  </div>
+                  <div class="col-6">
+                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                    <div class="fw-bold text-white">Rp {{ number_format($prevProgramData['realization'], 0, ',', '.') }}</div>
+                  </div>
+                </div>
+              @else
+                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+              @endif
+            </span>
+          </span>
           @if (count($workPlans) > 1)
           <button type="button" wire:click="removeWorkPlan({{ $wpIdx }})"
             class="btn btn-sm btn-outline-danger" title="Hapus program kerja">
@@ -307,7 +387,33 @@
             }
             @endphp
             <span class="text-muted small fw-semibold mb-1">Subtotal Kegiatan</span>
-            <span class="text-muted small fw-bold text-primary fs-6">Rp {{ number_format($actSubtotal, 0, ',', '.') }}</span>
+            <span class="text-muted small fw-bold text-primary fs-6 has-tooltip">
+              Rp {{ number_format($actSubtotal, 0, ',', '.') }}
+              <span class="custom-tooltip-content tooltip-align-right">
+                @php
+                  $prevWpId = $wp['work_plan_id'] ?? null;
+                  $prevActId = $act['activity_id'] ?? null;
+                  $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
+                  $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
+                  $prevPeriod = $prevData['period'] ?? '-';
+                @endphp
+                @if ($prevActivityData)
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                  <div class="row text-center">
+                    <div class="col-6 border-end">
+                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                      <div class="fw-bold text-white">Rp {{ number_format($prevActivityData['budget'], 0, ',', '.') }}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                      <div class="fw-bold text-white">Rp {{ number_format($prevActivityData['realization'], 0, ',', '.') }}</div>
+                    </div>
+                  </div>
+                @else
+                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                @endif
+              </span>
+            </span>
           </div>
         </div>
 
@@ -328,7 +434,7 @@
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Satuan</label>
             <input type="text" class="form-control form-control-sm"
-              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
+              wire:model.live.debounce.300="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
               placeholder="Paket, Unit, ...">
           </div>
           <div class="col-md-3">
@@ -450,20 +556,34 @@
                           <i class="bx bx-x"></i>
                         </button>
                         @endif
-                        <span class="input-group-text px-2 fw-semibold text-nowrap"
-                          style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;"
-                          title="Sub-total akun ini">
+                        @php
+                          $prevActId = $act['activity_id'] ?? null;
+                          $coaKey = ($prevWpId && $prevActId && $prevCode) ? "{$prevWpId}-{$prevActId}-{$prevCode}" : null;
+                          $prevCoaData = ($coaKey && isset($prevData['map']['coas'][$coaKey])) ? $prevData['map']['coas'][$coaKey] : null;
+                          $prevPeriod = $prevData['period'] ?? '-';
+                        @endphp
+                        <span class="input-group-text px-2 fw-semibold text-nowrap has-tooltip"
+                          style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;">
                           <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
                           Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
+                          <span class="custom-tooltip-content">
+                            @if ($prevCoaData)
+                              <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                              <div class="row text-center">
+                                <div class="col-6 border-end">
+                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                  <div class="fw-bold text-white">Rp {{ number_format($prevCoaData['budget'], 0, ',', '.') }}</div>
+                                </div>
+                                <div class="col-6">
+                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                  <div class="fw-bold text-white">Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
+                                </div>
+                              </div>
+                            @else
+                              <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                            @endif
+                          </span>
                         </span>
-                        @if ($prevAmount !== null && $prevPeriod)
-                        <span class="input-group-text px-2 text-nowrap"
-                          style="font-size:0.72rem; background:#fffbeb; border-color:#fcd34d; color:#92400e;"
-                          title="Realisasi periode sebelumnya: {{ $prevPeriod }}">
-                          <i class="bx bx-history me-1" style="font-size:0.8rem;"></i>
-                          {{ $prevPeriod }}: Rp {{ number_format($prevAmount, 0, ',', '.') }}
-                        </span>
-                        @endif
                       </div>
                       @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $firstIdx .
                       '.coa_id')

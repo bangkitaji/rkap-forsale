@@ -1,4 +1,62 @@
 <div>
+    <style>
+        /* Custom CSS Tooltip styling */
+        .has-tooltip {
+            position: relative;
+            cursor: help;
+            display: inline-block;
+        }
+        .custom-tooltip-content {
+            visibility: hidden;
+            width: 250px;
+            background-color: #2f3349;
+            color: #ffffff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1080;
+            top: 110%; /* Position below the element */
+            bottom: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            font-size: 0.72rem;
+            line-height: 1.4;
+            pointer-events: none; /* Make sure it doesn't block mouse movements */
+            font-weight: normal;
+        }
+        .custom-tooltip-content::after {
+            content: "";
+            position: absolute;
+            bottom: 100%; /* At the top of the tooltip */
+            top: auto;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent #2f3349 transparent;
+        }
+        .has-tooltip:hover .custom-tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-align-right {
+            right: 0 !important;
+            left: auto !important;
+            transform: none !important;
+        }
+        .tooltip-align-right::after {
+            left: auto !important;
+            right: 15px !important;
+            margin-left: 0 !important;
+        }
+        .table-responsive, .card, .card-header {
+            overflow: visible !important;
+        }
+    </style>
     {{-- Page header --}}
     <div class="d-flex justify-content-between align-items-center py-3 mb-4 flex-wrap gap-2">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Kompilasi Pengajuan RKAP</h4>
@@ -183,7 +241,29 @@
                 </div>
             </div>
             <div class="text-end">
-                <span class="fw-bold text-dark">Rp {{ number_format($dirTotal, 0, ',', '.') }}</span>
+                <span class="has-tooltip fw-bold text-dark">
+                    Rp {{ number_format($dirTotal, 0, ',', '.') }}
+                    <span class="custom-tooltip-content tooltip-align-right">
+                        @if(isset($prevDataMap['directorates'][$dirName]))
+                            @php
+                                $prev = $prevDataMap['directorates'][$dirName];
+                            @endphp
+                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        @endif
+                    </span>
+                </span>
                 <div class="text-muted small">Total Direktorat</div>
             </div>
         </div>
@@ -201,8 +281,28 @@
                         <span class="fw-semibold text-secondary">{{ $deptName }}</span>
                         <span class="badge bg-label-secondary ms-2">{{ $deptSubmissions->count() }} Biro</span>
                     </div>
-                    <span class="fw-semibold text-secondary small">
+                    <span class="has-tooltip fw-semibold text-secondary small">
                         Rp {{ number_format($deptTotal, 0, ',', '.') }}
+                        <span class="custom-tooltip-content tooltip-align-right">
+                            @if(isset($prevDataMap['departments'][$deptName]))
+                                @php
+                                    $prev = $prevDataMap['departments'][$deptName];
+                                @endphp
+                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                                <div class="row text-center">
+                                    <div class="col-6 border-end">
+                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                        <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                        <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                            @endif
+                        </span>
                     </span>
                 </div>
 
@@ -241,7 +341,29 @@
                                     {{ $submission->workPlans()->count() }}
                                 </td>
                                 <td class="text-end">
-                                    <strong>Rp {{ number_format($submission->total_budget, 0, ',', '.') }}</strong>
+                                    <span class="has-tooltip fw-bold text-dark">
+                                        Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
+                                        <span class="custom-tooltip-content tooltip-align-right">
+                                            @if(isset($prevDataMap['submissions'][$submission->id]))
+                                                @php
+                                                    $prev = $prevDataMap['submissions'][$submission->id];
+                                                @endphp
+                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                                                <div class="row text-center">
+                                                    <div class="col-6 border-end">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                        <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                        <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                            @endif
+                                        </span>
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-success">
@@ -262,8 +384,30 @@
                         <tfoot class="table-light">
                             <tr>
                                 <td colspan="5" class="text-end fw-semibold text-secondary">Sub-Total {{ $deptName }}</td>
-                                <td class="text-end fw-bold text-secondary">
-                                    Rp {{ number_format($deptTotal, 0, ',', '.') }}
+                                <td class="text-end">
+                                    <span class="has-tooltip fw-bold text-secondary">
+                                        Rp {{ number_format($deptTotal, 0, ',', '.') }}
+                                        <span class="custom-tooltip-content tooltip-align-right">
+                                            @if(isset($prevDataMap['departments'][$deptName]))
+                                                @php
+                                                    $prev = $prevDataMap['departments'][$deptName];
+                                                @endphp
+                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                                                <div class="row text-center">
+                                                    <div class="col-6 border-end">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                        <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                        <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                            @endif
+                                        </span>
+                                    </span>
                                 </td>
                                 <td colspan="2"></td>
                             </tr>
@@ -278,7 +422,29 @@
                 <span class="fw-semibold">
                     <i class="bx bx-check-double me-1"></i>Total Direktorat {{ $dirName }}
                 </span>
-                <span class="fw-bold fs-6">Rp {{ number_format($dirTotal, 0, ',', '.') }}</span>
+                <span class="has-tooltip fw-bold fs-6 text-white">
+                    Rp {{ number_format($dirTotal, 0, ',', '.') }}
+                    <span class="custom-tooltip-content tooltip-align-right text-dark">
+                        @if(isset($prevDataMap['directorates'][$dirName]))
+                            @php
+                                $prev = $prevDataMap['directorates'][$dirName];
+                            @endphp
+                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        @endif
+                    </span>
+                </span>
             </div>
         </div>
     </div>
@@ -301,8 +467,27 @@
                     </div>
                 </div>
             </div>
-            <div class="text-end">
-                <div class="fw-bold fs-4">Rp {{ number_format($grandTotal, 0, ',', '.') }}</div>
+             <div class="text-end">
+                <span class="has-tooltip fw-bold fs-4 text-white">
+                    Rp {{ number_format($grandTotal, 0, ',', '.') }}
+                    <span class="custom-tooltip-content tooltip-align-right text-dark">
+                        @if($prevDataMap['grand_total']['period_title'])
+                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevDataMap['grand_total']['period_title'] }})</div>
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prevDataMap['grand_total']['budget'], 0, ',', '.') }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                    <div class="fw-bold text-white">Rp {{ number_format($prevDataMap['grand_total']['realization'], 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        @endif
+                    </span>
+                </span>
                 @if($selectedPeriod)
                 <div class="small opacity-75">{{ $selectedPeriod->title }}</div>
                 @endif

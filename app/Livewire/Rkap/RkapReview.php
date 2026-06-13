@@ -109,7 +109,7 @@ class RkapReview extends Component
 
         // Find the most recent prior approved submission for this bureau
         $prevSubmission = RkapSubmission::with([
-                'workPlans.budgetItems',
+                'workPlans.budgetItems.realizations',
                 'period',
             ])
             ->where('bureau_id', $bureauId)
@@ -123,19 +123,54 @@ class RkapReview extends Component
             return [];
         }
 
-        $map = [];
+        $programs = [];
+        $activities = [];
+        $coas = [];
+
         foreach ($prevSubmission->workPlans as $wp) {
-            $wpKey = $wp->work_plan_id;
-            if (!$wpKey) continue;
+            $wpId = $wp->work_plan_id;
+            $actId = $wp->activity_id;
+            if (!$wpId) {
+                continue;
+            }
+
+            if (!isset($programs[$wpId])) {
+                $programs[$wpId] = ['budget' => 0.0, 'realization' => 0.0];
+            }
+
+            $actKey = "{$wpId}-{$actId}";
+            if (!isset($activities[$actKey])) {
+                $activities[$actKey] = ['budget' => 0.0, 'realization' => 0.0];
+            }
+
             foreach ($wp->budgetItems as $bi) {
                 $code = $bi->account_code;
-                if (!$code) continue;
-                $map[$wpKey][$code] = ($map[$wpKey][$code] ?? 0) + (float) $bi->total_price;
+                $budgetVal = (float) $bi->total_price;
+                $realizationVal = (float) $bi->realizations->sum('amount');
+
+                $programs[$wpId]['budget'] += $budgetVal;
+                $programs[$wpId]['realization'] += $realizationVal;
+
+                $activities[$actKey]['budget'] += $budgetVal;
+                $activities[$actKey]['realization'] += $realizationVal;
+
+                if ($code) {
+                    $coaKey = "{$wpId}-{$actId}-{$code}";
+                    if (!isset($coas[$coaKey])) {
+                        $coas[$coaKey] = ['budget' => 0.0, 'realization' => 0.0];
+                    }
+                    $coas[$coaKey]['budget'] += $budgetVal;
+                    $coas[$coaKey]['realization'] += $realizationVal;
+                }
             }
         }
 
         return [
-            'map'    => $map,
+            'map' => [
+                'programs' => $programs,
+                'activities' => $activities,
+                'coas' => $coas,
+            ],
             'period' => $prevSubmission->period?->title ?? '-',
         ];
     }
