@@ -9,49 +9,8 @@
             Hanya <strong>Verifikator</strong> yang dapat melakukan upload ini.
           </p>
 
-          {{-- Template download --}}
-          <div class="alert alert-info mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <i class="bx bx-download fs-5"></i>
-              <strong>Download Template</strong>
-            </div>
-            @if ($periodId)
-              <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('rkap-realization-template-download', ['period_id' => $periodId]) }}"
-                   class="btn btn-sm btn-success d-inline-flex align-items-center gap-1">
-                  <i class="bx bx-file"></i>
-                  Excel (.xlsx) <span class="badge bg-white text-success ms-1" style="font-size:0.65rem;">Direkomendasikan</span>
-                </a>
-                <a href="{{ route('rkap-realization-template-download-csv', ['period_id' => $periodId]) }}"
-                   class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
-                  <i class="bx bx-code-alt"></i>
-                  CSV
-                </a>
-              </div>
-              <div class="mt-2 small text-muted">
-                File template telah diisi otomatis dengan data RKAP riil dari periode yang Anda pilih.
-              </div>
-            @else
-              <div class="text-warning mb-2 small fw-semibold">
-                <i class="bx bx-info-circle me-1"></i> Silakan pilih Periode RKAP terlebih dahulu untuk mengunduh template berisi data riil.
-              </div>
-              <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-sm btn-secondary d-inline-flex align-items-center gap-1" disabled>
-                  <i class="bx bx-file"></i> Excel (.xlsx)
-                </button>
-                <button class="btn btn-sm btn-secondary d-inline-flex align-items-center gap-1" disabled>
-                  <i class="bx bx-code-alt"></i> CSV
-                </button>
-              </div>
-            @endif
-            <div class="mt-2 small text-muted">
-              Kolom wajib untuk diisi saat upload: <code>budget_item_id, month, amount</code> &mdash; Kolom opsional: <code>notes</code>. Kolom detail RKAP lainnya otomatis diabaikan saat import.
-            </div>
-          </div>
-
-          {{-- Upload form --}}
-          <form wire:submit.prevent="uploadAndImport" class="mb-4">
-
+          {{-- Selectors --}}
+          <div class="mb-4">
             {{-- Period selector --}}
             <div class="mb-3">
               <label class="form-label fw-semibold" for="periodSelect">Periode RKAP <span class="text-danger">*</span></label>
@@ -67,28 +26,82 @@
               @enderror
             </div>
 
-            {{-- File input --}}
-            <div class="mb-3">
-              <label class="form-label fw-semibold" for="realizationFile">File Excel / CSV</label>
-              <input id="realizationFile" type="file" class="form-control" wire:model="file"
-                wire:loading.attr="disabled" wire:target="file, uploadAndImport"
-                accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
-              @error('file')
-                <div class="text-danger mt-1">{{ $message }}</div>
-              @enderror
+            {{-- Month selector --}}
+            @if ($periodId)
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="monthSelect">Bulan Realisasi <span class="text-danger">*</span></label>
+                @if (empty($this->monthOptions))
+                  <div class="alert alert-warning mb-0" role="alert">
+                    <i class="bx bx-info-circle me-1"></i> Semua bulan pada periode RKAP ini sudah memiliki realisasi terunggah.
+                  </div>
+                @else
+                  <select id="monthSelect" class="form-select" wire:model.live="month"
+                    wire:loading.attr="disabled" wire:target="uploadAndImport">
+                    <option value="">— Pilih Bulan —</option>
+                    @foreach ($this->monthOptions as $num => $name)
+                      <option value="{{ $num }}">{{ $name }}</option>
+                    @endforeach
+                  </select>
+                  @error('month')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                  @enderror
+                @endif
+              </div>
+            @endif
+          </div>
+
+          @if ($periodId && $month)
+            {{-- Template download --}}
+            <div class="alert alert-info mb-4" role="alert">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bx bx-download fs-5"></i>
+                <strong>Download Template</strong>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('rkap-realization-template-download', ['period_id' => $periodId, 'month' => $month]) }}"
+                   class="btn btn-sm btn-success d-inline-flex align-items-center gap-1">
+                  <i class="bx bx-file"></i>
+                  Excel (.xlsx) <span class="badge bg-white text-success ms-1" style="font-size:0.65rem;">Direkomendasikan</span>
+                </a>
+                <a href="{{ route('rkap-realization-template-download-csv', ['period_id' => $periodId, 'month' => $month]) }}"
+                   class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
+                  <i class="bx bx-code-alt"></i>
+                  CSV
+                </a>
+              </div>
+              <div class="mt-2 small text-muted">
+                File template telah diisi otomatis dengan data RKAP riil dan diset ke bulan <strong>{{ $this->monthOptions[$month] ?? '' }}</strong> dengan amount `0`.
+              </div>
+              <div class="mt-2 small text-muted">
+                Kolom wajib untuk diisi saat upload: <code>budget_item_id, month, amount</code> &mdash; Kolom opsional: <code>notes</code>. Kolom detail RKAP lainnya otomatis diabaikan saat import.
+              </div>
             </div>
 
-            <button type="submit" class="btn btn-primary"
-              wire:loading.attr="disabled" wire:target="file, uploadAndImport">
-              <span wire:loading.remove wire:target="file, uploadAndImport">
-                <i class="bx bx-upload me-1"></i> Upload &amp; Import
-              </span>
-              <span wire:loading wire:target="file, uploadAndImport">
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                Processing...
-              </span>
-            </button>
-          </form>
+            {{-- Upload form --}}
+            <form wire:submit.prevent="uploadAndImport" class="mb-4">
+              {{-- File input --}}
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="realizationFile">File Excel / CSV</label>
+                <input id="realizationFile" type="file" class="form-control" wire:model="file"
+                  wire:loading.attr="disabled" wire:target="file, uploadAndImport"
+                  accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+                @error('file')
+                  <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
+              </div>
+
+              <button type="submit" class="btn btn-primary"
+                wire:loading.attr="disabled" wire:target="file, uploadAndImport">
+                <span wire:loading.remove wire:target="file, uploadAndImport">
+                  <i class="bx bx-upload me-1"></i> Upload &amp; Import
+                </span>
+                <span wire:loading wire:target="file, uploadAndImport">
+                  <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  Processing...
+                </span>
+              </button>
+            </form>
+          @endif
 
           {{-- Validation errors --}}
           @if (!empty($errorsList))
@@ -106,6 +119,7 @@
           @if ($imported)
             <div class="alert alert-success">
               <h6 class="alert-heading mb-2"><i class="bx bx-check-circle me-1"></i>Import berhasil</h6>
+              <p class="mb-2">Realisasi RKAP untuk bulan <strong>{{ $importedMonthName }}</strong> berhasil diunggah dan disimpan.</p>
               <ul class="mb-0 ps-3">
                 <li>Baris baru: <strong>{{ $importSummary['created'] ?? 0 }}</strong></li>
                 <li>Baris diperbarui: <strong>{{ $importSummary['updated'] ?? 0 }}</strong></li>

@@ -95,10 +95,15 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('permission:rkap.realization.upload')
             ->name('rkap-realization-upload');
         Route::get('/realization-template/download', function () {
+            \Illuminate\Support\Facades\Log::info('Realization template route hit', [
+                'period_id' => request('period_id'),
+                'month' => request('month'),
+            ]);
             $periodId = request('period_id') ? (int) request('period_id') : null;
+            $month = request('month') ? (int) request('month') : null;
             $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.xlsx';
             return \Maatwebsite\Excel\Facades\Excel::download(
-                new \App\Exports\RkapRealizationTemplateExport($periodId),
+                new \App\Exports\RkapRealizationTemplateExport($periodId, $month),
                 $filename
             );
         })
@@ -107,9 +112,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/realization-template/download-csv', function () {
             $periodId = request('period_id') ? (int) request('period_id') : null;
+            $month = request('month') ? (int) request('month') : null;
             $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.csv';
             return \Maatwebsite\Excel\Facades\Excel::download(
-                new \App\Exports\RkapRealizationTemplateExport($periodId),
+                new \App\Exports\RkapRealizationTemplateExport($periodId, $month),
                 $filename,
                 \Maatwebsite\Excel\Excel::CSV
             );

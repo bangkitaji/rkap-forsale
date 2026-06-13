@@ -19,10 +19,12 @@ use Maatwebsite\Excel\Events\AfterSheet;
 class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAutoSize
 {
     protected ?int $periodId;
+    protected ?int $month;
 
-    public function __construct(?int $periodId = null)
+    public function __construct(?int $periodId = null, ?int $month = null)
     {
         $this->periodId = $periodId;
+        $this->month = $month;
     }
 
     public function array(): array
@@ -91,7 +93,7 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 // Map current realizations by month to easily fetch
                 $realizationsMap = $item->realizations->pluck('amount', 'month')->toArray();
 
-                $currentMonth = (int) date('n');
+                $currentMonth = $this->month ?? (int) date('n');
 
                 $rows[] = [
                     $item->id,
@@ -111,7 +113,7 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
                 ];
             }
         } else {
-            $currentMonth = (int) date('n');
+            $currentMonth = $this->month ?? (int) date('n');
             // Sample data row when no period is selected
             $rows[] = [
                 1,

@@ -17,6 +17,8 @@ class RkapRealizationUpload extends Component
 
     public $file;
     public ?int $periodId = null;
+    public ?int $month = null;
+    public ?string $importedMonthName = null;
 
     public array $errorsList    = [];
     public array $importSummary = [];
@@ -35,9 +37,59 @@ class RkapRealizationUpload extends Component
         }
     }
 
+    public function updatedPeriodId(): void
+    {
+        $this->month = null;
+        $this->resetState();
+    }
+
+    public function updatedMonth(): void
+    {
+        $this->resetState();
+    }
+
     public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
     {
         return RkapPeriod::orderByDesc('year')->get();
+    }
+
+    public function getMonthOptionsProperty(): array
+    {
+        if (! $this->periodId) {
+            return [];
+        }
+
+        $uploadedMonths = RkapBudgetItemRealization::where('rkap_period_id', $this->periodId)
+            ->distinct()
+            ->pluck('month')
+            ->toArray();
+
+        $allMonths = [
+            1  => 'Januari',  2  => 'Februari', 3  => 'Maret',
+            4  => 'April',    5  => 'Mei',       6  => 'Juni',
+            7  => 'Juli',     8  => 'Agustus',   9  => 'September',
+            10 => 'Oktober',  11 => 'November',  12 => 'Desember',
+        ];
+
+        $options = [];
+        foreach ($allMonths as $num => $name) {
+            if (! in_array($num, $uploadedMonths, true)) {
+                $options[$num] = $name;
+            }
+        }
+
+        return $options;
+    }
+
+    private function getMonthName(int $month): string
+    {
+        $names = [
+            1  => 'Januari',  2  => 'Februari', 3  => 'Maret',
+            4  => 'April',    5  => 'Mei',       6  => 'Juni',
+            7  => 'Juli',     8  => 'Agustus',   9  => 'September',
+            10 => 'Oktober',  11 => 'November',  12 => 'Desember',
+        ];
+        return $names[$month] ?? '';
     }
 
     public function uploadAndImport(): void
@@ -46,10 +98,21 @@ class RkapRealizationUpload extends Component
 
         $this->validate([
             'periodId' => 'required|integer|exists:rkap_periods,id',
+            'month'    => 'required|integer|between:1,12',
             'file'     => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ], [
             'periodId.required' => 'Periode RKAP wajib dipilih sebelum upload.',
+            'month.required'    => 'Bulan realisasi wajib dipilih sebelum upload.',
+            'month.between'     => 'Bulan tidak valid.',
         ]);
+
+        $alreadyUploaded = RkapBudgetItemRealization::where('rkap_period_id', $this->periodId)
+            ->where('month', $this->month)
+            ->exists();
+        if ($alreadyUploaded) {
+            $this->errorsList[] = 'Realisasi untuk bulan ' . $this->getMonthName($this->month) . ' sudah pernah diunggah.';
+            return;
+        }
 
         $parsed = $this->parseFile(
             $this->file->getRealPath(),
@@ -77,6 +140,10 @@ class RkapRealizationUpload extends Component
         }
 
         $this->importRows($normalizedRows);
+
+        $this->importedMonthName = $this->getMonthName($this->month);
+        $this->month = null;
+        $this->file = null;
     }
 
     private function resetState(): void
@@ -84,6 +151,7 @@ class RkapRealizationUpload extends Component
         $this->errorsList    = [];
         $this->importSummary = [];
         $this->imported      = false;
+        $this->importedMonthName = null;
     }
 
     /**
@@ -184,6 +252,12 @@ class RkapRealizationUpload extends Component
         // Pre-load valid budget_item_ids for the selected period to avoid N+1 queries
         $validBudgetItemIds = $this->getValidBudgetItemIds();
 
+        // Also get all months that already have realization uploaded for this period (in case someone uploaded in the meantime or they changed the month column in file)
+        $uploadedMonths = RkapBudgetItemRealization::where('rkap_period_id', $this->periodId)
+            ->distinct()
+            ->pluck('month')
+            ->toArray();
+
         foreach ($rows as $row) {
             $rowNo = $row['_row_number'];
 
@@ -206,6 +280,16 @@ class RkapRealizationUpload extends Component
             $month = (int) ($row['month'] ?? 0);
             if ($month < 1 || $month > 12) {
                 $this->errorsList[] = "Baris {$rowNo}: month harus antara 1–12.";
+            } else {
+                // Reject if the month doesn't match the selected month
+                if ($month !== (int) $this->month) {
+                    $this->errorsList[] = "Baris {$rowNo}: bulan {$month} (" . $this->getMonthName($month) . ") tidak sesuai dengan bulan yang dipilih: {$this->month} (" . $this->getMonthName($this->month) . ").";
+                }
+
+                // Reject if the month already has realization uploaded
+                if (in_array($month, $uploadedMonths, true)) {
+                    $this->errorsList[] = "Baris {$rowNo}: Bulan " . $this->getMonthName($month) . " sudah memiliki realisasi yang diunggah.";
+                }
             }
 
             // Amount must be >= 0
