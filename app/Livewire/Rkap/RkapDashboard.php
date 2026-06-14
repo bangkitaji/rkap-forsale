@@ -34,8 +34,8 @@ class RkapDashboard extends Component
         $stats = [
             'total'      => (clone $statsQuery)->count(),
             'draft'      => (clone $statsQuery)->where('status', 'draft')->count(),
-            'pending'    => (clone $statsQuery)->whereIn('status', ['submitted', 'dept_review', 'dir_review', 'final_review'])->count(),
-            'revision'   => (clone $statsQuery)->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision'])->count(),
+            'pending'    => (clone $statsQuery)->whereIn('status', ['submitted', 'dept_review', 'dir_review', 'final_review', 'verifikator_approved', 'pdir_review'])->count(),
+            'revision'   => (clone $statsQuery)->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])->count(),
             'approved'   => (clone $statsQuery)->where('status', 'approved')->count(),
             'total_budget' => (clone $statsQuery)->sum('total_budget'),
         ];
@@ -59,10 +59,15 @@ class RkapDashboard extends Component
                 ->where('status', 'dir_approved')
                 ->latest('updated_at')
                 ->limit(5)->get();
+        } elseif ($user->isPresidentDirector()) {
+            $myActions = RkapSubmission::with(['bureau.department.directorate', 'period'])
+                ->where('status', 'pdir_review')
+                ->latest('updated_at')
+                ->limit(5)->get();
         } elseif ($user->isKepalaBiro()) {
             $myActions = RkapSubmission::with(['period'])
                 ->where('bureau_id', $user->bureau_id)
-                ->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision'])
+                ->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])
                 ->latest('updated_at')
                 ->limit(5)->get();
         }

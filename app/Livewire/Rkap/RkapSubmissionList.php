@@ -260,8 +260,8 @@ class RkapSubmissionList extends Component
 
         $stats = [
             'total'       => (clone $statsQuery)->count(),
-            'pending'     => (clone $statsQuery)->whereIn('status', ['submitted', 'dept_review', 'dir_review', 'final_review'])->count(),
-            'revision'    => (clone $statsQuery)->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision'])->count(),
+            'pending'     => (clone $statsQuery)->whereIn('status', ['submitted', 'dept_review', 'dir_review', 'final_review', 'verifikator_approved', 'pdir_review'])->count(),
+            'revision'    => (clone $statsQuery)->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])->count(),
             'approved'    => (clone $statsQuery)->where('status', 'approved')->count(),
         ];
 

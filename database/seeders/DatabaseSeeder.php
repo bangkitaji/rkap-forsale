@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleAndUserSeeder::class,
             RkapSeeder::class,
             SatuanSeeder::class,
+            MasterDataSeeder::class,
         ]);
     }
 }

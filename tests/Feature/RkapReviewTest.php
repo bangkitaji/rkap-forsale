@@ -22,6 +22,7 @@ class RkapReviewTest extends TestCase
     protected User $kadept;
     protected User $direksi;
     protected User $verifikator;
+    protected User $president;
     protected RkapPeriod $period;
     protected RkapSubmission $submission;
 
@@ -91,6 +92,14 @@ class RkapReviewTest extends TestCase
         ]);
         $this->verifikator->assignRole($roleVerifikator);
 
+        $rolePresident = Role::create(['name' => 'president_director']);
+        $this->president = User::create([
+            'name' => 'President User',
+            'email' => 'president@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $this->president->assignRole($rolePresident);
+
         // 4. Period & Submission
         $this->period = RkapPeriod::create([
             'year' => 2026,
@@ -153,5 +162,60 @@ class RkapReviewTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Setujui RKAP')
             ->assertSee('Minta Revisi');
+    }
+
+    public function test_verifikator_approving_transitions_to_pdir_review(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        $this->actingAs($this->verifikator);
+
+        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+            ->call('approve');
+
+        $this->assertEquals('pdir_review', $this->submission->fresh()->status);
+    }
+
+    public function test_president_director_can_see_approval_buttons_in_pdir_review_status(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        $this->actingAs($this->president);
+
+        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+            ->assertStatus(200)
+            ->assertSee('Setujui RKAP')
+            ->assertSee('Minta Revisi');
+    }
+
+    public function test_president_director_approving_transitions_to_approved(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        $this->actingAs($this->president);
+
+        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+            ->call('approve');
+
+        $this->assertEquals('approved', $this->submission->fresh()->status);
+    }
+
+    public function test_president_director_requesting_revision_transitions_to_draft(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        $this->actingAs($this->president);
+
+        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+            ->set('revisionReason', 'Need more details on training expenses.')
+            ->call('requestRevision');
+
+        $this->assertEquals('draft', $this->submission->fresh()->status);
+
+        // Ensure approval log has the revision reason and role
+        $latestApproval = $this->submission->approvals()->first();
+        $this->assertEquals('president_director', $latestApproval->role);
+        $this->assertEquals('revision_requested', $latestApproval->action);
+        $this->assertEquals('Need more details on training expenses.', $latestApproval->comments);
     }
 }

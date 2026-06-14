@@ -120,6 +120,13 @@ class RkapProjectionTest extends TestCase
             'unit_price' => 100000,
             'total_price' => 100000,
         ]);
+
+        for ($m = 1; $m <= 12; $m++) {
+            $this->budgetItem->monthlies()->create([
+                'month' => $m,
+                'amount' => 100000,
+            ]);
+        }
     }
 
     public function test_user_without_permission_cannot_access_projection_page(): void
@@ -316,6 +323,13 @@ class RkapProjectionTest extends TestCase
             'total_price' => 50000,
         ]);
 
+        for ($m = 1; $m <= 12; $m++) {
+            $budgetItem->monthlies()->create([
+                'month' => $m,
+                'amount' => 50000,
+            ]);
+        }
+
         $this->actingAs($kepalaDept);
 
         // 1. Can view page and see list
@@ -329,5 +343,57 @@ class RkapProjectionTest extends TestCase
         Livewire::test(RkapProjections::class)
             ->call('selectBudgetItem', $budgetItem->id)
             ->assertStatus(403);
+    }
+
+    public function test_forbids_projection_amount_greater_than_monthly_budget_plan(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $currentMonth = (int) date('n');
+
+        // Budget is 100000 for currentMonth (seeded in setUp)
+        // Let's try to set a projection of 120000
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('editingProjections.' . $currentMonth, 120000)
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['editingProjections.' . $currentMonth]);
+
+        // Assert that the projection was NOT saved in database
+        $dbProjection = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
+            ->where('month', $currentMonth)
+            ->first();
+
+        $this->assertNull($dbProjection);
+    }
+
+    public function test_forbids_projection_accumulation_greater_than_total_approved_budget(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        // budgetItem total_price is 100000. Let's make individual months fit under monthly budgets,
+        // but let their sum exceed 100000.
+        // Let's set Month 1 = 60000, Month 2 = 60000 (Sum = 120000 > 100000).
+        // (Monthly limits are 100000 each, so individually they are valid, but combined they exceed 100000).
+        
+        $currentMonth = (int) date('n');
+        $nextMonth = $currentMonth < 12 ? $currentMonth + 1 : null;
+
+        // Skip test if it's December since we cannot test two months starting from the current month
+        if ($nextMonth === null) {
+            $this->assertTrue(true);
+            return;
+        }
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('editingProjections.' . $currentMonth, 60000)
+            ->set('editingProjections.' . $nextMonth, 60000)
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['editingProjections']);
+
+        // Assert that nothing was saved
+        $savedProjectionsCount = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->count();
+        $this->assertEquals(0, $savedProjectionsCount);
     }
 }

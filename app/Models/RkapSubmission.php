@@ -189,7 +189,7 @@ class RkapSubmission extends Model
             'action' => 'approved',
             'comments' => $comments,
         ]);
-        $this->update(['status' => 'approved']);
+        $this->update(['status' => 'verifikator_approved']);
     }
 
     public function requestRevisionByVerificator(User $user, ?string $comments = null): void
@@ -204,6 +204,30 @@ class RkapSubmission extends Model
         $this->update(['status' => 'final_revision']);
     }
 
+    public function approveByPresident(User $user, ?string $comments = null): void
+    {
+        $this->approvals()->create([
+            'user_id' => $user->id,
+            'version_number' => $this->current_version,
+            'role' => 'president_director',
+            'action' => 'approved',
+            'comments' => $comments,
+        ]);
+        $this->update(['status' => 'approved']);
+    }
+
+    public function requestRevisionByPresident(User $user, ?string $comments = null): void
+    {
+        $this->approvals()->create([
+            'user_id' => $user->id,
+            'version_number' => $this->current_version,
+            'role' => 'president_director',
+            'action' => 'revision_requested',
+            'comments' => $comments,
+        ]);
+        $this->update(['status' => 'pdir_revision']);
+    }
+
     public function revise(): void
     {
         $this->increment('current_version');
@@ -214,7 +238,7 @@ class RkapSubmission extends Model
 
     public function canBeEditedBy(User $user): bool
     {
-        if (!in_array($this->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision'])) {
+        if (!in_array($this->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
             return false;
         }
         return $user->bureau_id === $this->bureau_id;
@@ -232,6 +256,10 @@ class RkapSubmission extends Model
         }
         // Verifikator
         if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
+            return true;
+        }
+        // President Director
+        if ($this->status === 'pdir_review' && $user->hasRole('president_director')) {
             return true;
         }
         return false;
@@ -252,6 +280,9 @@ class RkapSubmission extends Model
             'dir_revision' => 'Revisi Direksi',
             'final_review' => 'Verifikasi Final',
             'final_revision' => 'Revisi Verifikator',
+            'verifikator_approved' => 'Disetujui Verifikator',
+            'pdir_review' => 'Review Dirut',
+            'pdir_revision' => 'Revisi Dirut',
             'approved' => 'Disetujui',
             default => $this->status,
         };
@@ -261,9 +292,9 @@ class RkapSubmission extends Model
     {
         return match ($this->status) {
             'draft' => 'secondary',
-            'submitted', 'dept_review', 'dir_review', 'final_review' => 'info',
-            'dept_approved', 'dir_approved' => 'primary',
-            'dept_revision', 'dir_revision', 'final_revision' => 'warning',
+            'submitted', 'dept_review', 'dir_review', 'final_review', 'pdir_review' => 'info',
+            'dept_approved', 'dir_approved', 'verifikator_approved' => 'primary',
+            'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision' => 'warning',
             'approved' => 'success',
             default => 'secondary',
         };

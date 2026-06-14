@@ -35,13 +35,14 @@ class RoleAndUserSeeder extends Seeder
         $permRkapRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
         $permRkapProjectionInput = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
         $permRkapProjectionView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
-
-
+        $permRkapReviewPresident = Permission::firstOrCreate(['name' => 'rkap.review.president', 'guard_name' => 'web']);
+        $permRkapApprovePresident = Permission::firstOrCreate(['name' => 'rkap.approve.president', 'guard_name' => 'web']);
 
         // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleUser = Role::firstOrCreate(['name' => 'user']);
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
+        $rolePresident = Role::firstOrCreate(['name' => 'president_director']);
 
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
@@ -60,6 +61,8 @@ class RoleAndUserSeeder extends Seeder
             $permRkapRealizationUpload,
             $permRkapProjectionInput,
             $permRkapProjectionView,
+            $permRkapReviewPresident,
+            $permRkapApprovePresident,
         ]);
 
         $roleVerifikator->givePermissionTo([
@@ -67,6 +70,13 @@ class RoleAndUserSeeder extends Seeder
             $permRkapSubmissionsDept,
             $permRkapRealizationUpload,
             $permRkapProjectionInput,
+            $permRkapProjectionView,
+        ]);
+
+        $rolePresident->givePermissionTo([
+            $permRkapShow,
+            $permRkapReviewPresident,
+            $permRkapApprovePresident,
             $permRkapProjectionView,
         ]);
 

@@ -24,10 +24,14 @@ class RkapSeeder extends Seeder
         $roleKepalaDept    = Role::firstOrCreate(['name' => 'kepala_departemen']);
         $roleDireksi       = Role::firstOrCreate(['name' => 'direksi']);
         $roleVerifikator   = Role::firstOrCreate(['name' => 'verifikator']);
+        $rolePresident     = Role::firstOrCreate(['name' => 'president_director']);
 
         // ── 2. Permissions ──
         $permissions = [
             // RKAP
+            'rkap.show',
+            'rkap.review.president',
+            'rkap.approve.president',
             'rkap.create',
             'rkap.edit',
             'rkap.delete',
@@ -116,6 +120,18 @@ class RkapSeeder extends Seeder
             'rkap.realization.upload',
             'rkap.projection.input',
             'rkap.projection.view',
+        ]);
+
+        $rolePresident->syncPermissions([
+            'rkap.view.all',
+            'rkap.review.president',
+            'rkap.approve.president',
+            'rkap.comment',
+            'rkap.compilation.dept',
+            'rkap.compilation.dir',
+            'rkap.compilation.all',
+            'rkap.projection.view',
+            'rkap.show',
         ]);
 
         // ── 4. Sample Organization ──
@@ -417,6 +433,18 @@ class RkapSeeder extends Seeder
             ]
         );
         $ver->syncRoles([$roleVerifikator]);
+
+        // President Director — President Director Directorate
+        $presdir = User::firstOrCreate(
+            ['email' => 'president@rkap.com'],
+            [
+                'name' => 'Ir. Budi Karya',
+                'password' => Hash::make('password'),
+                'directorate_id' => $dirHU->id,
+                'position' => 'President Director',
+            ]
+        );
+        $presdir->syncRoles([$rolePresident]);
 
         // ── 6. Sample Master Data (WorkPlans, Activities, COAs) ──
         $wp1 = \App\Models\WorkPlan::firstOrCreate(

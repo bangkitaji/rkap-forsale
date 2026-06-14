@@ -401,20 +401,43 @@
                         @endphp
                         <form wire:submit.prevent="saveMonthlyProjections">
                             <div class="modal-body">
-                                <div class="mb-3 p-2 bg-lighter rounded border">
-                                    <span class="text-muted d-block small mb-1 fw-semibold">Detail Item Anggaran</span>
-                                    <span class="fw-bold text-dark fs-6">{{ $selectedItem->account_code }} — {{ $selectedItem->description }}</span>
-                                    @if($selectedItem->remarks)
-                                        <div class="text-muted small mt-1">Remarks: {{ $selectedItem->remarks }}</div>
-                                    @endif
+                                <div class="mb-3 p-2 bg-lighter rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="text-muted d-block small mb-1 fw-semibold">Detail Item Anggaran</span>
+                                        <span class="fw-bold text-dark fs-6">{{ $selectedItem->account_code }} — {{ $selectedItem->description }}</span>
+                                        @if($selectedItem->remarks)
+                                            <div class="text-muted small mt-1">Remarks: {{ $selectedItem->remarks }}</div>
+                                        @endif
+                                    </div>
+                                    <div class="text-end border-start ps-3" style="min-width: 220px;">
+                                        <span class="text-muted d-block small mb-1 fw-semibold">Rencana Anggaran (Total)</span>
+                                        <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
+                                        <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
+                                        @php
+                                            $totalEditingProj = array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0, $editingProjections));
+                                            $isOverBudget = $totalEditingProj > (float) $selectedItem->total_price;
+                                        @endphp
+                                        <span class="fw-bold fs-6 {{ $isOverBudget ? 'text-danger' : 'text-success' }}">
+                                            Rp {{ number_format($totalEditingProj, 0, ',', '.') }}
+                                        </span>
+                                    </div>
                                 </div>
+
+                                @error('editingProjections')
+                                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert" wire:key="accumulation-error-{{ $selectedBudgetItemId }}">
+                                        <i class="bx bx-error-circle fs-4"></i>
+                                        <div class="small fw-semibold">{{ $message }}</div>
+                                    </div>
+                                @enderror
+
                                 <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
                                     <table class="table table-sm table-bordered align-middle mb-0">
                                         <thead class="table-light sticky-top" style="z-index: 10;">
                                             <tr>
-                                                <th style="width: 30%;">Bulan</th>
-                                                <th style="width: 35%;" class="text-end">Realisasi (Rp)</th>
-                                                <th style="width: 35%;" class="text-end">Jumlah Proyeksi (Rp)</th>
+                                                <th style="width: 20%;">Bulan</th>
+                                                <th style="width: 25%;" class="text-end">Rencana Anggaran (Rp)</th>
+                                                <th style="width: 25%;" class="text-end">Realisasi (Rp)</th>
+                                                <th style="width: 30%;" class="text-end">Jumlah Proyeksi (Rp)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -429,13 +452,14 @@
                                             @endphp
                                             @for($m = 1; $m <= 12; $m++)
                                                 @php
+                                                    $monthlyBudget = $selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0;
                                                     $realizationAmount = $selectedItem->realizations->where('month', $m)->sum('amount');
                                                     $existingProj = $selectedItem->projections->where('month', $m)->first();
                                                     $hasProjection = $existingProj && (float)$existingProj->amount > 0;
                                                     $isPastMonth = $m < $currentMonth;
                                                     $isLocked = $isPastMonth || $hasProjection;
                                                 @endphp
-                                                <tr>
+                                                <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
                                                     <td class="fw-semibold text-muted">
                                                         {{ $monthNames[$m] }}
                                                         @if($isPastMonth)
@@ -448,6 +472,9 @@
                                                             </span>
                                                         @endif
                                                     </td>
+                                                    <td class="text-end text-primary fw-semibold">
+                                                        Rp {{ number_format($monthlyBudget, 0, ',', '.') }}
+                                                    </td>
                                                     <td class="text-end text-success fw-semibold">
                                                         Rp {{ number_format($realizationAmount, 0, ',', '.') }}
                                                     </td>
@@ -456,7 +483,7 @@
                                                             <span class="input-group-text">Rp</span>
                                                             <input type="number" 
                                                                    class="form-control form-control-sm text-end @error('editingProjections.'.$m) is-invalid @enderror"
-                                                                   wire:model.defer="editingProjections.{{ $m }}"
+                                                                   wire:model.blur="editingProjections.{{ $m }}"
                                                                    min="0" 
                                                                    step="0.01"
                                                                    @disabled($isLocked)>

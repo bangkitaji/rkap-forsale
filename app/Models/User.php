@@ -110,6 +110,11 @@ class User extends Authenticatable
         return $this->hasRole('verifikator');
     }
 
+    public function isPresidentDirector(): bool
+    {
+        return $this->hasRole('president_director');
+    }
+
     public function getOrganizationNameAttribute(): string
     {
         if ($this->bureau) {

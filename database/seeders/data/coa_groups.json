@@ -1,0 +1,74 @@
+[
+    {
+        "id": 1,
+        "code": "100000",
+        "name": "Aset (Assets)",
+        "description": "Sumber daya ekonomi yang dikendalikan oleh perusahaan (Kas, Piutang, Aset Tetap, dll).",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 2,
+        "code": "200000",
+        "name": "Liabilitas (Liabilities)",
+        "description": "Kewajiban finansial perusahaan masa kini (Utang Usaha, Pinjaman Bank, dll).",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 3,
+        "code": "300000",
+        "name": "Ekuitas (Equity)",
+        "description": "Hak residual atas aset perusahaan setelah dikurangi semua liabilitas (Modal Saham, Laba Ditahan, dll).",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 4,
+        "code": "400000",
+        "name": "Pendapatan (Revenue)",
+        "description": "Penerimaan\/Arus masuk bruto dari aktivitas normal entitas (Pendapatan Operasional, Penjualan, dll).",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 5,
+        "code": "510000",
+        "name": "Beban Pegawai (Employee Expenses)",
+        "description": "Seluruh pengeluaran untuk gaji, tunjangan, jaminan sosial, dan fasilitas karyawan.",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 6,
+        "code": "520000",
+        "name": "Beban Operasional (Operating Expenses \/ OPEX)",
+        "description": "Biaya operasional rutin non-kepegawaian seperti sewa, listrik, air, perlengkapan kantor, perbaikan.",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 7,
+        "code": "530000",
+        "name": "Beban Investasi \/ Modal (Capital Expenditures \/ CAPEX)",
+        "description": "Pengeluaran untuk perolehan atau peningkatan kapasitas aset tetap\/investasi modal jangka panjang.",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 8,
+        "code": "600000",
+        "name": "Pendapatan\/Beban Non-Operasional (Non-Operating)",
+        "description": "Pendapatan dan beban dari aktivitas di luar kegiatan usaha utama (Pendapatan bunga, denda, pajak, dll).",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    }
+]

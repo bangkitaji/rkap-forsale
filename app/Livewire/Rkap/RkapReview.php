@@ -38,6 +38,7 @@ class RkapReview extends Component
             $user->isKepalaDepartemen() => $this->submission->approveByDept($user, $this->reviewComments),
             $user->isDireksi()          => $this->submission->approveByDir($user, $this->reviewComments),
             $user->isVerifikator()      => $this->submission->approveFinal($user, $this->reviewComments),
+            $user->isPresidentDirector() => $this->submission->approveByPresident($user, $this->reviewComments),
             default => null,
         };
 
@@ -45,6 +46,7 @@ class RkapReview extends Component
         $newStatus = match($this->submission->fresh()->status) {
             'dept_approved' => 'dir_review',
             'dir_approved'  => 'final_review',
+            'verifikator_approved' => 'pdir_review',
             default         => null,
         };
 
@@ -67,6 +69,7 @@ class RkapReview extends Component
             $user->isKepalaDepartemen() => $this->submission->requestRevisionByDept($user, $this->revisionReason),
             $user->isDireksi()          => $this->submission->requestRevisionByDir($user, $this->revisionReason),
             $user->isVerifikator()      => $this->submission->requestRevisionByVerificator($user, $this->revisionReason),
+            $user->isPresidentDirector() => $this->submission->requestRevisionByPresident($user, $this->revisionReason),
             default => null,
         };
 

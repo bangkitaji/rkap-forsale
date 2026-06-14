@@ -1,0 +1,1106 @@
+[
+    {
+        "id": 1,
+        "code": "1000000001",
+        "title": "Penyusutan Langsung",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 2,
+        "code": "1000000002",
+        "title": "Penyusutan Tidak Langsung",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 3,
+        "code": "1000000003",
+        "title": "Pelaporan Keuangan",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 4,
+        "code": "1000000004",
+        "title": "Pelaporan Pajak",
+        "created_at": "2026-06-14 11:37:34",
+        "updated_at": "2026-06-14 11:37:34",
+        "deleted_at": null
+    },
+    {
+        "id": 5,
+        "code": "1000000005",
+        "title": "General Administration",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 6,
+        "code": "1000000006",
+        "title": "Sistem Keuangan",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 7,
+        "code": "1000000007",
+        "title": "Training Program",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 8,
+        "code": "1000000008",
+        "title": "Beban Bunga Cos SHL Overrun",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 9,
+        "code": "1000000009",
+        "title": "Beban Bunga CDS",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 10,
+        "code": "1000000010",
+        "title": "Profit\/Loss due to currency exchange differences",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 11,
+        "code": "1000000011",
+        "title": "Admin Bank",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 12,
+        "code": "1000000012",
+        "title": "Pendapatan bunga",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 13,
+        "code": "1000000013",
+        "title": "Asuransi Operasional & Prasarana",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 14,
+        "code": "1000000014",
+        "title": "Pelaporan Cost Overrun",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 15,
+        "code": "1000000015",
+        "title": "Konsesi KCIC",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 16,
+        "code": "1000000016",
+        "title": "Kelangsungan Usaha KCIC",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 17,
+        "code": "1000000017",
+        "title": "Bunga CDB",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 18,
+        "code": "1000000018",
+        "title": "Insurance KCIC",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 19,
+        "code": "1000000019",
+        "title": "Service Employees at the Station",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 20,
+        "code": "1000000020",
+        "title": "Service on Train",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 21,
+        "code": "1000000021",
+        "title": "Service at the Station",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 22,
+        "code": "1000000022",
+        "title": "Gapeka",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 23,
+        "code": "1000000023",
+        "title": "Operational at Station Expense",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 24,
+        "code": "1000000024",
+        "title": "Operating Inventory",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 25,
+        "code": "1000000025",
+        "title": "Protokoler",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 26,
+        "code": "1000000026",
+        "title": "Company Event",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 27,
+        "code": "1000000027",
+        "title": "Foreign Worker Meal",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 28,
+        "code": "1000000028",
+        "title": "General Administration Equipment",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 29,
+        "code": "1000000029",
+        "title": "Integrated Facility Management",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 30,
+        "code": "1000000030",
+        "title": "Maintenance Asset",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 31,
+        "code": "1000000031",
+        "title": "Honorarium",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 32,
+        "code": "1000000032",
+        "title": "Sertifikasi",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 33,
+        "code": "1000000033",
+        "title": "Operating Tools",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 34,
+        "code": "1000000034",
+        "title": "Security Program",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 35,
+        "code": "1000000035",
+        "title": "Monitoring & Evaluasi Safety",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 36,
+        "code": "1000000036",
+        "title": "Security Management System Consultation Services",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 37,
+        "code": "1000000037",
+        "title": "Sistem Manajemen Keselamatan",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 38,
+        "code": "1000000038",
+        "title": "Bangunan",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 39,
+        "code": "1000000039",
+        "title": "Buku Biru Project",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 40,
+        "code": "1000000040",
+        "title": "Konsultan Hukum",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 41,
+        "code": "1000000041",
+        "title": "Pengurusan NIB",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 42,
+        "code": "1000000042",
+        "title": "Salary & Benefit OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 43,
+        "code": "1000000043",
+        "title": "Uniform OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 44,
+        "code": "1000000044",
+        "title": "Business Trip Allowance OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 45,
+        "code": "1000000045",
+        "title": "Business Trip Allowance HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 46,
+        "code": "1000000046",
+        "title": "Uniform HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 47,
+        "code": "1000000047",
+        "title": "Salary & Benefit HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 48,
+        "code": "1000000048",
+        "title": "Health Facility OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 49,
+        "code": "1000000049",
+        "title": "Health Facility HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 50,
+        "code": "1000000050",
+        "title": "Konsultan HR",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 51,
+        "code": "1000000051",
+        "title": "License SAP HR",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 52,
+        "code": "1000000052",
+        "title": "Industrial Relation",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 53,
+        "code": "1000000053",
+        "title": "Work Permit OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 54,
+        "code": "1000000054",
+        "title": "Work Permit HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 55,
+        "code": "1000000055",
+        "title": "Religious Allowance OM",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 56,
+        "code": "1000000056",
+        "title": "Religious Allowance HO",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 57,
+        "code": "1000000057",
+        "title": "Manage Service",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 58,
+        "code": "1000000058",
+        "title": "Application",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 59,
+        "code": "1000000059",
+        "title": "Subscription",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 60,
+        "code": "1000000060",
+        "title": "IT Tool & IT Devices",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 61,
+        "code": "1000000061",
+        "title": "First Class Passenger Revenue",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 62,
+        "code": "1000000062",
+        "title": "Business Class Passenger Revenue",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 63,
+        "code": "1000000063",
+        "title": "Premium Economy Passenger Revenue",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 64,
+        "code": "1000000064",
+        "title": "Management Fee",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 65,
+        "code": "1000000065",
+        "title": "Passenger Service Support Program",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 66,
+        "code": "1000000066",
+        "title": "Sales & Marketing Program",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 67,
+        "code": "1000000067",
+        "title": "Customer Loyalty Expense",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 68,
+        "code": "1000000068",
+        "title": "People Development",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 69,
+        "code": "1000000069",
+        "title": "Asuransi Penumpang",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 70,
+        "code": "1000000070",
+        "title": "Pendapatan Non Farebox",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 71,
+        "code": "1000000071",
+        "title": "Jasa Konsultan",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 72,
+        "code": "1000000072",
+        "title": "Develop Naming Right",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 73,
+        "code": "1000000073",
+        "title": "Partnership Expense",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 74,
+        "code": "1000000074",
+        "title": "Pajak PBB",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 75,
+        "code": "1000000075",
+        "title": "Electricity",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 76,
+        "code": "1000000076",
+        "title": "Asset Database Management system",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 77,
+        "code": "1000000077",
+        "title": "Land Mapping",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 78,
+        "code": "1000000078",
+        "title": "Sewa Lahan PSBI",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 79,
+        "code": "1000000079",
+        "title": "Konsultan Notaris",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 80,
+        "code": "1000000080",
+        "title": "Social Media Program",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 81,
+        "code": "1000000081",
+        "title": "Konsultan Sistem Development",
+        "created_at": "2026-06-14 11:38:57",
+        "updated_at": "2026-06-14 11:38:57",
+        "deleted_at": null
+    },
+    {
+        "id": 82,
+        "code": "1000000082",
+        "title": "Konsutla BOC BOC Remuneration",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 83,
+        "code": "1000000083",
+        "title": "Konsultan Social Media Handling",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 84,
+        "code": "1000000084",
+        "title": "Program CSR",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 85,
+        "code": "1000000085",
+        "title": "License",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 86,
+        "code": "1000000086",
+        "title": "Building",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 87,
+        "code": "1000000087",
+        "title": "Archive Program",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 88,
+        "code": "1000000088",
+        "title": "Program Sosialisasi Pengendalian Gratifikasi",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 89,
+        "code": "1000000089",
+        "title": "Konsultan RJPP",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 90,
+        "code": "1000000090",
+        "title": "Konsultan ISO",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 91,
+        "code": "1000000091",
+        "title": "Comprehensive Inspection Services",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 92,
+        "code": "1000000092",
+        "title": "Power Controller",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 93,
+        "code": "1000000093",
+        "title": "Track Maintenance",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 94,
+        "code": "1000000094",
+        "title": "Heavy Machinery Maintenance",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 95,
+        "code": "1000000095",
+        "title": "CTC Signaling",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 96,
+        "code": "1000000096",
+        "title": "Site Signaling",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 97,
+        "code": "1000000097",
+        "title": "Communication",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 98,
+        "code": "1000000098",
+        "title": "Comprehensive System",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 99,
+        "code": "1000000099",
+        "title": "Equipment for EMU Maintenance",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 100,
+        "code": "1000000100",
+        "title": "Level 1 - EMU",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 101,
+        "code": "1000000101",
+        "title": "Cleaning of Train Washing",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 102,
+        "code": "1000000102",
+        "title": "Licensing EMU & CIT",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 103,
+        "code": "1000000103",
+        "title": "High Level Maintenance Document",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 104,
+        "code": "1000000104",
+        "title": "Operational Sarana",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 105,
+        "code": "1000000105",
+        "title": "Inspection",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 106,
+        "code": "1000000106",
+        "title": "Program Aplikasi",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 107,
+        "code": "1000000107",
+        "title": "Inventaris Gudang",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 108,
+        "code": "1000000108",
+        "title": "Sertifikasi Warehouse",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 109,
+        "code": "1000000109",
+        "title": "Onboard Signaling",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 110,
+        "code": "1000000110",
+        "title": "Employee Benefit HO",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 111,
+        "code": "1000000111",
+        "title": "Business Trip Allowance",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 112,
+        "code": "1000000112",
+        "title": "Health Facility Post for Train Crew, Employee and Passenger",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 113,
+        "code": "1000000113",
+        "title": "Konsultan Lahan",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 114,
+        "code": "1000000114",
+        "title": "Manajemen Project",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 115,
+        "code": "1000000115",
+        "title": "Lisensi Pilot Drone di MOT",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 116,
+        "code": "1000000116",
+        "title": "Konsultan Desain Konstruksi",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 117,
+        "code": "1000000117",
+        "title": "Corporate Communication",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 118,
+        "code": "1000000118",
+        "title": "License SAP Hana",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 119,
+        "code": "1000000119",
+        "title": "License Server",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 120,
+        "code": "1000000120",
+        "title": "Employee Benefit OM",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 121,
+        "code": "1000000121",
+        "title": "Maintenance Building",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 122,
+        "code": "1000000122",
+        "title": "Radio Frequency Spectrum Usage Fee Compensation",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 123,
+        "code": "1000000123",
+        "title": "Outsourcing Comprehensive Inspection Train",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 124,
+        "code": "1000000124",
+        "title": "Outsourcing Signaling Technical Support",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 125,
+        "code": "1000000125",
+        "title": "Outsourcing permanent Way Manpower Maintain Bridge",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 126,
+        "code": "1000000126",
+        "title": "Outsourcing Disaster Monitoring System",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 127,
+        "code": "1000000127",
+        "title": "Outsourcing Maintenance Heavy Machinery",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 128,
+        "code": "1000000128",
+        "title": "Outsourcing Communication Technical Support",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 129,
+        "code": "1000000129",
+        "title": "Outsourcing CREC",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 130,
+        "code": "1000000130",
+        "title": "Outsourcing Permanent Way CCCC",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 131,
+        "code": "1000000131",
+        "title": "Outsourcing Power Supply OCS",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 132,
+        "code": "1000000132",
+        "title": "Outsourcing Gardu Maintenance Service",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 133,
+        "code": "1000000133",
+        "title": "Outsourcing Electrical Maintenance Service",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 134,
+        "code": "1000000134",
+        "title": "Outsourcing EMU Maintenance Level 1 & Level 2",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 135,
+        "code": "1000000135",
+        "title": "Komputer",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 136,
+        "code": "1000000136",
+        "title": "Aset Fasilitas",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 137,
+        "code": "1000000137",
+        "title": "Outsourcing OMC KAI",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    },
+    {
+        "id": 138,
+        "code": "1000000138",
+        "title": "Outsourcing OMCC",
+        "created_at": "2026-06-14 11:38:58",
+        "updated_at": "2026-06-14 11:38:58",
+        "deleted_at": null
+    }
+]
