@@ -11,7 +11,12 @@ class Coa extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['code', 'title', 'description'];
+    protected $fillable = ['code', 'title', 'description', 'coa_group_id'];
+
+    public function coaGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(CoaGroup::class, 'coa_group_id');
+    }
 
     public function activities(): BelongsToMany
     {

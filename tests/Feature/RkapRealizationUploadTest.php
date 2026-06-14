@@ -186,4 +186,148 @@ class RkapRealizationUploadTest extends TestCase
         $this->assertEquals(8, $dataRow[12]); // month should be 8
         $this->assertEquals(0, $dataRow[13]); // amount should be 0
     }
+
+    public function test_realization_list_is_rendered_with_correct_filters_and_search(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        // Setup submission, budget item, and realization
+        $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP001',
+            'title' => 'Work Plan 1',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP001',
+            'program_name' => 'Work Plan 1',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Target Item Description',
+            'quantity' => 1,
+            'unit_price' => 10000,
+        ]);
+
+        $realization = RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 4, // April
+            'amount' => 7500,
+            'uploaded_by' => $this->verifikator->id,
+            'uploaded_at' => now(),
+        ]);
+
+        // 1. Without period, should see the filter prompt
+        Livewire::test(RkapRealizationUpload::class)
+            ->assertSee('Silakan pilih Periode RKAP di atas')
+            ->assertDontSee('Target Item Description');
+
+        // 2. With period, should see the realization details
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->assertSee('Target Item Description')
+            ->assertSee('521111')
+            ->assertSee('B1')
+            ->assertSee('April')
+            ->assertSee('Rp 7.500');
+
+        // 3. Search matching COA
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('search', '521111')
+            ->assertSee('Target Item Description');
+
+        // 4. Search non-matching COA
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('search', '999999')
+            ->assertDontSee('Target Item Description');
+
+        // 5. Filter by matching month
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('filterMonth', 4)
+            ->assertSee('Target Item Description')
+            ->assertSee('April');
+
+        // 6. Filter by non-matching month
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('filterMonth', 5)
+            ->assertDontSee('Target Item Description');
+    }
+
+    public function test_realization_can_be_deleted(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP001',
+            'title' => 'Work Plan 1',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP001',
+            'program_name' => 'Work Plan 1',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Target Item Description',
+            'quantity' => 1,
+            'unit_price' => 10000,
+        ]);
+
+        $realization = RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 4, // April
+            'amount' => 7500,
+            'uploaded_by' => $this->verifikator->id,
+            'uploaded_at' => now(),
+        ]);
+
+        // Delete realization
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->call('deleteRealization', $realization->id)
+            ->assertHasNoErrors()
+            ->assertStatus(200);
+
+        // Assert deleted from database
+        $this->assertDatabaseMissing('rkap_budget_item_realizations', [
+            'id' => $realization->id,
+        ]);
+    }
 }

@@ -35,8 +35,9 @@ class RkapProjectionTest extends TestCase
 
         // 1. Create Roles and Permissions
         $permission = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
+        $permView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
         $roleKepalaBiro = Role::firstOrCreate(['name' => 'kepala_biro']);
-        $roleKepalaBiro->givePermissionTo($permission);
+        $roleKepalaBiro->givePermissionTo([$permission, $permView]);
         
         $roleUser = Role::firstOrCreate(['name' => 'user']);
 
@@ -195,7 +196,8 @@ class RkapProjectionTest extends TestCase
     {
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
         $permission = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
-        $roleVerifikator->givePermissionTo($permission);
+        $permView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
+        $roleVerifikator->givePermissionTo([$permission, $permView]);
 
         $verifikator = User::create([
             'name' => 'Verifikator User',
@@ -215,7 +217,8 @@ class RkapProjectionTest extends TestCase
     {
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
         $permission = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
-        $roleVerifikator->givePermissionTo($permission);
+        $permView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
+        $roleVerifikator->givePermissionTo([$permission, $permView]);
 
         $verifikator = User::create([
             'name' => 'Verifikator User 2',
@@ -235,7 +238,8 @@ class RkapProjectionTest extends TestCase
         Livewire::test(RkapProjections::class)
             ->set('directorateId', $this->bureau->department->directorate_id)
             ->assertSee('Budget Item Test')
-            ->assertSee('Biro: ' . $this->bureau->code . ' — ' . $this->bureau->name)
+            ->assertSee('Biro:')
+            ->assertSee($this->bureau->code . ' — ' . $this->bureau->name)
             ->assertDontSee('Silakan pilih Direktorat, Departemen, atau Biro terlebih dahulu');
 
         // 3. Select Department

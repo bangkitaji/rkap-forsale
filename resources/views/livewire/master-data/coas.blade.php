@@ -62,6 +62,7 @@
                                     <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
+                            <th>Group</th>
                             <th wire:click="sort('description')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                                 Description
                                 @if($sortBy === 'description')
@@ -78,6 +79,13 @@
                         <tr>
                             <td><strong>{{ $coa->code }}</strong></td>
                             <td>{{ $coa->title }}</td>
+                            <td>
+                                @if($coa->coaGroup)
+                                    <span class="badge bg-label-info fw-semibold">{{ $coa->coaGroup->name }}</span>
+                                @else
+                                    <span class="badge bg-label-secondary text-muted">Unmapped</span>
+                                @endif
+                            </td>
                             <td class="text-wrap" style="max-width: 300px;">
                                 {{ $coa->description ?? '-' }}
                             </td>
@@ -92,7 +100,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center">No COA records found.</td>
+                            <td colspan="5" class="text-center">No COA records found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -127,6 +135,17 @@
                             <label for="coa-title" class="form-label">Title <span class="text-danger">*</span></label>
                             <input type="text" id="coa-title" class="form-control @error('title') is-invalid @enderror" wire:model="title" placeholder="Account Title">
                             @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="coa-group" class="form-label">COA Group</label>
+                            <select id="coa-group" class="form-select @error('coaGroupId') is-invalid @enderror" wire:model="coaGroupId">
+                                <option value="">Select Group...</option>
+                                @foreach($coaGroups as $g)
+                                    <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
+                                @endforeach
+                            </select>
+                            @error('coaGroupId') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="mb-3">

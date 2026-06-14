@@ -79,6 +79,13 @@
       "permission": "masterdata.coa.manage"
     },
     {
+      "name": "COA Group",
+      "icon": "menu-icon icon-base bx bx-group",
+      "url": "master-data/coa-groups",
+      "slug": "master-data.coa-groups",
+      "permission": "masterdata.coagroup.manage"
+    },
+    {
       "name": "Activity ↔ COA",
       "icon": "menu-icon icon-base bx bx-link",
       "url": "master-data/activity-coa-mapping",

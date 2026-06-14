@@ -9,16 +9,21 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class RkapRealizationUpload extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
 
     public $file;
     public ?int $periodId = null;
     public ?int $month = null;
+    public ?int $filterMonth = null;
     public ?string $importedMonthName = null;
+    public ?string $search = '';
 
     public array $errorsList    = [];
     public array $importSummary = [];
@@ -39,13 +44,26 @@ class RkapRealizationUpload extends Component
 
     public function updatedPeriodId(): void
     {
+        $this->resetPage();
         $this->month = null;
+        $this->filterMonth = null;
         $this->resetState();
     }
 
     public function updatedMonth(): void
     {
+        $this->resetPage();
         $this->resetState();
+    }
+
+    public function updatedFilterMonth(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
@@ -400,10 +418,55 @@ class RkapRealizationUpload extends Component
         });
     }
 
+    public function deleteRealization(int $id): void
+    {
+        if (! auth()->user()?->can('rkap.realization.upload')) {
+            session()->flash('error', 'Anda tidak memiliki akses untuk menghapus data ini.');
+            return;
+        }
+
+        $realization = RkapBudgetItemRealization::find($id);
+        if ($realization) {
+            $realization->delete();
+            session()->flash('message', 'Data realisasi berhasil dihapus.');
+        }
+    }
+
     public function render(): View
     {
+        $realizations = collect();
+
+        if ($this->periodId) {
+            $query = RkapBudgetItemRealization::with([
+                'budgetItem.workPlan.submission.bureau',
+                'uploader'
+            ])
+            ->where('rkap_period_id', $this->periodId);
+
+            if ($this->filterMonth) {
+                $query->where('month', $this->filterMonth);
+            }
+
+            if ($this->search) {
+                $q = $this->search;
+                $query->where(function ($subQuery) use ($q) {
+                    $subQuery->whereHas('budgetItem', function ($biQuery) use ($q) {
+                        $biQuery->where('account_code', 'like', '%' . $q . '%')
+                            ->orWhere('description', 'like', '%' . $q . '%')
+                            ->orWhereHas('workPlan.submission.bureau', function ($bQuery) use ($q) {
+                                $bQuery->where('code', 'like', '%' . $q . '%')
+                                    ->orWhere('name', 'like', '%' . $q . '%');
+                            });
+                    });
+                });
+            }
+
+            $realizations = $query->orderBy('month')->orderBy('id', 'desc')->paginate(15);
+        }
+
         return view('livewire.rkap.rkap-realization-upload', [
             'periodOptions' => $this->periodOptions,
+            'realizations' => $realizations,
         ])->layout('layouts.contentNavbarLayout');
     }
 

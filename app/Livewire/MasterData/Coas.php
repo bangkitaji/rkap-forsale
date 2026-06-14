@@ -19,6 +19,7 @@ class Coas extends Component
     public $code = '';
     public $title = '';
     public $description = '';
+    public $coaGroupId = '';
     public $uploadedFile = null;
 
     public $sortBy  = 'code';
@@ -57,6 +58,7 @@ class Coas extends Component
             ],
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'coaGroupId' => 'nullable|exists:coa_groups,id',
         ];
     }
 
@@ -78,6 +80,7 @@ class Coas extends Component
             $this->code = $coa->code;
             $this->title = $coa->title;
             $this->description = $coa->description;
+            $this->coaGroupId = $coa->coa_group_id ?? '';
             $this->isModalOpen = true;
         } catch (\Exception $e) {
             session()->flash('error', 'COA not found.');
@@ -95,6 +98,7 @@ class Coas extends Component
                     'code' => $this->code,
                     'title' => $this->title,
                     'description' => $this->description,
+                    'coa_group_id' => $this->coaGroupId ?: null,
                 ]
             );
 
@@ -181,17 +185,22 @@ class Coas extends Component
         $this->code = '';
         $this->title = '';
         $this->description = '';
+        $this->coaGroupId = '';
         $this->resetValidation();
     }
 
     public function render()
     {
-        $coas = Coa::search('code|title|description', $this->search)
+        $coas = Coa::with('coaGroup')
+            ->search('code|title|description', $this->search)
             ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 
+        $coaGroups = \App\Models\CoaGroup::orderBy('name')->get();
+
         return view('livewire.master-data.coas', [
             'coas' => $coas,
+            'coaGroups' => $coaGroups,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

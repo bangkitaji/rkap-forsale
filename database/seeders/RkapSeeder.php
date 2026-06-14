@@ -50,6 +50,12 @@ class RkapSeeder extends Seeder
             'rkap.comment',
             // Settings Satuan
             'settings.satuan.manage',
+            // Master Data
+            'masterdata.show',
+            'masterdata.workplan.manage',
+            'masterdata.activity.manage',
+            'masterdata.coa.manage',
+            'masterdata.coagroup.manage',
             // Compilation — scoped from narrowest to widest
             'rkap.compilation.dept', // see own dept/bureau submissions
             'rkap.compilation.dir',  // see own directorate submissions
@@ -492,6 +498,60 @@ class RkapSeeder extends Seeder
         // if (isset($seededActivities['PK-03-01'])) {
         //     $seededActivities['PK-03-01']->coas()->syncWithoutDetaching([$coa3->id]);
         // }
+
+        // ── 5. Seed Reference COA Groups ──
+        $coaGroups = [
+            [
+                'code' => '100000',
+                'name' => 'Aset (Assets)',
+                'description' => 'Sumber daya ekonomi yang dikendalikan oleh perusahaan (Kas, Piutang, Aset Tetap, dll).'
+            ],
+            [
+                'code' => '200000',
+                'name' => 'Liabilitas (Liabilities)',
+                'description' => 'Kewajiban finansial perusahaan masa kini (Utang Usaha, Pinjaman Bank, dll).'
+            ],
+            [
+                'code' => '300000',
+                'name' => 'Ekuitas (Equity)',
+                'description' => 'Hak residual atas aset perusahaan setelah dikurangi semua liabilitas (Modal Saham, Laba Ditahan, dll).'
+            ],
+            [
+                'code' => '400000',
+                'name' => 'Pendapatan (Revenue)',
+                'description' => 'Penerimaan/Arus masuk bruto dari aktivitas normal entitas (Pendapatan Operasional, Penjualan, dll).'
+            ],
+            [
+                'code' => '510000',
+                'name' => 'Beban Pegawai (Employee Expenses)',
+                'description' => 'Seluruh pengeluaran untuk gaji, tunjangan, jaminan sosial, dan fasilitas karyawan.'
+            ],
+            [
+                'code' => '520000',
+                'name' => 'Beban Operasional (Operating Expenses / OPEX)',
+                'description' => 'Biaya operasional rutin non-kepegawaian seperti sewa, listrik, air, perlengkapan kantor, perbaikan.'
+            ],
+            [
+                'code' => '530000',
+                'name' => 'Beban Investasi / Modal (Capital Expenditures / CAPEX)',
+                'description' => 'Pengeluaran untuk perolehan atau peningkatan kapasitas aset tetap/investasi modal jangka panjang.'
+            ],
+            [
+                'code' => '600000',
+                'name' => 'Pendapatan/Beban Non-Operasional (Non-Operating)',
+                'description' => 'Pendapatan dan beban dari aktivitas di luar kegiatan usaha utama (Pendapatan bunga, denda, pajak, dll).'
+            ],
+        ];
+
+        foreach ($coaGroups as $group) {
+            \App\Models\CoaGroup::firstOrCreate(
+                ['code' => $group['code']],
+                [
+                    'name' => $group['name'],
+                    'description' => $group['description']
+                ]
+            );
+        }
 
         $this->command->info('RKAP Seeder completed: roles, permissions, org structure, sample users, and master data created.');
     }
