@@ -95,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('permission:rkap.realization.upload')
             ->name('rkap-realization-upload');
         Route::get('/projections', \App\Livewire\Rkap\RkapProjections::class)
-            ->middleware('permission:rkap.projection.input')
+            ->middleware('permission:rkap.projection.view')
             ->name('rkap-projections');
         Route::get('/realization-template/download', function () {
             \Illuminate\Support\Facades\Log::info('Realization template route hit', [

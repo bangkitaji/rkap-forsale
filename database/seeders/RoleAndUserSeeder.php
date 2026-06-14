@@ -33,6 +33,7 @@ class RoleAndUserSeeder extends Seeder
         $permRkapManagePeriod = Permission::firstOrCreate(['name' => 'rkap.manage.period', 'guard_name' => 'web']);
         $permRkapRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
         $permRkapProjectionInput = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
+        $permRkapProjectionView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
 
 
 
@@ -56,12 +57,15 @@ class RoleAndUserSeeder extends Seeder
             $permRkapManagePeriod,
             $permRkapRealizationUpload,
             $permRkapProjectionInput,
+            $permRkapProjectionView,
         ]);
 
         $roleVerifikator->givePermissionTo([
             $permRkapShow,
             $permRkapSubmissionsDept,
             $permRkapRealizationUpload,
+            $permRkapProjectionInput,
+            $permRkapProjectionView,
         ]);
 
         // create admin user

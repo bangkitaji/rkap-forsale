@@ -63,36 +63,155 @@
     {{-- Filter Selector Card --}}
     <div class="card mb-4">
         <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Pilih Biro <span class="text-danger">*</span></label>
+            <div class="row g-3">
+                {{-- Directorate Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Direktorat</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
-                        selectedId: @entangle('bureauId'),
-                        bureaus: @js($bureauOptions->map(fn($b) => [
-                            'id' => $b->id,
-                            'code' => $b->code,
-                            'name' => $b->name,
-                            'label' => $b->code . ' — ' . $b->name
-                        ])->toArray()),
+                        selectedId: @entangle('directorateId'),
                         get selectedLabel() {
-                            const found = this.bureaus.find(b => b.id == this.selectedId);
-                            return found ? found.label : '-- Pilih Biro --';
-                        },
-                        get filteredBureaus() {
-                            if (!this.search) return this.bureaus;
-                            const q = this.search.toLowerCase();
-                            return this.bureaus.filter(b => 
-                                b.code.toLowerCase().includes(q) || 
-                                b.name.toLowerCase().includes(q)
-                            );
+                            const list = {{ json_encode($directorateOptions->map(fn($d) => ['id' => $d->id, 'label' => $d->code . ' — ' . $d->name])->toArray()) }};
+                            const found = list.find(item => item.id == this.selectedId);
+                            return found ? found.label : '-- Semua Direktorat --';
                         }
                     }" @click.outside="open = false">
                         
                         <button type="button" 
                                 class="form-select text-start"
-                                id="bureauSelectButton"
+                                @click="open = !open"
+                                @disabled(Auth::user()->isKepalaBiro() || Auth::user()->isKepalaDepartemen() || Auth::user()->isDireksi())>
+                            <span x-text="selectedLabel"></span>
+                        </button>
+
+                        <div x-show="open" 
+                             class="dropdown-menu show w-100 p-2 shadow-sm border mt-1" 
+                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                            
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Cari direktorat..." 
+                                       x-model="search" 
+                                       @keydown.escape.prevent.stop="open = false"
+                                       @click.stop>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <div class="list-group list-group-flush">
+                                <button type="button" 
+                                        class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
+                                        @click="
+                                            selectedId = null;
+                                            $wire.set('directorateId', null);
+                                            open = false;
+                                            search = '';
+                                        ">
+                                    -- Semua Direktorat --
+                                </button>
+                                <template x-for="item in {{ json_encode($directorateOptions->map(fn($d) => ['id' => $d->id, 'code' => $d->code, 'name' => $d->name, 'label' => $d->code . ' — ' . $d->name])->toArray()) }}.filter(d => !search || d.code.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase()))" :key="item.id">
+                                    <button type="button" 
+                                            class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start"
+                                            :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
+                                            @click="
+                                                selectedId = item.id;
+                                                $wire.set('directorateId', item.id);
+                                                open = false;
+                                                search = '';
+                                            ">
+                                        <span x-text="item.label"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Department Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Departemen</label>
+                    <div class="position-relative" x-data="{
+                        open: false,
+                        search: '',
+                        selectedId: @entangle('departmentId'),
+                        get selectedLabel() {
+                            const list = {{ json_encode($departmentOptions->map(fn($d) => ['id' => $d->id, 'label' => $d->code . ' — ' . $d->name])->toArray()) }};
+                            const found = list.find(item => item.id == this.selectedId);
+                            return found ? found.label : '-- Semua Departemen --';
+                        }
+                    }" @click.outside="open = false">
+                        
+                        <button type="button" 
+                                class="form-select text-start"
+                                @click="open = !open"
+                                @disabled(Auth::user()->isKepalaBiro() || Auth::user()->isKepalaDepartemen())>
+                            <span x-text="selectedLabel"></span>
+                        </button>
+
+                        <div x-show="open" 
+                             class="dropdown-menu show w-100 p-2 shadow-sm border mt-1" 
+                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                            
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Cari departemen..." 
+                                       x-model="search" 
+                                       @keydown.escape.prevent.stop="open = false"
+                                       @click.stop>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <div class="list-group list-group-flush">
+                                <button type="button" 
+                                        class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
+                                        @click="
+                                            selectedId = null;
+                                            $wire.set('departmentId', null);
+                                            open = false;
+                                            search = '';
+                                        ">
+                                    -- Semua Departemen --
+                                </button>
+                                <template x-for="item in {{ json_encode($departmentOptions->map(fn($d) => ['id' => $d->id, 'code' => $d->code, 'name' => $d->name, 'label' => $d->code . ' — ' . $d->name])->toArray()) }}.filter(d => !search || d.code.toLowerCase().includes(search.toLowerCase()) || d.name.toLowerCase().includes(search.toLowerCase()))" :key="item.id">
+                                    <button type="button" 
+                                            class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start"
+                                            :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
+                                            @click="
+                                                selectedId = item.id;
+                                                $wire.set('departmentId', item.id);
+                                                open = false;
+                                                search = '';
+                                            ">
+                                        <span x-text="item.label"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Bureau Filter --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Biro</label>
+                    <div class="position-relative" x-data="{
+                        open: false,
+                        search: '',
+                        selectedId: @entangle('bureauId'),
+                        get selectedLabel() {
+                            const list = {{ json_encode($bureauOptions->map(fn($b) => ['id' => $b->id, 'label' => $b->code . ' — ' . $b->name])->toArray()) }};
+                            const found = list.find(item => item.id == this.selectedId);
+                            return found ? found.label : '-- Semua Biro --';
+                        }
+                    }" @click.outside="open = false">
+                        
+                        <button type="button" 
+                                class="form-select text-start"
                                 @click="open = !open"
                                 @disabled(Auth::user()->isKepalaBiro())>
                             <span x-text="selectedLabel"></span>
@@ -106,7 +225,7 @@
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
                                 <input type="text" 
                                        class="form-control" 
-                                       placeholder="Cari kode atau nama biro..." 
+                                       placeholder="Cari biro..." 
                                        x-model="search" 
                                        @keydown.escape.prevent.stop="open = false"
                                        @click.stop>
@@ -115,27 +234,36 @@
                             <div class="dropdown-divider"></div>
 
                             <div class="list-group list-group-flush">
-                                <template x-for="bureau in filteredBureaus" :key="bureau.id">
+                                <button type="button" 
+                                        class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
+                                        @click="
+                                            selectedId = null;
+                                            $wire.set('bureauId', null);
+                                            open = false;
+                                            search = '';
+                                        ">
+                                    -- Semua Biro --
+                                </button>
+                                <template x-for="item in {{ json_encode($bureauOptions->map(fn($b) => ['id' => $b->id, 'code' => $b->code, 'name' => $b->name, 'label' => $b->code . ' — ' . $b->name])->toArray()) }}.filter(b => !search || b.code.toLowerCase().includes(search.toLowerCase()) || b.name.toLowerCase().includes(search.toLowerCase()))" :key="item.id">
                                     <button type="button" 
                                             class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start"
-                                            :class="selectedId == bureau.id ? 'active text-white' : 'text-dark'"
+                                            :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
                                             @click="
-                                                selectedId = bureau.id;
-                                                $wire.set('bureauId', bureau.id);
+                                                selectedId = item.id;
+                                                $wire.set('bureauId', item.id);
                                                 open = false;
                                                 search = '';
                                             ">
-                                        <span x-text="bureau.label"></span>
+                                        <span x-text="item.label"></span>
                                     </button>
                                 </template>
-                                <div x-show="filteredBureaus.length === 0" class="text-muted small text-center py-2">
-                                    Tidak ada biro yang cocok
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+
+                {{-- Target Period --}}
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Target Periode Proyeksi</label>
                     <input type="text" class="form-control" value="{{ $activePeriodTitle ?? 'Tidak ada periode aktif' }}" disabled>
                 </div>
@@ -152,34 +280,42 @@
                 <p class="small mb-0">Proyeksi hanya dapat diinput pada periode RKAP tahun berjalan ({{ date('Y') }}) yang memiliki status <strong>Finalized</strong>.</p>
             </div>
         </div>
-    @elseif(!$bureauId)
+    @elseif(!$directorateId && !$departmentId && !$bureauId && !Auth::user()->isKepalaBiro() && !Auth::user()->isKepalaDepartemen() && !Auth::user()->isDireksi())
         <div class="card py-5 text-center text-muted">
             <div class="card-body">
                 <i class="bx bx-pointer bx-lg d-block mb-3 text-secondary"></i>
-                <h5 class="fw-semibold">Silakan pilih Biro terlebih dahulu</h5>
-                <p class="small mb-0">Pilih biro dari dropdown di atas untuk memuat item anggaran yang akan diproyeksikan.</p>
+                <h5 class="fw-semibold">Silakan pilih Direktorat, Departemen, atau Biro terlebih dahulu</h5>
+                <p class="small mb-0">Pilih salah satu filter di atas untuk memuat item anggaran yang akan diproyeksikan.</p>
             </div>
         </div>
-    @elseif(!$submission)
+    @elseif(!$submissions || $submissions->isEmpty())
         <div class="card py-5 text-center text-muted">
             <div class="card-body">
                 <i class="bx bx-info-circle bx-lg d-block mb-3 text-warning"></i>
                 <h5 class="fw-semibold">Tidak ditemukan pengajuan RKAP yang disetujui</h5>
-                <p class="small mb-0">Tidak ada pengajuan RKAP dengan status <strong>Disetujui</strong> untuk biro terpilih pada periode <strong>{{ $activePeriodTitle ?? '-' }}</strong>.</p>
+                <p class="small mb-0">Tidak ada pengajuan RKAP dengan status <strong>Disetujui</strong> untuk filter terpilih pada periode <strong>{{ $activePeriodTitle ?? '-' }}</strong>.</p>
             </div>
         </div>
     @else
-            @foreach($submission->workPlans as $wp)
-                <div class="card mb-4 border-start border-primary border-3">
-                    <div class="card-header bg-lighter py-3 d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bx bx-list-ul text-primary"></i>
-                            <h6 class="mb-0 fw-bold text-primary">{{ $wp->program_code }} — {{ $wp->program_name }}</h6>
+        @foreach($submissions as $sub)
+            <div class="mb-5">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <i class="bx bx-building fs-4 text-primary"></i>
+                    <h5 class="fw-bold text-dark mb-0">
+                        Biro: <span class="text-primary">{{ $sub->bureau->code }} — {{ $sub->bureau->name }}</span>
+                    </h5>
+                </div>
+                
+                @foreach($sub->workPlans as $wp)
+                    <div class="card mb-4 border-start border-primary border-3">
+                        <div class="card-header bg-lighter py-3 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bx bx-list-ul text-primary"></i>
+                                <h6 class="mb-0 fw-bold text-primary">{{ $wp->program_code }} — {{ $wp->program_name }}</h6>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="card-body p-3">
-                        @foreach($wp->budgetItems->groupBy('rkap_work_plan_id') as $workPlanId => $items)
+                        <div class="card-body p-3">
                             <div class="table-responsive">
                                 <table class="table table-sm table-bordered align-middle mb-0">
                                     <thead class="table-light">
@@ -193,7 +329,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($items as $bi)
+                                        @foreach($wp->budgetItems as $bi)
                                             @php
                                                 $realizationYtd = (float) $bi->realizations->sum('amount');
                                             @endphp
@@ -220,12 +356,14 @@
                                                 <td class="text-nowrap">
                                                     <div class="d-flex justify-content-end align-items-center gap-2">
                                                         <span class="fw-bold text-dark">Rp {{ number_format($bi->projections->sum('amount'), 0, ',', '.') }}</span>
-                                                        <button type="button" 
-                                                                class="btn btn-xs btn-icon btn-outline-primary p-1" 
-                                                                wire:click="selectBudgetItem({{ $bi->id }})"
-                                                                title="Input/Edit Proyeksi">
-                                                            <i class="bx bx-edit-alt"></i>
-                                                        </button>
+                                                        @can('rkap.projection.input')
+                                                            <button type="button" 
+                                                                    class="btn btn-xs btn-icon btn-outline-primary p-1" 
+                                                                    wire:click="selectBudgetItem({{ $bi->id }})"
+                                                                    title="Input/Edit Proyeksi">
+                                                                <i class="bx bx-edit-alt"></i>
+                                                            </button>
+                                                        @endcan
                                                     </div>
                                                 </td>
                                             </tr>
@@ -233,11 +371,12 @@
                                     </tbody>
                                 </table>
                             </div>
-                        @endforeach
+                        </div>
                     </div>
-                </div>
-            @endforeach
-        @endif
+                @endforeach
+            </div>
+        @endforeach
+    @endif
 
         {{-- Modal Input Proyeksi --}}
         <div class="modal fade" 

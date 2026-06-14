@@ -44,7 +44,7 @@
       "icon": "menu-icon icon-base bx bx-calculator",
       "name": "Proyeksi",
       "slug": "rkap-projections",
-      "permission": "rkap.projection.input"
+      "permission": "rkap.projection.view"
     },
     {
       "url": "rkap/periods",

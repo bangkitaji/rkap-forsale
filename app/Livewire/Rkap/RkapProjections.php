@@ -7,6 +7,8 @@ use App\Models\RkapPeriod;
 use App\Models\RkapSubmission;
 use App\Models\RkapBudgetItem;
 use App\Models\Bureau;
+use App\Models\Department;
+use App\Models\Directorate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
@@ -15,11 +17,12 @@ class RkapProjections extends Component
 {
     public ?int $activePeriodId = null;
     public ?int $prevPeriodId = null;
+    public ?int $directorateId = null;
+    public ?int $departmentId = null;
     public ?int $bureauId = null;
 
     public ?string $activePeriodTitle = null;
     public ?string $prevPeriodTitle = null;
-    public ?RkapSubmission $submission = null;
 
     public ?int $selectedBudgetItemId = null;
     public array $editingProjections = [];
@@ -37,7 +40,7 @@ class RkapProjections extends Component
     {
         $user = Auth::user();
 
-        if (!$user || !$user->can('rkap.projection.input')) {
+        if (!$user || !$user->can('rkap.projection.view')) {
             abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
         }
 
@@ -59,72 +62,141 @@ class RkapProjections extends Component
                 $this->prevPeriodId = $prevPeriod->id;
                 $this->prevPeriodTitle = $prevPeriod->title;
             }
-        } else {
-            $this->activePeriodId = null;
-            $this->activePeriodTitle = null;
         }
 
-        // 2. Set default Bureau or restrict selector based on role
+        // 2. Set default filters based on role
         if ($user->isKepalaBiro()) {
             $this->bureauId = $user->bureau_id;
-            $this->loadProjections();
-        } else {
-            // Default to null, Admin/Verifikator must select a bureau
-            $this->bureauId = null;
+            $this->departmentId = $user->department_id;
+            $this->directorateId = $user->directorate_id;
+        } elseif ($user->isKepalaDepartemen()) {
+            $this->departmentId = $user->department_id;
+            $this->directorateId = $user->directorate_id;
+        } elseif ($user->isDireksi()) {
+            $this->directorateId = $user->directorate_id;
         }
     }
 
-    public function updatedBureauId(): void
+    public function updatedDirectorateId(): void
     {
-        $this->loadProjections();
+        $this->departmentId = null;
+        $this->bureauId = null;
     }
 
-    public function loadProjections(): void
+    public function updatedDepartmentId(): void
     {
-        $this->submission = null;
+        $this->bureauId = null;
+    }
 
-        if (!$this->bureauId || !$this->activePeriodId) {
-            return;
+    public function getDirectorateOptionsProperty()
+    {
+        $user = Auth::user();
+        if ($user->isKepalaBiro() || $user->isKepalaDepartemen() || $user->isDireksi()) {
+            return Directorate::where('id', $user->directorate_id)->get();
         }
+        return Directorate::where('is_active', true)->orderBy('name')->get();
+    }
 
-        // Fetch the approved submission for the active period for the selected bureau (current year finalized RKAP)
-        $this->submission = RkapSubmission::with([
-                'workPlans.budgetItems.realizations',
-                'workPlans.budgetItems.projections',
-                'period'
-            ])
-            ->where('bureau_id', $this->bureauId)
-            ->where('rkap_period_id', $this->activePeriodId)
-            ->where('status', 'approved')
-            ->first();
+    public function getDepartmentOptionsProperty()
+    {
+        $user = Auth::user();
+        if ($user->isKepalaBiro() || $user->isKepalaDepartemen()) {
+            return Department::where('id', $user->department_id)->get();
+        }
+        
+        $query = Department::where('is_active', true);
+        
+        if ($this->directorateId) {
+            $query->where('directorate_id', $this->directorateId);
+        } elseif ($user->isDireksi()) {
+            $query->where('directorate_id', $user->directorate_id);
+        }
+        
+        return $query->orderBy('name')->get();
     }
 
     public function getBureauOptionsProperty()
     {
         $user = Auth::user();
-
         if ($user->isKepalaBiro()) {
             return Bureau::where('id', $user->bureau_id)->get();
         }
 
-        if ($user->isKepalaDepartemen()) {
-            return Bureau::where('department_id', $user->department_id)
-                ->orderBy('name')
-                ->get();
+        $query = Bureau::where('is_active', true);
+
+        if ($this->departmentId) {
+            $query->where('department_id', $this->departmentId);
+        } elseif ($this->directorateId) {
+            $query->whereHas('department', fn($q) => $q->where('directorate_id', $this->directorateId));
+        } else {
+            if ($user->isKepalaDepartemen()) {
+                $query->where('department_id', $user->department_id);
+            } elseif ($user->isDireksi()) {
+                $query->whereHas('department', fn($q) => $q->where('directorate_id', $user->directorate_id));
+            }
         }
 
-        if ($user->isDireksi()) {
-            return Bureau::whereHas('department', fn($q) => $q->where('directorate_id', $user->directorate_id))
-                ->orderBy('name')
-                ->get();
+        return $query->orderBy('name')->get();
+    }
+
+    public function getSubmissions()
+    {
+        if (!$this->activePeriodId) {
+            return collect();
         }
 
-        // Admin and Verifikator see all active bureaus
-        return Bureau::where('is_active', true)->orderBy('name')->get();
+        $user = Auth::user();
+        $targetBureauIds = [];
+
+        if ($this->bureauId) {
+            $targetBureauIds = [$this->bureauId];
+        } elseif ($this->departmentId) {
+            $targetBureauIds = Bureau::where('department_id', $this->departmentId)
+                ->pluck('id')
+                ->toArray();
+        } elseif ($this->directorateId) {
+            $targetBureauIds = Bureau::whereHas('department', fn($q) => $q->where('directorate_id', $this->directorateId))
+                ->pluck('id')
+                ->toArray();
+        } else {
+            // Defaults based on role
+            if ($user->isKepalaBiro()) {
+                $targetBureauIds = [$user->bureau_id];
+            } elseif ($user->isKepalaDepartemen()) {
+                $targetBureauIds = Bureau::where('department_id', $user->department_id)
+                    ->pluck('id')
+                    ->toArray();
+            } elseif ($user->isDireksi()) {
+                $targetBureauIds = Bureau::whereHas('department', fn($q) => $q->where('directorate_id', $user->directorate_id))
+                    ->pluck('id')
+                    ->toArray();
+            } else {
+                return collect();
+            }
+        }
+
+        if (empty($targetBureauIds)) {
+            return collect();
+        }
+
+        return RkapSubmission::with([
+                'bureau',
+                'workPlans.budgetItems.realizations',
+                'workPlans.budgetItems.projections',
+                'period'
+            ])
+            ->whereIn('bureau_id', $targetBureauIds)
+            ->where('rkap_period_id', $this->activePeriodId)
+            ->where('status', 'approved')
+            ->get();
     }
 
     public function selectBudgetItem(int $id): void
     {
+        if (!Auth::user()->can('rkap.projection.input')) {
+            abort(403, 'Anda tidak memiliki akses untuk mengedit proyeksi.');
+        }
+
         $this->selectedBudgetItemId = $id;
         $budgetItem = RkapBudgetItem::with(['projections'])->find($id);
         
@@ -166,7 +238,6 @@ class RkapProjections extends Component
         $this->validate();
 
         DB::transaction(function () use ($currentYear): void {
-            $realizations = \App\Models\RkapBudgetItemRealization::where('rkap_budget_item_id', $this->selectedBudgetItemId)->get();
             $projections = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->selectedBudgetItemId)->get();
 
             foreach ($this->editingProjections as $month => $amount) {
@@ -196,7 +267,6 @@ class RkapProjections extends Component
             }
         });
 
-        $this->loadProjections();
         $this->dispatch('close-projection-modal');
         session()->flash('message', 'Proyeksi RKAP berhasil disimpan.');
         $this->dispatch('projections-saved');
@@ -205,7 +275,10 @@ class RkapProjections extends Component
     public function render(): View
     {
         return view('livewire.rkap.rkap-projections', [
+            'directorateOptions' => $this->directorateOptions,
+            'departmentOptions' => $this->departmentOptions,
             'bureauOptions' => $this->bureauOptions,
+            'submissions' => $this->getSubmissions(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }
