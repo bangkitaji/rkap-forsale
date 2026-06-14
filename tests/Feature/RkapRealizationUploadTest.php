@@ -43,9 +43,9 @@ class RkapRealizationUploadTest extends TestCase
         $this->verifikator->assignRole($roleVerifikator);
 
         $this->period = RkapPeriod::create([
-            'year' => 2026,
-            'title' => 'RKAP 2026',
-            'status' => 'open',
+            'year' => (int) date('Y'),
+            'title' => 'RKAP ' . date('Y'),
+            'status' => 'finalized',
             'submission_start' => now()->subDay(),
             'submission_end' => now()->addDay(),
         ]);
@@ -69,18 +69,7 @@ class RkapRealizationUploadTest extends TestCase
     {
         $this->actingAs($this->verifikator);
 
-        // 1. Initial render (no period selected)
-        Livewire::test(RkapRealizationUpload::class)
-            ->assertStatus(200)
-            ->assertDontSee('Bulan Realisasi')
-            // Select period
-            ->set('periodId', $this->period->id)
-            ->assertSee('Bulan Realisasi')
-            ->assertDontSee('Download Template');
-
-        // 2. Select period and check month options
-        // Create an existing realization for month 3 (Maret)
-        // Set up required relations for RkapBudgetItem
+        // Set up required relations for RkapBudgetItem (Approved submission is required for period option filtering)
         $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
         $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
         $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
@@ -113,6 +102,17 @@ class RkapRealizationUploadTest extends TestCase
             'unit_price' => 10000,
         ]);
 
+        // 1. Initial render (no period selected)
+        Livewire::test(RkapRealizationUpload::class)
+            ->assertStatus(200)
+            ->assertDontSee('Bulan Realisasi')
+            // Select period
+            ->set('periodId', $this->period->id)
+            ->assertSee('Bulan Realisasi')
+            ->assertDontSee('Download Template');
+
+        // 2. Select period and check month options
+        // Create an existing realization for month 3 (Maret)
         RkapBudgetItemRealization::create([
             'rkap_budget_item_id' => $budgetItem->id,
             'rkap_period_id' => $this->period->id,

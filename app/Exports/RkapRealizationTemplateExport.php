@@ -67,7 +67,8 @@ class RkapRealizationTemplateExport implements FromArray, WithEvents, ShouldAuto
 
         if ($this->periodId) {
             $budgetItems = RkapBudgetItem::whereHas('workPlan.submission', function ($q) {
-                $q->where('rkap_period_id', $this->periodId);
+                $q->where('rkap_period_id', $this->periodId)
+                  ->where('status', 'approved');
             })
                 ->with([
                     'workPlan.submission.bureau',

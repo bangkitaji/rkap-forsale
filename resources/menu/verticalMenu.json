@@ -40,6 +40,13 @@
       "permission": "rkap.realization.upload"
     },
     {
+      "url": "rkap/projections",
+      "icon": "menu-icon icon-base bx bx-calculator",
+      "name": "Proyeksi",
+      "slug": "rkap-projections",
+      "permission": "rkap.projection.input"
+    },
+    {
       "url": "rkap/periods",
       "icon": "menu-icon icon-base bx bx-calendar",
       "name": "Periode RKAP",

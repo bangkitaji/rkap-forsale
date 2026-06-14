@@ -50,7 +50,25 @@ class RkapRealizationUpload extends Component
 
     public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
     {
-        return RkapPeriod::orderByDesc('year')->get();
+        $currentYear = (int) date('Y');
+
+        $period = RkapPeriod::where('year', $currentYear)
+            ->where('status', 'finalized')
+            ->first();
+
+        if ($period) {
+            // Check if there is at least one approved (finalized) submission for this period
+            $hasApproved = \App\Models\RkapSubmission::where('rkap_period_id', $period->id)
+                ->where('status', 'approved')
+                ->exists();
+
+            if ($hasApproved) {
+                return RkapPeriod::where('id', $period->id)->get();
+            }
+        }
+
+        // Return empty collection if conditions not met
+        return RkapPeriod::whereRaw('1=0')->get();
     }
 
     public function getMonthOptionsProperty(): array
@@ -105,6 +123,27 @@ class RkapRealizationUpload extends Component
             'month.required'    => 'Bulan realisasi wajib dipilih sebelum upload.',
             'month.between'     => 'Bulan tidak valid.',
         ]);
+
+        // Validate that the period matches current year and status is finalized
+        $currentYear = (int) date('Y');
+        $validPeriod = RkapPeriod::where('year', $currentYear)
+            ->where('status', 'finalized')
+            ->first();
+
+        if (!$validPeriod || (int)$this->periodId !== $validPeriod->id) {
+            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP tahun ini (' . $currentYear . ') dengan status Finalized.';
+            return;
+        }
+
+        // Validate that there is at least one approved (finalized) submission for this period
+        $hasApproved = \App\Models\RkapSubmission::where('rkap_period_id', $validPeriod->id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$hasApproved) {
+            $this->errorsList[] = 'Tidak ditemukan pengajuan RKAP yang disetujui (final) pada periode ini.';
+            return;
+        }
 
         $alreadyUploaded = RkapBudgetItemRealization::where('rkap_period_id', $this->periodId)
             ->where('month', $this->month)
@@ -302,12 +341,13 @@ class RkapRealizationUpload extends Component
     }
 
     /**
-     * Collect all rkap_budget_item ids that belong to submissions in the selected period.
+     * Collect all rkap_budget_item ids that belong to approved (finalized) submissions in the selected period.
      */
     private function getValidBudgetItemIds(): array
     {
         return RkapBudgetItem::whereHas('workPlan.submission', function ($q) {
-            $q->where('rkap_period_id', $this->periodId);
+            $q->where('rkap_period_id', $this->periodId)
+              ->where('status', 'approved');
         })->pluck('id')->map(fn ($v) => (int) $v)->toArray();
     }
 

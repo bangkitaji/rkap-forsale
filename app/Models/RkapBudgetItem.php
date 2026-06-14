@@ -18,6 +18,7 @@ class RkapBudgetItem extends Model
         'quantity_2',
         'unit_price',
         'total_price',
+        'projection',
         'remarks',
     ];
 
@@ -28,6 +29,7 @@ class RkapBudgetItem extends Model
             'quantity_2' => 'integer',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'projection' => 'decimal:2',
         ];
     }
 
@@ -73,6 +75,11 @@ class RkapBudgetItem extends Model
     public function getRealizationTotalAttribute(): float
     {
         return (float) $this->realizations->sum('amount');
+    }
+
+    public function projections(): HasMany
+    {
+        return $this->hasMany(RkapBudgetItemProjection::class)->orderBy('month');
     }
 
     protected static function booted(): void

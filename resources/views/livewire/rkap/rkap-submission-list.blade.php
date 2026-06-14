@@ -12,7 +12,7 @@
         }
         .custom-tooltip-content {
             visibility: hidden;
-            width: 250px;
+            width: 400px;
             background-color: #2f3349;
             color: #ffffff;
             text-align: left;
@@ -242,13 +242,17 @@
                                         @endphp
                                         <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
                                         <div class="row text-center">
-                                            <div class="col-6 border-end">
+                                            <div class="col-4 border-end">
                                                 <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                <div class="fw-bold text-white">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                                <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-4 border-end">
                                                 <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                <div class="fw-bold text-white">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
                                             </div>
                                         </div>
                                     @else

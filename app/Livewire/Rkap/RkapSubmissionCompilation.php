@@ -112,6 +112,7 @@ class RkapSubmissionCompilation extends Component
             'grand_total' => [
                 'budget' => 0.0,
                 'realization' => 0.0,
+                'projection' => 0.0,
                 'period_title' => null,
             ],
         ];
@@ -122,6 +123,7 @@ class RkapSubmissionCompilation extends Component
 
             $prevSubmission = RkapSubmission::with([
                     'workPlans.budgetItems.realizations',
+                    'workPlans.budgetItems.projections',
                     'period',
                 ])
                 ->where('bureau_id', $bureauId)
@@ -133,9 +135,11 @@ class RkapSubmissionCompilation extends Component
 
             if ($prevSubmission) {
                 $totalRealization = 0;
+                $totalProjection = 0;
                 foreach ($prevSubmission->workPlans as $wp) {
                     foreach ($wp->budgetItems as $bi) {
                         $totalRealization += (float) $bi->realizations->sum('amount');
+                        $totalProjection += (float) $bi->projections->sum('amount');
                     }
                 }
 
@@ -143,6 +147,7 @@ class RkapSubmissionCompilation extends Component
                     'period_title' => $prevSubmission->period->title,
                     'budget' => (float) $prevSubmission->total_budget,
                     'realization' => $totalRealization,
+                    'projection' => $totalProjection,
                 ];
 
                 // Add to department total
@@ -151,11 +156,13 @@ class RkapSubmissionCompilation extends Component
                     $prevDataMap['departments'][$deptKey] = [
                         'budget' => 0.0,
                         'realization' => 0.0,
+                        'projection' => 0.0,
                         'period_title' => $prevSubmission->period->title,
                     ];
                 }
                 $prevDataMap['departments'][$deptKey]['budget'] += (float) $prevSubmission->total_budget;
                 $prevDataMap['departments'][$deptKey]['realization'] += $totalRealization;
+                $prevDataMap['departments'][$deptKey]['projection'] += $totalProjection;
 
                 // Add to directorate total
                 $dirKey = $sub->bureau?->department?->directorate?->name ?? 'Lainnya';
@@ -163,17 +170,20 @@ class RkapSubmissionCompilation extends Component
                     $prevDataMap['directorates'][$dirKey] = [
                         'budget' => 0.0,
                         'realization' => 0.0,
+                        'projection' => 0.0,
                         'period_title' => $prevSubmission->period->title,
                     ];
                 }
                 $prevDataMap['directorates'][$dirKey]['budget'] += (float) $prevSubmission->total_budget;
                 $prevDataMap['directorates'][$dirKey]['realization'] += $totalRealization;
+                $prevDataMap['directorates'][$dirKey]['projection'] += $totalProjection;
             }
         }
 
         foreach ($prevDataMap['submissions'] as $subData) {
             $prevDataMap['grand_total']['budget'] += $subData['budget'];
             $prevDataMap['grand_total']['realization'] += $subData['realization'];
+            $prevDataMap['grand_total']['projection'] += $subData['projection'];
             if (!$prevDataMap['grand_total']['period_title']) {
                 $prevDataMap['grand_total']['period_title'] = $subData['period_title'];
             }

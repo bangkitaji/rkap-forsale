@@ -1111,7 +1111,8 @@ class RkapSubmissionForm extends Component
         }
 
         $prevSubmission = RkapSubmission::with([
-            'workPlans.budgetItems',
+            'workPlans.budgetItems.realizations',
+            'workPlans.budgetItems.projections',
             'period',
         ])
             ->where('bureau_id', $bureauId)
@@ -1136,32 +1137,36 @@ class RkapSubmissionForm extends Component
             }
 
             if (!isset($programs[$wpId])) {
-                $programs[$wpId] = ['budget' => 0.0, 'realization' => 0.0];
+                $programs[$wpId] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
             }
 
             $actKey = "{$wpId}-{$actId}";
             if (!isset($activities[$actKey])) {
-                $activities[$actKey] = ['budget' => 0.0, 'realization' => 0.0];
+                $activities[$actKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
             }
 
             foreach ($wp->budgetItems as $bi) {
                 $code = $bi->account_code;
                 $budgetVal = (float) $bi->total_price;
                 $realizationVal = (float) $bi->realizations->sum('amount');
+                $projectionVal = (float) $bi->projections->sum('amount');
 
                 $programs[$wpId]['budget'] += $budgetVal;
                 $programs[$wpId]['realization'] += $realizationVal;
+                $programs[$wpId]['projection'] += $projectionVal;
 
                 $activities[$actKey]['budget'] += $budgetVal;
                 $activities[$actKey]['realization'] += $realizationVal;
+                $activities[$actKey]['projection'] += $projectionVal;
 
                 if ($code) {
                     $coaKey = "{$wpId}-{$actId}-{$code}";
                     if (!isset($coas[$coaKey])) {
-                        $coas[$coaKey] = ['budget' => 0.0, 'realization' => 0.0];
+                        $coas[$coaKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
                     }
                     $coas[$coaKey]['budget'] += $budgetVal;
                     $coas[$coaKey]['realization'] += $realizationVal;
+                    $coas[$coaKey]['projection'] += $projectionVal;
                 }
             }
         }

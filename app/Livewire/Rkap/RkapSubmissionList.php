@@ -219,6 +219,7 @@ class RkapSubmissionList extends Component
 
             $prevSubmission = RkapSubmission::with([
                     'workPlans.budgetItems.realizations',
+                    'workPlans.budgetItems.projections',
                     'period',
                 ])
                 ->where('bureau_id', $bureauId)
@@ -230,9 +231,11 @@ class RkapSubmissionList extends Component
 
             if ($prevSubmission) {
                 $totalRealization = 0;
+                $totalProjection = 0;
                 foreach ($prevSubmission->workPlans as $wp) {
                     foreach ($wp->budgetItems as $bi) {
                         $totalRealization += (float) $bi->realizations->sum('amount');
+                        $totalProjection += (float) $bi->projections->sum('amount');
                     }
                 }
 
@@ -240,6 +243,7 @@ class RkapSubmissionList extends Component
                     'period_title' => $prevSubmission->period->title,
                     'budget' => (float) $prevSubmission->total_budget,
                     'realization' => $totalRealization,
+                    'projection' => $totalProjection,
                 ];
             }
         }

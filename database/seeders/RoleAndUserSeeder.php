@@ -32,6 +32,7 @@ class RoleAndUserSeeder extends Seeder
         $permRkapCompilationDept = Permission::firstOrCreate(['name' => 'rkap.compilation.dept', 'guard_name' => 'web']);
         $permRkapManagePeriod = Permission::firstOrCreate(['name' => 'rkap.manage.period', 'guard_name' => 'web']);
         $permRkapRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
+        $permRkapProjectionInput = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
 
 
 
@@ -54,6 +55,7 @@ class RoleAndUserSeeder extends Seeder
             $permRkapCompilationDept,
             $permRkapManagePeriod,
             $permRkapRealizationUpload,
+            $permRkapProjectionInput,
         ]);
 
         $roleVerifikator->givePermissionTo([

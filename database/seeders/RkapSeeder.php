@@ -55,6 +55,7 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dir',  // see own directorate submissions
             'rkap.compilation.all',  // see all directorates
             'rkap.realization.upload',
+            'rkap.projection.input',
         ];
 
         foreach ($permissions as $perm) {
@@ -73,6 +74,7 @@ class RkapSeeder extends Seeder
             'rkap.comment',
             'rkap.show',
             'rkap.compilation.dept', // can see their own department compilation
+            'rkap.projection.input',
         ]);
 
         $roleKepalaDept->syncPermissions([
