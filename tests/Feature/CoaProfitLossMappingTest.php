@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\Coa;
 use App\Models\CoaGroup;
+use App\Models\CoaCategory;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Livewire\Livewire;
@@ -69,39 +70,43 @@ class CoaProfitLossMappingTest extends TestCase
 
     public function test_mappings_property_is_populated_from_db(): void
     {
-        $this->coa1->update(['profit_loss_group' => 'revenue_passenger']);
+        $cat = CoaCategory::where('key', 'revenue_passenger')->first();
+        $this->coa1->update(['coa_category_id' => $cat->id]);
 
         $component = Livewire::actingAs($this->admin)
             ->test(CoaProfitLossMapping::class);
 
         $mappings = $component->get('mappings');
-        $this->assertEquals('revenue_passenger', $mappings[(string)$this->coa1->id]);
+        $this->assertEquals((string)$cat->id, $mappings[(string)$this->coa1->id]);
         $this->assertEquals('', $mappings[(string)$this->coa2->id]);
     }
 
     public function test_wire_model_saves_mapping_via_updated_lifecycle(): void
     {
+        $cat = CoaCategory::where('key', 'indirect_cost_admin')->first();
+
         // Simulate what wire:model.live does: set the property value
         // Livewire automatically calls updatedMappings() when a key changes
         Livewire::actingAs($this->admin)
             ->test(CoaProfitLossMapping::class)
-            ->set('mappings.' . $this->coa1->id, 'indirect_cost_admin')
+            ->set('mappings.' . $this->coa1->id, (string)$cat->id)
             ->assertDispatched('flash-message', message: "Pemetaan COA {$this->coa1->code} berhasil diperbarui.", type: 'success');
 
         // Verify DB was updated
-        $this->assertEquals('indirect_cost_admin', $this->coa1->fresh()->profit_loss_group);
+        $this->assertEquals($cat->id, $this->coa1->fresh()->coa_category_id);
     }
 
     public function test_wire_model_clears_mapping_when_empty(): void
     {
-        $this->coa1->update(['profit_loss_group' => 'revenue_passenger']);
+        $cat = CoaCategory::where('key', 'revenue_passenger')->first();
+        $this->coa1->update(['coa_category_id' => $cat->id]);
 
         Livewire::actingAs($this->admin)
             ->test(CoaProfitLossMapping::class)
             ->set('mappings.' . $this->coa1->id, '')
             ->assertDispatched('flash-message');
 
-        $this->assertNull($this->coa1->fresh()->profit_loss_group);
+        $this->assertNull($this->coa1->fresh()->coa_category_id);
     }
 
     public function test_select_all_toggles_current_page_items(): void
@@ -116,22 +121,25 @@ class CoaProfitLossMappingTest extends TestCase
 
     public function test_bulk_mapping_updates_selected_items(): void
     {
+        $cat = CoaCategory::where('key', 'direct_cost_traction')->first();
+
         Livewire::actingAs($this->admin)
             ->test(CoaProfitLossMapping::class)
             ->set('selectedCoas', [(string)$this->coa1->id, (string)$this->coa2->id])
-            ->call('bulkMap', 'direct_cost_traction')
-            ->assertDispatched('flash-message', message: "Berhasil memetakan 2 COA ke kategori 'direct_cost_traction'.", type: 'success')
+            ->call('bulkMap', (string)$cat->id)
+            ->assertDispatched('flash-message', message: "Berhasil memetakan 2 COA ke {$cat->label}.", type: 'success')
             ->assertSet('selectedCoas', [])
             ->assertSet('selectAll', false);
 
-        $this->assertEquals('direct_cost_traction', $this->coa1->fresh()->profit_loss_group);
-        $this->assertEquals('direct_cost_traction', $this->coa2->fresh()->profit_loss_group);
+        $this->assertEquals($cat->id, $this->coa1->fresh()->coa_category_id);
+        $this->assertEquals($cat->id, $this->coa2->fresh()->coa_category_id);
     }
 
     public function test_bulk_reset_clears_mapping(): void
     {
-        $this->coa1->update(['profit_loss_group' => 'revenue_passenger']);
-        $this->coa2->update(['profit_loss_group' => 'revenue_passenger']);
+        $cat = CoaCategory::where('key', 'revenue_passenger')->first();
+        $this->coa1->update(['coa_category_id' => $cat->id]);
+        $this->coa2->update(['coa_category_id' => $cat->id]);
 
         Livewire::actingAs($this->admin)
             ->test(CoaProfitLossMapping::class)
@@ -140,8 +148,8 @@ class CoaProfitLossMappingTest extends TestCase
             ->assertDispatched('flash-message', message: 'Berhasil memetakan 2 COA ke tanpa pemetaan (reset).', type: 'success')
             ->assertSet('selectedCoas', []);
 
-        $this->assertNull($this->coa1->fresh()->profit_loss_group);
-        $this->assertNull($this->coa2->fresh()->profit_loss_group);
+        $this->assertNull($this->coa1->fresh()->coa_category_id);
+        $this->assertNull($this->coa2->fresh()->coa_category_id);
     }
 
     public function test_bulk_map_does_nothing_when_empty_category_selected(): void

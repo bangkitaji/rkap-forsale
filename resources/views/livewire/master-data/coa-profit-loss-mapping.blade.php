@@ -143,14 +143,16 @@
                 <div class="col-md-3 d-flex gap-2">
                     <div class="w-100">
                         <label class="form-label small text-muted">Filter Kategori Profit & Loss</label>
-                        <select class="form-select form-select-sm" wire:model.live="filterProfitLossGroup">
+                        <select class="form-select form-select-sm"
+                            wire:key="filter-pl-group"
+                            wire:model.live="filterProfitLossGroup">
                             <option value="">Semua Status / Kategori</option>
                             <option value="unmapped">Belum Dipetakan</option>
                             <option value="mapped">Sudah Dipetakan (Semua)</option>
-                            @foreach(collect($categories)->groupBy('group') as $groupName => $groupCats)
+                            @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                                 <optgroup label="{{ $groupName }}">
-                                    @foreach($groupCats as $catKey => $cat)
-                                        <option value="{{ $catKey }}">{{ $cat['label'] }}</option>
+                                    @foreach($groupCats as $cat)
+                                        <option value="{{ $cat->id }}">{{ $cat->label }}</option>
                                     @endforeach
                                 </optgroup>
                             @endforeach
@@ -190,10 +192,10 @@
                         @change="$wire.bulkMap($event.target.value); $event.target.value = '';">
                         <option value="">-- Pilih Kategori --</option>
                         <option value="__reset__">-- Hapus Pemetaan (Reset) --</option>
-                        @foreach(collect($categories)->groupBy('group') as $groupName => $groupCats)
+                        @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                             <optgroup label="{{ $groupName }}">
-                                @foreach($groupCats as $catKey => $cat)
-                                    <option value="{{ $catKey }}">{{ $cat['label'] }}</option>
+                                @foreach($groupCats as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->label }}</option>
                                 @endforeach
                             </optgroup>
                         @endforeach
@@ -248,11 +250,9 @@
                                 @endif
                             </td>
                             <td>
-                                @php $currentMapping = $mappings[(string)$coa->id] ?? ''; @endphp
-                                @if($currentMapping !== '' && isset($categories[$currentMapping]))
-                                    @php $cat = $categories[$currentMapping]; @endphp
-                                    <span class="badge bg-label-{{ $cat['color'] }} fw-semibold">
-                                        {{ $cat['label'] }}
+                                @if($coa->coaCategory)
+                                    <span class="badge bg-label-{{ $coa->coaCategory->color }} fw-semibold">
+                                        {{ $coa->coaCategory->label }}
                                     </span>
                                 @else
                                     <span class="badge bg-label-secondary text-muted" style="color: #8592a3 !important;">Belum Dipetakan</span>
@@ -264,11 +264,11 @@
                                     wire:model.live="mappings.{{ $coa->id }}"
                                     class="form-select form-select-sm">
                                     <option value="">-- Belum Dipetakan --</option>
-                                    @foreach(collect($categories)->groupBy('group') as $groupName => $groupCats)
+                                    @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                                         <optgroup label="{{ $groupName }}">
-                                            @foreach($groupCats as $catKey => $cat)
-                                                <option value="{{ $catKey }}">
-                                                    {{ $cat['label'] }}
+                                            @foreach($groupCats as $cat)
+                                                <option value="{{ $cat->id }}">
+                                                    {{ $cat->label }}
                                                 </option>
                                             @endforeach
                                         </optgroup>

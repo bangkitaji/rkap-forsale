@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Coa;
 use App\Models\CoaGroup;
+use App\Models\CoaCategory;
 
 class CoaProfitLossMapping extends Component
 {
@@ -21,7 +22,7 @@ class CoaProfitLossMapping extends Component
     public $selectedCoas = [];
     public $selectAll = false;
 
-    /** @var array<string, string> COA ID => profit_loss_group value */
+    /** @var array<string, string> COA ID => coa_category_id value */
     public array $mappings = [];
 
     protected $queryString = [
@@ -73,14 +74,13 @@ class CoaProfitLossMapping extends Component
 
     /**
      * Livewire lifecycle hook: fires when any key in $mappings is changed via wire:model.
-     * This is the core save mechanism — no JavaScript event value passing needed.
      */
     public function updatedMappings($value, $key)
     {
         try {
             $coa = Coa::findOrFail($key);
             $coa->update([
-                'profit_loss_group' => $value !== '' ? $value : null,
+                'coa_category_id' => $value !== '' ? (int)$value : null,
             ]);
             $msg = "Pemetaan COA {$coa->code} berhasil diperbarui.";
             $this->dispatch('flash-message', message: $msg, type: 'success');
@@ -98,7 +98,7 @@ class CoaProfitLossMapping extends Component
         try {
             $coa = Coa::findOrFail($coaId);
             $coa->update([
-                'profit_loss_group' => $value ?: null
+                'coa_category_id' => $value ? (int)$value : null
             ]);
             $msg = "Pemetaan COA {$coa->code} berhasil diperbarui.";
             $this->dispatch('flash-message', message: $msg, type: 'success');
@@ -153,16 +153,20 @@ class CoaProfitLossMapping extends Component
         }
 
         // __reset__ sentinel means "remove mapping"
-        $mappingValue = ($categoryId === '__reset__') ? null : $categoryId;
+        $mappingValue = ($categoryId === '__reset__') ? null : (int)$categoryId;
 
         try {
             $count = Coa::whereIn('id', $this->selectedCoas)->update([
-                'profit_loss_group' => $mappingValue
+                'coa_category_id' => $mappingValue
             ]);
             $this->selectedCoas = [];
             $this->selectAll = false;
-            $label = $mappingValue ? "kategori '{$mappingValue}'" : 'tanpa pemetaan (reset)';
-            $msg = "Berhasil memetakan {$count} COA ke {$label}.";
+            
+            $categoryName = 'tanpa pemetaan (reset)';
+            if ($mappingValue) {
+                $categoryName = CoaCategory::find($mappingValue)?->label ?? 'kategori';
+            }
+            $msg = "Berhasil memetakan {$count} COA ke {$categoryName}.";
             $this->dispatch('flash-message', message: $msg, type: 'success');
         } catch (\Exception $e) {
             $err = "Gagal melakukan pemetaan massal: " . $e->getMessage();
@@ -170,89 +174,21 @@ class CoaProfitLossMapping extends Component
         }
     }
 
-    public function getCategoriesProperty(): array
-    {
-        return self::CATEGORIES;
-    }
-
-    public const CATEGORIES = [
-        'revenue_passenger' => [
-            'label' => 'Pendapatan Tiket Penumpang',
-            'group' => 'Revenue',
-            'color' => 'success'
-        ],
-        'revenue_non_passenger' => [
-            'label' => 'Pendapatan Non-Tiket / Komersial',
-            'group' => 'Revenue',
-            'color' => 'success'
-        ],
-        'direct_cost_traction' => [
-            'label' => 'Beban Energi Listrik Traksi',
-            'group' => 'Direct Cost',
-            'color' => 'info'
-        ],
-        'direct_cost_maintenance' => [
-            'label' => 'Beban Pemeliharaan Sarana & Prasarana',
-            'group' => 'Direct Cost',
-            'color' => 'info'
-        ],
-        'direct_cost_crew' => [
-            'label' => 'Beban Awak KA & Staf Stasiun',
-            'group' => 'Direct Cost',
-            'color' => 'info'
-        ],
-        'direct_cost_passenger' => [
-            'label' => 'Beban Pelayanan Penumpang',
-            'group' => 'Direct Cost',
-            'color' => 'info'
-        ],
-        'direct_cost_others' => [
-            'label' => 'Beban Langsung Lainnya',
-            'group' => 'Direct Cost',
-            'color' => 'info'
-        ],
-        'indirect_cost_marketing' => [
-            'label' => 'Beban Pemasaran & Penjualan',
-            'group' => 'Indirect Cost',
-            'color' => 'warning'
-        ],
-        'indirect_cost_admin' => [
-            'label' => 'Beban Umum & Administrasi',
-            'group' => 'Indirect Cost',
-            'color' => 'warning'
-        ],
-        'depreciation_amortization' => [
-            'label' => 'Beban Penyusutan & Amortisasi',
-            'group' => 'Indirect Cost',
-            'color' => 'warning'
-        ],
-        'non_operating_revenue' => [
-            'label' => 'Pendapatan Non-Operasional',
-            'group' => 'Non-Operating',
-            'color' => 'secondary'
-        ],
-        'non_operating_expense' => [
-            'label' => 'Beban Non-Operasional / Keuangan',
-            'group' => 'Non-Operating',
-            'color' => 'secondary'
-        ],
-    ];
-
     private function buildQuery()
     {
-        return Coa::with('coaGroup')
+        return Coa::with(['coaGroup', 'coaCategory'])
             ->search('code|title|description', $this->search)
             ->when($this->filterCoaGroup, function ($query) {
                 return $query->where('coa_group_id', $this->filterCoaGroup);
             })
             ->when($this->filterProfitLossGroup, function ($query) {
                 if ($this->filterProfitLossGroup === 'unmapped') {
-                    return $query->whereNull('profit_loss_group');
+                    return $query->whereNull('coa_category_id');
                 }
                 if ($this->filterProfitLossGroup === 'mapped') {
-                    return $query->whereNotNull('profit_loss_group');
+                    return $query->whereNotNull('coa_category_id');
                 }
-                return $query->where('profit_loss_group', $this->filterProfitLossGroup);
+                return $query->where('coa_category_id', $this->filterProfitLossGroup);
             });
     }
 
@@ -266,22 +202,36 @@ class CoaProfitLossMapping extends Component
 
         $stats = [
             'total' => Coa::count(),
-            'mapped' => Coa::whereNotNull('profit_loss_group')->count(),
-            'unmapped' => Coa::whereNull('profit_loss_group')->count(),
+            'mapped' => Coa::whereNotNull('coa_category_id')->count(),
+            'unmapped' => Coa::whereNull('coa_category_id')->count(),
         ];
 
-        // Sync mappings property from current page's DB values.
-        // This runs AFTER updatedMappings() saves, so DB values are fresh.
-        $freshMappings = [];
+        // Sync mappings for current page COAs only when they differ
+        // (avoids wholesale property replacement which disrupts DOM morphing)
+        $currentPageIds = $coas->pluck('id')->map(fn($id) => (string)$id)->toArray();
+
+        // Remove mappings for COAs no longer on current page
+        $this->mappings = array_intersect_key(
+            $this->mappings,
+            array_flip($currentPageIds)
+        );
+
+        // Add/update mappings for current page COAs
         foreach ($coas as $coa) {
-            $freshMappings[(string)$coa->id] = $coa->profit_loss_group ?? '';
+            $key = (string)$coa->id;
+            $dbValue = $coa->coa_category_id ? (string)$coa->coa_category_id : '';
+            // Only set if not already present or if DB value changed externally (e.g. bulk map)
+            if (!array_key_exists($key, $this->mappings) || $this->mappings[$key] !== $dbValue) {
+                $this->mappings[$key] = $dbValue;
+            }
         }
-        $this->mappings = $freshMappings;
+
+        $coaCategories = CoaCategory::orderBy('sort_order')->get();
 
         return view('livewire.master-data.coa-profit-loss-mapping', [
             'coas' => $coas,
             'coaGroups' => $coaGroups,
-            'categories' => self::CATEGORIES,
+            'coaCategories' => $coaCategories,
             'stats' => $stats,
         ])->layout('layouts.contentNavbarLayout');
     }

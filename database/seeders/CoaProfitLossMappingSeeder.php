@@ -4,9 +4,28 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Coa;
+use App\Models\CoaCategory;
 
 class CoaProfitLossMappingSeeder extends Seeder
 {
+    /**
+     * The 12 P&L categories.
+     */
+    private const CATEGORIES = [
+        ['key' => 'revenue_passenger',         'label' => 'Pendapatan Tiket Penumpang',            'group' => 'Revenue',       'color' => 'success',   'sort_order' => 1],
+        ['key' => 'revenue_non_passenger',     'label' => 'Pendapatan Non-Tiket / Komersial',      'group' => 'Revenue',       'color' => 'success',   'sort_order' => 2],
+        ['key' => 'direct_cost_traction',      'label' => 'Beban Energi Listrik Traksi',           'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 3],
+        ['key' => 'direct_cost_maintenance',   'label' => 'Beban Pemeliharaan Sarana & Prasarana',  'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 4],
+        ['key' => 'direct_cost_crew',          'label' => 'Beban Awak KA & Staf Stasiun',          'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 5],
+        ['key' => 'direct_cost_passenger',     'label' => 'Beban Pelayanan Penumpang',              'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 6],
+        ['key' => 'direct_cost_others',        'label' => 'Beban Langsung Lainnya',                 'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 7],
+        ['key' => 'indirect_cost_marketing',   'label' => 'Beban Pemasaran & Penjualan',            'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 8],
+        ['key' => 'indirect_cost_admin',       'label' => 'Beban Umum & Administrasi',              'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 9],
+        ['key' => 'depreciation_amortization', 'label' => 'Beban Penyusutan & Amortisasi',          'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 10],
+        ['key' => 'non_operating_revenue',     'label' => 'Pendapatan Non-Operasional',             'group' => 'Non-Operating', 'color' => 'secondary', 'sort_order' => 11],
+        ['key' => 'non_operating_expense',     'label' => 'Beban Non-Operasional / Keuangan',       'group' => 'Non-Operating', 'color' => 'secondary', 'sort_order' => 12],
+    ];
+
     /**
      * COA prefix → Profit & Loss category mapping rules.
      *
@@ -93,44 +112,69 @@ class CoaProfitLossMappingSeeder extends Seeder
 
     public function run(): void
     {
-        // Reset existing mappings
-        Coa::query()->update(['profit_loss_group' => null]);
+        // 1. Seed or update coa_categories
+        foreach (self::CATEGORIES as $cat) {
+            CoaCategory::updateOrCreate(
+                ['key' => $cat['key']],
+                [
+                    'label' => $cat['label'],
+                    'group' => $cat['group'],
+                    'color' => $cat['color'],
+                    'sort_order' => $cat['sort_order'],
+                ]
+            );
+        }
+        $this->command->info("Seeded / updated Coa categories.");
 
-        // 1. Apply prefix-based rules
-        foreach (self::PREFIX_RULES as $prefix => $category) {
-            $count = Coa::where('code', 'like', $prefix . '%')
-                ->update(['profit_loss_group' => $category]);
-            $this->command->info("  {$prefix}xx → {$category}: {$count} COAs");
+        // Fetch categories to map key -> id
+        $categories = CoaCategory::all()->keyBy('key');
+
+        // Reset existing mappings
+        Coa::query()->update(['coa_category_id' => null]);
+
+        // 2. Apply prefix-based rules
+        foreach (self::PREFIX_RULES as $prefix => $catKey) {
+            $catId = $categories->get($catKey)?->id;
+            if ($catId) {
+                $count = Coa::where('code', 'like', $prefix . '%')
+                    ->update(['coa_category_id' => $catId]);
+                $this->command->info("  {$prefix}xx → {$catKey} (ID: {$catId}): {$count} COAs");
+            }
         }
 
-        // 2. Apply specific code overrides
-        foreach (self::CODE_OVERRIDES as $code => $category) {
-            Coa::where('code', $code)->update(['profit_loss_group' => $category]);
+        // 3. Apply specific code overrides
+        foreach (self::CODE_OVERRIDES as $code => $catKey) {
+            $catId = $categories->get($catKey)?->id;
+            if ($catId) {
+                Coa::where('code', $code)->update(['coa_category_id' => $catId]);
+            }
         }
         $this->command->info("  Applied " . count(self::CODE_OVERRIDES) . " code overrides");
 
-        // 3. Handle 99xx by title keywords
+        // 4. Handle 99xx by title keywords
         $stat99 = Coa::where('code', 'like', '99%')->get();
         $mapped99 = 0;
+        $defaultCatId = $categories->get('direct_cost_others')?->id;
+
         foreach ($stat99 as $coa) {
             $titleLower = strtolower($coa->title);
-            $category = 'direct_cost_others'; // default
+            $catId = $defaultCatId;
 
-            foreach (self::TITLE_KEYWORDS_99XX as $keyword => $cat) {
+            foreach (self::TITLE_KEYWORDS_99XX as $keyword => $catKey) {
                 if (str_contains($titleLower, $keyword)) {
-                    $category = $cat;
+                    $catId = $categories->get($catKey)?->id ?? $defaultCatId;
                     break;
                 }
             }
 
-            $coa->update(['profit_loss_group' => $category]);
+            $coa->update(['coa_category_id' => $catId]);
             $mapped99++;
         }
         $this->command->info("  99xx (by title): {$mapped99} COAs");
 
         // Summary
-        $total = Coa::whereNotNull('profit_loss_group')->count();
-        $unmapped = Coa::whereNull('profit_loss_group')->count();
+        $total = Coa::whereNotNull('coa_category_id')->count();
+        $unmapped = Coa::whereNull('coa_category_id')->count();
         $this->command->newLine();
         $this->command->info("Mapped {$total} COAs to P&L categories. {$unmapped} accounts unmapped (Balance Sheet/CAPEX).");
     }

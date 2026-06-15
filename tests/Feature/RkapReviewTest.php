@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Livewire\Livewire;
-use App\Livewire\Rkap\RkapReview;
+use App\Livewire\Rkap\RkapApprovalReview;
 use App\Models\RkapPeriod;
 use App\Models\Bureau;
 use App\Models\Department;
@@ -122,7 +122,7 @@ class RkapReviewTest extends TestCase
     {
         $this->actingAs($this->kadept);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertStatus(200)
             ->assertSee('Setujui RKAP')
             ->assertSee('Minta Revisi');
@@ -132,7 +132,7 @@ class RkapReviewTest extends TestCase
     {
         $this->actingAs($this->direksi);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertStatus(200)
             ->assertDontSee('Setujui RKAP')
             ->assertDontSee('Minta Revisi');
@@ -145,7 +145,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->direksi);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertStatus(200)
             ->assertSee('Setujui RKAP')
             ->assertSee('Minta Revisi');
@@ -158,7 +158,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->verifikator);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertStatus(200)
             ->assertSee('Setujui RKAP')
             ->assertSee('Minta Revisi');
@@ -170,7 +170,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->verifikator);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->call('approve');
 
         $this->assertEquals('pdir_review', $this->submission->fresh()->status);
@@ -182,7 +182,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->president);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertStatus(200)
             ->assertSee('Setujui RKAP')
             ->assertSee('Minta Revisi');
@@ -194,7 +194,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->president);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->call('approve');
 
         $this->assertEquals('approved', $this->submission->fresh()->status);
@@ -206,7 +206,7 @@ class RkapReviewTest extends TestCase
 
         $this->actingAs($this->president);
 
-        Livewire::test(RkapReview::class, ['id' => $this->submission->id])
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->set('revisionReason', 'Need more details on training expenses.')
             ->call('requestRevision');
 

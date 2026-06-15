@@ -214,7 +214,7 @@ class RkapProjections extends Component
     public function updatedEditingProjections($value, $key): void
     {
         $monthVal = (int) $key;
-        $selectedItem = RkapBudgetItem::find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::with(['monthlies'])->find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
         }
@@ -225,6 +225,14 @@ class RkapProjections extends Component
             return;
         } else {
             $this->resetErrorBag("editingProjections.{$monthVal}");
+        }
+
+        // Check monthly budget plan limit
+        $monthlyLimit = $selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00;
+        $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
+        if ($sanitizedValue > (float)$monthlyLimit) {
+            $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
+            return;
         }
 
         // Check total projections vs total RKAP budget
@@ -262,9 +270,19 @@ class RkapProjections extends Component
 
         $this->validate();
 
-        $selectedItem = RkapBudgetItem::with(['projections'])->find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::with(['projections', 'monthlies'])->find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
+        }
+
+        // Validate that individual month projections do not exceed monthly plans
+        foreach ($this->editingProjections as $month => $amount) {
+            $monthlyLimit = $selectedItem->monthlies->where('month', $month)->first()?->amount ?? 0.00;
+            $sanitizedAmount = $amount !== '' && $amount !== null ? (float)$amount : 0.00;
+            if ($sanitizedAmount > (float)$monthlyLimit) {
+                $this->addError("editingProjections.{$month}", "Proyeksi bulan {$month} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
+                return;
+            }
         }
 
         // Validate that the total projections do not exceed the total RKAP budget

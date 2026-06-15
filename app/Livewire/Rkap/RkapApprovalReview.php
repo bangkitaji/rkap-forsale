@@ -407,7 +407,7 @@ class RkapApprovalReview extends Component
     {
         $currentWpIds = $this->submission->workPlans->pluck('id');
         $currentItems = \App\Models\RkapBudgetItem::whereIn('rkap_work_plan_id', $currentWpIds)
-            ->with(['coa.coaGroup'])
+            ->with(['coa.coaGroup', 'coa.coaCategory'])
             ->get();
 
         $bureauId = $this->submission->bureau_id;
@@ -424,18 +424,18 @@ class RkapApprovalReview extends Component
         if ($prevSubmission) {
             $prevWpIds = $prevSubmission->workPlans->pluck('id');
             $prevItems = \App\Models\RkapBudgetItem::whereIn('rkap_work_plan_id', $prevWpIds)
-                ->with(['coa.coaGroup'])
+                ->with(['coa.coaGroup', 'coa.coaCategory'])
                 ->get();
         }
 
         $categoriesData = [];
-        $categoriesMeta = \App\Livewire\MasterData\CoaProfitLossMapping::CATEGORIES;
-        foreach ($categoriesMeta as $key => $cat) {
-            $categoriesData[$key] = [
-                'key' => $key,
-                'label' => $cat['label'],
-                'group' => $cat['group'],
-                'color' => $cat['color'],
+        $categoriesMeta = \App\Models\CoaCategory::orderBy('sort_order')->get();
+        foreach ($categoriesMeta as $cat) {
+            $categoriesData[$cat->id] = [
+                'key' => $cat->key,
+                'label' => $cat->label,
+                'group' => $cat->group,
+                'color' => $cat->color,
                 'current_total' => 0.0,
                 'prev_total' => 0.0,
                 'coas' => []
@@ -448,21 +448,21 @@ class RkapApprovalReview extends Component
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
 
-            if ($coa && $coa->profit_loss_group) {
-                $groupKey = $coa->profit_loss_group;
-                if (isset($categoriesData[$groupKey])) {
-                    $categoriesData[$groupKey]['current_total'] += $totalPrice;
+            if ($coa && $coa->coa_category_id) {
+                $catId = $coa->coa_category_id;
+                if (isset($categoriesData[$catId])) {
+                    $categoriesData[$catId]['current_total'] += $totalPrice;
 
                     $coaCode = $coa->code;
-                    if (!isset($categoriesData[$groupKey]['coas'][$coaCode])) {
-                        $categoriesData[$groupKey]['coas'][$coaCode] = [
+                    if (!isset($categoriesData[$catId]['coas'][$coaCode])) {
+                        $categoriesData[$catId]['coas'][$coaCode] = [
                             'code' => $coaCode,
                             'title' => $coa->title,
                             'current_total' => 0.0,
                             'prev_total' => 0.0,
                         ];
                     }
-                    $categoriesData[$groupKey]['coas'][$coaCode]['current_total'] += $totalPrice;
+                    $categoriesData[$catId]['coas'][$coaCode]['current_total'] += $totalPrice;
                 }
             } else {
                 $coaCode = $item->account_code ?: 'unspecified';
@@ -500,21 +500,21 @@ class RkapApprovalReview extends Component
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
 
-            if ($coa && $coa->profit_loss_group) {
-                $groupKey = $coa->profit_loss_group;
-                if (isset($categoriesData[$groupKey])) {
-                    $categoriesData[$groupKey]['prev_total'] += $totalPrice;
+            if ($coa && $coa->coa_category_id) {
+                $catId = $coa->coa_category_id;
+                if (isset($categoriesData[$catId])) {
+                    $categoriesData[$catId]['prev_total'] += $totalPrice;
 
                     $coaCode = $coa->code;
-                    if (!isset($categoriesData[$groupKey]['coas'][$coaCode])) {
-                        $categoriesData[$groupKey]['coas'][$coaCode] = [
+                    if (!isset($categoriesData[$catId]['coas'][$coaCode])) {
+                        $categoriesData[$catId]['coas'][$coaCode] = [
                             'code' => $coaCode,
                             'title' => $coa->title,
                             'current_total' => 0.0,
                             'prev_total' => 0.0,
                         ];
                     }
-                    $categoriesData[$groupKey]['coas'][$coaCode]['prev_total'] += $totalPrice;
+                    $categoriesData[$catId]['coas'][$coaCode]['prev_total'] += $totalPrice;
                 }
             } else {
                 $coaCode = $item->account_code ?: 'unspecified';
