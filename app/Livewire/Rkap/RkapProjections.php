@@ -214,7 +214,7 @@ class RkapProjections extends Component
     public function updatedEditingProjections($value, $key): void
     {
         $monthVal = (int) $key;
-        $selectedItem = RkapBudgetItem::with(['monthlies', 'projections'])->find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
         }
@@ -223,28 +223,14 @@ class RkapProjections extends Component
         if ($value !== '' && $value !== null && !is_numeric($value)) {
             $this->addError("editingProjections.{$monthVal}", "Nilai proyeksi bulanan harus berupa angka.");
             return;
-        }
-
-        $monthlyBudget = (float) ($selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00);
-        $sanitizedAmount = $value !== '' && $value !== null ? (float) $value : 0.00;
-
-        if ($sanitizedAmount > $monthlyBudget) {
-            $monthNames = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
-                4 => 'April', 5 => 'Mei', 6 => 'Juni',
-                7 => 'Juli', 8 => 'Agustus', 9 => 'September',
-                10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-            $monthName = $monthNames[$monthVal] ?? $monthVal;
-            $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthName} tidak boleh melebihi rencana anggaran (Rp " . number_format($monthlyBudget, 0, ',', '.') . ").");
         } else {
             $this->resetErrorBag("editingProjections.{$monthVal}");
         }
 
-        // Also check accumulation on every update
+        // Check total projections vs total RKAP budget
         $totalProjections = array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0.00, $this->editingProjections));
         if ($totalProjections > (float) $selectedItem->total_price) {
-            $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total rencana anggaran yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
+            $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
         } else {
             $this->resetErrorBag('editingProjections');
         }
@@ -276,48 +262,15 @@ class RkapProjections extends Component
 
         $this->validate();
 
-        $selectedItem = RkapBudgetItem::with(['monthlies', 'projections'])->find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::with(['projections'])->find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
         }
 
-        // Validate that the projection amount is not more than the budget plan for each month
-        $errors = [];
-        foreach ($this->editingProjections as $month => $amount) {
-            $monthVal = (int) $month;
-            if ($monthVal < (int) date('n') || $monthVal > 12) {
-                continue;
-            }
-
-            // Skip if projection already exists with amount > 0 (as those are read-only)
-            $existingProj = $selectedItem->projections->where('month', $monthVal)->first();
-            if ($existingProj && (float)$existingProj->amount > 0) {
-                continue;
-            }
-
-            $monthlyBudget = (float) ($selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00);
-            $sanitizedAmount = $amount !== '' && $amount !== null ? (float) $amount : 0.00;
-
-            if ($sanitizedAmount > $monthlyBudget) {
-                $monthNames = [
-                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
-                    4 => 'April', 5 => 'Mei', 6 => 'Juni',
-                    7 => 'Juli', 8 => 'Agustus', 9 => 'September',
-                    10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                ];
-                $monthName = $monthNames[$monthVal] ?? $monthVal;
-                $errors["editingProjections.{$monthVal}"] = "Proyeksi bulan {$monthName} tidak boleh melebihi rencana anggaran (Rp " . number_format($monthlyBudget, 0, ',', '.') . ").";
-            }
-        }
-
-        // Validate that the total accumulation of all 12 months projections does not exceed the total approved budget
+        // Validate that the total projections do not exceed the total RKAP budget
         $totalProjections = array_sum(array_map(fn($v) => $v !== '' && $v !== null ? (float)$v : 0.00, $this->editingProjections));
         if ($totalProjections > (float) $selectedItem->total_price) {
-            $errors['editingProjections'] = "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total rencana anggaran yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").";
-        }
-
-        if (!empty($errors)) {
-            $this->setErrorBag($errors);
+            $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
             return;
         }
 

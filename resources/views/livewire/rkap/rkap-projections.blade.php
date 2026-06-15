@@ -62,15 +62,18 @@
 
     {{-- Filter Selector Card --}}
     <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0 fw-bold">Input Proyeksi {{ $activePeriodTitle ?? '' }}</h5>
+        </div>
         <div class="card-body">
             <div class="row g-3">
                 {{-- Directorate Filter --}}
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Direktorat</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
-                        selectedId: @entangle('directorateId'),
+                        selectedId: @entangle('directorateId').live,
                         get selectedLabel() {
                             const list = {{ json_encode($directorateOptions->map(fn($d) => ['id' => $d->id, 'label' => $d->code . ' — ' . $d->name])->toArray()) }};
                             const found = list.find(item => item.id == this.selectedId);
@@ -85,9 +88,9 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div x-show="open" 
-                             class="dropdown-menu show w-100 p-2 shadow-sm border mt-1" 
-                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1" 
+                             :class="{ 'show': open }"
+                             style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
                             
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -106,7 +109,6 @@
                                         class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
                                         @click="
                                             selectedId = null;
-                                            $wire.set('directorateId', null);
                                             open = false;
                                             search = '';
                                         ">
@@ -118,7 +120,6 @@
                                             :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
                                             @click="
                                                 selectedId = item.id;
-                                                $wire.set('directorateId', item.id);
                                                 open = false;
                                                 search = '';
                                             ">
@@ -131,12 +132,12 @@
                 </div>
 
                 {{-- Department Filter --}}
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Departemen</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
-                        selectedId: @entangle('departmentId'),
+                        selectedId: @entangle('departmentId').live,
                         get selectedLabel() {
                             const list = {{ json_encode($departmentOptions->map(fn($d) => ['id' => $d->id, 'label' => $d->code . ' — ' . $d->name])->toArray()) }};
                             const found = list.find(item => item.id == this.selectedId);
@@ -151,9 +152,9 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div x-show="open" 
-                             class="dropdown-menu show w-100 p-2 shadow-sm border mt-1" 
-                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1" 
+                             :class="{ 'show': open }"
+                             style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
                             
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -172,7 +173,6 @@
                                         class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
                                         @click="
                                             selectedId = null;
-                                            $wire.set('departmentId', null);
                                             open = false;
                                             search = '';
                                         ">
@@ -184,7 +184,6 @@
                                             :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
                                             @click="
                                                 selectedId = item.id;
-                                                $wire.set('departmentId', item.id);
                                                 open = false;
                                                 search = '';
                                             ">
@@ -197,12 +196,12 @@
                 </div>
 
                 {{-- Bureau Filter --}}
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Biro</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
-                        selectedId: @entangle('bureauId'),
+                        selectedId: @entangle('bureauId').live,
                         get selectedLabel() {
                             const list = {{ json_encode($bureauOptions->map(fn($b) => ['id' => $b->id, 'label' => $b->code . ' — ' . $b->name])->toArray()) }};
                             const found = list.find(item => item.id == this.selectedId);
@@ -217,9 +216,9 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div x-show="open" 
-                             class="dropdown-menu show w-100 p-2 shadow-sm border mt-1" 
-                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1" 
+                             :class="{ 'show': open }"
+                             style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
                             
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -238,7 +237,6 @@
                                         class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-dark"
                                         @click="
                                             selectedId = null;
-                                            $wire.set('bureauId', null);
                                             open = false;
                                             search = '';
                                         ">
@@ -250,7 +248,6 @@
                                             :class="selectedId == item.id ? 'active text-white' : 'text-dark'"
                                             @click="
                                                 selectedId = item.id;
-                                                $wire.set('bureauId', item.id);
                                                 open = false;
                                                 search = '';
                                             ">
@@ -260,12 +257,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {{-- Target Period --}}
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Target Periode Proyeksi</label>
-                    <input type="text" class="form-control" value="{{ $activePeriodTitle ?? 'Tidak ada periode aktif' }}" disabled>
                 </div>
             </div>
         </div>
@@ -383,8 +374,9 @@
              id="projectionModal" 
              tabindex="-1" 
              aria-hidden="true"
+             wire:ignore.self
              x-data
-             @open-projection-modal.window="new bootstrap.Modal(document.getElementById('projectionModal')).show()"
+             @open-projection-modal.window="bootstrap.Modal.getOrCreateInstance(document.getElementById('projectionModal')).show()"
              @close-projection-modal.window="
                 let m = bootstrap.Modal.getInstance(document.getElementById('projectionModal'));
                 if (m) m.hide();
@@ -397,7 +389,7 @@
                     </div>
                     @if($selectedBudgetItemId)
                         @php
-                            $selectedItem = \App\Models\RkapBudgetItem::with(['workPlan.submission.bureau', 'realizations', 'projections'])->find($selectedBudgetItemId);
+                            $selectedItem = \App\Models\RkapBudgetItem::with(['workPlan.submission.bureau', 'monthlies', 'realizations', 'projections'])->find($selectedBudgetItemId);
                         @endphp
                         <form wire:submit.prevent="saveMonthlyProjections">
                             <div class="modal-body">
@@ -505,7 +497,10 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                                <button type="submit" class="btn btn-primary d-flex align-items-center gap-1">
+                                <button type="submit" 
+                                        class="btn btn-primary d-flex align-items-center gap-1"
+                                        @disabled($isOverBudget)
+                                        @if($isOverBudget) title="Total proyeksi melebihi total anggaran RKAP" @endif>
                                     <i class="bx bx-save"></i> Simpan Proyeksi
                                 </button>
                             </div>
