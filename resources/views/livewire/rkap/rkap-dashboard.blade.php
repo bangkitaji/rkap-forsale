@@ -86,6 +86,264 @@
         </div>
     </div>
 
+    @if(auth()->user()->isPresidentDirector() || auth()->user()->isVerifikator() || auth()->user()->isAdmin())
+        <!-- Helicopter Progress & Department Tabulation for Management -->
+        <div class="row mb-4">
+            <!-- Progress Card -->
+            <div class="col-12 col-md-4 mb-4 mb-md-0">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">Status Pengajuan Departemen</h5>
+                        <p class="text-muted small">Status verifikasi RKAP per departemen</p>
+                        
+                        <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+                            <span class="fw-semibold">Terverifikasi</span>
+                            <span class="badge bg-label-success">{{ $verifiedDeptCount }} dari {{ $totalDeptCount }} Departemen</span>
+                        </div>
+                        
+                        @php
+                            $progressPercent = $totalDeptCount > 0 ? ($verifiedDeptCount / $totalDeptCount) * 100 : 0;
+                        @endphp
+                        
+                        <div class="progress mb-3" style="height: 12px;">
+                            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                        @if($verifiedDeptCount < $totalDeptCount)
+                            <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.75rem;">
+                                <i class="bx bx-lock-alt me-1"></i>
+                                Persetujuan akhir oleh Direktur Utama ditangguhkan hingga seluruh {{ $totalDeptCount }} departemen terverifikasi.
+                            </div>
+                        @else
+                            <div class="alert alert-success py-2 px-3 mb-0" style="font-size: 0.75rem;">
+                                <i class="bx bx-check-double me-1"></i>
+                                Seluruh departemen telah terverifikasi. Direktur Utama dapat memberikan persetujuan akhir.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabulation Card -->
+            <div class="col-12 col-md-8">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header p-0">
+                        <div class="nav-align-top">
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#tab-dept-status" aria-controls="tab-dept-status" aria-selected="true">
+                                        <i class="bx bx-buildings me-1"></i> Status Departemen
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-verified" aria-controls="tab-verified" aria-selected="false">
+                                        <i class="bx bx-check-shield me-1"></i> Terverifikasi ({{ $submissionsByStatus['verified']->count() }})
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-review" aria-controls="tab-review" aria-selected="false">
+                                        <i class="bx bx-hourglass me-1"></i> Direview ({{ $submissionsByStatus['review']->count() }})
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-draft" aria-controls="tab-draft" aria-selected="false">
+                                        <i class="bx bx-edit me-1"></i> Draf/Revisi ({{ $submissionsByStatus['draft']->count() }})
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content border-0 p-0">
+                        <!-- Tab 1: Department Statuses -->
+                        <div class="tab-pane fade show active p-4" id="tab-dept-status" role="tabpanel">
+                            <div class="table-responsive text-nowrap">
+                                <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Kode</th>
+                                            <th>Nama Departemen</th>
+                                            <th>Status Pengajuan</th>
+                                            <th class="text-end">Total Anggaran</th>
+                                            <th class="text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($departmentsSubmissions as $ds)
+                                            @php
+                                                $statusColor = match($ds['status']) {
+                                                    'Terverifikasi' => 'success',
+                                                    'Sedang Direview' => 'info',
+                                                    'Draf / Revisi' => 'warning',
+                                                    default => 'secondary',
+                                                };
+                                            @endphp
+                                            <tr>
+                                                <td><strong>{{ $ds['department']->code }}</strong></td>
+                                                <td>{{ $ds['department']->name }}</td>
+                                                <td>
+                                                    <span class="badge bg-label-{{ $statusColor }} fw-semibold">{{ $ds['status'] }}</span>
+                                                </td>
+                                                <td class="text-end fw-semibold text-primary">
+                                                    Rp {{ number_format($ds['total_budget'], 0, ',', '.') }}
+                                                </td>
+                                                <td class="text-center">
+                                                    @if($ds['submissions']->isNotEmpty())
+                                                        <div class="btn-group">
+                                                            @foreach($ds['submissions'] as $sub)
+                                                                <a href="{{ route('rkap-submissions-approval-review', $sub->id) }}" class="btn btn-xs btn-outline-primary" title="Detail RKAP {{ $sub->bureau->name }}">
+                                                                    {{ $sub->bureau->name }} <i class="bx bx-link-external ms-1"></i>
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted small">-</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Verified Submissions -->
+                        <div class="tab-pane fade p-4" id="tab-verified" role="tabpanel">
+                            @if($submissionsByStatus['verified']->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bx bx-check-shield bx-md opacity-50 mb-2"></i>
+                                    <p class="mb-0">Belum ada pengajuan yang diverifikasi oleh verifikator.</p>
+                                </div>
+                            @else
+                                <div class="table-responsive text-nowrap">
+                                    <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>Biro / Departemen</th>
+                                                <th class="text-center">Versi</th>
+                                                <th>Diajukan Oleh</th>
+                                                <th class="text-end">Total Anggaran</th>
+                                                <th>Status</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($submissionsByStatus['verified'] as $sub)
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ $sub->bureau->name }}</strong>
+                                                        <div class="text-muted small" style="font-size: 0.75rem;">{{ $sub->bureau->department->name }}</div>
+                                                    </td>
+                                                    <td class="text-center"><span class="badge bg-label-secondary">v{{ $sub->current_version }}</span></td>
+                                                    <td>{{ $sub->creator->name ?? '-' }}</td>
+                                                    <td class="text-end fw-semibold text-primary">Rp {{ number_format($sub->total_budget, 0, ',', '.') }}</td>
+                                                    <td><span class="badge bg-label-{{ $sub->status_color }}">{{ $sub->status_label }}</span></td>
+                                                    <td class="text-center">
+                                                        <a href="{{ route('rkap-submissions-approval-review', $sub->id) }}" class="btn btn-xs btn-primary">
+                                                            <i class="bx bx-search-alt"></i> Buka Review
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Tab 3: Submissions in review -->
+                        <div class="tab-pane fade p-4" id="tab-review" role="tabpanel">
+                            @if($submissionsByStatus['review']->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bx bx-hourglass bx-md opacity-50 mb-2"></i>
+                                    <p class="mb-0">Tidak ada pengajuan yang sedang berada dalam proses review.</p>
+                                </div>
+                            @else
+                                <div class="table-responsive text-nowrap">
+                                    <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>Biro / Departemen</th>
+                                                <th class="text-center">Versi</th>
+                                                <th>Diajukan Oleh</th>
+                                                <th class="text-end">Total Anggaran</th>
+                                                <th>Status</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($submissionsByStatus['review'] as $sub)
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ $sub->bureau->name }}</strong>
+                                                        <div class="text-muted small" style="font-size: 0.75rem;">{{ $sub->bureau->department->name }}</div>
+                                                    </td>
+                                                    <td class="text-center"><span class="badge bg-label-secondary">v{{ $sub->current_version }}</span></td>
+                                                    <td>{{ $sub->creator->name ?? '-' }}</td>
+                                                    <td class="text-end fw-semibold text-primary">Rp {{ number_format($sub->total_budget, 0, ',', '.') }}</td>
+                                                    <td><span class="badge bg-label-{{ $sub->status_color }}">{{ $sub->status_label }}</span></td>
+                                                    <td class="text-center">
+                                                        <a href="{{ route('rkap-submissions-approval-review', $sub->id) }}" class="btn btn-xs btn-outline-primary">
+                                                            Detail <i class="bx bx-chevron-right"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Tab 4: Submissions in draft/revision -->
+                        <div class="tab-pane fade p-4" id="tab-draft" role="tabpanel">
+                            @if($submissionsByStatus['draft']->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bx bx-edit bx-md opacity-50 mb-2"></i>
+                                    <p class="mb-0">Tidak ada pengajuan dengan status draf atau revisi.</p>
+                                </div>
+                            @else
+                                <div class="table-responsive text-nowrap">
+                                    <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>Biro / Departemen</th>
+                                                <th class="text-center">Versi</th>
+                                                <th>Diajukan Oleh</th>
+                                                <th class="text-end">Total Anggaran</th>
+                                                <th>Status</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($submissionsByStatus['draft'] as $sub)
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ $sub->bureau->name }}</strong>
+                                                        <div class="text-muted small" style="font-size: 0.75rem;">{{ $sub->bureau->department->name }}</div>
+                                                    </td>
+                                                    <td class="text-center"><span class="badge bg-label-secondary">v{{ $sub->current_version }}</span></td>
+                                                    <td>{{ $sub->creator->name ?? '-' }}</td>
+                                                    <td class="text-end fw-semibold text-primary">Rp {{ number_format($sub->total_budget, 0, ',', '.') }}</td>
+                                                    <td><span class="badge bg-label-{{ $sub->status_color }}">{{ $sub->status_label }}</span></td>
+                                                    <td class="text-center">
+                                                        <a href="{{ route('rkap-submissions-review', $sub->id) }}" class="btn btn-xs btn-outline-secondary">
+                                                            Detail <i class="bx bx-chevron-right"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="row mb-4">
         <!-- Pending Actions / Tasks -->
         <div class="col-lg-6 mb-4 mb-lg-0">

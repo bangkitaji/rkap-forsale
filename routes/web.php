@@ -134,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('activities', \App\Livewire\MasterData\Activities::class)->name('activities')->middleware('can:masterdata.activity.manage');
         Route::get('coas', \App\Livewire\MasterData\Coas::class)->name('coas')->middleware('can:masterdata.coa.manage');
         Route::get('coa-groups', \App\Livewire\MasterData\CoaGroups::class)->name('coa-groups')->middleware('can:masterdata.coagroup.manage');
+        Route::get('coa-profit-loss-mapping', \App\Livewire\MasterData\CoaProfitLossMapping::class)->name('coa-profit-loss-mapping')->middleware('can:masterdata.coaprofitloss.manage');
         Route::get('activity-coa-mapping', \App\Livewire\MasterData\ActivityCoaMapping::class)->name('activity-coa-mapping')->middleware('can:masterdata.activity.manage');
     });
 

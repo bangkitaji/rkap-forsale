@@ -34,6 +34,14 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
 
+        if ($user->isPresidentDirector()) {
+            $status = $this->presidentApprovalStatus;
+            if (!$status['is_ready']) {
+                session()->flash('error', 'Gagal menyetujui: Belum semua departemen menyelesaikan pengajuan RKAP yang terverifikasi.');
+                return;
+            }
+        }
+
         match (true) {
             $user->isKepalaDepartemen() => $this->submission->approveByDept($user, $this->reviewComments),
             $user->isDireksi()          => $this->submission->approveByDir($user, $this->reviewComments),
@@ -98,7 +106,49 @@ class RkapApprovalReview extends Component
     public function canApprove(): bool
     {
         $user = Auth::user();
-        return $this->submission->canBeReviewedBy($user);
+        if (!$this->submission->canBeReviewedBy($user)) {
+            return false;
+        }
+
+        if ($user->isPresidentDirector()) {
+            $status = $this->presidentApprovalStatus;
+            if (!$status['is_ready']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function getPresidentApprovalStatusProperty(): array
+    {
+        $periodId = $this->submission->rkap_period_id;
+        $activeDeptCount = \App\Models\Department::active()->count();
+
+        $verifiedSubmissions = \App\Models\RkapSubmission::where('rkap_period_id', $periodId)
+            ->whereIn('status', ['pdir_review', 'approved'])
+            ->whereHas('bureau.department', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+            ->select('bureaus.department_id')
+            ->distinct()
+            ->get();
+
+        $verifiedDeptIds = $verifiedSubmissions->pluck('department_id')->toArray();
+        $verifiedSubmissionsCount = count($verifiedDeptIds);
+
+        $pendingDepartments = \App\Models\Department::active()
+            ->whereNotIn('id', $verifiedDeptIds)
+            ->pluck('name')
+            ->toArray();
+
+        return [
+            'is_ready' => $verifiedSubmissionsCount >= $activeDeptCount,
+            'verified_count' => $verifiedSubmissionsCount,
+            'total_count' => $activeDeptCount,
+            'pending_departments' => $pendingDepartments,
+        ];
     }
 
     /**
@@ -353,11 +403,187 @@ class RkapApprovalReview extends Component
         return $combined;
     }
 
+    public function getHelicopterViewData(): array
+    {
+        $currentWpIds = $this->submission->workPlans->pluck('id');
+        $currentItems = \App\Models\RkapBudgetItem::whereIn('rkap_work_plan_id', $currentWpIds)
+            ->with(['coa.coaGroup'])
+            ->get();
+
+        $bureauId = $this->submission->bureau_id;
+        $currentPeriodYear = $this->submission->period?->year ?? 0;
+
+        $prevSubmission = \App\Models\RkapSubmission::where('bureau_id', $bureauId)
+            ->where('id', '!=', $this->submission->id)
+            ->where('status', 'approved')
+            ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
+            ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
+            ->first();
+
+        $prevItems = collect();
+        if ($prevSubmission) {
+            $prevWpIds = $prevSubmission->workPlans->pluck('id');
+            $prevItems = \App\Models\RkapBudgetItem::whereIn('rkap_work_plan_id', $prevWpIds)
+                ->with(['coa.coaGroup'])
+                ->get();
+        }
+
+        $categoriesData = [];
+        $categoriesMeta = \App\Livewire\MasterData\CoaProfitLossMapping::CATEGORIES;
+        foreach ($categoriesMeta as $key => $cat) {
+            $categoriesData[$key] = [
+                'key' => $key,
+                'label' => $cat['label'],
+                'group' => $cat['group'],
+                'color' => $cat['color'],
+                'current_total' => 0.0,
+                'prev_total' => 0.0,
+                'coas' => []
+            ];
+        }
+
+        $unmappedData = [];
+
+        foreach ($currentItems as $item) {
+            $coa = $item->coa;
+            $totalPrice = (float) $item->total_price;
+
+            if ($coa && $coa->profit_loss_group) {
+                $groupKey = $coa->profit_loss_group;
+                if (isset($categoriesData[$groupKey])) {
+                    $categoriesData[$groupKey]['current_total'] += $totalPrice;
+
+                    $coaCode = $coa->code;
+                    if (!isset($categoriesData[$groupKey]['coas'][$coaCode])) {
+                        $categoriesData[$groupKey]['coas'][$coaCode] = [
+                            'code' => $coaCode,
+                            'title' => $coa->title,
+                            'current_total' => 0.0,
+                            'prev_total' => 0.0,
+                        ];
+                    }
+                    $categoriesData[$groupKey]['coas'][$coaCode]['current_total'] += $totalPrice;
+                }
+            } else {
+                $coaCode = $item->account_code ?: 'unspecified';
+                $coaTitle = $coa ? $coa->title : ($item->description ?: 'Tanpa Kode Akun');
+                $coaGroupId = $coa ? $coa->coa_group_id : 0;
+                $coaGroupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : 'Tanpa Grup COA';
+                $coaGroupCode = ($coa && $coa->coaGroup) ? $coa->coaGroup->code : '999';
+
+                if (!isset($unmappedData[$coaGroupId])) {
+                    $unmappedData[$coaGroupId] = [
+                        'group_id' => $coaGroupId,
+                        'group_code' => $coaGroupCode,
+                        'group_name' => $coaGroupName,
+                        'current_total' => 0.0,
+                        'prev_total' => 0.0,
+                        'coas' => []
+                    ];
+                }
+
+                $unmappedData[$coaGroupId]['current_total'] += $totalPrice;
+
+                if (!isset($unmappedData[$coaGroupId]['coas'][$coaCode])) {
+                    $unmappedData[$coaGroupId]['coas'][$coaCode] = [
+                        'code' => $coaCode,
+                        'title' => $coaTitle,
+                        'current_total' => 0.0,
+                        'prev_total' => 0.0,
+                    ];
+                }
+                $unmappedData[$coaGroupId]['coas'][$coaCode]['current_total'] += $totalPrice;
+            }
+        }
+
+        foreach ($prevItems as $item) {
+            $coa = $item->coa;
+            $totalPrice = (float) $item->total_price;
+
+            if ($coa && $coa->profit_loss_group) {
+                $groupKey = $coa->profit_loss_group;
+                if (isset($categoriesData[$groupKey])) {
+                    $categoriesData[$groupKey]['prev_total'] += $totalPrice;
+
+                    $coaCode = $coa->code;
+                    if (!isset($categoriesData[$groupKey]['coas'][$coaCode])) {
+                        $categoriesData[$groupKey]['coas'][$coaCode] = [
+                            'code' => $coaCode,
+                            'title' => $coa->title,
+                            'current_total' => 0.0,
+                            'prev_total' => 0.0,
+                        ];
+                    }
+                    $categoriesData[$groupKey]['coas'][$coaCode]['prev_total'] += $totalPrice;
+                }
+            } else {
+                $coaCode = $item->account_code ?: 'unspecified';
+                $coaTitle = $coa ? $coa->title : ($item->description ?: 'Tanpa Kode Akun');
+                $coaGroupId = $coa ? $coa->coa_group_id : 0;
+                $coaGroupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : 'Tanpa Grup COA';
+                $coaGroupCode = ($coa && $coa->coaGroup) ? $coa->coaGroup->code : '999';
+
+                if (!isset($unmappedData[$coaGroupId])) {
+                    $unmappedData[$coaGroupId] = [
+                        'group_id' => $coaGroupId,
+                        'group_code' => $coaGroupCode,
+                        'group_name' => $coaGroupName,
+                        'current_total' => 0.0,
+                        'prev_total' => 0.0,
+                        'coas' => []
+                    ];
+                }
+
+                $unmappedData[$coaGroupId]['prev_total'] += $totalPrice;
+
+                if (!isset($unmappedData[$coaGroupId]['coas'][$coaCode])) {
+                    $unmappedData[$coaGroupId]['coas'][$coaCode] = [
+                        'code' => $coaCode,
+                        'title' => $coaTitle,
+                        'current_total' => 0.0,
+                        'prev_total' => 0.0,
+                    ];
+                }
+                $unmappedData[$coaGroupId]['coas'][$coaCode]['prev_total'] += $totalPrice;
+            }
+        }
+
+        // Sort coas in categoriesData
+        foreach ($categoriesData as $key => &$cat) {
+            if (!empty($cat['coas'])) {
+                ksort($cat['coas']);
+                $cat['coas'] = array_values($cat['coas']);
+            }
+        }
+        unset($cat);
+
+        // Sort unmapped groups by group_code
+        uasort($unmappedData, function ($a, $b) {
+            return strcasecmp($a['group_code'], $b['group_code']);
+        });
+
+        // Sort coas in unmapped groups
+        foreach ($unmappedData as $groupId => &$group) {
+            if (!empty($group['coas'])) {
+                ksort($group['coas']);
+                $group['coas'] = array_values($group['coas']);
+            }
+        }
+        unset($group);
+
+        return [
+            'categories' => $categoriesData,
+            'unmappedGroups' => array_values($unmappedData),
+            'prevPeriod' => $prevSubmission ? ($prevSubmission->period->title ?? '-') : null,
+        ];
+    }
+
     public function render()
     {
         return view('livewire.rkap.rkap-approval-review', [
             'combinedWorkPlans' => $this->getCombinedWorkPlans(),
             'prevData' => $this->buildPreviousMap(),
+            'helicopterViewData' => $this->getHelicopterViewData(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }

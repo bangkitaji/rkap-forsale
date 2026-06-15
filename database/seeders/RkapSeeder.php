@@ -60,6 +60,7 @@ class RkapSeeder extends Seeder
             'masterdata.activity.manage',
             'masterdata.coa.manage',
             'masterdata.coagroup.manage',
+            'masterdata.coaprofitloss.manage',
             // Compilation — scoped from narrowest to widest
             'rkap.compilation.dept', // see own dept/bureau submissions
             'rkap.compilation.dir',  // see own directorate submissions
@@ -107,6 +108,7 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dept', // inherits dept scope
             'rkap.compilation.dir',  // can see their own directorate compilation
             'rkap.projection.view',
+            'rkap.show',
         ]);
 
         $roleVerifikator->syncPermissions([
@@ -120,6 +122,7 @@ class RkapSeeder extends Seeder
             'rkap.realization.upload',
             'rkap.projection.input',
             'rkap.projection.view',
+            'rkap.show',
         ]);
 
         $rolePresident->syncPermissions([
@@ -133,6 +136,12 @@ class RkapSeeder extends Seeder
             'rkap.projection.view',
             'rkap.show',
         ]);
+
+        // Assign rkap.show to all roles
+        $rkapShowPerm = Permission::firstOrCreate(['name' => 'rkap.show']);
+        foreach (Role::all() as $role) {
+            $role->givePermissionTo($rkapShowPerm);
+        }
 
         // ── 4. Sample Organization ──
         $dirHU = Directorate::firstOrCreate(

@@ -85,6 +85,59 @@ class RkapDashboard extends Component
                 ->get();
         }
 
+        // Submissions by status tabs (for President Director, Verifikator, Admin)
+        $submissionsByStatus = [
+            'verified' => collect(),
+            'review'   => collect(),
+            'draft'    => collect(),
+        ];
+        $departmentsSubmissions = [];
+        $verifiedDeptCount = 0;
+        $totalDeptCount = 0;
+
+        if ($user->isPresidentDirector() || $user->isVerifikator() || $user->isAdmin()) {
+            // Tabulated submissions
+            $allSubmissions = RkapSubmission::with(['bureau.department.directorate', 'period', 'creator'])
+                ->when($activePeriod, fn($q) => $q->where('rkap_period_id', $activePeriod->id))
+                ->get();
+
+            $submissionsByStatus['verified'] = $allSubmissions->filter(fn($s) => in_array($s->status, ['pdir_review', 'approved']));
+            $submissionsByStatus['review']   = $allSubmissions->filter(fn($s) => in_array($s->status, ['submitted', 'dept_review', 'dept_approved', 'dir_review', 'dir_approved', 'final_review']));
+            $submissionsByStatus['draft']    = $allSubmissions->filter(fn($s) => in_array($s->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision']));
+
+            // Department compilation
+            $departments = \App\Models\Department::active()->orderBy('code')->get();
+            $totalDeptCount = $departments->count();
+
+            foreach ($departments as $dept) {
+                $submissions = RkapSubmission::whereHas('bureau', fn($b) => $b->where('department_id', $dept->id))
+                    ->when($activePeriod, fn($q) => $q->where('rkap_period_id', $activePeriod->id))
+                    ->with(['bureau', 'creator'])
+                    ->get();
+
+                $status = 'Belum Mengajukan';
+                if ($submissions->isNotEmpty()) {
+                    $statuses = $submissions->pluck('status')->unique();
+                    
+                    if ($statuses->contains(fn($s) => in_array($s, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision']))) {
+                        $status = 'Draf / Revisi';
+                    } elseif ($statuses->every(fn($s) => in_array($s, ['pdir_review', 'approved']))) {
+                        $status = 'Terverifikasi';
+                        $verifiedDeptCount++;
+                    } else {
+                        $status = 'Sedang Direview';
+                    }
+                }
+
+                $departmentsSubmissions[] = [
+                    'department' => $dept,
+                    'submissions' => $submissions,
+                    'total_budget' => $submissions->sum('total_budget'),
+                    'status' => $status,
+                ];
+            }
+        }
+
         // Recent activity
         $recentActivity = RkapSubmission::with(['bureau', 'period'])
             ->when($user->isKepalaBiro(), fn($q) => $q->where('bureau_id', $user->bureau_id))
@@ -93,7 +146,8 @@ class RkapDashboard extends Component
             ->latest('updated_at')->limit(8)->get();
 
         return view('livewire.rkap.rkap-dashboard', compact(
-            'activePeriod', 'stats', 'myActions', 'budgetByDirectorate', 'recentActivity'
+            'activePeriod', 'stats', 'myActions', 'budgetByDirectorate', 'recentActivity',
+            'submissionsByStatus', 'departmentsSubmissions', 'verifiedDeptCount', 'totalDeptCount'
         ))->layout('layouts.contentNavbarLayout');
     }
 }

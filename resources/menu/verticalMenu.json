@@ -86,6 +86,13 @@
       "permission": "masterdata.coagroup.manage"
     },
     {
+      "name": "Profit and Loss Mapping",
+      "icon": "menu-icon icon-base bx bx-pie-chart-alt",
+      "url": "master-data/coa-profit-loss-mapping",
+      "slug": "master-data.coa-profit-loss-mapping",
+      "permission": "masterdata.coaprofitloss.manage"
+    },
+    {
       "name": "Activity ↔ COA",
       "icon": "menu-icon icon-base bx bx-link",
       "url": "master-data/activity-coa-mapping",

@@ -80,6 +80,11 @@ class RoleAndUserSeeder extends Seeder
             $permRkapProjectionView,
         ]);
 
+        // Assign rkap.show to all roles
+        foreach (Role::all() as $role) {
+            $role->givePermissionTo($permRkapShow);
+        }
+
         // create admin user
         $admin = User::updateOrCreate(
             ['email' => 'admin@rkap.com'],

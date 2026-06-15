@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RkapSeeder::class,
             SatuanSeeder::class,
             MasterDataSeeder::class,
+            CoaProfitLossMappingSeeder::class,
         ]);
     }
 }

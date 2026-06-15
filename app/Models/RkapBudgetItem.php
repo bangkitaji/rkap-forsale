@@ -38,6 +38,11 @@ class RkapBudgetItem extends Model
         return $this->belongsTo(RkapWorkPlan::class, 'rkap_work_plan_id');
     }
 
+    public function coa(): BelongsTo
+    {
+        return $this->belongsTo(Coa::class, 'account_code', 'code');
+    }
+
     public function monthlies(): HasMany
     {
         return $this->hasMany(RkapBudgetItemMonthly::class)->orderBy('month');
