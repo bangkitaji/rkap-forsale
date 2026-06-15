@@ -59,7 +59,7 @@
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0">
             <span class="text-muted fw-light">RKAP / <a href="{{ route('rkap-submissions') }}" class="text-muted text-decoration-none">Pengajuan</a> /</span>
-            Review RKAP
+            Review & Persetujuan RKAP
         </h4>
         <div>
             <span class="badge bg-{{ $submission->status_color }} fs-6">{{ $submission->status_label }}</span>
@@ -76,7 +76,7 @@
     <div class="row">
         <!-- Main Content: RKAP Details -->
         <div class="col-xl-9 col-lg-8">
-            <!-- Header Info -->
+            <!-- Header Info with Comparison -->
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row g-3">
@@ -90,8 +90,29 @@
                             <div class="fw-semibold">{{ $submission->period->title ?? '-' }}</div>
                         </div>
                         <div class="col-sm-3">
-                            <label class="text-muted small">Total Anggaran</label>
+                            <label class="text-muted small">Total Anggaran Ajuan</label>
                             <div class="fw-bold text-primary fs-5">Rp {{ number_format($submission->total_budget, 0, ',', '.') }}</div>
+                            
+                            @if(isset($prevData['total_budget']))
+                                @php
+                                    $prevTotal = $prevData['total_budget'];
+                                    $totalDiff = $submission->total_budget - $prevTotal;
+                                    $totalPct = $prevTotal > 0 ? ($totalDiff / $prevTotal) * 100 : 0;
+                                @endphp
+                                <div class="small mt-1 p-1 bg-lighter rounded">
+                                    <span class="text-muted d-block" style="font-size: 0.65rem;">Sebelumnya ({{ $prevData['period'] }}):</span>
+                                    <span class="fw-semibold text-secondary" style="font-size: 0.72rem;">Rp {{ number_format($prevTotal, 0, ',', '.') }}</span>
+                                    <span class="fw-bold d-block mt-0.5 @if($totalDiff > 0) text-danger @elseif($totalDiff < 0) text-success @else text-muted @endif" style="font-size: 0.72rem;">
+                                        @if($totalDiff > 0)
+                                            <i class="bx bx-trending-up" style="font-size: 0.8rem;"></i> +{{ number_format($totalPct, 1) }}%
+                                        @elseif($totalDiff < 0)
+                                            <i class="bx bx-trending-down" style="font-size: 0.8rem;"></i> -{{ number_format(abs($totalPct), 1) }}%
+                                        @else
+                                            = 0%
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     @if($submission->notes)
@@ -104,24 +125,32 @@
 
             <!-- Work Plans -->
             <h5 class="mb-3">Rincian Program Kerja</h5>
-            @foreach($submission->workPlans as $idx => $wp)
-            <div class="card mb-3 border-start border-primary border-3">
-                <div class="card-header border-bottom">
+            @foreach($combinedWorkPlans as $idx => $wp)
+            @php
+                $isWpVirtual = $wp['is_virtual'] ?? false;
+            @endphp
+            <div class="card mb-3 border-start border-primary border-3 @if($isWpVirtual) border-danger @endif" style="@if($isWpVirtual) border-left-color: #ff3e1d !important; background-color: #fff5f5; @endif">
+                <div class="card-header border-bottom" style="@if($isWpVirtual) background-color: #fff0f0; @endif">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-1 text-primary">{{ $wp->program_code }} - {{ $wp->program_name }}</h6>
-                            @if($wp->description)
-                            <p class="text-muted small mb-0">{{ $wp->description }}</p>
+                            <h6 class="mb-1 @if($isWpVirtual) text-danger @else text-primary @endif">
+                                {{ $wp['program_code'] }} - {{ $wp['program_name'] }}
+                                @if($isWpVirtual)
+                                    <span class="badge bg-danger ms-2">Tidak Diajukan Kembali</span>
+                                @endif
+                            </h6>
+                            @if($wp['description'])
+                            <p class="text-muted small mb-0">{{ $wp['description'] }}</p>
                             @endif
                         </div>
                         <div class="text-end">
                             <span class="text-muted small d-block">Subtotal Kegiatan</span>
                             <strong class="text-dark has-tooltip">
-                                Rp {{ number_format($wp->total_budget, 0, ',', '.') }}
+                                Rp {{ number_format($wp['total_budget'], 0, ',', '.') }}
                                 <span class="custom-tooltip-content tooltip-align-right">
                                     @php
-                                        $prevWpId = $wp->work_plan_id ?? null;
-                                        $prevActId = $wp->activity_id ?? null;
+                                        $prevWpId = $wp['work_plan_id'] ?? null;
+                                        $prevActId = $wp['activity_id'] ?? null;
                                         $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
                                         $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
                                         $prevPeriod = $prevData['period'] ?? '-';
@@ -151,10 +180,10 @@
                     </div>
                     <div class="row mt-2 g-2 small">
                         <div class="col-auto">
-                            <span class="text-muted">Target Output:</span> <span class="fw-medium">{{ $wp->output_target ?? '-' }}</span>
+                            <span class="text-muted">Target Output:</span> <span class="fw-medium">{{ $wp['output_target'] ?? '-' }}</span>
                         </div>
                         <div class="col-auto">
-                            <span class="text-muted">Volume:</span> <span class="fw-medium">{{ $wp->quantity }} {{ $wp->unit }}</span>
+                            <span class="text-muted">Volume:</span> <span class="fw-medium">{{ $wp['quantity'] }} {{ $wp['unit'] }}</span>
                         </div>
                     </div>
                 </div>
@@ -169,41 +198,63 @@
                                     <th>Satuan</th>
                                     <th class="text-end">Harga Satuan</th>
                                     <th class="text-end">Total</th>
+                                    <th class="text-end" style="width: 12%;">RKAP Sblm</th>
+                                    <th class="text-end" style="width: 12%;">Selisih (Δ)</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($wp->budgetItems->groupBy('account_code') as $accountCode => $items)
+                                @foreach($wp['grouped_items'] as $accountCode => $items)
                                 @php
-                                $firstItem = $items->first();
-                                $coaGroupSubtotal = $items->sum('total_price');
-                                $prevWpId   = $wp->work_plan_id ?? null;
+                                $firstItem = $items[0];
+                                $coaGroupSubtotal = collect($items)->sum('total_price');
+                                $prevWpId   = $wp['work_plan_id'] ?? null;
                                 $prevCode   = $accountCode;
-                                $prevAmount = ($prevWpId && $prevCode && !empty($prevData['map'][$prevWpId][$prevCode]))
-                                    ? $prevData['map'][$prevWpId][$prevCode]
-                                    : null;
-                                $prevPeriod = $prevData['period'] ?? null;
                                 @endphp
                                 <tr class="table-light fw-semibold">
-                                    <td colspan="7" class="text-dark bg-lighter py-2 px-3">
+                                    <td colspan="9" class="text-dark bg-lighter py-2 px-3">
                                         <div class="d-flex justify-content-between align-items-center gap-2">
                                             <div class="d-flex align-items-center gap-1 min-w-0">
                                                 <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
-                                                <span class="text-truncate"><strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem->description }}</span>
+                                                <span class="text-truncate"><strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem['description'] }}</span>
                                             </div>
                                             <div class="d-flex align-items-center gap-3 flex-shrink-0 text-end">
+                                                @php
+                                                    $prevActId = $wp['activity_id'] ?? null;
+                                                    $coaKey = ($prevWpId && $prevActId && $prevCode) ? "{$prevWpId}-{$prevActId}-{$prevCode}" : null;
+                                                    $prevCoaData = ($coaKey && isset($prevData['map']['coas'][$coaKey])) ? $prevData['map']['coas'][$coaKey] : null;
+                                                    $prevPeriod = $prevData['period'] ?? '-';
+                                                    
+                                                    $prevCoaBudget = $prevCoaData ? (float) $prevCoaData['budget'] : 0.0;
+                                                    $coaDiff = $coaGroupSubtotal - $prevCoaBudget;
+                                                    $coaPct = $prevCoaBudget > 0 ? ($coaDiff / $prevCoaBudget) * 100 : 0;
+                                                @endphp
+                                                
+                                                @if($prevCoaData)
+                                                <div style="font-size:0.75rem; line-height:1.2;">
+                                                    <span class="text-muted" style="font-size:0.68rem;">Sblm ({{ $prevPeriod }}):</span>
+                                                    <span class="fw-semibold text-secondary">Rp {{ number_format($prevCoaBudget, 0, ',', '.') }}</span>
+                                                </div>
+                                                <div style="font-size:0.75rem; line-height:1.2;">
+                                                    <span class="text-muted" style="font-size:0.68rem;">Selisih:</span>
+                                                    <span class="fw-bold @if($coaDiff > 0) text-danger @elseif($coaDiff < 0) text-success @else text-muted @endif">
+                                                        @if($coaDiff > 0)
+                                                            ↑ +{{ number_format($coaPct, 1) }}%
+                                                        @elseif($coaDiff < 0)
+                                                            ↓ -{{ number_format(abs($coaPct), 1) }}%
+                                                        @else
+                                                            = 0%
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                                @endif
+
                                                 <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
-                                                    <div class="text-muted" style="white-space:nowrap; font-size:0.68rem;">Sub-total</div>
-                                                    <div class="fw-bold text-primary" style="white-space:nowrap;">
+                                                    <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
+                                                    <span class="fw-bold text-primary">
                                                         Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}
-                                                    </div>
+                                                    </span>
                                                     <span class="custom-tooltip-content tooltip-align-right">
-                                                        @php
-                                                            $prevActId = $wp->activity_id ?? null;
-                                                            $coaKey = ($prevWpId && $prevActId && $prevCode) ? "{$prevWpId}-{$prevActId}-{$prevCode}" : null;
-                                                            $prevCoaData = ($coaKey && isset($prevData['map']['coas'][$coaKey])) ? $prevData['map']['coas'][$coaKey] : null;
-                                                            $prevPeriod = $prevData['period'] ?? '-';
-                                                        @endphp
                                                         @if ($prevCoaData)
                                                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
                                                             <div class="row text-center">
@@ -231,31 +282,66 @@
                                 </tr>
                                 @foreach($items as $bi)
                                 @php
-                                $allocationModalId = 'allocationDetailModal-' . $bi->id;
+                                $isBiVirtual = $bi['is_virtual'] ?? false;
+                                $allocationModalId = 'allocationDetailModal-' . ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
                                 $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                
+                                $prevActId = $wp['activity_id'] ?? null;
+                                $itemKey = ($prevWpId && $prevActId && $accountCode) ? "{$prevWpId}-{$prevActId}-{$accountCode}-" . trim(strtolower($bi['description'])) : null;
+                                $prevItemData = ($itemKey && isset($prevData['map']['items'][$itemKey])) ? $prevData['map']['items'][$itemKey] : null;
+                                $prevItemBudget = $prevItemData ? (float) $prevItemData['budget'] : null;
+                                $itemDiff = $prevItemBudget !== null ? ($bi['total_price'] - $prevItemBudget) : null;
+                                $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
                                 @endphp
-                                <tr>
+                                <tr @if($isBiVirtual) style="background-color: #fff9f9;" @endif>
                                     <td class="text-center text-muted">
                                         <span class="ps-2">•</span>
                                     </td>
                                     <td>
-                                        {{ $bi->remarks ?: $bi->description }}
+                                        <span class="@if($isBiVirtual) text-danger text-decoration-line-through @endif">
+                                            {{ $bi['remarks'] ?: $bi['description'] }}
+                                        </span>
+                                        @if($isBiVirtual)
+                                            <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
+                                        @endif
                                     </td>
-                                    <td class="text-center">{{ $bi->quantity }}</td>
-                                    <td>{{ $bi->unit }}</td>
-                                    <td class="text-end">Rp {{ number_format($bi->unit_price, 0, ',', '.') }}</td>
+                                    <td class="text-center @if($isBiVirtual) text-danger @endif">{{ $bi['quantity'] }}</td>
+                                    <td class="@if($isBiVirtual) text-danger @endif">{{ $bi['unit'] }}</td>
+                                    <td class="text-end @if($isBiVirtual) text-danger @endif">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
                                     <td class="text-end">
-                                        <div class="fw-semibold text-primary">Rp {{ number_format($bi->total_price, 0, ',', '.') }}</div>
+                                        <div class="fw-semibold @if($isBiVirtual) text-danger @else text-primary @endif">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</div>
+                                    </td>
+                                    <!-- RKAP Sblm -->
+                                    <td class="text-end text-secondary" style="font-size: 0.8rem;">
+                                        @if($prevItemBudget !== null)
+                                            Rp {{ number_format($prevItemBudget, 0, ',', '.') }}
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
+                                    </td>
+                                    <!-- Selisih (Δ) -->
+                                    <td class="text-end fw-semibold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-muted @endif" style="font-size: 0.8rem;">
+                                        @if($itemDiff !== null)
+                                            @if($itemDiff > 0)
+                                                ↑ +{{ number_format($itemPct, 1) }}%
+                                            @elseif($itemDiff < 0)
+                                                ↓ -{{ number_format(abs($itemPct), 1) }}%
+                                            @else
+                                                = 0%
+                                            @endif
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
-                                        @if($bi->monthlies->isNotEmpty() || $bi->cashOuts->isNotEmpty())
+                                        @if(!$isBiVirtual && ($bi['monthlies']->isNotEmpty() || $bi['cashOuts']->isNotEmpty()))
                                         <div class="d-flex justify-content-center">
                                             <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#{{ $allocationModalId }}" title="Detail Alokasi">
                                                 <i class="bx bx-detail"></i>
                                             </button>
 
                                             <!-- Modal Detail Alokasi (Merged) -->
-                                            <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1" aria-hidden="true" wire:key="allocation-modal-{{ $bi->id }}">
+                                            <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1" aria-hidden="true" wire:key="allocation-modal-{{ $bi['model']->id }}">
                                                 <div class="modal-dialog modal-dialog-centered modal-lg">
                                                     <div class="modal-content text-start">
                                                         <div class="modal-header">
@@ -271,22 +357,22 @@
                                                                     <div class="row g-3 small">
                                                                         <div class="col-md-3 border-end">
                                                                             <span class="text-muted d-block mb-1">Kode Akun</span>
-                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi->account_code ?? '-' }}</span>
+                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi['account_code'] ?? '-' }}</span>
                                                                         </div>
                                                                         <div class="col-md-5 border-end">
                                                                             <span class="text-muted d-block mb-1">Deskripsi / Detail Belanja</span>
-                                                                            <span class="fw-semibold text-dark fs-6 text-wrap">{{ $bi->description }}</span>
-                                                                            @if($bi->remarks)
-                                                                            <div class="text-muted mt-1 small">Ket: {{ $bi->remarks }}</div>
+                                                                            <span class="fw-semibold text-dark fs-6 text-wrap">{{ $bi['description'] }}</span>
+                                                                            @if($bi['remarks'])
+                                                                            <div class="text-muted mt-1 small">Ket: {{ $bi['remarks'] }}</div>
                                                                             @endif
                                                                         </div>
                                                                         <div class="col-md-2 border-end">
                                                                             <span class="text-muted d-block mb-1">Volume</span>
-                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi->quantity }} {{ $bi->unit }}</span>
+                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi['quantity'] }} {{ $bi['unit'] }}</span>
                                                                         </div>
                                                                         <div class="col-md-2">
                                                                             <span class="text-muted d-block mb-1">Total Anggaran</span>
-                                                                            <span class="fw-bold text-primary fs-6">Rp {{ number_format($bi->total_price, 0, ',', '.') }}</span>
+                                                                            <span class="fw-bold text-primary fs-6">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -301,7 +387,7 @@
                                                                             <i class="bx bx-calendar me-2"></i>Distribusi Bulanan
                                                                         </h6>
                                                                         @php
-                                                                        $activeMonthlies = $bi->monthlies->filter(fn($m) => (float) $m->amount > 0);
+                                                                        $activeMonthlies = $bi['monthlies']->filter(fn($m) => (float) $m->amount > 0);
                                                                         @endphp
                                                                         @if($activeMonthlies->isEmpty())
                                                                         <div class="text-center text-muted py-4">
@@ -321,7 +407,7 @@
                                                                                 <tbody>
                                                                                     @foreach($activeMonthlies as $monthlyRecord)
                                                                                     @php
-                                                                                    $percentage = $bi->total_price > 0 ? ($monthlyRecord->amount / $bi->total_price) * 100 : 0;
+                                                                                    $percentage = $bi['total_price'] > 0 ? ($monthlyRecord->amount / $bi['total_price']) * 100 : 0;
                                                                                     @endphp
                                                                                     <tr class="fw-medium text-primary">
                                                                                         <td>{{ $monthNames[$monthlyRecord->month] }}</td>
@@ -345,7 +431,7 @@
                                                                             <i class="bx bx-wallet me-2"></i>Rencana Kas Keluar
                                                                         </h6>
                                                                         @php
-                                                                        $activeCashOuts = $bi->cashOuts->filter(fn($c) => (float) $c->amount > 0);
+                                                                        $activeCashOuts = $bi['cashOuts']->filter(fn($c) => (float) $c->amount > 0);
                                                                         @endphp
                                                                         @if($activeCashOuts->isEmpty())
                                                                         <div class="text-center text-muted py-4">
@@ -365,7 +451,7 @@
                                                                                 <tbody>
                                                                                     @foreach($activeCashOuts as $cashOutRecord)
                                                                                     @php
-                                                                                    $percentage = $bi->total_price > 0 ? ($cashOutRecord->amount / $bi->total_price) * 100 : 0;
+                                                                                    $percentage = $bi['total_price'] > 0 ? ($cashOutRecord->amount / $bi['total_price']) * 100 : 0;
                                                                                     @endphp
                                                                                     <tr class="fw-medium text-success">
                                                                                         <td>{{ $monthNames[$cashOutRecord->month] }}</td>
@@ -406,7 +492,40 @@
         <!-- Sidebar: Actions & History -->
         <div class="col-xl-3 col-lg-4">
 
-
+            <!-- Review Actions (Only if user can review) -->
+            @if($this->canApprove())
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-label-primary">
+                    <h5 class="mb-0 text-primary"><i class="bx bx-check-shield me-2"></i>Aksi Review</h5>
+                </div>
+                <div class="card-body mt-3">
+                    @if($showRevisionForm)
+                    <div class="mb-3">
+                        <label class="form-label text-danger">Alasan Permintaan Revisi <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('revisionReason') is-invalid @enderror" wire:model="revisionReason" rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..."></textarea>
+                        @error('revisionReason') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-label-secondary w-50" wire:click="$set('showRevisionForm', false)">Batal</button>
+                        <button class="btn btn-danger w-50" wire:click="requestRevision" wire:loading.attr="disabled">Kirim Permintaan</button>
+                    </div>
+                    @else
+                    <div class="mb-3">
+                        <label class="form-label">Catatan Review (Opsional)</label>
+                        <textarea class="form-control" wire:model="reviewComments" rows="2" placeholder="Tinggalkan catatan untuk persetujuan..."></textarea>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-success w-100" wire:click="approve" wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?">
+                            <i class="bx bx-check-circle me-1"></i> Setujui RKAP
+                        </button>
+                        <button class="btn btn-outline-danger w-100" wire:click="$set('showRevisionForm', true)">
+                            <i class="bx bx-x-circle me-1"></i> Minta Revisi
+                        </button>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
 
             <!-- Comments / Discussion -->
             <div class="card mb-4">

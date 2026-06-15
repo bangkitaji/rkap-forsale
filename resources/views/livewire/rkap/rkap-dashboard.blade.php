@@ -104,10 +104,10 @@
                                             <span class="badge bg-label-warning">Perlu Review</span>
                                             <small class="text-muted">{{ $action->updated_at->diffForHumans() }}</small>
                                         </div>
-                                        <a href="{{ route('rkap-submissions-review', $action->id) }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name }}</a>
+                                        <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name }}</a>
                                         <small class="text-muted">{{ $action->bureau->department->name ?? '-' }}</small>
                                     </div>
-                                    <a href="{{ route('rkap-submissions-review', $action->id) }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
+                                    <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
                                         <i class="bx bx-chevron-right"></i>
                                     </a>
                                 </div>

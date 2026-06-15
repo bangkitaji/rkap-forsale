@@ -273,7 +273,7 @@
                                 </a>
                                 @endif
                                 @if($submission->canBeReviewedBy(Auth::user()))
-                                <a href="{{ route('rkap-submissions-review', $submission->id) }}" class="btn btn-sm btn-icon btn-text-success rounded-pill" title="Review">
+                                <a href="{{ route('rkap-submissions-approval-review', $submission->id) }}" class="btn btn-sm btn-icon btn-text-success rounded-pill" title="Review">
                                     <i class="bx bx-check-circle"></i>
                                 </a>
                                 @endif
