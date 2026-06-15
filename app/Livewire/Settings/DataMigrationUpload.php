@@ -246,6 +246,7 @@ class DataMigrationUpload extends Component
     DB::transaction(function () use ($rows): void {
       $submissionMap = [];
       $workPlanMap = [];
+      $budgetItemMap = [];
 
       $createdSubmissions = 0;
       $createdWorkPlans = 0;
@@ -282,68 +283,125 @@ class DataMigrationUpload extends Component
 
         /** @var \App\Models\RkapSubmission $submission */
         $submission = $submissionMap[$compositeSubmissionKey];
-        $workPlanKey = $row['work_plan_key'];
-
-        // Prefix with composite submission key to prevent cross-submission collisions
-        $compositeWpKey = $compositeSubmissionKey . '::' . $workPlanKey;
+        
+        $wpId = (int) $row['work_plan_id'];
+        $actId = !empty($row['activity_id']) ? (int) $row['activity_id'] : null;
+        $compositeWpKey = $compositeSubmissionKey . '::' . $wpId . '::' . ($actId ?? 'null');
 
         if (!isset($workPlanMap[$compositeWpKey])) {
-          $masterWorkPlan = WorkPlan::withTrashed()->find((int) $row['work_plan_id']);
-          $masterActivity = !empty($row['activity_id'])
-            ? Activity::withTrashed()->find((int) $row['activity_id'])
-            : null;
+          $workPlan = RkapWorkPlan::where('rkap_submission_id', $submission->id)
+            ->where('work_plan_id', $wpId)
+            ->where('activity_id', $actId)
+            ->first();
 
-          $workPlan = RkapWorkPlan::create([
-            'rkap_submission_id' => $submission->id,
-            'work_plan_id' => (int) $row['work_plan_id'],
-            'activity_id' => !empty($row['activity_id']) ? (int) $row['activity_id'] : null,
-            'program_code' => $masterActivity?->code ?? $masterWorkPlan?->code ?? '-',
-            'program_name' => $masterActivity?->title ?? $masterWorkPlan?->title ?? 'Tanpa Nama',
-            'description' => ($row['wp_description'] ?? null) ?: null,
-            'output_target' => ($row['output_target'] ?? null) ?: null,
-            'unit' => ($row['wp_unit'] ?? null) ?: null,
-            'quantity' => (int) (($row['wp_quantity'] ?? null) ?: 1),
-            'sort_order' => (int) (($row['sort_order'] ?? null) ?: 0),
-          ]);
+          if (!$workPlan) {
+            $masterWorkPlan = WorkPlan::withTrashed()->find($wpId);
+            $masterActivity = $actId ? Activity::withTrashed()->find($actId) : null;
+
+            $workPlan = RkapWorkPlan::create([
+              'rkap_submission_id' => $submission->id,
+              'work_plan_id' => $wpId,
+              'activity_id' => $actId,
+              'program_code' => $masterActivity?->code ?? $masterWorkPlan?->code ?? '-',
+              'program_name' => $masterActivity?->title ?? $masterWorkPlan?->title ?? 'Tanpa Nama',
+              'description' => ($row['wp_description'] ?? null) ?: null,
+              'output_target' => ($row['output_target'] ?? null) ?: null,
+              'unit' => ($row['wp_unit'] ?? null) ?: null,
+              'quantity' => (int) (($row['wp_quantity'] ?? null) ?: 1),
+              'sort_order' => (int) (($row['sort_order'] ?? null) ?: 0),
+            ]);
+            $createdWorkPlans++;
+          }
 
           $workPlanMap[$compositeWpKey] = $workPlan;
-          $createdWorkPlans++;
         }
 
         /** @var \App\Models\RkapWorkPlan $workPlan */
         $workPlan = $workPlanMap[$compositeWpKey];
         $coa = Coa::withTrashed()->find((int) $row['coa_id']);
+        
+        $coaId = (int) $row['coa_id'];
+        $compositeBiKey = $compositeWpKey . '::' . $coaId;
 
-        $budgetItem = RkapBudgetItem::create([
-          'rkap_work_plan_id' => $workPlan->id,
-          'account_code' => $coa?->code,
-          'description' => $coa?->title ?? '',
-          'unit' => ($row['bi_unit'] ?? null) ?: null,
-          'quantity' => (int) $row['bi_quantity'],
-          'unit_price' => (float) $row['unit_price'],
-          'remarks' => ($row['remarks'] ?? null) ?: null,
-        ]);
-        $createdBudgetItems++;
+        if (!isset($budgetItemMap[$compositeBiKey])) {
+          $budgetItem = RkapBudgetItem::where('rkap_work_plan_id', $workPlan->id)
+            ->where('account_code', $coa?->code)
+            ->first();
+
+          if (!$budgetItem) {
+            $budgetItem = RkapBudgetItem::create([
+              'rkap_work_plan_id' => $workPlan->id,
+              'account_code' => $coa?->code,
+              'description' => $coa?->title ?? '',
+              'unit' => ($row['bi_unit'] ?? null) ?: null,
+              'quantity' => (int) $row['bi_quantity'],
+              'unit_price' => (float) $row['unit_price'],
+              'remarks' => ($row['remarks'] ?? null) ?: null,
+            ]);
+            $createdBudgetItems++;
+          }
+          $budgetItemMap[$compositeBiKey] = $budgetItem;
+        } else {
+          /** @var \App\Models\RkapBudgetItem $budgetItem */
+          $budgetItem = $budgetItemMap[$compositeBiKey];
+
+          $oldQty = $budgetItem->quantity;
+          $oldUnitPrice = $budgetItem->unit_price;
+          $oldTotal = $oldQty * $oldUnitPrice;
+
+          $rowQty = (int) $row['bi_quantity'];
+          $rowUnitPrice = (float) $row['unit_price'];
+          $rowTotal = $rowQty * $rowUnitPrice;
+
+          $newQty = $oldQty + $rowQty;
+          $newTotal = $oldTotal + $rowTotal;
+          $newUnitPrice = $newQty > 0 ? ($newTotal / $newQty) : 0.00;
+
+          $newRemarks = $budgetItem->remarks;
+          if (!empty($row['remarks']) && $row['remarks'] !== $budgetItem->remarks) {
+            $newRemarks = $budgetItem->remarks ? $budgetItem->remarks . '; ' . $row['remarks'] : $row['remarks'];
+          }
+
+          $budgetItem->update([
+            'quantity' => $newQty,
+            'unit_price' => $newUnitPrice,
+            'remarks' => $newRemarks,
+          ]);
+        }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["m{$m}"] ?? 0);
           if ($amount > 0) {
-            $budgetItem->monthlies()->create([
-              'month' => $m,
-              'amount' => $amount,
-            ]);
-            $createdMonthlies++;
+            $monthly = $budgetItem->monthlies()->where('month', $m)->first();
+            if ($monthly) {
+              $monthly->update([
+                'amount' => $monthly->amount + $amount,
+              ]);
+            } else {
+              $budgetItem->monthlies()->create([
+                'month' => $m,
+                'amount' => $amount,
+              ]);
+              $createdMonthlies++;
+            }
           }
         }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["co{$m}"] ?? 0);
           if ($amount > 0) {
-            $budgetItem->cashOuts()->create([
-              'month' => $m,
-              'amount' => $amount,
-            ]);
-            $createdCashOuts++;
+            $cashOut = $budgetItem->cashOuts()->where('month', $m)->first();
+            if ($cashOut) {
+              $cashOut->update([
+                'amount' => $cashOut->amount + $amount,
+              ]);
+            } else {
+              $budgetItem->cashOuts()->create([
+                'month' => $m,
+                'amount' => $amount,
+              ]);
+              $createdCashOuts++;
+            }
           }
         }
       }

@@ -58,12 +58,12 @@ class SatuanSeeder extends Seeder
                 'description' => 'Liter - Satuan volume cairan atau cat',
             ],
             [
-                'name' => 'Orang Hari (OH)',
-                'description' => 'Orang Hari - Jumlah durasi tenaga kerja per hari',
+                'name' => 'Orang',
+                'description' => 'Jumlah orang',
             ],
             [
-                'name' => 'Orang Jam (OJ)',
-                'description' => 'Orang Jam - Jumlah durasi tenaga kerja per jam',
+                'name' => 'Hari (Hari)',
+                'description' => 'Jumlah hari kerja atau durasi waktu',
             ],
             [
                 'name' => 'Bulan (Bln)',
