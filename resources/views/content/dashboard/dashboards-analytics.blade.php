@@ -11,6 +11,13 @@
 @endsection
 
 @section('content')
+<style>
+    .btn-check:checked + .btn-outline-primary {
+        color: #fff !important;
+        background-color: #696cff !important;
+        border-color: #696cff !important;
+    }
+</style>
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
         <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Analytics</h4>
@@ -118,17 +125,18 @@
         <!-- Division Absorption Bar Chart -->
         <div class="col-lg-8 col-12">
             <div class="card h-100">
-                <div class="card-header border-bottom py-3">
-                    <h5 class="card-title mb-0">Komparasi Penyerapan Anggaran per Unit</h5>
-                    <small class="text-muted">
-                        @if(auth()->user()->isAdmin() || auth()->user()->isVerifikator())
-                            Perbandingan per Direktorat
-                        @elseif(auth()->user()->isDireksi())
-                            Perbandingan per Departemen di bawah Direktorat Anda
-                        @else
-                            Perbandingan per Biro
-                        @endif
-                    </small>
+                <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="card-title mb-0">Penyerapan Anggaran</h5>
+                        <small class="text-muted">Komparasi Penyerapan per Unit Kerja</small>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="Comparative data options">
+                        <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDirectorate" checked autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm px-3" for="groupDirectorate">Direktorat</label>
+                        
+                        <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment" autocomplete="off">
+                        <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+                    </div>
                 </div>
                 <div class="card-body pt-3">
                     <div id="divisionChart" style="min-height: 350px;"></div>
@@ -295,56 +303,121 @@ document.addEventListener('DOMContentLoaded', function() {
     utilizationGauge.render();
 
     // 3. Division Absorption Bar Chart Setup
-    const absorptionData = @json($absorptionData);
-    const labels = absorptionData.map(item => item.label);
-    const budgets = absorptionData.map(item => parseFloat(item.budget || 0));
-    const realizations = absorptionData.map(item => parseFloat(item.realization || 0));
-    const projections = absorptionData.map(item => parseFloat(item.projection || 0));
+    const directorateData = @json($directorateData);
+    const departmentData = @json($departmentData);
 
-    const divisionChartOptions = {
-        series: [
-            { name: 'Anggaran', data: budgets },
-            { name: 'Realisasi YTD', data: realizations },
-            { name: 'Proyeksi Akhir Tahun', data: projections }
-        ],
-        chart: {
-            type: 'bar',
-            height: 350,
-            toolbar: { show: false }
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true,
-                barHeight: '75%',
-                borderRadius: 4,
-                dataLabels: { position: 'top' }
-            }
-        },
-        colors: ['#a1acb8', '#71dd37', '#ffab00'],
-        xaxis: {
-            categories: labels,
-            labels: {
-                formatter: function (value) {
-                    if (value >= 1e9) return (value / 1e9).toFixed(1) + ' M';
-                    if (value >= 1e6) return (value / 1e6).toFixed(0) + ' Jt';
-                    return value.toLocaleString('id-ID');
+    // Sort department data by budget descending so biggest budgets appear first
+    departmentData.sort((a, b) => parseFloat(b.budget || 0) - parseFloat(a.budget || 0));
+
+    // Helper to format large numbers for data labels
+    function formatValueShort(value) {
+        if (value >= 1e12) return (value / 1e12).toFixed(1) + ' T';
+        if (value >= 1e9) return (value / 1e9).toFixed(1) + ' M';
+        if (value >= 1e6) return (value / 1e6).toFixed(0) + ' Jt';
+        if (value === 0) return '';
+        return value.toLocaleString('id-ID');
+    }
+
+    // Calculate dynamic height: 60px per item, min 350px
+    function calcChartHeight(itemCount) {
+        return Math.max(350, itemCount * 60);
+    }
+
+    // Build chart options for a given dataset
+    function buildDivisionChartOptions(data) {
+        const labels = data.map(item => item.label);
+        const budgets = data.map(item => parseFloat(item.budget || 0));
+        const realizations = data.map(item => parseFloat(item.realization || 0));
+        const projections = data.map(item => parseFloat(item.projection || 0));
+
+        return {
+            series: [
+                { name: 'Anggaran', data: budgets },
+                { name: 'Realisasi YTD', data: realizations },
+                { name: 'Proyeksi Akhir Tahun', data: projections }
+            ],
+            chart: {
+                type: 'bar',
+                height: calcChartHeight(data.length),
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '70%',
+                    borderRadius: 3,
+                    dataLabels: { position: 'top' }
                 }
-            }
-        },
-        tooltip: {
-            y: {
-                formatter: function (val) {
-                    return 'Rp ' + val.toLocaleString('id-ID');
+            },
+            dataLabels: {
+                enabled: true,
+                offsetX: 30,
+                style: {
+                    fontSize: '10px',
+                    colors: ['#566a7f']
+                },
+                formatter: function(val) {
+                    return formatValueShort(val);
                 }
+            },
+            colors: ['#a1acb8', '#71dd37', '#ffab00'],
+            xaxis: {
+                categories: labels,
+                labels: {
+                    formatter: function (value) {
+                        if (value >= 1e12) return (value / 1e12).toFixed(1) + ' T';
+                        if (value >= 1e9) return (value / 1e9).toFixed(1) + ' M';
+                        if (value >= 1e6) return (value / 1e6).toFixed(0) + ' Jt';
+                        return value.toLocaleString('id-ID');
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    maxWidth: 200,
+                    style: {
+                        fontSize: '11px'
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return 'Rp ' + val.toLocaleString('id-ID');
+                    }
+                }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'left'
             }
-        },
-        legend: {
-            position: 'top',
-            horizontalAlign: 'left'
-        }
-    };
-    const divisionChart = new ApexCharts(document.querySelector("#divisionChart"), divisionChartOptions);
+        };
+    }
+
+    // Create initial chart with directorate data
+    let divisionChart = new ApexCharts(
+        document.querySelector("#divisionChart"),
+        buildDivisionChartOptions(directorateData)
+    );
     divisionChart.render();
+
+    // Destroy and recreate chart to avoid ApexCharts horizontal bar update bugs
+    function switchDivisionChart(type) {
+        const data = type === 'directorate' ? directorateData : departmentData;
+        divisionChart.destroy();
+        divisionChart = new ApexCharts(
+            document.querySelector("#divisionChart"),
+            buildDivisionChartOptions(data)
+        );
+        divisionChart.render();
+    }
+
+    document.getElementById('groupDirectorate').addEventListener('change', function() {
+        if(this.checked) switchDivisionChart('directorate');
+    });
+    document.getElementById('groupDepartment').addEventListener('change', function() {
+        if(this.checked) switchDivisionChart('department');
+    });
 
     // 4. COA Expense Category Allocation Setup
     @if(!empty($coaData))

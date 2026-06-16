@@ -37,7 +37,8 @@ class Analytics extends Controller
     $monthlyRealizationData = array_fill(1, 12, 0.0);
     $monthlyProjectionData = array_fill(1, 12, 0.0);
 
-    $absorptionData = [];
+    $directorateData = [];
+    $departmentData = [];
     $coaData = [];
 
     if ($activePeriod) {
@@ -55,6 +56,18 @@ class Analytics extends Controller
           ->where('departments.directorate_id', $user->directorate_id)
           ->pluck('bureaus.id')
           ->toArray();
+      }
+
+      // Define scoped filters for high-level comparison charts (directorate and department level)
+      // Both views should use the same directorate scope so totals are consistent
+      $userDirectorateId = null;
+      $deptFilterField = null;
+      $deptFilterVal = null;
+      if (!$user->isAdmin() && !$user->isVerifikator()) {
+        $userDirectorateId = $user->directorate_id;
+        // Always filter departments by directorate so both views show the same scope
+        $deptFilterField = 'departments.directorate_id';
+        $deptFilterVal = $userDirectorateId;
       }
 
       // Total Budget (Approved Submissions only)
@@ -143,154 +156,129 @@ class Analytics extends Controller
         $monthlyProjectionData[$m] = (float) $val;
       }
 
-      // --- 4. Grouped Division Comparison for absorption Bar chart ---
-      if ($user->isAdmin() || $user->isVerifikator()) {
-        // Group by Directorate
-        $budgets = DB::table('rkap_submissions')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
-          ->where('rkap_submissions.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->selectRaw('directorates.name as label, SUM(rkap_submissions.total_budget) as budget')
-          ->groupBy('directorates.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
+      // --- 4a. Directorate-level budgets, realizations, projections ---
+      $directorateBudgets = DB::table('rkap_submissions')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($userDirectorateId, fn($q) => $q->where('departments.directorate_id', $userDirectorateId))
+        ->selectRaw('directorates.name as label, SUM(rkap_submissions.total_budget) as budget')
+        ->groupBy('directorates.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
 
-        $realizations = DB::table('rkap_budget_item_realizations')
-          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
-          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->selectRaw('directorates.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
-          ->groupBy('directorates.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
+      $directorateRealizations = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($userDirectorateId, fn($q) => $q->where('departments.directorate_id', $userDirectorateId))
+        ->selectRaw('directorates.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
+        ->groupBy('directorates.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
 
-        $projections = DB::table('rkap_budget_item_projections')
-          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
-          ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->selectRaw('directorates.name as label, SUM(rkap_budget_item_projections.amount) as amount')
-          ->groupBy('directorates.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-      } elseif ($user->isDireksi()) {
-        // Group by Department
-        $budgets = DB::table('rkap_submissions')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->where('rkap_submissions.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->where('departments.directorate_id', $user->directorate_id)
-          ->selectRaw('departments.name as label, SUM(rkap_submissions.total_budget) as budget')
-          ->groupBy('departments.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
+      $directorateProjections = DB::table('rkap_budget_item_projections')
+        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($userDirectorateId, fn($q) => $q->where('departments.directorate_id', $userDirectorateId))
+        ->selectRaw('directorates.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+        ->groupBy('directorates.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
 
-        $realizations = DB::table('rkap_budget_item_realizations')
-          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->where('departments.directorate_id', $user->directorate_id)
-          ->selectRaw('departments.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
-          ->groupBy('departments.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-
-        $projections = DB::table('rkap_budget_item_projections')
-          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->where('departments.directorate_id', $user->directorate_id)
-          ->selectRaw('departments.name as label, SUM(rkap_budget_item_projections.amount) as amount')
-          ->groupBy('departments.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-      } else {
-        // Group by Bureau
-        $deptId = $user->isKepalaDepartemen() ? $user->department_id : $user->bureau?->department_id;
-
-        $budgets = DB::table('rkap_submissions')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->where('rkap_submissions.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->when($deptId, fn($q) => $q->where('bureaus.department_id', $deptId))
-          ->when($user->isKepalaBiro(), fn($q) => $q->where('bureaus.id', $user->bureau_id))
-          ->selectRaw('bureaus.name as label, SUM(rkap_submissions.total_budget) as budget')
-          ->groupBy('bureaus.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-
-        $realizations = DB::table('rkap_budget_item_realizations')
-          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->when($deptId, fn($q) => $q->where('bureaus.department_id', $deptId))
-          ->when($user->isKepalaBiro(), fn($q) => $q->where('bureaus.id', $user->bureau_id))
-          ->selectRaw('bureaus.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
-          ->groupBy('bureaus.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-
-        $projections = DB::table('rkap_budget_item_projections')
-          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-          ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
-          ->where('rkap_submissions.status', 'approved')
-          ->when($deptId, fn($q) => $q->where('bureaus.department_id', $deptId))
-          ->when($user->isKepalaBiro(), fn($q) => $q->where('bureaus.id', $user->bureau_id))
-          ->selectRaw('bureaus.name as label, SUM(rkap_budget_item_projections.amount) as amount')
-          ->groupBy('bureaus.name')
-          ->get()
-          ->keyBy('label')
-          ->toArray();
-      }
-
-      $allLabels = array_unique(array_merge(
-        array_keys($budgets),
-        array_keys($realizations),
-        array_keys($projections)
+      $allDirLabels = array_unique(array_merge(
+        array_keys($directorateBudgets),
+        array_keys($directorateRealizations),
+        array_keys($directorateProjections)
       ));
 
-      foreach ($allLabels as $lbl) {
-        $absorptionData[] = [
+      $directorateData = [];
+      foreach ($allDirLabels as $lbl) {
+        $directorateData[] = [
           'label'       => $lbl,
-          'budget'      => isset($budgets[$lbl]) ? (float) $budgets[$lbl]->budget : 0.0,
-          'realization' => isset($realizations[$lbl]) ? (float) $realizations[$lbl]->amount : 0.0,
-          'projection'  => isset($projections[$lbl]) ? (float) $projections[$lbl]->amount : 0.0,
+          'budget'      => isset($directorateBudgets[$lbl]) ? (float) $directorateBudgets[$lbl]->budget : 0.0,
+          'realization' => isset($directorateRealizations[$lbl]) ? (float) $directorateRealizations[$lbl]->amount : 0.0,
+          'projection'  => isset($directorateProjections[$lbl]) ? (float) $directorateProjections[$lbl]->amount : 0.0,
         ];
       }
+
+      // --- 4b. Department-level budgets, realizations, projections ---
+      $departmentBudgets = DB::table('rkap_submissions')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($deptFilterField, fn($q) => $q->where($deptFilterField, $deptFilterVal))
+        ->selectRaw('departments.name as label, SUM(rkap_submissions.total_budget) as budget')
+        ->groupBy('departments.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
+
+      $departmentRealizations = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($deptFilterField, fn($q) => $q->where($deptFilterField, $deptFilterVal))
+        ->selectRaw('departments.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
+        ->groupBy('departments.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
+
+      $departmentProjections = DB::table('rkap_budget_item_projections')
+        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($deptFilterField, fn($q) => $q->where($deptFilterField, $deptFilterVal))
+        ->selectRaw('departments.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+        ->groupBy('departments.name')
+        ->get()
+        ->keyBy('label')
+        ->toArray();
+
+      $allDeptLabels = array_unique(array_merge(
+        array_keys($departmentBudgets),
+        array_keys($departmentRealizations),
+        array_keys($departmentProjections)
+      ));
+
+      $departmentData = [];
+      foreach ($allDeptLabels as $lbl) {
+        $departmentData[] = [
+          'label'       => $lbl,
+          'budget'      => isset($departmentBudgets[$lbl]) ? (float) $departmentBudgets[$lbl]->budget : 0.0,
+          'realization' => isset($departmentRealizations[$lbl]) ? (float) $departmentRealizations[$lbl]->amount : 0.0,
+          'projection'  => isset($departmentProjections[$lbl]) ? (float) $departmentProjections[$lbl]->amount : 0.0,
+        ];
+      }
+
+      // Sort by budget descending so largest departments appear first
+      usort($departmentData, fn($a, $b) => $b['budget'] <=> $a['budget']);
 
       // --- 5. COA Category breakdown in PHP (database dialect safe) ---
       $items = DB::table('rkap_budget_items')
@@ -299,7 +287,7 @@ class Analytics extends Controller
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
-        ->selectRaw('rkap_budget_items.account_code, SUM(rkap_budget_items.quantity * rkap_budget_items.unit_price) as total')
+        ->selectRaw('rkap_budget_items.account_code, SUM(rkap_budget_items.total_price) as total')
         ->groupBy('rkap_budget_items.account_code')
         ->get();
 
@@ -377,7 +365,8 @@ class Analytics extends Controller
       'cumulativeBudget',
       'cumulativeRealization',
       'cumulativeProjection',
-      'absorptionData',
+      'directorateData',
+      'departmentData',
       'coaData'
     ));
   }
