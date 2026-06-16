@@ -209,7 +209,7 @@ class RkapSubmission extends Model
         $this->approvals()->create([
             'user_id' => $user->id,
             'version_number' => $this->current_version,
-            'role' => 'president_director',
+            'role' => 'direktur_utama',
             'action' => 'approved',
             'comments' => $comments,
         ]);
@@ -221,7 +221,7 @@ class RkapSubmission extends Model
         $this->approvals()->create([
             'user_id' => $user->id,
             'version_number' => $this->current_version,
-            'role' => 'president_director',
+            'role' => 'direktur_utama',
             'action' => 'revision_requested',
             'comments' => $comments,
         ]);
@@ -259,7 +259,7 @@ class RkapSubmission extends Model
             return true;
         }
         // President Director
-        if ($this->status === 'pdir_review' && $user->hasRole('president_director')) {
+        if ($this->status === 'pdir_review' && $user->hasRole('direktur_utama')) {
             return true;
         }
         return false;

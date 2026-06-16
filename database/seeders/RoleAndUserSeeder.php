@@ -42,7 +42,8 @@ class RoleAndUserSeeder extends Seeder
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleUser = Role::firstOrCreate(['name' => 'user']);
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
-        $rolePresident = Role::firstOrCreate(['name' => 'president_director']);
+        $roleDireksi = Role::firstOrCreate(['name' => 'direksi']);
+        $rolePresident = Role::firstOrCreate(['name' => 'direktur_utama']);
 
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
@@ -66,6 +67,7 @@ class RoleAndUserSeeder extends Seeder
         ]);
 
         $roleVerifikator->givePermissionTo([
+            $permDashboardShow,
             $permRkapShow,
             $permRkapSubmissionsDept,
             $permRkapRealizationUpload,
@@ -73,7 +75,13 @@ class RoleAndUserSeeder extends Seeder
             $permRkapProjectionView,
         ]);
 
+        $roleDireksi->givePermissionTo([
+            $permDashboardShow,
+            $permRkapShow,
+        ]);
+
         $rolePresident->givePermissionTo([
+            $permDashboardShow,
             $permRkapShow,
             $permRkapReviewPresident,
             $permRkapApprovePresident,

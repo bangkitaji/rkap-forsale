@@ -92,7 +92,7 @@ class RkapReviewTest extends TestCase
         ]);
         $this->verifikator->assignRole($roleVerifikator);
 
-        $rolePresident = Role::create(['name' => 'president_director']);
+        $rolePresident = Role::create(['name' => 'direktur_utama']);
         $this->president = User::create([
             'name' => 'President User',
             'email' => 'president@example.com',
@@ -214,7 +214,7 @@ class RkapReviewTest extends TestCase
 
         // Ensure approval log has the revision reason and role
         $latestApproval = $this->submission->approvals()->first();
-        $this->assertEquals('president_director', $latestApproval->role);
+        $this->assertEquals('direktur_utama', $latestApproval->role);
         $this->assertEquals('revision_requested', $latestApproval->action);
         $this->assertEquals('Need more details on training expenses.', $latestApproval->comments);
     }

@@ -24,10 +24,11 @@ class RkapSeeder extends Seeder
         $roleKepalaDept    = Role::firstOrCreate(['name' => 'kepala_departemen']);
         $roleDireksi       = Role::firstOrCreate(['name' => 'direksi']);
         $roleVerifikator   = Role::firstOrCreate(['name' => 'verifikator']);
-        $rolePresident     = Role::firstOrCreate(['name' => 'president_director']);
+        $rolePresident     = Role::firstOrCreate(['name' => 'direktur_utama']);
 
         // ── 2. Permissions ──
         $permissions = [
+            'dashboard.show',
             // RKAP
             'rkap.show',
             'rkap.review.president',
@@ -101,6 +102,7 @@ class RkapSeeder extends Seeder
         ]);
 
         $roleDireksi->syncPermissions([
+            'dashboard.show',
             'rkap.view.dept',
             'rkap.review.dir',
             'rkap.approve.dir',
@@ -112,6 +114,7 @@ class RkapSeeder extends Seeder
         ]);
 
         $roleVerifikator->syncPermissions([
+            'dashboard.show',
             'rkap.view.all',
             'rkap.review.final',
             'rkap.approve.final',
@@ -126,6 +129,7 @@ class RkapSeeder extends Seeder
         ]);
 
         $rolePresident->syncPermissions([
+            'dashboard.show',
             'rkap.view.all',
             'rkap.review.president',
             'rkap.approve.president',
@@ -401,14 +405,15 @@ class RkapSeeder extends Seeder
         }
 
         // 4. Seed Specialist User (Sony Suseno)
+        $bureauBusinessAnalysis = Bureau::where('code', 'HFAB')->first();
         $specialist = User::firstOrCreate(
             ['email' => 'sony.suseno@kcic.co.id'],
             [
                 'name' => 'Sony Suseno',
                 'password' => Hash::make('password'),
-                'bureau_id' => 21,
-                'department_id' => 19,
-                'directorate_id' => 3,
+                'bureau_id' => $bureauBusinessAnalysis?->id,
+                'department_id' => $bureauBusinessAnalysis?->department_id,
+                'directorate_id' => $bureauBusinessAnalysis?->department?->directorate_id,
                 'position' => 'Specialist Of Business Analityc',
             ]
         );

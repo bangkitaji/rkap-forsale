@@ -122,7 +122,7 @@ class RolesTab extends Component
 
         return view('livewire.settings.roles-tab', [
             'roles' => $roles,
-            'permissions' => Permission::all()
+            'permissions' => Permission::orderBy('name')->get()
         ]);
     }
 }
