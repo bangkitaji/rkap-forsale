@@ -1,0 +1,2 @@
+submission_key,title,bureau_code,created_by,work_plan_key,work_plan_code,activity_code,budget_item_key,coa_code,bi_quantity,unit_price,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,co1,co2,co3,co4,co5,co6,co7,co8,co9,co10,co11,co12,status,current_version,notes,wp_description,output_target,wp_unit,wp_quantity,sort_order,bi_unit,remarks
+SUB_SAMPLE_01,RKAP 2026,BUR01,1,WP_KEY_SAMPLE_01,WP001,,BI_KEY_SAMPLE_01,521111,10,100000,1000000,0,0,0,0,0,0,0,0,0,0,0,1000000,0,0,0,0,0,0,0,0,0,0,0,draft,1,,Sample Work Plan description,Sample Target,Pkt,1,0,Pkt,Sample remarks

@@ -69,24 +69,24 @@ class DataMigrationUploadTest extends TestCase
 
         // Build CSV content with two rows that target the same submission, work plan, and COA
         $headers = [
-            'submission_key', 'rkap_period_id', 'bureau_id', 'created_by',
-            'work_plan_key', 'work_plan_id', 'activity_id', 'budget_item_key', 'coa_id',
+            'submission_key', 'title', 'bureau_code', 'created_by',
+            'work_plan_key', 'work_plan_code', 'activity_code', 'budget_item_key', 'coa_code',
             'bi_quantity', 'unit_price',
             'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12',
             'co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12'
         ];
 
         $row1 = [
-            'SUB01', $this->period->id, $this->bureau->id, $this->admin->id,
-            'WPKEY1', $this->workPlanMaster->id, '', 'BIKEY1', $this->coaMaster->id,
+            'SUB01', $this->period->title, $this->bureau->code, $this->admin->id,
+            'WPKEY1', $this->workPlanMaster->code, '', 'BIKEY1', $this->coaMaster->code,
             '2', '5000',
             '10000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', // m1..m12
             '10000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'  // co1..co12
         ];
 
         $row2 = [
-            'SUB01', $this->period->id, $this->bureau->id, $this->admin->id,
-            'WPKEY2', $this->workPlanMaster->id, '', 'BIKEY2', $this->coaMaster->id,
+            'SUB01', $this->period->title, $this->bureau->code, $this->admin->id,
+            'WPKEY2', $this->workPlanMaster->code, '', 'BIKEY2', $this->coaMaster->code,
             '3', '10000',
             '0', '30000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', // m1..m12
             '0', '30000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'  // co1..co12

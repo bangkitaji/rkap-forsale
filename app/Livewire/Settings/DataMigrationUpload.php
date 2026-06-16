@@ -27,15 +27,21 @@ class DataMigrationUpload extends Component
   public array $importSummary = [];
   public bool $imported = false;
 
+  private array $rkapPeriodCache = [];
+  private array $workPlanCache = [];
+  private array $activityCache = [];
+  private array $coaCache = [];
+  private array $bureauCache = [];
+
   private array $requiredColumns = [
     'submission_key',
-    'rkap_period_id',
-    'bureau_id',
+    'title',
+    'bureau_code',
     'created_by',
     'work_plan_key',
-    'work_plan_id',
+    'work_plan_code',
     'budget_item_key',
-    'coa_id',
+    'coa_code',
     'bi_quantity',
     'unit_price',
   ];
@@ -78,6 +84,11 @@ class DataMigrationUpload extends Component
     $this->errorsList = [];
     $this->importSummary = [];
     $this->imported = false;
+    $this->rkapPeriodCache = [];
+    $this->workPlanCache = [];
+    $this->activityCache = [];
+    $this->coaCache = [];
+    $this->bureauCache = [];
   }
 
   /**
@@ -181,28 +192,28 @@ class DataMigrationUpload extends Component
         }
       }
 
-      if (!$this->existsId(RkapPeriod::class, $row['rkap_period_id'] ?? null)) {
-        $this->errorsList[] = "Baris {$rowNo}: rkap_period_id tidak ditemukan.";
+      if (!$this->resolveRkapPeriodId($row['title'] ?? null)) {
+        $this->errorsList[] = "Baris {$rowNo}: title (RKAP Period) tidak ditemukan.";
       }
 
-      if (!$this->existsId(Bureau::class, $row['bureau_id'] ?? null)) {
-        $this->errorsList[] = "Baris {$rowNo}: bureau_id tidak ditemukan.";
+      if (!$this->resolveBureauId($row['bureau_code'] ?? null)) {
+        $this->errorsList[] = "Baris {$rowNo}: bureau_code tidak ditemukan.";
       }
 
       if (!$this->existsId(User::class, $row['created_by'] ?? null)) {
         $this->errorsList[] = "Baris {$rowNo}: created_by (user) tidak ditemukan.";
       }
 
-      if (!$this->existsIdWithTrashed(WorkPlan::class, $row['work_plan_id'] ?? null)) {
-        $this->errorsList[] = "Baris {$rowNo}: work_plan_id tidak ditemukan.";
+      if (!$this->resolveWorkPlanId($row['work_plan_code'] ?? null)) {
+        $this->errorsList[] = "Baris {$rowNo}: work_plan_code tidak ditemukan.";
       }
 
-      if (!empty($row['activity_id']) && !$this->existsIdWithTrashed(Activity::class, $row['activity_id'])) {
-        $this->errorsList[] = "Baris {$rowNo}: activity_id tidak ditemukan.";
+      if (!empty($row['activity_code']) && !$this->resolveActivityId($row['activity_code'])) {
+        $this->errorsList[] = "Baris {$rowNo}: activity_code tidak ditemukan.";
       }
 
-      if (!$this->existsIdWithTrashed(Coa::class, $row['coa_id'] ?? null)) {
-        $this->errorsList[] = "Baris {$rowNo}: coa_id tidak ditemukan.";
+      if (!$this->resolveCoaId($row['coa_code'] ?? null)) {
+        $this->errorsList[] = "Baris {$rowNo}: coa_code tidak ditemukan.";
       }
 
       $qty = (float) ($row['bi_quantity'] ?? 0);
@@ -256,14 +267,17 @@ class DataMigrationUpload extends Component
 
       foreach ($rows as $row) {
         $submissionKey = $row['submission_key'];
+        $periodId = $this->resolveRkapPeriodId($row['title']);
+        $bureauId = $this->resolveBureauId($row['bureau_code']);
+
         // Use composite submission key to differentiate submissions by period and bureau in case keys are reused
-        $compositeSubmissionKey = $submissionKey . '::' . $row['rkap_period_id'] . '::' . $row['bureau_id'];
+        $compositeSubmissionKey = $submissionKey . '::' . $periodId . '::' . $bureauId;
 
         if (!isset($submissionMap[$compositeSubmissionKey])) {
           $submission = RkapSubmission::firstOrCreate(
             [
-              'rkap_period_id' => (int) $row['rkap_period_id'],
-              'bureau_id' => (int) $row['bureau_id'],
+              'rkap_period_id' => $periodId,
+              'bureau_id' => $bureauId,
             ],
             [
               'created_by' => (int) $row['created_by'],
@@ -284,8 +298,8 @@ class DataMigrationUpload extends Component
         /** @var \App\Models\RkapSubmission $submission */
         $submission = $submissionMap[$compositeSubmissionKey];
         
-        $wpId = (int) $row['work_plan_id'];
-        $actId = !empty($row['activity_id']) ? (int) $row['activity_id'] : null;
+        $wpId = $this->resolveWorkPlanId($row['work_plan_code']);
+        $actId = !empty($row['activity_code']) ? $this->resolveActivityId($row['activity_code']) : null;
         $compositeWpKey = $compositeSubmissionKey . '::' . $wpId . '::' . ($actId ?? 'null');
 
         if (!isset($workPlanMap[$compositeWpKey])) {
@@ -318,9 +332,9 @@ class DataMigrationUpload extends Component
 
         /** @var \App\Models\RkapWorkPlan $workPlan */
         $workPlan = $workPlanMap[$compositeWpKey];
-        $coa = Coa::withTrashed()->find((int) $row['coa_id']);
         
-        $coaId = (int) $row['coa_id'];
+        $coaId = $this->resolveCoaId($row['coa_code']);
+        $coa = Coa::withTrashed()->find($coaId);
         $compositeBiKey = $compositeWpKey . '::' . $coaId;
 
         if (!isset($budgetItemMap[$compositeBiKey])) {
@@ -420,6 +434,76 @@ class DataMigrationUpload extends Component
 
       $this->imported = true;
     });
+  }
+
+  private function resolveBureauId(?string $code): ?int
+  {
+    if ($code === null || $code === '') {
+      return null;
+    }
+    if (array_key_exists($code, $this->bureauCache)) {
+      return $this->bureauCache[$code];
+    }
+    $bureau = Bureau::where('code', $code)->first();
+    $id = $bureau ? $bureau->id : null;
+    $this->bureauCache[$code] = $id;
+    return $id;
+  }
+
+  private function resolveRkapPeriodId(?string $title): ?int
+  {
+    if ($title === null || $title === '') {
+      return null;
+    }
+    if (array_key_exists($title, $this->rkapPeriodCache)) {
+      return $this->rkapPeriodCache[$title];
+    }
+    $period = RkapPeriod::where('title', $title)->first();
+    $id = $period ? $period->id : null;
+    $this->rkapPeriodCache[$title] = $id;
+    return $id;
+  }
+
+  private function resolveWorkPlanId(?string $code): ?int
+  {
+    if ($code === null || $code === '') {
+      return null;
+    }
+    if (array_key_exists($code, $this->workPlanCache)) {
+      return $this->workPlanCache[$code];
+    }
+    $wp = WorkPlan::withTrashed()->where('code', $code)->first();
+    $id = $wp ? $wp->id : null;
+    $this->workPlanCache[$code] = $id;
+    return $id;
+  }
+
+  private function resolveActivityId(?string $code): ?int
+  {
+    if ($code === null || $code === '') {
+      return null;
+    }
+    if (array_key_exists($code, $this->activityCache)) {
+      return $this->activityCache[$code];
+    }
+    $act = Activity::withTrashed()->where('code', $code)->first();
+    $id = $act ? $act->id : null;
+    $this->activityCache[$code] = $id;
+    return $id;
+  }
+
+  private function resolveCoaId(?string $code): ?int
+  {
+    if ($code === null || $code === '') {
+      return null;
+    }
+    if (array_key_exists($code, $this->coaCache)) {
+      return $this->coaCache[$code];
+    }
+    $coa = Coa::withTrashed()->where('code', $code)->first();
+    $id = $coa ? $coa->id : null;
+    $this->coaCache[$code] = $id;
+    return $id;
   }
 
   private function existsId(string $modelClass, $id): bool

@@ -22,6 +22,7 @@ class GenerateImportTemplates extends Command
     $this->generateActivityTemplate();
     $this->generateCoaTemplate();
     $this->generateActivityCoaMappingTemplate();
+    $this->generateRkapMigrationTemplate();
 
     $this->info('Templates generated successfully!');
   }
@@ -333,5 +334,58 @@ class GenerateImportTemplates extends Command
 
     $writer = new Xlsx($spreadsheet);
     $writer->save($path . '/activity_coa_mapping_template.xlsx');
+  }
+
+  private function generateRkapMigrationTemplate()
+  {
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('RKAP Migration');
+
+    // Set headers
+    $headers = [
+      'submission_key', 'title', 'bureau_code', 'created_by',
+      'work_plan_key', 'work_plan_code', 'activity_code', 'budget_item_key', 'coa_code',
+      'bi_quantity', 'unit_price',
+      'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12',
+      'co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12',
+      'status', 'current_version', 'notes', 'wp_description', 'output_target', 'wp_unit', 'wp_quantity', 'sort_order', 'bi_unit', 'remarks'
+    ];
+
+    foreach ($headers as $col => $header) {
+      $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
+      $cell->setValue($header);
+      $cell->getStyle()->getFont()->setBold(true);
+      $cell->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
+      $cell->getStyle()->getFill()->getStartColor()->setARGB('FF4472C4');
+      $cell->getStyle()->getFont()->getColor()->setARGB('FFFFFFFF');
+      $cell->getStyle()->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    }
+
+    // Add sample row
+    $sampleRow = [
+      'SUB_SAMPLE_01', 'RKAP 2026', 'BUR01', '1', 'WP_KEY_SAMPLE_01', 'WP001', '', 'BI_KEY_SAMPLE_01', '521111',
+      '10', '100000', '1000000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+      '1000000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+      'draft', '1', '', 'Sample Work Plan description', 'Sample Target', 'Pkt', '1', '0', 'Pkt', 'Sample remarks'
+    ];
+
+    foreach ($sampleRow as $col => $val) {
+      $sheet->setCellValueByColumnAndRow($col + 1, 2, $val);
+    }
+
+    // Auto fit column widths
+    foreach (range(1, count($headers)) as $col) {
+      $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+    }
+
+    // Save file
+    $path = public_path('templates');
+    if (!is_dir($path)) {
+      mkdir($path, 0755, true);
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save($path . '/rkap_migration_template.xlsx');
   }
 }

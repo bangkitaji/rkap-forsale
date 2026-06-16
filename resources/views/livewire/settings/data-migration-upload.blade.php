@@ -13,6 +13,10 @@
             <a href="{{ asset('rkap_migration_template.csv') }}" class="alert-link" download>
               Download rkap_migration_template.csv
             </a>
+            <span class="mx-2">|</span>
+            <a href="{{ asset('templates/rkap_migration_template.xlsx') }}" class="alert-link" download>
+              Download rkap_migration_template.xlsx
+            </a>
           </div>
 
           <form wire:submit.prevent="uploadAndImport" class="mb-4">
@@ -63,8 +67,8 @@
 
           <div class="border rounded p-3 bg-lighter">
             <p class="mb-2 fw-semibold">Catatan format kolom minimum:</p>
-            <code>submission_key, rkap_period_id, bureau_id, created_by, work_plan_key, work_plan_id, budget_item_key, coa_id, bi_quantity, unit_price, m1..m12, co1..co12</code>
-            <p class="text-muted mt-2 mb-0"><small>Kolom opsional: status, current_version, notes, activity_id, wp_description, output_target, wp_unit, wp_quantity, sort_order, bi_unit, remarks</small></p>
+            <code>submission_key, title, bureau_code, created_by, work_plan_key, work_plan_code, budget_item_key, coa_code, bi_quantity, unit_price, m1..m12, co1..co12</code>
+            <p class="text-muted mt-2 mb-0"><small>Kolom opsional: status, current_version, notes, activity_code, wp_description, output_target, wp_unit, wp_quantity, sort_order, bi_unit, remarks</small></p>
           </div>
         </div>
       </div>

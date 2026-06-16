@@ -213,88 +213,88 @@ class RkapSeeder extends Seeder
         }
 
         $bureaus = [
-            ['department_code' => 'HUC', 'code' => 'HUCC', 'name' => 'MANAGER OF CORPORATE COMMUNICATION', 'is_active' => true],
-            ['department_code' => 'HUC', 'code' => 'HUCR', 'name' => 'MANAGER OF CORPORATE RELATION', 'is_active' => true],
-            ['department_code' => 'HUC', 'code' => 'HUCS', 'name' => 'MANAGER OF SECRETARY', 'is_active' => true],
-            ['department_code' => 'HUI', 'code' => 'HUIA', 'name' => 'MANAGER OF AUDIT 1', 'is_active' => true],
-            ['department_code' => 'HUI', 'code' => 'HUIB', 'name' => 'MANAGER OF AUDIT 2', 'is_active' => true],
-            ['department_code' => 'HUI', 'code' => 'HUIC', 'name' => 'MANAGER OF AUDIT 3', 'is_active' => true],
-            ['department_code' => 'HUI', 'code' => 'HUIP', 'name' => 'MANAGER OF AUDIT ADMINISTRATION', 'is_active' => true],
-            ['department_code' => 'HUL', 'code' => 'HULC', 'name' => 'SENIOR MANAGER OF LEGAL CORPORATE AND BUSINESS', 'is_active' => true],
-            ['department_code' => 'HUL', 'code' => 'HULD', 'name' => 'SENIOR MANAGER OF DISPUTE RESOLUTION AND REGULATION', 'is_active' => true],
-            ['department_code' => 'HUP', 'code' => 'HUPP', 'name' => 'MANAGER OF CORPORATE PLANNING', 'is_active' => true],
-            ['department_code' => 'HUP', 'code' => 'HUPG', 'name' => 'MANAGER OF QUALITY ASSURANCE AND GOOD CORPORATE GOVERNANCE', 'is_active' => true],
-            ['department_code' => 'HUP', 'code' => 'HUPA', 'name' => 'MANAGER OF ARCHIVE MANAGEMENT', 'is_active' => true],
-            ['department_code' => 'HFF', 'code' => 'HFFF', 'name' => 'MANAGER OF FINANCE', 'is_active' => true],
-            ['department_code' => 'HFF', 'code' => 'HFFB', 'name' => 'MANAGER OF BUDGET', 'is_active' => true],
-            ['department_code' => 'HFF', 'code' => 'HFFT', 'name' => 'MANAGER OF TAX', 'is_active' => true],
-            ['department_code' => 'HFF', 'code' => 'HFFA', 'name' => 'MANAGER OF ACCOUNTING', 'is_active' => true],
-            ['department_code' => 'HFI', 'code' => 'HFII', 'name' => 'MANAGER OF INVESTMENT', 'is_active' => true],
-            ['department_code' => 'HFI', 'code' => 'HFIR', 'name' => 'MANAGER OF RISK MANAGEMENT', 'is_active' => true],
-            ['department_code' => 'HFI', 'code' => 'HFIE', 'name' => 'MANAGER OF EXPORT AND IMPORT MANAGEMENT', 'is_active' => true],
-            ['department_code' => 'HFA', 'code' => 'HFAI', 'name' => 'MANAGER OF INFORMATION SYSTEM INTEGRATION', 'is_active' => true],
-            ['department_code' => 'HFA', 'code' => 'HFAB', 'name' => 'MANAGER OF BUSINESS ANALYSIS', 'is_active' => true],
-            ['department_code' => 'HFL', 'code' => 'HFLE', 'name' => 'MANAGER OF PROCUREMENT PLANNING AND EVALUATION', 'is_active' => true],
-            ['department_code' => 'HFL', 'code' => 'HFLP', 'name' => 'MANAGER OF PROCUREMENT', 'is_active' => true],
-            ['department_code' => 'HFL', 'code' => 'HFLG', 'name' => 'MANAGER OF GENERAL MATERIAL, CUSTOM AND SUPPLY CHAIN', 'is_active' => true],
-            ['department_code' => 'HRH', 'code' => 'HRHO', 'name' => 'MANAGER OF ORGANIZATION DEVELOPMENT', 'is_active' => true],
-            ['department_code' => 'HRH', 'code' => 'HRHT', 'name' => 'MANAGER OF TALENT MANAGEMENT', 'is_active' => true],
-            ['department_code' => 'HRH', 'code' => 'HRHP', 'name' => 'MANAGER OF PERSONNEL CARE AND ADMINISTRATION', 'is_active' => true],
-            ['department_code' => 'HRH', 'code' => 'HRHI', 'name' => 'MANAGER OF INDUSTRIAL RELATION AND EMPLOYEE REGULATION', 'is_active' => true],
-            ['department_code' => 'HRH', 'code' => 'HRHD', 'name' => 'MANAGER OF TRAINING AND CERTIFICATION', 'is_active' => true],
-            ['department_code' => 'HRS', 'code' => 'HRSR', 'name' => 'MANAGER OF SAFETY RAILWAY', 'is_active' => true],
-            ['department_code' => 'HRS', 'code' => 'HRSH', 'name' => 'MANAGER OF HEALTH AND ENVIRONMENT', 'is_active' => true],
-            ['department_code' => 'HRS', 'code' => 'HRSS', 'name' => 'MANAGER OF SAFETY STANDARD', 'is_active' => true],
-            ['department_code' => 'HRS', 'code' => 'HRSO', 'name' => 'MANAGER OF RAILWAY OPERATION SECURITY', 'is_active' => true],
-            ['department_code' => 'HRS', 'code' => 'HRSV', 'name' => 'MANAGER OF VITAL OBJECT SECURITY', 'is_active' => true],
-            ['department_code' => 'HRA', 'code' => 'HRAR', 'name' => 'MANAGER OF RAILWAY ASSET', 'is_active' => true],
-            ['department_code' => 'HRA', 'code' => 'HRAN', 'name' => 'MANAGER OF NON-RAILWAY ASSET', 'is_active' => true],
-            ['department_code' => 'HRA', 'code' => 'HRAL', 'name' => 'MANAGER OF LAND ACQUISITION', 'is_active' => true],
-            ['department_code' => 'HRA', 'code' => 'HRAC', 'name' => 'MANAGER OF LAND CERTIFICATION', 'is_active' => true],
-            ['department_code' => 'HRG', 'code' => 'HRGA', 'name' => 'MANAGER OF GENERAL AFFAIR AND PROTOCOL', 'is_active' => true],
-            ['department_code' => 'HRG', 'code' => 'HRGD', 'name' => 'MANAGER OF DEPOT GENERAL AFFAIR AND DORMITORY', 'is_active' => true],
-            ['department_code' => 'HRG', 'code' => 'HRGS', 'name' => 'MANAGER OF GENERAL AFFAIR SUPPORT SYSTEM', 'is_active' => true],
-            ['department_code' => 'HPP', 'code' => 'HPPG', 'name' => 'MANAGER OF PROJECT GOVERNANCE AND COMPLIANCE', 'is_active' => true],
-            ['department_code' => 'HPP', 'code' => 'HPPN', 'name' => 'MANAGER OF NETWORK EXPANSION PROJECT', 'is_active' => true],
-            ['department_code' => 'HPP', 'code' => 'HPPI', 'name' => 'MANAGER OF PROJECT INTEGRATION MANAGEMENT', 'is_active' => true],
-            ['department_code' => 'HPR', 'code' => 'HPRM', 'name' => 'MANAGER OF MARKETING AND DEVELOPMENT', 'is_active' => true],
-            ['department_code' => 'HPR', 'code' => 'HPRS', 'name' => 'MANAGER OF SALES', 'is_active' => true],
-            ['department_code' => 'HPR', 'code' => 'HPRC', 'name' => 'MANAGER OF CUSTOMER CARE', 'is_active' => true],
-            ['department_code' => 'HPY', 'code' => 'HPYD', 'name' => 'MANAGER OF BUSINESS DEVELOPMENT', 'is_active' => true],
-            ['department_code' => 'HPY', 'code' => 'HPYP', 'name' => 'MANAGER OF MARKETING AND PARTNERSHIP', 'is_active' => true],
-            ['department_code' => 'HPY', 'code' => 'HPYB', 'name' => 'MANAGER OF BUSINESS SUPPORT', 'is_active' => true],
-            ['department_code' => 'HPY', 'code' => 'HPYM', 'name' => 'MANAGER OF TENANT RELATION AND COLLECTION', 'is_active' => true],
-            ['department_code' => 'HPY', 'code' => 'HPYO', 'name' => 'MANAGER OF BUSINESS OPERATION', 'is_active' => true],
-            ['department_code' => 'HPI', 'code' => 'HPIC', 'name' => 'MANAGER OF IT OFFICE AND CORPORATE SUPPORT IT', 'is_active' => true],
-            ['department_code' => 'HPI', 'code' => 'HPIT', 'name' => 'MANAGER OF IT TICKETING FACILITIES IT', 'is_active' => true],
-            ['department_code' => 'HPI', 'code' => 'HPIO', 'name' => 'MANAGER OF IT DATA CENTER AND OPERATION NETWORK IT', 'is_active' => true],
-            ['department_code' => 'HHT', 'code' => 'HHTC', 'name' => 'MANAGER OF CIVIL AND TRACKWORK', 'is_active' => true],
-            ['department_code' => 'HHT', 'code' => 'HHTE', 'name' => 'MANAGER OF RAILWAY SYSTEM AND EMU', 'is_active' => true],
-            ['department_code' => 'HHT', 'code' => 'HHTF', 'name' => 'MANAGER OF STATION BUILDING AND FACILITIES', 'is_active' => true],
-            ['department_code' => 'HHC', 'code' => 'HHCC', 'name' => 'MANAGER OF RAILWAY CONSTRUCTION', 'is_active' => true],
-            ['department_code' => 'HHC', 'code' => 'HHCQ', 'name' => 'MANAGER OF QUALITY CONTROL AND ASSURANCE', 'is_active' => true],
-            ['department_code' => 'HHC', 'code' => 'HHCO', 'name' => 'MANAGER OF EMU AND OPERATION FACILITY', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOP', 'name' => 'MANAGER OF OPERATION PLANNING', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOC', 'name' => 'MANAGER OF OPERATION CONTROL CENTER (OCC)', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOD', 'name' => 'MANAGER OF TRAIN CREW (DRIVER MANAGEMENT)', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOT', 'name' => 'MANAGER OF PASSENGER SERVICE ON TRAIN', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOS', 'name' => 'MANAGER OF PASSENGER SERVICE ON STATION', 'is_active' => true],
-            ['department_code' => 'HHO', 'code' => 'HHOF', 'name' => 'MANAGER OF PASSENGER FACILITY', 'is_active' => true],
-            ['department_code' => 'HHE', 'code' => 'HHEC', 'name' => 'MANAGER OF MAINTENANCE TRAIN CREW (ONBOARD)', 'is_active' => true],
-            ['department_code' => 'HHE', 'code' => 'HHEO', 'name' => 'MANAGER OF OPERATIONAL', 'is_active' => true],
-            ['department_code' => 'HHE', 'code' => 'HHES', 'name' => 'MANAGER OF MAINTENANCE SUPPORT', 'is_active' => true],
-            ['department_code' => 'HHE', 'code' => 'HHET', 'name' => 'MANAGER OF TECHNOLOGY AND QUALITY', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFI', 'name' => 'MANAGER OF COMPREHENSIVE INSPECTION', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFT', 'name' => 'MANAGER OF COMPREHENSIVE TECHNOLOGY OF COMMUNICATION', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFL', 'name' => 'MANAGER OF COMPREHENSIVE TECHNOLOGY OF SIGNALING', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFO', 'name' => 'MANAGER OF COMPREHENSIVE TECHNOLOGY OF POWER SUPPLY', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFB', 'name' => 'MANAGER OF COMPREHENSIVE TECHNOLOGY OF PERMANENT WAY', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFD', 'name' => 'MANAGER OF DISPATCHING', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFH', 'name' => 'MANAGER OF HEAVY MACHINERY OPERATION AND MAINTENANCE', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFC', 'name' => 'MANAGER OF COMMUNICATION MAINTENANCE', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFS', 'name' => 'MANAGER OF SIGNALING MAINTENANCE', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFW', 'name' => 'MANAGER OF POWER SUPPLY MAINTENANCE', 'is_active' => true],
-            ['department_code' => 'HHF', 'code' => 'HHFP', 'name' => 'MANAGER OF PERMANENT WAY AND BUILDING MAINTENANCE', 'is_active' => true]
+            ['department_code' => 'HUC', 'code' => 'HUCC', 'name' => 'CORPORATE COMMUNICATION', 'is_active' => true],
+            ['department_code' => 'HUC', 'code' => 'HUCR', 'name' => 'CORPORATE RELATION', 'is_active' => true],
+            ['department_code' => 'HUC', 'code' => 'HUCS', 'name' => 'SECRETARY', 'is_active' => true],
+            ['department_code' => 'HUI', 'code' => 'HUIA', 'name' => 'AUDIT 1', 'is_active' => true],
+            ['department_code' => 'HUI', 'code' => 'HUIB', 'name' => 'AUDIT 2', 'is_active' => true],
+            ['department_code' => 'HUI', 'code' => 'HUIC', 'name' => 'AUDIT 3', 'is_active' => true],
+            ['department_code' => 'HUI', 'code' => 'HUIP', 'name' => 'AUDIT ADMINISTRATION', 'is_active' => true],
+            ['department_code' => 'HUL', 'code' => 'HULC', 'name' => 'LEGAL CORPORATE AND BUSINESS', 'is_active' => true],
+            ['department_code' => 'HUL', 'code' => 'HULD', 'name' => 'DISPUTE RESOLUTION AND REGULATION', 'is_active' => true],
+            ['department_code' => 'HUP', 'code' => 'HUPP', 'name' => 'CORPORATE PLANNING', 'is_active' => true],
+            ['department_code' => 'HUP', 'code' => 'HUPG', 'name' => 'QUALITY ASSURANCE AND GOOD CORPORATE GOVERNANCE', 'is_active' => true],
+            ['department_code' => 'HUP', 'code' => 'HUPA', 'name' => 'ARCHIVE MANAGEMENT', 'is_active' => true],
+            ['department_code' => 'HFF', 'code' => 'HFFF', 'name' => 'FINANCE', 'is_active' => true],
+            ['department_code' => 'HFF', 'code' => 'HFFB', 'name' => 'BUDGET', 'is_active' => true],
+            ['department_code' => 'HFF', 'code' => 'HFFT', 'name' => 'TAX', 'is_active' => true],
+            ['department_code' => 'HFF', 'code' => 'HFFA', 'name' => 'ACCOUNTING', 'is_active' => true],
+            ['department_code' => 'HFI', 'code' => 'HFII', 'name' => 'INVESTMENT', 'is_active' => true],
+            ['department_code' => 'HFI', 'code' => 'HFIR', 'name' => 'RISK MANAGEMENT', 'is_active' => true],
+            ['department_code' => 'HFI', 'code' => 'HFIE', 'name' => 'EXPORT AND IMPORT MANAGEMENT', 'is_active' => true],
+            ['department_code' => 'HFA', 'code' => 'HFAI', 'name' => 'INFORMATION SYSTEM INTEGRATION', 'is_active' => true],
+            ['department_code' => 'HFA', 'code' => 'HFAB', 'name' => 'BUSINESS ANALYSIS', 'is_active' => true],
+            ['department_code' => 'HFL', 'code' => 'HFLE', 'name' => 'PROCUREMENT PLANNING AND EVALUATION', 'is_active' => true],
+            ['department_code' => 'HFL', 'code' => 'HFLP', 'name' => 'PROCUREMENT', 'is_active' => true],
+            ['department_code' => 'HFL', 'code' => 'HFLG', 'name' => 'GENERAL MATERIAL, CUSTOM AND SUPPLY CHAIN', 'is_active' => true],
+            ['department_code' => 'HRH', 'code' => 'HRHO', 'name' => 'ORGANIZATION DEVELOPMENT', 'is_active' => true],
+            ['department_code' => 'HRH', 'code' => 'HRHT', 'name' => 'TALENT MANAGEMENT', 'is_active' => true],
+            ['department_code' => 'HRH', 'code' => 'HRHP', 'name' => 'PERSONNEL CARE AND ADMINISTRATION', 'is_active' => true],
+            ['department_code' => 'HRH', 'code' => 'HRHI', 'name' => 'INDUSTRIAL RELATION AND EMPLOYEE REGULATION', 'is_active' => true],
+            ['department_code' => 'HRH', 'code' => 'HRHD', 'name' => 'TRAINING AND CERTIFICATION', 'is_active' => true],
+            ['department_code' => 'HRS', 'code' => 'HRSR', 'name' => 'SAFETY RAILWAY', 'is_active' => true],
+            ['department_code' => 'HRS', 'code' => 'HRSH', 'name' => 'HEALTH AND ENVIRONMENT', 'is_active' => true],
+            ['department_code' => 'HRS', 'code' => 'HRSS', 'name' => 'SAFETY STANDARD', 'is_active' => true],
+            ['department_code' => 'HRS', 'code' => 'HRSO', 'name' => 'RAILWAY OPERATION SECURITY', 'is_active' => true],
+            ['department_code' => 'HRS', 'code' => 'HRSV', 'name' => 'VITAL OBJECT SECURITY', 'is_active' => true],
+            ['department_code' => 'HRA', 'code' => 'HRAR', 'name' => 'RAILWAY ASSET', 'is_active' => true],
+            ['department_code' => 'HRA', 'code' => 'HRAN', 'name' => 'NON-RAILWAY ASSET', 'is_active' => true],
+            ['department_code' => 'HRA', 'code' => 'HRAL', 'name' => 'LAND ACQUISITION', 'is_active' => true],
+            ['department_code' => 'HRA', 'code' => 'HRAC', 'name' => 'LAND CERTIFICATION', 'is_active' => true],
+            ['department_code' => 'HRG', 'code' => 'HRGA', 'name' => 'GENERAL AFFAIR AND PROTOCOL', 'is_active' => true],
+            ['department_code' => 'HRG', 'code' => 'HRGD', 'name' => 'DEPOT GENERAL AFFAIR AND DORMITORY', 'is_active' => true],
+            ['department_code' => 'HRG', 'code' => 'HRGS', 'name' => 'GENERAL AFFAIR SUPPORT SYSTEM', 'is_active' => true],
+            ['department_code' => 'HPP', 'code' => 'HPPG', 'name' => 'PROJECT GOVERNANCE AND COMPLIANCE', 'is_active' => true],
+            ['department_code' => 'HPP', 'code' => 'HPPN', 'name' => 'NETWORK EXPANSION PROJECT', 'is_active' => true],
+            ['department_code' => 'HPP', 'code' => 'HPPI', 'name' => 'PROJECT INTEGRATION MANAGEMENT', 'is_active' => true],
+            ['department_code' => 'HPR', 'code' => 'HPRM', 'name' => 'MARKETING AND DEVELOPMENT', 'is_active' => true],
+            ['department_code' => 'HPR', 'code' => 'HPRS', 'name' => 'SALES', 'is_active' => true],
+            ['department_code' => 'HPR', 'code' => 'HPRC', 'name' => 'CUSTOMER CARE', 'is_active' => true],
+            ['department_code' => 'HPY', 'code' => 'HPYD', 'name' => 'BUSINESS DEVELOPMENT', 'is_active' => true],
+            ['department_code' => 'HPY', 'code' => 'HPYP', 'name' => 'MARKETING AND PARTNERSHIP', 'is_active' => true],
+            ['department_code' => 'HPY', 'code' => 'HPYB', 'name' => 'BUSINESS SUPPORT', 'is_active' => true],
+            ['department_code' => 'HPY', 'code' => 'HPYM', 'name' => 'TENANT RELATION AND COLLECTION', 'is_active' => true],
+            ['department_code' => 'HPY', 'code' => 'HPYO', 'name' => 'BUSINESS OPERATION', 'is_active' => true],
+            ['department_code' => 'HPI', 'code' => 'HPIC', 'name' => 'IT OFFICE AND CORPORATE SUPPORT IT', 'is_active' => true],
+            ['department_code' => 'HPI', 'code' => 'HPIT', 'name' => 'IT TICKETING FACILITIES IT', 'is_active' => true],
+            ['department_code' => 'HPI', 'code' => 'HPIO', 'name' => 'IT DATA CENTER AND OPERATION NETWORK IT', 'is_active' => true],
+            ['department_code' => 'HHT', 'code' => 'HHTC', 'name' => 'CIVIL AND TRACKWORK', 'is_active' => true],
+            ['department_code' => 'HHT', 'code' => 'HHTE', 'name' => 'RAILWAY SYSTEM AND EMU', 'is_active' => true],
+            ['department_code' => 'HHT', 'code' => 'HHTF', 'name' => 'STATION BUILDING AND FACILITIES', 'is_active' => true],
+            ['department_code' => 'HHC', 'code' => 'HHCC', 'name' => 'RAILWAY CONSTRUCTION', 'is_active' => true],
+            ['department_code' => 'HHC', 'code' => 'HHCQ', 'name' => 'QUALITY CONTROL AND ASSURANCE', 'is_active' => true],
+            ['department_code' => 'HHC', 'code' => 'HHCO', 'name' => 'EMU AND OPERATION FACILITY', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOP', 'name' => 'OPERATION PLANNING', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOC', 'name' => 'OPERATION CONTROL CENTER (OCC)', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOD', 'name' => 'TRAIN CREW (DRIVER MANAGEMENT)', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOT', 'name' => 'PASSENGER SERVICE ON TRAIN', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOS', 'name' => 'PASSENGER SERVICE ON STATION', 'is_active' => true],
+            ['department_code' => 'HHO', 'code' => 'HHOF', 'name' => 'PASSENGER FACILITY', 'is_active' => true],
+            ['department_code' => 'HHE', 'code' => 'HHEC', 'name' => 'MAINTENANCE TRAIN CREW (ONBOARD)', 'is_active' => true],
+            ['department_code' => 'HHE', 'code' => 'HHEO', 'name' => 'OPERATIONAL', 'is_active' => true],
+            ['department_code' => 'HHE', 'code' => 'HHES', 'name' => 'MAINTENANCE SUPPORT', 'is_active' => true],
+            ['department_code' => 'HHE', 'code' => 'HHET', 'name' => 'TECHNOLOGY AND QUALITY', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFI', 'name' => 'COMPREHENSIVE INSPECTION', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFT', 'name' => 'COMPREHENSIVE TECHNOLOGY OF COMMUNICATION', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFL', 'name' => 'COMPREHENSIVE TECHNOLOGY OF SIGNALING', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFO', 'name' => 'COMPREHENSIVE TECHNOLOGY OF POWER SUPPLY', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFB', 'name' => 'COMPREHENSIVE TECHNOLOGY OF PERMANENT WAY', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFD', 'name' => 'DISPATCHING', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFH', 'name' => 'HEAVY MACHINERY OPERATION AND MAINTENANCE', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFC', 'name' => 'COMMUNICATION MAINTENANCE', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFS', 'name' => 'SIGNALING MAINTENANCE', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFW', 'name' => 'POWER SUPPLY MAINTENANCE', 'is_active' => true],
+            ['department_code' => 'HHF', 'code' => 'HHFP', 'name' => 'PERMANENT WAY AND BUILDING MAINTENANCE', 'is_active' => true]
         ];
 
         $departmentCodes = collect($bureaus)->pluck('department_code')->unique()->values();
@@ -318,19 +318,9 @@ class RkapSeeder extends Seeder
             );
         }
 
-        // ── 5. Sample Users ──
-        // Fetch key departments and bureaus from database for reference
-        $deptHFA = Department::where('code', 'HFA')->first(); // IS & Business Analyst (verifier)
-        $deptHFA2 = Department::where('code', 'HFT')->first(); // Finance and Budget Management
-        $deptHPI = Department::where('code', 'HPI')->first(); // IT & Ticketing Facilities
-        $deptHRH = Department::where('code', 'HRH')->first(); // Human Resources
-        $deptHHO = Department::where('code', 'HHO')->first(); // Operation
-
-        $bureauHFAB = Bureau::where('code', 'HFAB')->first(); // Business Analytic
-        $bureauHFAI = Bureau::where('code', 'HFAI')->first(); // Information system Integration
-        $bureauHPIO = Bureau::where('code', 'HPIO')->first(); // IT Data Center
-        $bureauHRHT = Bureau::where('code', 'HRHT')->first(); // HR Talent & Career Management
-        $bureauHHOP = Bureau::where('code', 'HHOP')->first(); // Operation Bureau (previously HHOO)
+        // ── 5. Seed Users from Org Structure ──
+        // Reset non-admin users first to keep db clean
+        User::where('email', '!=', 'admin@rkap.com')->delete();
 
         // Admin (already created by RoleAndUserSeeder, just update org if needed)
         $admin = User::where('email', 'admin@rkap.com')->first();
@@ -338,108 +328,91 @@ class RkapSeeder extends Seeder
             $admin->update(['directorate_id' => $dirHU->id, 'position' => 'Administrator Sistem']);
         }
 
-        // Kepala Biro — Business Analytic Bureau
-        $kb1 = User::firstOrCreate(
-            ['email' => 'kabiro.ba@rkap.com'],
-            [
-                'name' => 'Budi Santoso',
-                'password' => Hash::make('password'),
-                'bureau_id' => $bureauHFAB->id,
-                'department_id' => $deptHFA->id,
-                'directorate_id' => $dirHF->id,
-                'position' => 'Kepala Biro Business Analytic',
-            ]
-        );
-        $kb1->syncRoles([$roleKepalaBiro]);
+        // Helper to format acronyms in titles
+        $formatTitle = function ($title) {
+            return str_ireplace(
+                ['Emu', 'It', 'Occ', 'Gcg', 'Sshe', 'Hsr', 'Pmo', 'Ba', 'Coa'],
+                ['EMU', 'IT', 'OCC', 'GCG', 'SSHE', 'HSR', 'PMO', 'BA', 'COA'],
+                ucwords(strtolower(trim($title)))
+            );
+        };
 
-        // Kepala Biro — Information System Integration Bureau
-        $kb2 = User::firstOrCreate(
-            ['email' => 'kabiro.isi@rkap.com'],
-            [
-                'name' => 'Siti Rahayu',
-                'password' => Hash::make('password'),
-                'bureau_id' => $bureauHFAI->id,
-                'department_id' => $deptHFA->id,
-                'directorate_id' => $dirHF->id,
-                'position' => 'Kepala Biro Information System Integration',
-            ]
-        );
-        $kb2->syncRoles([$roleKepalaBiro]);
+        // 1. Seed Directorate Users (Direksi & President Director)
+        foreach (Directorate::all() as $dir) {
+            $email = strtolower($dir->code) . '@kcic.co.id';
+            
+            if ($dir->code === 'HU') {
+                $position = $dir->name; // President Director
+                $role = $rolePresident;
+            } else {
+                $cleanName = str_replace(' Director', '', $dir->name);
+                $position = "Director of " . $formatTitle($cleanName);
+                $role = $roleDireksi;
+            }
 
-        // Kepala Departemen — Information System and Business Analyst (Verifier Dept)
-        $kd1 = User::firstOrCreate(
-            ['email' => 'kadept.hfa@rkap.com'],
-            [
-                'name' => 'Andi Wijaya',
-                'password' => Hash::make('password'),
-                'department_id' => $deptHFA->id,
-                'directorate_id' => $dirHF->id,
-                'position' => 'Kepala Departemen IS & Business Analyst',
-            ]
-        );
-        $kd1->syncRoles([$roleKepalaDept]);
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $dir->code,
+                    'password' => Hash::make('password'),
+                    'directorate_id' => $dir->id,
+                    'position' => $position,
+                ]
+            );
+            $user->syncRoles([$role]);
+        }
 
-        // Kepala Departemen — Human Resources
-        $kd2 = User::firstOrCreate(
-            ['email' => 'kadept.hrh@rkap.com'],
-            [
-                'name' => 'Rini Kusuma',
-                'password' => Hash::make('password'),
-                'department_id' => $deptHRH->id,
-                'directorate_id' => $dirHR->id,
-                'position' => 'Kepala Departemen Human Resources',
-            ]
-        );
-        $kd2->syncRoles([$roleKepalaDept]);
+        // 2. Seed Department Users (Kepala Departemen)
+        foreach (Department::all() as $dept) {
+            $email = strtolower($dept->code) . '@kcic.co.id';
+            $position = "GM of " . $formatTitle($dept->name);
 
-        // Direksi — HR, Asset, & SSHE Directorate
-        $dir1 = User::firstOrCreate(
-            ['email' => 'direksi.hr@rkap.com'],
-            [
-                'name' => 'Dr. Hendra Gunawan',
-                'password' => Hash::make('password'),
-                'directorate_id' => $dirHR->id,
-                'position' => 'HR, Asset, & SSHE Director',
-            ]
-        );
-        $dir1->syncRoles([$roleDireksi]);
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $dept->code,
+                    'password' => Hash::make('password'),
+                    'department_id' => $dept->id,
+                    'directorate_id' => $dept->directorate_id,
+                    'position' => $position,
+                ]
+            );
+            $user->syncRoles([$roleKepalaDept]);
+        }
 
-        // Direksi — Finance & Risk Directorate
-        $dir2 = User::firstOrCreate(
-            ['email' => 'direksi.finance@rkap.com'],
-            [
-                'name' => 'Ir. Dewi Purnama',
-                'password' => Hash::make('password'),
-                'directorate_id' => $dirHF->id,
-                'position' => 'Finance & Risk Director',
-            ]
-        );
-        $dir2->syncRoles([$roleDireksi]);
+        // 3. Seed Bureau Users (Kepala Biro)
+        foreach (Bureau::all() as $bureau) {
+            $email = strtolower($bureau->code) . '@kcic.co.id';
+            $cleanName = preg_replace('/^(senior\s+)?manager\s+of\s+/i', '', $bureau->name);
+            $position = "Manager of " . $formatTitle($cleanName);
 
-        // Verifikator — IS & Business Analyst Department (Verifier Dept)
-        $ver = User::firstOrCreate(
-            ['email' => 'verifikator@rkap.com'],
-            [
-                'name' => 'Ahmad Fauzi',
-                'password' => Hash::make('password'),
-                'department_id' => $deptHFA->id,
-                'directorate_id' => $dirHF->id,
-                'position' => 'Verifikator - IS & Business Analyst',
-            ]
-        );
-        $ver->syncRoles([$roleVerifikator]);
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $bureau->code,
+                    'password' => Hash::make('password'),
+                    'bureau_id' => $bureau->id,
+                    'department_id' => $bureau->department_id,
+                    'directorate_id' => $bureau->department?->directorate_id,
+                    'position' => $position,
+                ]
+            );
+            $user->syncRoles([$roleKepalaBiro]);
+        }
 
-        // President Director — President Director Directorate
-        $presdir = User::firstOrCreate(
-            ['email' => 'president@rkap.com'],
+        // 4. Seed Specialist User (Sony Suseno)
+        $specialist = User::firstOrCreate(
+            ['email' => 'sony.suseno@kcic.co.id'],
             [
-                'name' => 'Ir. Budi Karya',
+                'name' => 'Sony Suseno',
                 'password' => Hash::make('password'),
-                'directorate_id' => $dirHU->id,
-                'position' => 'President Director',
+                'bureau_id' => 21,
+                'department_id' => 19,
+                'directorate_id' => 3,
+                'position' => 'Specialist Of Business Analityc',
             ]
         );
-        $presdir->syncRoles([$rolePresident]);
+        $specialist->syncRoles([$roleVerifikator]);
 
         // ── 6. Sample Master Data (WorkPlans, Activities, COAs) ──
         $wp1 = \App\Models\WorkPlan::firstOrCreate(
