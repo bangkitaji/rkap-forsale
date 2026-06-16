@@ -167,6 +167,310 @@
             </div>
         </div>
     </div>
+
+    {{-- Row 3: Profit and Loss Summary --}}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="card-title mb-0">Laporan Laba Rugi (Profit & Loss Summary)</h5>
+                        <small class="text-muted">Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori P&L</small>
+                    </div>
+                </div>
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover table-striped-columns mb-0 align-middle">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Kategori / Golongan</th>
+                                <th class="text-end">Anggaran (Budget)</th>
+                                <th class="text-end">Realisasi YTD</th>
+                                <th class="text-center">% Realisasi</th>
+                                <th class="text-end">Proyeksi (Outlook)</th>
+                                <th class="text-center">% Proyeksi</th>
+                                <th class="text-end">Selisih (Variance)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($plGroups as $groupKey => $group)
+                                <!-- Group Header (Bold, Uppercase) -->
+                                <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                                    <td colspan="7">
+                                        <i class="bx bx-folder me-2 text-primary"></i>{{ $group['label'] }}
+                                    </td>
+                                </tr>
+                                
+                                <!-- Group Items -->
+                                @foreach ($group['items'] as $item)
+                                    @php
+                                        $itemBudget = $item['budget'];
+                                        $itemReal = $item['realization'];
+                                        $itemProj = $item['projection'];
+                                        $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
+                                        $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
+                                        
+                                        $itemVariance = $groupKey === 'Revenue' ? ($itemProj - $itemBudget) : ($itemBudget - $itemProj);
+                                    @endphp
+                                    <tr>
+                                        <td class="ps-4">
+                                            <i class="bx bxs-circle text-{{ $item['color'] }} me-2" style="font-size: 8px; vertical-align: middle;"></i>
+                                            {{ $item['label'] }}
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($itemBudget > 0)
+                                                {{ number_format($itemRealPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($itemBudget > 0)
+                                                {{ number_format($itemProjPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">
+                                            @if($itemVariance > 0)
+                                                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($itemVariance, 0, ',', '.') }}</span>
+                                            @elseif($itemVariance < 0)
+                                                <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($itemVariance), 0, ',', '.') }})</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                                <!-- Group Subtotal Row -->
+                                @php
+                                    $subBudget = $group['budget_subtotal'];
+                                    $subReal = $group['realization_subtotal'];
+                                    $subProj = $group['projection_subtotal'];
+                                    $subRealPct = $subBudget > 0 ? ($subReal / $subBudget) * 100 : 0;
+                                    $subProjPct = $subBudget > 0 ? ($subProj / $subBudget) * 100 : 0;
+                                    
+                                    $subVariance = $groupKey === 'Revenue' ? ($subProj - $subBudget) : ($subBudget - $subProj);
+                                @endphp
+                                <tr class="fw-semibold bg-lighter">
+                                    <td class="ps-3 text-secondary">
+                                        Subtotal {{ $group['label'] }}
+                                    </td>
+                                    <td class="text-end font-monospace">Rp {{ number_format($subBudget, 0, ',', '.') }}</td>
+                                    <td class="text-end font-monospace text-success">Rp {{ number_format($subReal, 0, ',', '.') }}</td>
+                                    <td class="text-center font-monospace text-muted">
+                                        @if($subBudget > 0)
+                                            {{ number_format($subRealPct, 1, ',', '.') }}%
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="text-end font-monospace text-warning">Rp {{ number_format($subProj, 0, ',', '.') }}</td>
+                                    <td class="text-center font-monospace text-muted">
+                                        @if($subBudget > 0)
+                                            {{ number_format($subProjPct, 1, ',', '.') }}%
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="text-end font-monospace">
+                                        @if($subVariance > 0)
+                                            <span class="text-success fw-semibold"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($subVariance, 0, ',', '.') }}</span>
+                                        @elseif($subVariance < 0)
+                                            <span class="text-danger fw-semibold"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($subVariance), 0, ',', '.') }})</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                </tr>
+
+                                <!-- Insert intermediate P&L summary rows if applicable -->
+                                @if ($groupKey === 'Direct Cost')
+                                    @php
+                                        $gp = $plSummary['gross_profit'];
+                                        $gpBudget = $gp['budget'];
+                                        $gpReal = $gp['realization'];
+                                        $gpProj = $gp['projection'];
+                                        $gpRealPct = $gpBudget > 0 ? ($gpReal / $gpBudget) * 100 : 0;
+                                        $gpProjPct = $gpBudget > 0 ? ($gpProj / $gpBudget) * 100 : 0;
+                                        $gpVariance = $gpProj - $gpBudget;
+                                    @endphp
+                                    <tr class="table-primary fw-bold">
+                                        <td class="text-primary">
+                                            <i class="bx bx-calculator me-2"></i>{{ $gp['label'] }}
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($gpBudget, 0, ',', '.') }}</td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($gpReal, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($gpBudget > 0)
+                                                {{ number_format($gpRealPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($gpProj, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($gpBudget > 0)
+                                                {{ number_format($gpProjPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">
+                                            @if($gpVariance > 0)
+                                                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($gpVariance, 0, ',', '.') }}</span>
+                                            @elseif($gpVariance < 0)
+                                                <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($gpVariance), 0, ',', '.') }})</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @elseif ($groupKey === 'Indirect Cost')
+                                    @php
+                                        $op = $plSummary['operating_profit'];
+                                        $opBudget = $op['budget'];
+                                        $opReal = $op['realization'];
+                                        $opProj = $op['projection'];
+                                        $opRealPct = $opBudget > 0 ? ($opReal / $opBudget) * 100 : 0;
+                                        $opProjPct = $opBudget > 0 ? ($opProj / $opBudget) * 100 : 0;
+                                        $opVariance = $opProj - $opBudget;
+                                    @endphp
+                                    <tr class="table-info fw-bold">
+                                        <td class="text-info" style="color: #03c3ec !important;">
+                                            <i class="bx bx-trending-up me-2"></i>{{ $op['label'] }}
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($opBudget, 0, ',', '.') }}</td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($opReal, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($opBudget > 0)
+                                                {{ number_format($opRealPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($opProj, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($opBudget > 0)
+                                                {{ number_format($opProjPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">
+                                            @if($opVariance > 0)
+                                                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($opVariance, 0, ',', '.') }}</span>
+                                            @elseif($opVariance < 0)
+                                                <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($opVariance), 0, ',', '.') }})</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+
+                            <!-- Show unmapped if present -->
+                            @if ($unmappedGroup)
+                                <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                                    <td colspan="7">
+                                        <i class="bx bx-question-mark me-2 text-secondary"></i>{{ $unmappedGroup['label'] }}
+                                    </td>
+                                </tr>
+                                @foreach ($unmappedGroup['items'] as $item)
+                                    @php
+                                        $itemBudget = $item['budget'];
+                                        $itemReal = $item['realization'];
+                                        $itemProj = $item['projection'];
+                                        $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
+                                        $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
+                                        $itemVariance = $itemBudget - $itemProj;
+                                    @endphp
+                                    <tr>
+                                        <td class="ps-4">
+                                            <i class="bx bxs-circle text-{{ $item['color'] }} me-2" style="font-size: 8px; vertical-align: middle;"></i>
+                                            {{ $item['label'] }}
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($itemBudget > 0)
+                                                {{ number_format($itemRealPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
+                                        <td class="text-center font-monospace text-muted">
+                                            @if($itemBudget > 0)
+                                                {{ number_format($itemProjPct, 1, ',', '.') }}%
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-end font-monospace">
+                                            @if($itemVariance > 0)
+                                                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($itemVariance, 0, ',', '.') }}</span>
+                                            @elseif($itemVariance < 0)
+                                                <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($itemVariance), 0, ',', '.') }})</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            <!-- Final Net Profit Summary Row -->
+                            @php
+                                $np = $plSummary['net_profit'];
+                                $npBudget = $np['budget'];
+                                $npReal = $np['realization'];
+                                $npProj = $np['projection'];
+                                $npRealPct = $npBudget > 0 ? ($npReal / $npBudget) * 100 : 0;
+                                $npProjPct = $npBudget > 0 ? ($npProj / $npBudget) * 100 : 0;
+                                $npVariance = $npProj - $npBudget;
+                            @endphp
+                            <tr class="table-success fw-bold border-top border-2">
+                                <td class="text-success" style="font-size: 1.1rem;">
+                                    <i class="bx bx-money me-2"></i>{{ $np['label'] }}
+                                </td>
+                                <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($npBudget, 0, ',', '.') }}</td>
+                                <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($npReal, 0, ',', '.') }}</td>
+                                <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
+                                    @if($npBudget > 0)
+                                        {{ number_format($npRealPct, 1, ',', '.') }}%
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($npProj, 0, ',', '.') }}</td>
+                                <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
+                                    @if($npBudget > 0)
+                                        {{ number_format($npProjPct, 1, ',', '.') }}%
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-end font-monospace" style="font-size: 1.1rem;">
+                                    @if($npVariance > 0)
+                                        <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($npVariance, 0, ',', '.') }}</span>
+                                    @elseif($npVariance < 0)
+                                        <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($npVariance), 0, ',', '.') }})</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 @else
     <div class="card py-5 text-center">
         <div class="card-body">

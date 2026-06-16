@@ -212,4 +212,57 @@ class RkapDashboardTest extends TestCase
         // Outlook Rate: (50000 / 60000) * 100 = 83.3%
         $this->assertEquals(83.3, $stats['outlook_rate']);
     }
+
+    public function test_admin_sees_profit_and_loss_summary(): void
+    {
+        // 1. Create COAs mapped to categories
+        $coaGroup = \App\Models\CoaGroup::create([
+            'code' => '500000',
+            'name' => 'Biaya Operasional',
+        ]);
+
+        $catRevenue = \App\Models\CoaCategory::where('key', 'revenue_passenger')->first();
+        $catCost = \App\Models\CoaCategory::where('key', 'direct_cost_traction')->first();
+
+        \App\Models\Coa::create([
+            'coa_group_id' => $coaGroup->id,
+            'code' => '521111',
+            'title' => 'Tiket KA',
+            'coa_category_id' => $catRevenue->id,
+        ]);
+
+        \App\Models\Coa::create([
+            'coa_group_id' => $coaGroup->id,
+            'code' => '522222',
+            'title' => 'Energi Traksi',
+            'coa_category_id' => $catCost->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get('/analytics');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('plGroups');
+        $response->assertViewHas('plSummary');
+
+        $plGroups = $response->viewData('plGroups');
+        $plSummary = $response->viewData('plSummary');
+
+        // Check revenue is correct
+        // bi1 (60000) is mapped to revenue_passenger via 521111
+        $this->assertEquals(60000.0, $plGroups['Revenue']['budget_subtotal']);
+
+        // bi2 (40000) is mapped to direct_cost_traction via 522222
+        $this->assertEquals(40000.0, $plGroups['Direct Cost']['budget_subtotal']);
+
+        // Gross Profit: Revenue (60000) - Direct Cost (40000) = 20000
+        $this->assertEquals(20000.0, $plSummary['gross_profit']['budget']);
+
+        // Check if values are rendered in the HTML
+        $response->assertSee('Laporan Laba Rugi');
+        $response->assertSee('Pendapatan Tiket Penumpang');
+        $response->assertSee('Beban Energi Listrik Traksi');
+        $response->assertSee('Laba Kotor (Gross Profit)');
+        $response->assertSee('Laba Usaha (EBITDA)');
+        $response->assertSee('Laba Bersih (Net Profit)');
+    }
 }
