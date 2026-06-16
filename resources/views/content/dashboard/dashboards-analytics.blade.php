@@ -143,26 +143,117 @@
                 </div>
             </div>
         </div>
-        <!-- COA Expense Category Allocation -->
+        <!-- Profit & Loss Summary Card -->
         <div class="col-lg-4 col-12">
             <div class="card h-100">
                 <div class="card-header border-bottom py-3">
-                    <h5 class="card-title mb-0">Alokasi Pagu per Jenis Belanja</h5>
-                    <small class="text-muted">Top 5 Golongan COA Terbesar</small>
+                    <h5 class="card-title mb-0">Ringkasan Laba Rugi (P&L Summary)</h5>
+                    <small class="text-muted">Ikhtisar Pendapatan & Beban Periode ini</small>
                 </div>
-                <div class="card-body d-flex flex-column align-items-center justify-content-center pt-3">
-                    @if(empty($coaData))
-                        <div class="text-center text-muted py-5">
-                            <i class="bx bx-category fs-1 mb-2"></i>
-                            <p class="mb-0">Tidak ada alokasi COA</p>
+                <div class="card-body pt-3">
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Row 1: Pendapatan -->
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-success p-2 rounded me-3">
+                                    <i class="bx bx-trending-up fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold">Pendapatan</h6>
+                                    <small class="text-muted">Revenue</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['revenue']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
                         </div>
-                    @else
-                        <div class="w-100 text-center mb-2">
-                            <span class="text-muted small">Total Pagu</span>
-                            <h5 class="fw-bold mb-0 text-primary">Rp {{ number_format($stats['total_budget'], 0, ',', '.') }}</h5>
+
+                        <!-- Row 2: Beban Langsung -->
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-info p-2 rounded me-3">
+                                    <i class="bx bx-receipt fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold">Beban Langsung</h6>
+                                    <small class="text-muted">Direct Cost</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['direct_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-info fw-medium">Real: Rp {{ number_format($plSummary['direct_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
                         </div>
-                        <div id="coaAllocationChart" style="min-height: 290px; width: 100%;"></div>
-                    @endif
+
+                        <!-- Row 3: Laba Kotor -->
+                        <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-primary p-2 rounded me-3">
+                                    <i class="bx bx-calculator fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-primary">Laba Kotor</h6>
+                                    <small class="text-muted">Gross Profit</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold text-primary">Rp {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-primary fw-medium">Real: Rp {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Beban Tidak Langsung -->
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-warning p-2 rounded me-3">
+                                    <i class="bx bx-credit-card fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold">Beban Td. Langsung</h6>
+                                    <small class="text-muted">Indirect Cost</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['indirect_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-warning fw-medium">Real: Rp {{ number_format($plSummary['indirect_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Row 5: Laba Usaha -->
+                        <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-info p-2 rounded me-3" style="background-color: rgba(3, 195, 236, 0.16) !important; color: #03c3ec !important;">
+                                    <i class="bx bx-line-chart fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Laba Usaha (EBITDA)</h6>
+                                    <small class="text-muted">Operating Profit</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Rp {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Row 6: Laba Bersih -->
+                        <div class="d-flex align-items-center justify-content-between bg-label-success p-3 rounded">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-success text-white p-2 rounded me-3">
+                                    <i class="bx bx-money fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-success">Laba Bersih</h6>
+                                    <small class="text-success opacity-75">Net Profit</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="mb-0 fw-bold text-success">Rp {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                                <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -723,53 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(this.checked) switchDivisionChart('department');
     });
 
-    // 4. COA Expense Category Allocation Setup
-    @if(!empty($coaData))
-        const coaData = @json($coaData);
-        const coaLabels = coaData.map(item => item.label);
-        const coaTotals = coaData.map(item => parseFloat(item.total || 0));
-
-        const coaChartOptions = {
-            series: coaTotals,
-            chart: {
-                height: 290,
-                type: 'donut'
-            },
-            labels: coaLabels,
-            colors: ['#696cff', '#03c3ec', '#71dd37', '#ffab00', '#ff3e1d', '#8592a3'],
-            dataLabels: {
-                enabled: true,
-                formatter: function (val, opts) {
-                    return val.toFixed(1) + '%';
-                },
-                dropShadow: { enabled: false }
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '45%',
-                        labels: {
-                            show: false
-                        }
-                    }
-                }
-            },
-            tooltip: {
-                y: {
-                    formatter: function (val, opts) {
-                        const total = opts.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                        const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                        return 'Rp ' + parseInt(val).toLocaleString('id-ID') + ' (' + percent + '%)';
-                    }
-                }
-            },
-            legend: {
-                position: 'bottom'
-            }
-        };
-        const coaChart = new ApexCharts(document.querySelector("#coaAllocationChart"), coaChartOptions);
-        coaChart.render();
-    @endif
+    // Note: COA Expense Category Allocation donut chart replaced by Profit & Loss Summary card widget.
 });
 </script>
 @endif

@@ -48,6 +48,7 @@ use App\Http\Controllers\tables\Basic as TablesBasic;
 Route::middleware(['auth'])->group(function () {
     Route::get('/analytics', [Analytics::class, 'index'])->name('dashboard-analytics');
     Route::get('/', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
+    Route::get('/change-password', \App\Livewire\Auth\ChangePassword::class)->name('change-password');
 
     Route::post('/logout', function () {
         \Illuminate\Support\Facades\Auth::logout();

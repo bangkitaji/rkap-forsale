@@ -72,8 +72,8 @@ use Illuminate\Support\Facades\Route;
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
-                        <i class="icon-base bx bx-cog icon-md me-3"></i><span>Settings</span>
+                    <a class="dropdown-item" href="{{ route('change-password') }}">
+                        <i class="icon-base bx bx-lock-alt icon-md me-3"></i><span>Change Password</span>
                     </a>
                 </li>
                 <!-- <li>
