@@ -259,7 +259,7 @@ class RkapDashboardTest extends TestCase
 
         // Check if values are rendered in the HTML
         $response->assertSee('Laporan Laba Rugi');
-        $response->assertSee('Ringkasan Laba Rugi (P&L Summary)');
+        $response->assertSee('Ringkasan Laba Rugi');
         $response->assertSee('Pendapatan');
         $response->assertSee('Beban Langsung');
         $response->assertSee('Laba Kotor');

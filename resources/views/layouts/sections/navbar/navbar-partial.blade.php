@@ -67,12 +67,12 @@ use Illuminate\Support\Facades\Route;
                     <div class="dropdown-divider my-1"></div>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="javascript:void(0);">
+                    <a class="dropdown-item" href="{{ route('my-profile') }}">
                         <i class="icon-base bx bx-user icon-md me-3"></i><span>My Profile</span>
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="{{ route('change-password') }}">
+                    <a class="dropdown-item" href="{{ route('my-profile', ['tab' => 'security']) }}">
                         <i class="icon-base bx bx-lock-alt icon-md me-3"></i><span>Change Password</span>
                     </a>
                 </li>
