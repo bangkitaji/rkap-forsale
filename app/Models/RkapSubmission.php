@@ -204,6 +204,26 @@ class RkapSubmission extends Model
         $this->update(['status' => 'final_revision']);
     }
 
+    public function hasApprovedCurrentVersion(User $user): bool
+    {
+        $role = null;
+        if ($user->isPresidentDirector()) {
+            $role = 'direktur_utama';
+        } elseif ($user->isDirekturFinance()) {
+            $role = 'direktur_keuangan';
+        }
+
+        if (!$role) {
+            return false;
+        }
+
+        return $this->approvals()
+            ->where('version_number', $this->current_version)
+            ->where('role', $role)
+            ->where('action', 'approved')
+            ->exists();
+    }
+
     public function approveByPresident(User $user, ?string $comments = null): void
     {
         $this->approvals()->create([
@@ -213,7 +233,7 @@ class RkapSubmission extends Model
             'action' => 'approved',
             'comments' => $comments,
         ]);
-        $this->update(['status' => 'approved']);
+        $this->checkParallelApprovalAndFinalize();
     }
 
     public function requestRevisionByPresident(User $user, ?string $comments = null): void
@@ -226,6 +246,51 @@ class RkapSubmission extends Model
             'comments' => $comments,
         ]);
         $this->update(['status' => 'pdir_revision']);
+    }
+
+    public function approveByFinance(User $user, ?string $comments = null): void
+    {
+        $this->approvals()->create([
+            'user_id' => $user->id,
+            'version_number' => $this->current_version,
+            'role' => 'direktur_keuangan',
+            'action' => 'approved',
+            'comments' => $comments,
+        ]);
+        $this->checkParallelApprovalAndFinalize();
+    }
+
+    public function requestRevisionByFinance(User $user, ?string $comments = null): void
+    {
+        $this->approvals()->create([
+            'user_id' => $user->id,
+            'version_number' => $this->current_version,
+            'role' => 'direktur_keuangan',
+            'action' => 'revision_requested',
+            'comments' => $comments,
+        ]);
+        $this->update(['status' => 'pdir_revision']);
+    }
+
+    public function checkParallelApprovalAndFinalize(): void
+    {
+        $hasDirut = $this->approvals()
+            ->where('version_number', $this->current_version)
+            ->where('role', 'direktur_utama')
+            ->where('action', 'approved')
+            ->exists();
+
+        $hasFinance = $this->approvals()
+            ->where('version_number', $this->current_version)
+            ->where('role', 'direktur_keuangan')
+            ->where('action', 'approved')
+            ->exists();
+
+        if ($hasDirut && $hasFinance) {
+            $this->update(['status' => 'approved']);
+        } else {
+            $this->update(['status' => 'pdir_review']);
+        }
     }
 
     public function revise(): void
@@ -258,9 +323,11 @@ class RkapSubmission extends Model
         if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
             return true;
         }
-        // President Director
-        if ($this->status === 'pdir_review' && $user->hasRole('direktur_utama')) {
-            return true;
+        // President Director & Direktur Finance
+        if ($this->status === 'pdir_review') {
+            if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
+                return !$this->hasApprovedCurrentVersion($user);
+            }
         }
         return false;
     }

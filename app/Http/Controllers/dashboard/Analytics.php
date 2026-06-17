@@ -43,6 +43,7 @@ class Analytics extends Controller
 
     $directorateData = [];
     $departmentData = [];
+    $bureauData = [];
     $coaData = [];
 
     if ($activePeriod) {
@@ -61,11 +62,14 @@ class Analytics extends Controller
       $userDirectorateId = null;
       $deptFilterField = null;
       $deptFilterVal = null;
-      if ($user->isKepalaBiro() || $user->isKepalaDepartemen()) {
+      if ($user->isKepalaBiro()) {
         $userDirectorateId = $user->directorate_id;
-        // Always filter departments by directorate so both views show the same scope
         $deptFilterField = 'departments.directorate_id';
         $deptFilterVal = $userDirectorateId;
+      } elseif ($user->isKepalaDepartemen()) {
+        $userDirectorateId = $user->directorate_id;
+        $deptFilterField = 'departments.id';
+        $deptFilterVal = $user->department_id;
       }
 
       // Total Budget (Approved Submissions only)
@@ -277,6 +281,65 @@ class Analytics extends Controller
 
       // Sort by budget descending so largest departments appear first
       usort($departmentData, fn($a, $b) => $b['budget'] <=> $a['budget']);
+
+      // --- 4c. Bureau-level budgets, realizations, projections ---
+      if ($user->isKepalaDepartemen()) {
+        $bureauBudgets = DB::table('rkap_submissions')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_submissions.rkap_period_id', $periodId)
+          ->where('rkap_submissions.status', 'approved')
+          ->when($bureauIds, fn($q) => $q->whereIn('bureau_id', $bureauIds))
+          ->selectRaw('bureaus.name as label, SUM(rkap_submissions.total_budget) as budget')
+          ->groupBy('bureaus.name')
+          ->get()
+          ->keyBy('label')
+          ->toArray();
+
+        $bureauRealizations = DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+          ->where('rkap_submissions.status', 'approved')
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->selectRaw('bureaus.name as label, SUM(rkap_budget_item_realizations.amount) as amount')
+          ->groupBy('bureaus.name')
+          ->get()
+          ->keyBy('label')
+          ->toArray();
+
+        $bureauProjections = DB::table('rkap_budget_item_projections')
+          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+          ->where('rkap_submissions.status', 'approved')
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->selectRaw('bureaus.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+          ->groupBy('bureaus.name')
+          ->get()
+          ->keyBy('label')
+          ->toArray();
+
+        $allBureauLabels = array_unique(array_merge(
+          array_keys($bureauBudgets),
+          array_keys($bureauRealizations),
+          array_keys($bureauProjections)
+        ));
+
+        foreach ($allBureauLabels as $lbl) {
+          $bureauData[] = [
+            'label'       => $lbl,
+            'budget'      => isset($bureauBudgets[$lbl]) ? (float) $bureauBudgets[$lbl]->budget : 0.0,
+            'realization' => isset($bureauRealizations[$lbl]) ? (float) $bureauRealizations[$lbl]->amount : 0.0,
+            'projection'  => isset($bureauProjections[$lbl]) ? (float) $bureauProjections[$lbl]->amount : 0.0,
+          ];
+        }
+
+        usort($bureauData, fn($a, $b) => $b['budget'] <=> $a['budget']);
+      }
 
       // --- 5. COA Category breakdown in PHP (database dialect safe) ---
       $items = DB::table('rkap_budget_items')
@@ -566,6 +629,7 @@ class Analytics extends Controller
       'cumulativeProjection',
       'directorateData',
       'departmentData',
+      'bureauData',
       'coaData',
       'plGroups',
       'plSummary',

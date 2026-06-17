@@ -120,6 +120,11 @@ class User extends Authenticatable
         return $this->isDirekturUtama();
     }
 
+    public function isDirekturFinance(): bool
+    {
+        return $this->isDireksi() && $this->directorate?->code === 'HF';
+    }
+
     public function getOrganizationNameAttribute(): string
     {
         if ($this->bureau) {

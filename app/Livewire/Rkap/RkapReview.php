@@ -36,6 +36,7 @@ class RkapReview extends Component
 
         match (true) {
             $user->isKepalaDepartemen() => $this->submission->approveByDept($user, $this->reviewComments),
+            ($user->isDirekturFinance() && $this->submission->status === 'pdir_review') => $this->submission->approveByFinance($user, $this->reviewComments),
             $user->isDireksi()          => $this->submission->approveByDir($user, $this->reviewComments),
             $user->isVerifikator()      => $this->submission->approveFinal($user, $this->reviewComments),
             $user->isPresidentDirector() => $this->submission->approveByPresident($user, $this->reviewComments),
@@ -67,6 +68,7 @@ class RkapReview extends Component
 
         match (true) {
             $user->isKepalaDepartemen() => $this->submission->requestRevisionByDept($user, $this->revisionReason),
+            ($user->isDirekturFinance() && $this->submission->status === 'pdir_review') => $this->submission->requestRevisionByFinance($user, $this->revisionReason),
             $user->isDireksi()          => $this->submission->requestRevisionByDir($user, $this->revisionReason),
             $user->isVerifikator()      => $this->submission->requestRevisionByVerificator($user, $this->revisionReason),
             $user->isPresidentDirector() => $this->submission->requestRevisionByPresident($user, $this->revisionReason),

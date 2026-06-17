@@ -390,6 +390,20 @@ class RkapDashboardTest extends TestCase
         // Assert that P&L summary and table are not displayed
         $response->assertDontSee('Ringkasan Laba Rugi');
         $response->assertDontSee('Laporan Laba Rugi');
+
+        // Assert comparative data options
+        $deptData = $response->viewData('departmentData');
+        $burData = $response->viewData('bureauData');
+
+        // Kadept should only see their own department DP1
+        $this->assertCount(1, $deptData);
+        $this->assertEquals('Dept 1', $deptData[0]['label']);
+
+        // Kadept should see their bureaus: Bur 1 and Bur 2
+        $this->assertCount(2, $burData);
+        $bureauLabels = collect($burData)->pluck('label')->toArray();
+        $this->assertContains('Bur 1', $bureauLabels);
+        $this->assertContains('Bur 2', $bureauLabels);
     }
 
     public function test_direksi_and_direktur_utama_see_global_analytics_data(): void

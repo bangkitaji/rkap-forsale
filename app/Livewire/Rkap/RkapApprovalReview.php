@@ -34,7 +34,7 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
 
-        if ($user->isPresidentDirector()) {
+        if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
             $status = $this->presidentApprovalStatus;
             if (!$status['is_ready']) {
                 session()->flash('error', 'Gagal menyetujui: Belum semua departemen menyelesaikan pengajuan RKAP yang terverifikasi.');
@@ -44,6 +44,7 @@ class RkapApprovalReview extends Component
 
         match (true) {
             $user->isKepalaDepartemen() => $this->submission->approveByDept($user, $this->reviewComments),
+            ($user->isDirekturFinance() && $this->submission->status === 'pdir_review') => $this->submission->approveByFinance($user, $this->reviewComments),
             $user->isDireksi()          => $this->submission->approveByDir($user, $this->reviewComments),
             $user->isVerifikator()      => $this->submission->approveFinal($user, $this->reviewComments),
             $user->isPresidentDirector() => $this->submission->approveByPresident($user, $this->reviewComments),
@@ -75,6 +76,7 @@ class RkapApprovalReview extends Component
 
         match (true) {
             $user->isKepalaDepartemen() => $this->submission->requestRevisionByDept($user, $this->revisionReason),
+            ($user->isDirekturFinance() && $this->submission->status === 'pdir_review') => $this->submission->requestRevisionByFinance($user, $this->revisionReason),
             $user->isDireksi()          => $this->submission->requestRevisionByDir($user, $this->revisionReason),
             $user->isVerifikator()      => $this->submission->requestRevisionByVerificator($user, $this->revisionReason),
             $user->isPresidentDirector() => $this->submission->requestRevisionByPresident($user, $this->revisionReason),
@@ -110,7 +112,7 @@ class RkapApprovalReview extends Component
             return false;
         }
 
-        if ($user->isPresidentDirector()) {
+        if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
             $status = $this->presidentApprovalStatus;
             if (!$status['is_ready']) {
                 return false;

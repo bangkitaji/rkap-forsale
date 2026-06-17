@@ -188,7 +188,7 @@ class RkapReviewTest extends TestCase
             ->assertSee('Minta Revisi');
     }
 
-    public function test_president_director_approving_transitions_to_approved(): void
+    public function test_president_director_approving_leaves_in_pdir_review_if_finance_pending(): void
     {
         $this->submission->update(['status' => 'pdir_review']);
 
@@ -197,6 +197,42 @@ class RkapReviewTest extends TestCase
         Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->call('approve');
 
+        // Status must remain pdir_review because Finance Director has not approved
+        $this->assertEquals('pdir_review', $this->submission->fresh()->status);
+    }
+
+    public function test_parallel_final_approvals_transition_to_approved(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        // Create Finance Director
+        $dirFinanceRole = Role::firstOrCreate(['name' => 'direksi']);
+        $financeDirectorate = Directorate::create([
+            'code' => 'HF',
+            'name' => 'Finance Directorate',
+            'is_active' => true,
+        ]);
+        $financeUser = User::create([
+            'name' => 'Finance Director',
+            'email' => 'finance_dir@example.com',
+            'password' => bcrypt('password'),
+            'directorate_id' => $financeDirectorate->id,
+        ]);
+        $financeUser->assignRole($dirFinanceRole);
+
+        // 1. Finance Director approves
+        $this->actingAs($financeUser);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('approve');
+
+        $this->assertEquals('pdir_review', $this->submission->fresh()->status);
+
+        // 2. President Director approves
+        $this->actingAs($this->president);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('approve');
+
+        // Now both have approved, status must be approved
         $this->assertEquals('approved', $this->submission->fresh()->status);
     }
 
@@ -217,5 +253,38 @@ class RkapReviewTest extends TestCase
         $this->assertEquals('direktur_utama', $latestApproval->role);
         $this->assertEquals('revision_requested', $latestApproval->action);
         $this->assertEquals('Need more details on training expenses.', $latestApproval->comments);
+    }
+
+    public function test_finance_director_requesting_revision_transitions_to_draft(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        // Create Finance Director
+        $dirFinanceRole = Role::firstOrCreate(['name' => 'direksi']);
+        $financeDirectorate = Directorate::create([
+            'code' => 'HF',
+            'name' => 'Finance Directorate',
+            'is_active' => true,
+        ]);
+        $financeUser = User::create([
+            'name' => 'Finance Director',
+            'email' => 'finance_dir@example.com',
+            'password' => bcrypt('password'),
+            'directorate_id' => $financeDirectorate->id,
+        ]);
+        $financeUser->assignRole($dirFinanceRole);
+
+        $this->actingAs($financeUser);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->set('revisionReason', 'Budget allocation for travel is too high.')
+            ->call('requestRevision');
+
+        $this->assertEquals('draft', $this->submission->fresh()->status);
+
+        $latestApproval = $this->submission->approvals()->first();
+        $this->assertEquals('direktur_keuangan', $latestApproval->role);
+        $this->assertEquals('revision_requested', $latestApproval->action);
+        $this->assertEquals('Budget allocation for travel is too high.', $latestApproval->comments);
     }
 }

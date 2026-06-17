@@ -80,13 +80,13 @@
     </div>
     @endif
 
-    @if(auth()->user()->isPresidentDirector() && !$this->presidentApprovalStatus['is_ready'])
+    @if((auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance()) && !$this->presidentApprovalStatus['is_ready'])
     <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
         <span class="badge bg-warning text-white me-3 p-1"><i class="bx bx-error fs-4"></i></span>
         <div>
             <h6 class="alert-heading mb-1 fw-bold text-warning" style="color: #ffab00 !important;">Persetujuan Ditangguhkan (Persetujuan Belum Dapat Dilakukan)</h6>
             <span>
-                Persetujuan akhir oleh Direktur Utama hanya dapat dilakukan setelah <strong>seluruh departemen</strong> menyelesaikan pengajuan RKAP dan telah diverifikasi oleh verifikator. 
+                Persetujuan akhir oleh Direktur Utama dan Direktur Finance hanya dapat dilakukan setelah <strong>seluruh departemen</strong> menyelesaikan pengajuan RKAP dan telah diverifikasi oleh verifikator. 
                 Saat ini baru <strong>{{ $this->presidentApprovalStatus['verified_count'] }} dari {{ $this->presidentApprovalStatus['total_count'] }}</strong> departemen yang terverifikasi.
             </span>
             @if(!empty($this->presidentApprovalStatus['pending_departments']))
@@ -149,14 +149,14 @@
                 </div>
             </div>
 
-            @if(auth()->user()->isPresidentDirector())
+            @if(auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance())
                 <!-- Helicopter View -->
                 <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                     <div>
                         <h5 class="mb-1"><i class="bx bx-spreadsheet me-2 text-primary"></i>Helikopter-View Pengajuan RKAP</h5>
                         <p class="text-muted small mb-0">Menampilkan akumulasi anggaran yang dikompilasi berdasarkan kategori Profit & Loss.</p>
                     </div>
-                    <span class="badge bg-label-primary">Direktur Utama Approval</span>
+                    <span class="badge bg-label-primary">{{ auth()->user()->isPresidentDirector() ? 'Direktur Utama Approval' : 'Direktur Finance Approval' }}</span>
                 </div>
 
                 @php

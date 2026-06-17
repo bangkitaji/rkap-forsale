@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    @if(auth()->user()->isPresidentDirector() || auth()->user()->isVerifikator() || auth()->user()->isAdmin())
+    @if(auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance() || auth()->user()->isVerifikator() || auth()->user()->isAdmin())
         <!-- Helicopter Progress & Department Tabulation for Management -->
         <div class="row mb-4">
             <!-- Progress Card -->

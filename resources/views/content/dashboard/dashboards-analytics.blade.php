@@ -131,11 +131,19 @@
                         <small class="text-muted">Komparasi Penyerapan per Unit Kerja</small>
                     </div>
                     <div class="btn-group" role="group" aria-label="Comparative data options">
-                        <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDirectorate" checked autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm px-3" for="groupDirectorate">Direktorat</label>
-                        
-                        <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment" autocomplete="off">
-                        <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+                        @if(auth()->user()->isKepalaDepartemen())
+                            <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment" checked autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+                            
+                            <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupBureau" autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm px-3" for="groupBureau">Biro</label>
+                        @else
+                            <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDirectorate" checked autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm px-3" for="groupDirectorate">Direktorat</label>
+                            
+                            <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment" autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+                        @endif
                     </div>
                 </div>
                 <div class="card-body pt-3">
@@ -703,9 +711,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. Division Absorption Bar Chart Setup
     const directorateData = @json($directorateData);
     const departmentData = @json($departmentData);
+    const bureauData = @json($bureauData);
 
-    // Sort department data by budget descending so biggest budgets appear first
+    // Sort department and bureau data by budget descending so biggest budgets appear first
     departmentData.sort((a, b) => parseFloat(b.budget || 0) - parseFloat(a.budget || 0));
+    if (bureauData) {
+        bureauData.sort((a, b) => parseFloat(b.budget || 0) - parseFloat(a.budget || 0));
+    }
 
     // Helper to format large numbers for data labels
     function formatValueShort(value) {
@@ -792,16 +804,24 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // Create initial chart with directorate data
+    // Create initial chart with appropriate data based on role
+    const isKadept = @json(auth()->user()->isKepalaDepartemen());
     let divisionChart = new ApexCharts(
         document.querySelector("#divisionChart"),
-        buildDivisionChartOptions(directorateData)
+        buildDivisionChartOptions(isKadept ? departmentData : directorateData)
     );
     divisionChart.render();
 
     // Destroy and recreate chart to avoid ApexCharts horizontal bar update bugs
     function switchDivisionChart(type) {
-        const data = type === 'directorate' ? directorateData : departmentData;
+        let data;
+        if (type === 'directorate') {
+            data = directorateData;
+        } else if (type === 'department') {
+            data = departmentData;
+        } else if (type === 'bureau') {
+            data = bureauData;
+        }
         divisionChart.destroy();
         divisionChart = new ApexCharts(
             document.querySelector("#divisionChart"),
@@ -810,12 +830,21 @@ document.addEventListener('DOMContentLoaded', function() {
         divisionChart.render();
     }
 
-    document.getElementById('groupDirectorate').addEventListener('change', function() {
-        if(this.checked) switchDivisionChart('directorate');
-    });
-    document.getElementById('groupDepartment').addEventListener('change', function() {
-        if(this.checked) switchDivisionChart('department');
-    });
+    if (isKadept) {
+        document.getElementById('groupDepartment').addEventListener('change', function() {
+            if(this.checked) switchDivisionChart('department');
+        });
+        document.getElementById('groupBureau').addEventListener('change', function() {
+            if(this.checked) switchDivisionChart('bureau');
+        });
+    } else {
+        document.getElementById('groupDirectorate').addEventListener('change', function() {
+            if(this.checked) switchDivisionChart('directorate');
+        });
+        document.getElementById('groupDepartment').addEventListener('change', function() {
+            if(this.checked) switchDivisionChart('department');
+        });
+    }
 
     // Note: COA Expense Category Allocation donut chart replaced by Profit & Loss Summary card widget.
 });

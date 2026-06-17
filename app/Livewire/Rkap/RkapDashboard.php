@@ -49,11 +49,30 @@ class RkapDashboard extends Component
                 ->latest('updated_at')
                 ->limit(5)->get();
         } elseif ($user->isDireksi()) {
-            $myActions = RkapSubmission::with(['bureau.department', 'period'])
-                ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id))
-                ->where('status', 'dir_review')
-                ->latest('updated_at')
-                ->limit(5)->get();
+            if ($user->isDirekturFinance()) {
+                $myActions = RkapSubmission::with(['bureau.department.directorate', 'period'])
+                    ->where(function ($query) use ($user) {
+                        $query->where(function ($q1) use ($user) {
+                            $q1->where('status', 'dir_review')
+                               ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
+                        })->orWhere(function ($q2) {
+                            $q2->where('status', 'pdir_review')
+                               ->whereDoesntHave('approvals', function ($q) {
+                                   $q->whereColumn('version_number', 'rkap_submissions.current_version')
+                                     ->where('role', 'direktur_keuangan')
+                                     ->where('action', 'approved');
+                               });
+                        });
+                    })
+                    ->latest('updated_at')
+                    ->limit(5)->get();
+            } else {
+                $myActions = RkapSubmission::with(['bureau.department', 'period'])
+                    ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id))
+                    ->where('status', 'dir_review')
+                    ->latest('updated_at')
+                    ->limit(5)->get();
+            }
         } elseif ($user->isVerifikator()) {
             $myActions = RkapSubmission::with(['bureau.department.directorate', 'period'])
                 ->where('status', 'final_review')
@@ -62,6 +81,11 @@ class RkapDashboard extends Component
         } elseif ($user->isPresidentDirector()) {
             $myActions = RkapSubmission::with(['bureau.department.directorate', 'period'])
                 ->where('status', 'pdir_review')
+                ->whereDoesntHave('approvals', function ($q) {
+                    $q->whereColumn('version_number', 'rkap_submissions.current_version')
+                      ->where('role', 'direktur_utama')
+                      ->where('action', 'approved');
+                })
                 ->latest('updated_at')
                 ->limit(5)->get();
         } elseif ($user->isKepalaBiro()) {
@@ -95,7 +119,7 @@ class RkapDashboard extends Component
         $verifiedDeptCount = 0;
         $totalDeptCount = 0;
 
-        if ($user->isPresidentDirector() || $user->isVerifikator() || $user->isAdmin()) {
+        if ($user->isPresidentDirector() || $user->isDirekturFinance() || $user->isVerifikator() || $user->isAdmin()) {
             // Tabulated submissions
             $allSubmissions = RkapSubmission::with(['bureau.department.directorate', 'period', 'creator'])
                 ->when($activePeriod, fn($q) => $q->where('rkap_period_id', $activePeriod->id))

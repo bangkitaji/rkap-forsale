@@ -204,10 +204,10 @@ class RkapSubmissionList extends Component
             $query->where('bureau_id', $user->bureau_id);
         } elseif ($user->isKepalaDepartemen()) {
             $query->whereHas('bureau', fn($b) => $b->where('department_id', $user->department_id));
-        } elseif ($user->isDireksi()) {
+        } elseif ($user->isDireksi() && !$user->isDirekturFinance()) {
             $query->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
         }
-        // Verifikator and Admin see all
+        // Verifikator, Admin, President Director, and Direktur Finance see all
 
         $submissions = $query->orderByDesc('updated_at')->paginate($this->perPage);
 
@@ -254,7 +254,7 @@ class RkapSubmissionList extends Component
             $statsQuery->where('bureau_id', $user->bureau_id);
         } elseif ($user->isKepalaDepartemen()) {
             $statsQuery->whereHas('bureau', fn($b) => $b->where('department_id', $user->department_id));
-        } elseif ($user->isDireksi()) {
+        } elseif ($user->isDireksi() && !$user->isDirekturFinance()) {
             $statsQuery->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
         }
 
