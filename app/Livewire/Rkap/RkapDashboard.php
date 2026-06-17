@@ -51,12 +51,12 @@ class RkapDashboard extends Component
         } elseif ($user->isDireksi()) {
             $myActions = RkapSubmission::with(['bureau.department', 'period'])
                 ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id))
-                ->where('status', 'dept_approved')
+                ->where('status', 'dir_review')
                 ->latest('updated_at')
                 ->limit(5)->get();
         } elseif ($user->isVerifikator()) {
             $myActions = RkapSubmission::with(['bureau.department.directorate', 'period'])
-                ->where('status', 'dir_approved')
+                ->where('status', 'final_review')
                 ->latest('updated_at')
                 ->limit(5)->get();
         } elseif ($user->isPresidentDirector()) {

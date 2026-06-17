@@ -123,7 +123,7 @@
     {{-- Row 2: Division Comparison & COA allocation --}}
     <div class="row g-4">
         <!-- Division Absorption Bar Chart -->
-        <div class="col-lg-8 col-12">
+        <div class="{{ auth()->user()->isKepalaDepartemen() ? 'col-12' : 'col-lg-8 col-12' }}">
             <div class="card h-100">
                 <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
@@ -143,6 +143,7 @@
                 </div>
             </div>
         </div>
+        @if(!auth()->user()->isKepalaDepartemen())
         <!-- Profit & Loss Summary Card -->
         <div class="col-lg-4 col-12">
             <div class="card h-100">
@@ -168,7 +169,7 @@
                                 <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
                             </div>
                         </div>
-
+ 
                         <!-- Row 2: Beban Langsung -->
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
@@ -185,7 +186,7 @@
                                 <small class="text-info fw-medium">Real: Rp {{ number_format($plSummary['direct_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                             </div>
                         </div>
-
+ 
                         <!-- Row 3: Laba Kotor -->
                         <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
                             <div class="d-flex align-items-center">
@@ -202,7 +203,7 @@
                                 <small class="text-primary fw-medium">Real: Rp {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                             </div>
                         </div>
-
+ 
                         <!-- Row 4: Beban Tidak Langsung -->
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
@@ -219,7 +220,7 @@
                                 <small class="text-warning fw-medium">Real: Rp {{ number_format($plSummary['indirect_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                             </div>
                         </div>
-
+ 
                         <!-- Row 5: Laba Usaha -->
                         <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
                             <div class="d-flex align-items-center">
@@ -236,7 +237,7 @@
                                 <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                             </div>
                         </div>
-
+ 
                         <!-- Row 6: Laba Bersih -->
                         <div class="d-flex align-items-center justify-content-between bg-label-success p-3 rounded">
                             <div class="d-flex align-items-center">
@@ -257,8 +258,10 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
+    @if(!auth()->user()->isKepalaDepartemen())
     {{-- Row 3: Profit and Loss Summary --}}
     <div class="row mt-4">
         <div class="col-12">
@@ -335,7 +338,7 @@
                                         </td>
                                     </tr>
                                 @endforeach
-
+ 
                                 <!-- Group Subtotal Row -->
                                 @php
                                     $subBudget = $group['budget_subtotal'];
@@ -377,7 +380,7 @@
                                         @endif
                                     </td>
                                 </tr>
-
+ 
                                 <!-- Insert intermediate P&L summary rows if applicable -->
                                 @if ($groupKey === 'Direct Cost')
                                     @php
@@ -463,7 +466,7 @@
                                     </tr>
                                 @endif
                             @endforeach
-
+ 
                             <!-- Show unmapped if present -->
                             @if ($unmappedGroup)
                                 <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
@@ -514,7 +517,7 @@
                                     </tr>
                                 @endforeach
                             @endif
-
+ 
                             <!-- Final Net Profit Summary Row -->
                             @php
                                 $np = $plSummary['net_profit'];
@@ -562,7 +565,7 @@
             </div>
         </div>
     </div>
-@else
+    @endif@else
     <div class="card py-5 text-center">
         <div class="card-body">
             <i class="bx bx-error-circle bx-lg text-warning mb-3"></i>

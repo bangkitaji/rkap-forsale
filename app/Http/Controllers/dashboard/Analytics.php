@@ -54,12 +54,6 @@ class Analytics extends Controller
         $bureauIds = [$user->bureau_id];
       } elseif ($user->isKepalaDepartemen()) {
         $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
-      } elseif ($user->isDireksi()) {
-        $bureauIds = DB::table('bureaus')
-          ->join('departments', 'bureaus.department_id', '=', 'departments.id')
-          ->where('departments.directorate_id', $user->directorate_id)
-          ->pluck('bureaus.id')
-          ->toArray();
       }
 
       // Define scoped filters for high-level comparison charts (directorate and department level)
@@ -67,7 +61,7 @@ class Analytics extends Controller
       $userDirectorateId = null;
       $deptFilterField = null;
       $deptFilterVal = null;
-      if (!$user->isAdmin() && !$user->isVerifikator()) {
+      if ($user->isKepalaBiro() || $user->isKepalaDepartemen()) {
         $userDirectorateId = $user->directorate_id;
         // Always filter departments by directorate so both views show the same scope
         $deptFilterField = 'departments.directorate_id';

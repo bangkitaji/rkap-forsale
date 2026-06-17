@@ -270,4 +270,177 @@ class RkapDashboardTest extends TestCase
         $response->assertSee('Laba Usaha (EBITDA)');
         $response->assertSee('Laba Bersih (Net Profit)');
     }
+
+    public function test_direksi_sees_pending_reviews_in_tugas_saya(): void
+    {
+        // Create role Direksi
+        $roleDireksi = Role::firstOrCreate(['name' => 'direksi']);
+        $roleDireksi->givePermissionTo(Permission::firstOrCreate(['name' => 'rkap.show', 'guard_name' => 'web']));
+
+        // Create a Directorate and Department
+        $directorate = Directorate::create(['code' => 'DIR_TEST', 'name' => 'Directorate Test']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DEPT_TEST', 'name' => 'Department Test']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'BUR_TEST', 'name' => 'Bureau Test']);
+
+        // Create a Direksi User
+        $direksiUser = User::create([
+            'name' => 'Direksi User Test',
+            'email' => 'direksitest@example.com',
+            'password' => bcrypt('password'),
+            'directorate_id' => $directorate->id,
+        ]);
+        $direksiUser->assignRole($roleDireksi);
+
+        // Create a submission with status 'dir_review'
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'dir_review',
+            'total_budget' => 50000,
+        ]);
+
+        $this->actingAs($direksiUser);
+
+        // Test the Livewire component RkapDashboard
+        \Livewire\Livewire::test(\App\Livewire\Rkap\RkapDashboard::class)
+            ->assertStatus(200)
+            ->assertViewHas('myActions', function ($myActions) use ($submission) {
+                return $myActions->contains('id', $submission->id);
+            });
+    }
+
+    public function test_verifikator_sees_pending_reviews_in_tugas_saya(): void
+    {
+        // Create role Verifikator
+        $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
+        $roleVerifikator->givePermissionTo(Permission::firstOrCreate(['name' => 'rkap.show', 'guard_name' => 'web']));
+
+        // Create a Directorate and Department
+        $directorate = Directorate::create(['code' => 'DIR_TEST_V', 'name' => 'Directorate Test V']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DEPT_TEST_V', 'name' => 'Department Test V']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'BUR_TEST_V', 'name' => 'Bureau Test V']);
+
+        // Create a Verifikator User
+        $verifikatorUser = User::create([
+            'name' => 'Verifikator User Test',
+            'email' => 'verifikatortest@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $verifikatorUser->assignRole($roleVerifikator);
+
+        // Create a submission with status 'final_review'
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'final_review',
+            'total_budget' => 50000,
+        ]);
+
+        $this->actingAs($verifikatorUser);
+
+        // Test the Livewire component RkapDashboard
+        \Livewire\Livewire::test(\App\Livewire\Rkap\RkapDashboard::class)
+            ->assertStatus(200)
+            ->assertViewHas('myActions', function ($myActions) use ($submission) {
+                return $myActions->contains('id', $submission->id);
+            });
+    }
+
+    public function test_kadept_sees_scoped_analytics_data(): void
+    {
+        $roleKadept = Role::firstOrCreate(['name' => 'kepala_departemen']);
+        $roleKadept->givePermissionTo(Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']));
+
+        $department = Department::where('code', 'DP1')->first();
+        $directorate = Directorate::where('code', 'D1')->first();
+
+        // Create Kepala Departemen user for DP1 department
+        $kadeptUser = User::create([
+            'name' => 'Kadept Scoped Test',
+            'email' => 'kadeptscoped@example.com',
+            'password' => bcrypt('password'),
+            'department_id' => $department->id,
+            'directorate_id' => $directorate->id,
+        ]);
+        $kadeptUser->assignRole($roleKadept);
+
+        // Create a different department and bureau with an approved submission
+        $otherDept = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP2', 'name' => 'Dept 2']);
+        $otherBureau = Bureau::create(['department_id' => $otherDept->id, 'code' => 'B3', 'name' => 'Bur 3']);
+        RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $otherBureau->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 50000,
+        ]);
+
+        // Access the analytics dashboard as Kepala Departemen
+        $response = $this->actingAs($kadeptUser)->get('/analytics');
+
+        $response->assertStatus(200);
+        $stats = $response->viewData('stats');
+
+        // Total budget should only be the sum of bureau1 and bureau2 budgets (60000 + 40000 = 100000)
+        // and should exclude the other department's budget (50000)
+        $this->assertEquals(100000.0, $stats['total_budget']);
+
+        // Assert that P&L summary and table are not displayed
+        $response->assertDontSee('Ringkasan Laba Rugi');
+        $response->assertDontSee('Laporan Laba Rugi');
+    }
+
+    public function test_direksi_and_direktur_utama_see_global_analytics_data(): void
+    {
+        $roleDireksi = Role::firstOrCreate(['name' => 'direksi']);
+        $roleDireksi->givePermissionTo(Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']));
+        
+        $roleDirut = Role::firstOrCreate(['name' => 'direktur_utama']);
+        $roleDirut->givePermissionTo(Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']));
+
+        $directorate = Directorate::where('code', 'D1')->first();
+
+        // Create Direksi User
+        $direksiUser = User::create([
+            'name' => 'Direksi Global Test',
+            'email' => 'direksiglobal@example.com',
+            'password' => bcrypt('password'),
+            'directorate_id' => $directorate->id,
+        ]);
+        $direksiUser->assignRole($roleDireksi);
+
+        // Create Direktur Utama User
+        $dirutUser = User::create([
+            'name' => 'Dirut Global Test',
+            'email' => 'dirutglobal@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $dirutUser->assignRole($roleDirut);
+
+        // Create another department in a different directorate to ensure it's global
+        $otherDirectorate = Directorate::create(['code' => 'D2', 'name' => 'Dir 2']);
+        $otherDept = Department::create(['directorate_id' => $otherDirectorate->id, 'code' => 'DP2', 'name' => 'Dept 2']);
+        $otherBureau = Bureau::create(['department_id' => $otherDept->id, 'code' => 'B3', 'name' => 'Bur 3']);
+        RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $otherBureau->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 50000,
+        ]);
+
+        // 1. Assert Direksi User sees global data (60000 + 40000 + 50000 = 150000)
+        $response1 = $this->actingAs($direksiUser)->get('/analytics');
+        $response1->assertStatus(200);
+        $stats1 = $response1->viewData('stats');
+        $this->assertEquals(150000.0, $stats1['total_budget']);
+
+        // 2. Assert Direktur Utama User sees global data (150000)
+        $response2 = $this->actingAs($dirutUser)->get('/analytics');
+        $response2->assertStatus(200);
+        $stats2 = $response2->viewData('stats');
+        $this->assertEquals(150000.0, $stats2['total_budget']);
+    }
 }

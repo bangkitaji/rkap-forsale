@@ -92,6 +92,7 @@ class RkapSeeder extends Seeder
         ]);
 
         $roleKepalaDept->syncPermissions([
+            'dashboard.show',
             'rkap.view.dept',
             'rkap.review.dept',
             'rkap.approve.dept',
