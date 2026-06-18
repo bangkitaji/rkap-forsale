@@ -37,6 +37,7 @@ class RoleAndUserSeeder extends Seeder
         $permRkapProjectionView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
         $permRkapReviewPresident = Permission::firstOrCreate(['name' => 'rkap.review.president', 'guard_name' => 'web']);
         $permRkapApprovePresident = Permission::firstOrCreate(['name' => 'rkap.approve.president', 'guard_name' => 'web']);
+        $permMasterDataRequestApprove = Permission::firstOrCreate(['name' => 'masterdata.request.approve', 'guard_name' => 'web']);
 
         // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -64,6 +65,7 @@ class RoleAndUserSeeder extends Seeder
             $permRkapProjectionView,
             $permRkapReviewPresident,
             $permRkapApprovePresident,
+            $permMasterDataRequestApprove,
         ]);
 
         $roleVerifikator->givePermissionTo([
@@ -73,6 +75,7 @@ class RoleAndUserSeeder extends Seeder
             $permRkapRealizationUpload,
             $permRkapProjectionInput,
             $permRkapProjectionView,
+            $permMasterDataRequestApprove,
         ]);
 
         $roleDireksi->givePermissionTo([

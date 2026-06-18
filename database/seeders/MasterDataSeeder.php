@@ -54,5 +54,15 @@ class MasterDataSeeder extends Seeder
         $seedTable('coas');
         $seedTable('activities');
         $seedTable('activity_coa');
+
+        // 3. Reset PostgreSQL sequences to avoid primary key out-of-sync unique constraint violations
+        if (DB::getDriverName() === 'pgsql') {
+            $tables = ['coa_groups', 'work_plans', 'coas', 'activities'];
+            foreach ($tables as $table) {
+                if (Schema::hasColumn($table, 'id')) {
+                    DB::statement("SELECT setval(pg_get_serial_sequence('$table', 'id'), COALESCE(MAX(id), 1)) FROM $table");
+                }
+            }
+        }
     }
 }

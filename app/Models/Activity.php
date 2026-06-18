@@ -12,7 +12,7 @@ class Activity extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['work_plan_id', 'code', 'title', 'description'];
+    protected $fillable = ['work_plan_id', 'code', 'title', 'description', 'approval_status', 'requested_by_bureau_id'];
 
     public function workPlan(): BelongsTo
     {
@@ -22,5 +22,10 @@ class Activity extends Model
     public function coas(): BelongsToMany
     {
         return $this->belongsToMany(Coa::class, 'activity_coa', 'activity_id', 'coa_id');
+    }
+
+    public function requestedBureau(): BelongsTo
+    {
+        return $this->belongsTo(Bureau::class, 'requested_by_bureau_id');
     }
 }

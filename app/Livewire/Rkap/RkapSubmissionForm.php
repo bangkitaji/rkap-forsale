@@ -224,7 +224,10 @@ class RkapSubmissionForm extends Component
      */
     public function getWorkPlanOptionsProperty(): \Illuminate\Database\Eloquent\Collection
     {
-        return WorkPlan::with('activities')->orderBy('code')->get();
+        return WorkPlan::where('approval_status', 'approved')
+            ->with(['activities' => fn($q) => $q->where('approval_status', 'approved')])
+            ->orderBy('code')
+            ->get();
     }
 
     /**
@@ -257,20 +260,23 @@ class RkapSubmissionForm extends Component
         }
 
         if (!$activityId) {
-            return WorkPlan::orderBy('code')
+            return WorkPlan::where('approval_status', 'approved')
+                ->orderBy('code')
                 ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
                 ->get();
         }
 
         $activity = Activity::find($activityId);
         if ($activity && $activity->work_plan_id) {
-            return WorkPlan::where('id', $activity->work_plan_id)
+            return WorkPlan::where('approval_status', 'approved')
+                ->where('id', $activity->work_plan_id)
                 ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
                 ->orderBy('code')
                 ->get();
         }
 
-        return WorkPlan::orderBy('code')
+        return WorkPlan::where('approval_status', 'approved')
+            ->orderBy('code')
             ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
             ->get();
     }
@@ -314,12 +320,14 @@ class RkapSubmissionForm extends Component
         $usedIds    = $this->getUsedActivityIds($wpIndex, excludeActIndex: $excludeActIndex);
 
         if (!$workPlanId) {
-            return Activity::orderBy('code')
+            return Activity::where('approval_status', 'approved')
+                ->orderBy('code')
                 ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
                 ->get();
         }
 
-        return Activity::where('work_plan_id', $workPlanId)
+        return Activity::where('approval_status', 'approved')
+            ->where('work_plan_id', $workPlanId)
             ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
             ->orderBy('code')
             ->get();

@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('permission:rkap.manage.period')
             ->name('rkap-periods');
         Route::get('/submissions', \App\Livewire\Rkap\RkapSubmissionList::class)->name('rkap-submissions');
+        Route::get('/requests', \App\Livewire\Rkap\RkapRequests::class)->name('rkap-requests');
         Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
         Route::get('/submissions/{id}/edit', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-edit');
         Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');

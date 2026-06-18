@@ -26,6 +26,13 @@
       "permission": "rkap.show"
     },
     {
+      "url": "rkap/requests",
+      "icon": "menu-icon icon-base bx bx-git-pull-request",
+      "name": "Usulan Program & Kegiatan",
+      "slug": "rkap-requests",
+      "permission": "rkap.show"
+    },
+    {
       "url": "rkap/compilation",
       "icon": "menu-icon icon-base bx bx-layer",
       "name": "Kompilasi RKAP",
