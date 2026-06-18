@@ -539,25 +539,7 @@
                                                             $coaPct = $prevCoaBudget > 0 ? ($coaDiff / $prevCoaBudget) * 100 : 0;
                                                         @endphp
                                                         
-                                                        @if($prevCoaData)
-                                                        <div style="font-size:0.75rem; line-height:1.2;">
-                                                            <span class="text-muted" style="font-size:0.68rem;">Sblm ({{ $prevPeriod }}):</span>
-                                                            <span class="fw-semibold text-secondary">Rp {{ number_format($prevCoaBudget, 0, ',', '.') }}</span>
-                                                        </div>
-                                                        <div style="font-size:0.75rem; line-height:1.2;">
-                                                            <span class="text-muted" style="font-size:0.68rem;">Selisih:</span>
-                                                            <span class="fw-bold @if($coaDiff > 0) text-danger @elseif($coaDiff < 0) text-success @else text-muted @endif">
-                                                                @if($coaDiff > 0)
-                                                                    ↑ +{{ number_format($coaPct, 1) }}%
-                                                                @elseif($coaDiff < 0)
-                                                                    ↓ -{{ number_format(abs($coaPct), 1) }}%
-                                                                @else
-                                                                    = 0%
-                                                                @endif
-                                                            </span>
-                                                        </div>
-                                                        @endif
-
+                                                        
                                                         <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
                                                             <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
                                                             <span class="fw-bold text-primary">
