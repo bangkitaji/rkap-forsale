@@ -41,21 +41,31 @@ trait Searchable
 
           if ($isFirstCondition) {
             $q->whereHas($relation, function (Builder $subQuery) use ($relationColumn, $lowerTerm) {
-              $subQuery->where(DB::raw("LOWER({$relationColumn})"), 'like', '%' . $lowerTerm . '%');
+              $relatedTable = $subQuery->getModel()->getTable();
+              $grammar = $subQuery->getConnection()->getQueryGrammar();
+              $qualifiedColumn = $grammar->wrap($relatedTable . '.' . $relationColumn);
+              $subQuery->where(DB::raw("LOWER({$qualifiedColumn})"), 'like', '%' . $lowerTerm . '%');
             });
             $isFirstCondition = false;
           } else {
             $q->orWhereHas($relation, function (Builder $subQuery) use ($relationColumn, $lowerTerm) {
-              $subQuery->where(DB::raw("LOWER({$relationColumn})"), 'like', '%' . $lowerTerm . '%');
+              $relatedTable = $subQuery->getModel()->getTable();
+              $grammar = $subQuery->getConnection()->getQueryGrammar();
+              $qualifiedColumn = $grammar->wrap($relatedTable . '.' . $relationColumn);
+              $subQuery->where(DB::raw("LOWER({$qualifiedColumn})"), 'like', '%' . $lowerTerm . '%');
             });
           }
         } else {
           // Handle direct columns
+          $tableName = $q->getModel()->getTable();
+          $grammar = $q->getConnection()->getQueryGrammar();
+          $qualifiedColumn = $grammar->wrap($tableName . '.' . $column);
+
           if ($isFirstCondition) {
-            $q->where(DB::raw("LOWER({$column})"), 'like', '%' . $lowerTerm . '%');
+            $q->where(DB::raw("LOWER({$qualifiedColumn})"), 'like', '%' . $lowerTerm . '%');
             $isFirstCondition = false;
           } else {
-            $q->orWhere(DB::raw("LOWER({$column})"), 'like', '%' . $lowerTerm . '%');
+            $q->orWhere(DB::raw("LOWER({$qualifiedColumn})"), 'like', '%' . $lowerTerm . '%');
           }
         }
       }

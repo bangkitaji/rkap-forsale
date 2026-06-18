@@ -702,5 +702,28 @@ class RkapSubmissionFormTest extends TestCase
             'total_price' => 300000.00,
         ]);
     }
+
+    public function test_deleting_budget_item_quantity_or_price_does_not_throw_operand_error(): void
+    {
+        $this->actingAs($this->user);
+
+        // Instantiate component and set up a budget item
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            
+            // Set quantity to empty string (simulating deletion by user)
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', '')
+            
+            // Set unit_price to empty string
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', '')
+            
+            // Set quantity_2 to empty string
+            ->set('workPlans.0.activities.0.budget_items.0.quantity_2', '')
+            
+            // Ensure no operand type error was thrown and it renders successfully
+            ->assertStatus(200);
+    }
 }
+
 

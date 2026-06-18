@@ -301,7 +301,7 @@
           foreach ($wp['activities'] ?? [] as $act) {
           foreach ($act['budget_items'] ?? [] as $bi) {
           $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-          $wpSubtotal += ($bi['quantity'] ?? 0) * $qty2 * ($bi['unit_price'] ?? 0);
+          $wpSubtotal += ((float)($bi['quantity'] ?? 0)) * $qty2 * ((float)($bi['unit_price'] ?? 0));
           }
           }
           @endphp
@@ -442,7 +442,7 @@
             $actSubtotal = 0;
             foreach ($act['budget_items'] ?? [] as $bi) {
             $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-            $actSubtotal += ($bi['quantity'] ?? 0) * $qty2 * ($bi['unit_price'] ?? 0);
+            $actSubtotal += ((float)($bi['quantity'] ?? 0)) * $qty2 * ((float)($bi['unit_price'] ?? 0));
             }
             @endphp
             <span class="text-muted small fw-semibold mb-1">Subtotal Kegiatan</span>
@@ -606,7 +606,7 @@
                     $groupSubtotal = collect($group['items'])->sum(function($info) {
                     $bi = $info['item'];
                     $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-                    return ($bi['quantity'] ?? 0) * $qty2 * ($bi['unit_price'] ?? 0);
+                    return ((float)($bi['quantity'] ?? 0)) * $qty2 * ((float)($bi['unit_price'] ?? 0));
                     });
                     $prevWpId = $wp['work_plan_id'] ?? null;
                     $prevCode = $selectedCoa?->code ?? ($firstBi['account_code'] ?? null);
@@ -652,7 +652,7 @@
                                 </div>
                                 <div class="col-4 border-end">
                                   <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                  <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
+                                  <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['realization'] ?? 0, 0, ',', '.') }}</div>
                                 </div>
                                 <div class="col-4">
                                   <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
@@ -721,7 +721,7 @@
                 $biIdx = $itemInfo['index'];
                 $bi = $itemInfo['item'];
                 $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-                $biTotal = ($bi['quantity'] ?? 0) * $qty2 * ($bi['unit_price'] ?? 0);
+                $biTotal = ((float)($bi['quantity'] ?? 0)) * $qty2 * ((float)($bi['unit_price'] ?? 0));
                 $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
                 $monthlyRemainder = $biTotal - $monthlyAllocated;
                 $selectedMonths = $bi['distribution_months'] ?? [];
@@ -771,13 +771,26 @@
                       autocomplete="off" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0">
-                    <input type="number"
-                      class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
-                      wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price"
-                      min="0" step="1000"
-                      oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
-                      onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }"
-                      @disabled($isApproved)>
+                    <div x-data="{ price: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') }">
+                      <input type="number"
+                        class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
+                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price"
+                        min="0" step="1000"
+                        @input="price = $event.target.value"
+                        oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
+                        onblur="if (this.value === '' || this.value === null) { this.value = 0; price = 0; this.dispatchEvent(new Event('input')); }"
+                        @disabled($isApproved)>
+                      <div x-show="price && price > 0"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform -translate-y-1"
+                        x-transition:enter-end="opacity-100 transform translate-y-0"
+                        class="mt-1 d-flex align-items-center"
+                        style="min-height: 18px;">
+                        <span class="badge bg-label-success rounded-pill fw-semibold" style="font-size: 0.65rem; padding: 0.15rem 0.4rem; white-space: nowrap;">
+                          <span class="opacity-75">Rp</span> <span x-text="new Intl.NumberFormat('id-ID').format(price)"></span>
+                        </span>
+                      </div>
+                    </div>
                   </td>
                   <td class="text-end text-nowrap border-top-0">
                     <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
@@ -849,7 +862,7 @@
           @foreach ($act['budget_items'] as $biIdx => $bi)
           @php
           $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-          $biTotal = ($bi['quantity'] ?? 0) * $qty2 * ($bi['unit_price'] ?? 0);
+          $biTotal = ((float)($bi['quantity'] ?? 0)) * $qty2 * ((float)($bi['unit_price'] ?? 0));
           $monthlyAllocated = array_sum($bi['monthly_distribution'] ?? []);
           $monthlyRemainder = $biTotal - $monthlyAllocated;
           $selectedMonths = $bi['distribution_months'] ?? [];
@@ -911,7 +924,7 @@
                       @if ($biTotal > 0)
                       @if (abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
                         <span class="badge bg-success rounded-pill small"><i
-                          class="bx bx-check me-1"></i>Lengkap</span>
+                           class="bx bx-check me-1"></i>Lengkap</span>
                         @elseif($monthlyRemainder < 0)
                           <span class="badge bg-danger rounded-pill small">Lebih Rp
                           {{ number_format(abs($monthlyRemainder), 0, ',', '.') }}</span>
@@ -920,22 +933,10 @@
                             {{ number_format($monthlyRemainder, 0, ',', '.') }}</span>
                           @endif
                           @endif
-                          <button type="button"
-                             wire:click="distributeEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                             class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;"
-                             @disabled($biTotal <= 0 || $isApproved)>
-                             <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                           </button>
                     </div>
                   </div>
-                  <div class="d-flex align-items-center justify-content-between mb-1">
+                  <div class="d-flex align-items-center mb-1">
                     <label class="form-label small text-muted mb-0">Pilih Bulan Distribusi Beban:</label>
-                    <button type="button"
-                       wire:click="selectAllMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                       class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
-                       @disabled($isApproved)>
-                       {{ count($selectedMonths) === 12 ? 'Deselect All' : 'Select All' }}
-                     </button>
                   </div>
                   <div class="d-flex flex-wrap gap-1 mb-2">
                     @foreach ($monthLabels as $monthNum => $monthLabel)
@@ -947,6 +948,21 @@
                        {{ $monthLabel }}
                      </button>
                     @endforeach
+                  </div>
+                  <div class="d-flex gap-2 mb-2">
+                    <button type="button"
+                       wire:click="selectAllMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                       class="btn btn-xs {{ count($selectedMonths) === 12 ? 'btn-outline-danger' : 'btn-outline-secondary' }}"
+                       @disabled($isApproved)>
+                       <i class="bx {{ count($selectedMonths) === 12 ? 'bx-x-circle' : 'bx-select-multiple' }} me-1"></i>
+                       {{ count($selectedMonths) === 12 ? 'Batal Pilih Semua' : 'Pilih Semua Bulan' }}
+                     </button>
+                     <button type="button"
+                       wire:click="distributeEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                       class="btn btn-xs btn-outline-primary"
+                       @disabled($biTotal <= 0 || $isApproved)>
+                       <i class="bx bx-equalizer me-1"></i> Bagi Rata Anggaran
+                     </button>
                   </div>
                   @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx .
                   '.monthly')
@@ -969,7 +985,7 @@
                       @if ($biTotal > 0)
                       @if (abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
                         <span class="badge bg-success rounded-pill small"><i
-                          class="bx bx-check me-1"></i>Lengkap</span>
+                           class="bx bx-check me-1"></i>Lengkap</span>
                         @elseif($cashOutRemainder < 0)
                           <span class="badge bg-danger rounded-pill small">Lebih Rp
                           {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
@@ -978,22 +994,10 @@
                             {{ number_format($cashOutRemainder, 0, ',', '.') }}</span>
                           @endif
                           @endif
-                          <button type="button"
-                            wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                            class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;"
-                            @disabled($biTotal <= 0 || $isApproved)>
-                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                          </button>
                     </div>
                   </div>
-                  <div class="d-flex align-items-center justify-content-between mb-1">
+                  <div class="d-flex align-items-center mb-1">
                     <label class="form-label small text-muted mb-0">Pilih Bulan Pembayaran:</label>
-                    <button type="button"
-                      wire:click="selectAllCashOutMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
-                      @disabled($isApproved)>
-                      {{ count($selectedCashOutMonths) === 12 ? 'Deselect All' : 'Select All' }}
-                    </button>
                   </div>
                   <div class="d-flex flex-wrap gap-1 mb-2">
                     @foreach ($monthLabels as $monthNum => $monthLabel)
@@ -1006,60 +1010,25 @@
                     </button>
                     @endforeach
                   </div>
-                  @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx .
-                  '.cash_out')
+                  <div class="d-flex gap-2 mb-2">
+                    <button type="button"
+                       wire:click="selectAllCashOutMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                       class="btn btn-xs {{ count($selectedCashOutMonths) === 12 ? 'btn-outline-danger' : 'btn-outline-secondary' }}"
+                       @disabled($isApproved)>
+                       <i class="bx {{ count($selectedCashOutMonths) === 12 ? 'bx-x-circle' : 'bx-select-multiple' }} me-1"></i>
+                       {{ count($selectedCashOutMonths) === 12 ? 'Batal Pilih Semua' : 'Pilih Semua Bulan' }}
+                     </button>
+                     <button type="button"
+                       wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                       class="btn btn-xs btn-outline-primary"
+                       @disabled($biTotal <= 0 || $isApproved)>
+                       <i class="bx bx-equalizer me-1"></i> Bagi Rata Anggaran
+                     </button>
+                  </div>
+                  @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.cash_out')
                   <div class="alert alert-danger small py-2 mb-2"><i
                       class="bx bx-error-circle me-1"></i>{{ $message }}</div>
                   @enderror
-                </div>
-                {{-- Realisasi --}}
-                <div class="mb-4">
-                  <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                      <i class="bx bx-trending-up text-success"></i>
-                      <span class="fw-semibold text-success small">Realisasi</span>
-                      @if (!empty($selectedRealizationMonths))
-                      <span class="badge bg-label-success rounded-pill">{{ count($selectedRealizationMonths) }} bulan</span>
-                      @endif
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                      @if ($biTotal > 0)
-                      @if (abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths))
-                        <span class="badge bg-success rounded-pill small"><i class="bx bx-check me-1"></i>Lengkap</span>
-                        @elseif($realizationRemainder < 0)
-                          <span class="badge bg-danger rounded-pill small">Melebihi Rp {{ number_format(abs($realizationRemainder), 0, ',', '.') }}</span>
-                          @elseif(!empty($selectedRealizationMonths))
-                          <span class="badge bg-warning rounded-pill small">Sisa Rp {{ number_format($realizationRemainder, 0, ',', '.') }}</span>
-                          @endif
-                          @endif
-                          <button type="button"
-                            wire:click="distributeRealizationEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                            class="btn btn-xs btn-outline-success py-0 px-2" style="font-size:0.72rem;"
-                            @disabled($biTotal <= 0 || $isApproved)>
-                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                          </button>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center justify-content-between mb-1">
-                    <label class="form-label small text-muted mb-0">Pilih Bulan Realisasi:</label>
-                    <button type="button"
-                      wire:click="selectAllRealizationMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
-                      @disabled($isApproved)>
-                      {{ count($selectedRealizationMonths) === 12 ? 'Deselect All' : 'Select All' }}
-                    </button>
-                  </div>
-                  <div class="d-flex flex-wrap gap-1 mb-2">
-                    @foreach ($monthLabels as $monthNum => $monthLabel)
-                    <button type="button"
-                      wire:click="toggleRealizationMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                      class="btn btn-sm {{ in_array($monthNum, $selectedRealizationMonths) ? 'btn-success' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
-                      @disabled($isApproved)>
-                      {{ $monthLabel }}
-                    </button>
-                    @endforeach
-                  </div>
                 </div>
                 {{-- 4-column summary table --}}
                 @if (!empty($allMonths))
@@ -1070,7 +1039,6 @@
                         <th class="text-center" style="width:90px;">Bulan</th>
                         <th class="text-end">Distribusi Beban (Rp)</th>
                         <th class="text-end">Rencana Kas Keluar (Rp)</th>
-                        <th class="text-end">Realisasi (Rp)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1078,9 +1046,8 @@
                       @php
                       $isDistribMonth = in_array($monthNum, $selectedMonths);
                       $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
-                      $isRealizationMonth = in_array($monthNum, $selectedRealizationMonths);
                       @endphp
-                      @if ($isDistribMonth || $isCashOutMonth || $isRealizationMonth)
+                      @if ($isDistribMonth || $isCashOutMonth)
                       <tr>
                         <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
                         <td class="text-end">
@@ -1111,20 +1078,7 @@
                           <span class="text-muted small">—</span>
                           @endif
                         </td>
-                        <td class="text-end">
-                          @if ($isRealizationMonth)
-                          <div class="input-group input-group-sm justify-content-end">
-                            <span class="input-group-text"
-                              style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
-                            <input type="number" class="form-control form-control-sm text-end"
-                              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.realization_distribution.{{ $monthNum }}"
-                              min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
-                          </div>
-                          @else
-                          <span class="text-muted small">—</span>
-                          @endif
-                        </td>
+
                       </tr>
                       @endif
                       @endforeach
@@ -1138,9 +1092,6 @@
                         <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                           Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}
                         </th>
-                        <th class="text-end small {{ abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths) ? 'text-success' : ($realizationRemainder < 0 ? 'text-danger' : 'text-warning') }}">
-                          Rp {{ number_format($realizationAllocated, 0, ',', '.') }}
-                        </th>
                       </tr>
                       <tr>
                         <th class="text-center small text-muted">Sisa</th>
@@ -1149,9 +1100,6 @@
                         </th>
                         <th class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                           Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
-                        </th>
-                        <th class="text-end small {{ abs($realizationRemainder) < 0.01 && !empty($selectedRealizationMonths) ? 'text-success' : ($realizationRemainder < 0 ? 'text-danger' : 'text-warning') }}">
-                          Rp {{ number_format($realizationRemainder, 0, ',', '.') }}
                         </th>
                       </tr>
                     </tfoot>
