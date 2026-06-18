@@ -434,50 +434,84 @@
                             $actSubtotal = (float) $wp['total_budget'];
                         @endphp
                         <div class="activity-card p-3 mb-3 @if($isWpVirtual) border-danger @endif" style="@if($isWpVirtual) border-color: #ff3e1d !important; background-color: #fff9f9; @else background-color: #ffffff; @endif">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge @if($isWpVirtual) bg-label-danger @else bg-label-primary @endif rounded-circle p-2"><i class="bx bx-task"></i></span>
-                                    <div>
-                                        <h6 class="mb-0 fw-bold @if($isWpVirtual) text-danger @endif">Kegiatan {{ $actIdx + 1 }}</h6>
-                                        <span class="@if($isWpVirtual) text-danger @else text-muted @endif small">{{ $activityCode }} — {{ $activityTitle }}</span>
-                                        @if($isWpVirtual)
-                                            <span class="badge bg-danger ms-2" style="font-size: 0.6rem;">Tidak Diajukan Kembali</span>
-                                        @endif
+                            <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-2 mb-3">
+                                {{-- Left: icon + activity info --}}
+                                <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                                    <span class="badge @if($isWpVirtual) bg-label-danger @else bg-label-primary @endif rounded-circle p-2 flex-shrink-0"><i class="bx bx-task"></i></span>
+                                    <div class="overflow-hidden">
+                                        <div class="d-flex align-items-center flex-wrap gap-1 mb-1">
+                                            <h6 class="mb-0 fw-bold @if($isWpVirtual) text-danger @endif">Kegiatan {{ $actIdx + 1 }}</h6>
+                                            @if($isWpVirtual)
+                                                <span class="badge bg-danger" style="font-size: 0.6rem;">Tidak Diajukan Kembali</span>
+                                            @endif
+                                        </div>
+                                        <span class="@if($isWpVirtual) text-danger @else text-muted @endif small d-block text-truncate">{{ $activityCode }} — {{ $activityTitle }}</span>
                                     </div>
                                 </div>
-                                <div class="text-end">
-                                    <span class="text-muted small d-block">Subtotal Kegiatan</span>
-                                    <strong class="text-dark has-tooltip @if($isWpVirtual) text-danger @endif">
-                                        Rp {{ number_format($actSubtotal, 0, ',', '.') }}
-                                        <span class="custom-tooltip-content tooltip-align-right">
-                                            @php
-                                                $prevWpId = $wp['work_plan_id'] ?? null;
-                                                $prevActId = $wp['activity_id'] ?? null;
-                                                $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
-                                                $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
-                                                $prevPeriod = $prevData['period'] ?? '-';
-                                            @endphp
-                                            @if ($prevActivityData)
-                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
-                                                <div class="row text-center">
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['budget'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['realization'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}</div>
-                                                    </div>
-                                                </div>
+                                {{-- Right: approval controls stacked above subtotal --}}
+                                <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+                                    @if(!$isWpVirtual)
+                                        @php
+                                            $wpModelId = $wp['model']?->id;
+                                            $currStatus = $this->activityStatuses[$wpModelId] ?? 'pending';
+                                        @endphp
+                                        @if($this->canApprove())
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button"
+                                                    class="btn {{ $currStatus === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
+                                                    wire:click="setActivityStatus({{ $wpModelId }}, 'approved')">
+                                                    <i class="bx bx-check me-1"></i>Setujui
+                                                </button>
+                                                <button type="button"
+                                                    class="btn {{ $currStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
+                                                    wire:click="setActivityStatus({{ $wpModelId }}, 'rejected')">
+                                                    <i class="bx bx-x me-1"></i>Tolak
+                                                </button>
+                                            </div>
+                                        @else
+                                            @if($currStatus === 'approved')
+                                                <span class="badge bg-label-success fs-6"><i class="bx bx-check-circle me-1"></i>Disetujui</span>
+                                            @elseif($currStatus === 'rejected')
+                                                <span class="badge bg-label-danger fs-6"><i class="bx bx-x-circle me-1"></i>Revisi</span>
                                             @else
-                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                                <span class="badge bg-label-secondary fs-6"><i class="bx bx-time-five me-1"></i>Pending</span>
                                             @endif
-                                        </span>
-                                    </strong>
+                                        @endif
+                                    @endif
+                                    <div class="text-end">
+                                        <span class="text-muted small d-block">Subtotal Kegiatan</span>
+                                        <strong class="has-tooltip @if($isWpVirtual) text-danger @else text-dark @endif">
+                                            Rp {{ number_format($actSubtotal, 0, ',', '.') }}
+                                            <span class="custom-tooltip-content tooltip-align-right">
+                                                @php
+                                                    $prevWpId = $wp['work_plan_id'] ?? null;
+                                                    $prevActId = $wp['activity_id'] ?? null;
+                                                    $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
+                                                    $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
+                                                    $prevPeriod = $prevData['period'] ?? '-';
+                                                @endphp
+                                                @if ($prevActivityData)
+                                                    <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                                                    <div class="row text-center">
+                                                        <div class="col-4 border-end">
+                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                            <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['budget'], 0, ',', '.') }}</div>
+                                                        </div>
+                                                        <div class="col-4 border-end">
+                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                            <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['realization'], 0, ',', '.') }}</div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                            <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                                @endif
+                                            </span>
+                                        </strong>
+                                    </div>
                                 </div>
                             </div>
 
@@ -497,19 +531,37 @@
                                 </div>
                             </div>
 
+                            @if(!$isWpVirtual && ($this->activityStatuses[$wp['model']?->id] ?? 'pending') === 'rejected')
+                            <div class="card bg-label-danger border-0 p-3 mb-3 animate__animated animate__fadeIn" wire:key="rev-notes-edit-{{ $wp['model']?->id }}">
+                                <label class="form-label text-danger fw-semibold small">Catatan Revisi Kegiatan <span class="text-danger">*</span></label>
+                                @if($this->canApprove())
+                                    <textarea class="form-control bg-white" 
+                                        wire:model.blur="activityRevisionNotes.{{ $wp['model']?->id }}"
+                                        rows="2" 
+                                        placeholder="Tuliskan catatan perbaikan untuk kegiatan ini..."></textarea>
+                                @else
+                                    <p class="mb-0 text-dark small">{{ $wp['model']?->revision_notes ?: 'Tidak ada catatan revisi.' }}</p>
+                                @endif
+                            </div>
+                            @elseif(!$isWpVirtual && !empty($wp['model']?->revision_notes))
+                            <div class="card bg-label-danger border-0 p-3 mb-3 animate__animated animate__fadeIn" wire:key="rev-notes-view-{{ $wp['model']?->id }}">
+                                <label class="form-label text-danger fw-semibold small">Catatan Revisi Kegiatan</label>
+                                <p class="mb-0 text-dark small">{{ $wp['model']?->revision_notes }}</p>
+                            </div>
+                            @endif
+
                             <div class="table-responsive">
                                 <table class="table table-sm table-striped table-hover mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Kode Akun</th>
                                             <th>Uraian & Detail Belanja</th>
-                                            <th class="text-center">Vol 1 & 2</th>
-                                            <th>Satuan 1 & 2</th>
-                                            <th class="text-end">Harga Satuan</th>
-                                            <th class="text-end">Total</th>
+                                            <th class="text-center" style="width: 10%;">Vol 1 & 2</th>
+                                            <th style="width: 12%;">Satuan 1 & 2</th>
+                                            <th class="text-end" style="width: 14%;">Harga Satuan</th>
+                                            <th class="text-end" style="width: 14%;">Total</th>
                                             <th class="text-end" style="width: 12%;">RKAP Sblm</th>
                                             <th class="text-end" style="width: 12%;">Selisih (Δ)</th>
-                                            <th class="text-center">Aksi</th>
+                                            <th class="text-center" style="width: 8%;">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -521,7 +573,7 @@
                                         $prevCode   = $accountCode;
                                         @endphp
                                         <tr class="table-light fw-semibold">
-                                            <td colspan="9" class="text-dark bg-lighter py-2 px-3">
+                                            <td colspan="8" class="text-dark bg-lighter py-2 px-3">
                                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                                     <div class="d-flex align-items-center gap-1 min-w-0">
                                                         <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
@@ -585,9 +637,6 @@
                                         $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
                                         @endphp
                                         <tr @if($isBiVirtual) style="background-color: #fff9f9;" @endif>
-                                            <td class="text-center text-muted">
-                                                <span class="ps-2">•</span>
-                                            </td>
                                             <td>
                                                 <span class="@if($isBiVirtual) text-danger text-decoration-line-through @endif">
                                                     {{ $bi['remarks'] ?: $bi['description'] }}
@@ -646,7 +695,8 @@
                                                     </button>
                                                     <!-- Modal Detail Alokasi (Merged) -->
                                                     <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1" aria-hidden="true" wire:key="allocation-modal-{{ $bi['model']->id }}">
-                                                        <div class="modal-content text-start">
+                                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                                            <div class="modal-content text-start">
                                                             <div class="modal-header">
                                                                 <h5 class="modal-title d-flex align-items-center">
                                                                     <i class="bx bx-info-circle me-2 text-primary fs-4"></i>Detail Alokasi Anggaran
@@ -823,13 +873,51 @@
                         <label class="form-label">Catatan Review (Opsional)</label>
                         <textarea class="form-control" wire:model="reviewComments" rows="2" placeholder="Tinggalkan catatan untuk persetujuan..."></textarea>
                     </div>
+                    @php
+                        $allApproved = collect($submission->workPlans)->every(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved');
+                        $hasRejected = collect($submission->workPlans)->contains(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected');
+                    @endphp
                     <div class="d-flex flex-column gap-2">
-                        <button class="btn btn-success w-100" wire:click="approve" wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?">
+                        @php
+                            $totalActivities = $submission->workPlans->count();
+                            $approvedCount = collect($submission->workPlans)->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved')->count();
+                            $rejectedCount = collect($submission->workPlans)->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected')->count();
+                            $pendingCount = $totalActivities - $approvedCount - $rejectedCount;
+                        @endphp
+
+                        {{-- Activity progress summary --}}
+                        <div class="bg-lighter rounded p-2 mb-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted fw-semibold">Status Kegiatan</small>
+                                <small class="fw-bold text-{{ $allApproved ? 'success' : 'secondary' }}">{{ $approvedCount }}/{{ $totalActivities }} Disetujui</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                @if($totalActivities > 0)
+                                    <div class="progress-bar bg-success" style="width: {{ ($approvedCount / $totalActivities) * 100 }}%;"></div>
+                                    <div class="progress-bar bg-danger" style="width: {{ ($rejectedCount / $totalActivities) * 100 }}%;"></div>
+                                @endif
+                            </div>
+                            @if($rejectedCount > 0 || $pendingCount > 0)
+                            <div class="d-flex gap-2 mt-1" style="font-size: 0.7rem;">
+                                @if($approvedCount > 0)<span class="text-success"><i class="bx bx-check-circle me-1"></i>{{ $approvedCount }} Disetujui</span>@endif
+                                @if($rejectedCount > 0)<span class="text-danger"><i class="bx bx-x-circle me-1"></i>{{ $rejectedCount }} Ditolak</span>@endif
+                                @if($pendingCount > 0)<span class="text-secondary"><i class="bx bx-time-five me-1"></i>{{ $pendingCount }} Pending</span>@endif
+                            </div>
+                            @endif
+                        </div>
+
+                        <button class="btn btn-success w-100" wire:click="approve" wire:loading.attr="disabled"
+                            wire:confirm="Yakin menyetujui RKAP ini?"
+                            @disabled(!$allApproved)>
                             <i class="bx bx-check-circle me-1"></i> Setujui RKAP
                         </button>
-                        <button class="btn btn-outline-danger w-100" wire:click="$set('showRevisionForm', true)">
+
+                        <button class="btn btn-outline-danger w-100" wire:click="$set('showRevisionForm', true)" @disabled(!$hasRejected)>
                             <i class="bx bx-x-circle me-1"></i> Minta Revisi
                         </button>
+                        @if(!$hasRejected)
+                            <small class="text-center text-muted"><i class="bx bx-info-circle me-1"></i>Tolak minimal satu kegiatan untuk meminta revisi.</small>
+                        @endif
                     </div>
                     @endif
                 </div>

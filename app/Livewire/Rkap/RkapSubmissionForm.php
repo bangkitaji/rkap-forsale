@@ -58,6 +58,7 @@ class RkapSubmissionForm extends Component
                 'workPlans.budgetItems.monthlies',
                 'workPlans.budgetItems.cashOuts',
                 'workPlans.budgetItems.realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
+                'approvals.user',
             ]);
             $this->notes = $this->submission->notes ?? '';
             $this->loadWorkPlans();
@@ -205,14 +206,16 @@ class RkapSubmissionForm extends Component
     private function emptyActivityBlock(int $sortOrder): array
     {
         return [
-            'id' => null,
-            'activity_id' => null,
-            'description' => '',
-            'output_target' => '',
-            'unit' => '',
-            'quantity' => 1,
-            'sort_order' => $sortOrder,
-            'budget_items' => [$this->emptyBudgetItem()],
+            'id'              => null,
+            'activity_id'     => null,
+            'description'     => '',
+            'output_target'   => '',
+            'unit'            => '',
+            'quantity'        => 1,
+            'sort_order'      => $sortOrder,
+            'approval_status' => 'pending',
+            'revision_notes'  => '',
+            'budget_items'    => [$this->emptyBudgetItem()],
         ];
     }
 
@@ -581,14 +584,16 @@ class RkapSubmissionForm extends Component
             $activities = [];
             foreach ($rkapWorkPlans as $wp) {
                 $activities[] = [
-                    'id' => $wp->id,
-                    'activity_id' => $wp->activity_id,
-                    'description' => $wp->description ?? '',
-                    'output_target' => $wp->output_target ?? '',
-                    'unit' => $wp->unit ?? '',
-                    'quantity' => $wp->quantity,
-                    'sort_order' => $wp->sort_order,
-                    'budget_items' => $wp->budgetItems->map(function ($bi) {
+                    'id'              => $wp->id,
+                    'activity_id'     => $wp->activity_id,
+                    'description'     => $wp->description ?? '',
+                    'output_target'   => $wp->output_target ?? '',
+                    'unit'            => $wp->unit ?? '',
+                    'quantity'        => $wp->quantity,
+                    'sort_order'      => $wp->sort_order,
+                    'approval_status' => $wp->approval_status ?? 'pending',
+                    'revision_notes'  => $wp->revision_notes ?? '',
+                    'budget_items'    => $wp->budgetItems->map(function ($bi) {
                         $coa = Coa::where('code', $bi->account_code)->first();
                         return [
                             'id'                       => $bi->id,
@@ -822,6 +827,13 @@ class RkapSubmissionForm extends Component
 
         $submission = $this->saveSubmission('draft');
 
+        // Reset rejected activities back to pending for the new review cycle
+        foreach ($submission->workPlans as $wp) {
+            if ($wp->approval_status === 'rejected') {
+                $wp->update(['approval_status' => 'pending']);
+            }
+        }
+
         if ($submission->status === 'draft') {
             $submission->submit();
         }
@@ -990,13 +1002,21 @@ class RkapSubmissionForm extends Component
                     }
                 }
             }
-            $submission->workPlans()->whereNotIn('id', $existingWpIds)->delete();
+            $submission->workPlans()->whereNotIn('id', $existingWpIds)->where('approval_status', '!=', 'approved')->delete();
 
             $sortIdx = 0;
             foreach ($this->workPlans as $wpGroup) {
                 $workPlanId = $wpGroup['work_plan_id'];
 
                 foreach ($wpGroup['activities'] as $actData) {
+                    if (!empty($actData['id'])) {
+                        $dbWp = RkapWorkPlan::find($actData['id']);
+                        if ($dbWp && $dbWp->approval_status === 'approved') {
+                            $sortIdx++;
+                            continue;
+                        }
+                    }
+
                     // Resolve program_name from the selected Activity (or WorkPlan as fallback)
                     $programName = null;
                     if (!empty($actData['activity_id'])) {

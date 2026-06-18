@@ -15,6 +15,9 @@ class RkapApprovalReview extends Component
     public string $revisionReason = '';
     public bool $showRevisionForm = false;
     public string $newComment = '';
+    
+    public array $activityStatuses = [];
+    public array $activityRevisionNotes = [];
 
     public function mount(int $id): void
     {
@@ -28,11 +31,47 @@ class RkapApprovalReview extends Component
             'approvals.user',
             'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
         ])->findOrFail($id);
+
+        foreach ($this->submission->workPlans as $wp) {
+            $this->activityStatuses[$wp->id] = $wp->approval_status ?: 'pending';
+            $this->activityRevisionNotes[$wp->id] = $wp->revision_notes ?: '';
+        }
+    }
+
+    public function setActivityStatus(int $workPlanId, string $status): void
+    {
+        $this->activityStatuses[$workPlanId] = $status;
+        $wp = \App\Models\RkapWorkPlan::find($workPlanId);
+        if ($wp) {
+            $wp->update(['approval_status' => $status]);
+            if ($status === 'approved') {
+                $this->activityRevisionNotes[$workPlanId] = '';
+                $wp->update(['revision_notes' => null]);
+            }
+        }
+        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts']);
+    }
+
+    public function updateActivityRevisionNotes(int $workPlanId, string $notes): void
+    {
+        $this->activityRevisionNotes[$workPlanId] = $notes;
+        $wp = \App\Models\RkapWorkPlan::find($workPlanId);
+        if ($wp) {
+            $wp->update(['revision_notes' => $notes]);
+        }
     }
 
     public function approve(): void
     {
         $user = Auth::user();
+
+        // 1. the approver can only approve the rkap submission if all activities are approved
+        foreach ($this->submission->workPlans as $wp) {
+            if (($this->activityStatuses[$wp->id] ?? 'pending') !== 'approved') {
+                session()->flash('error', 'Gagal menyetujui: Semua kegiatan harus disetujui terlebih dahulu.');
+                return;
+            }
+        }
 
         if (($user->isPresidentDirector() || $user->isDirekturFinance()) && $this->submission->status === 'pdir_review') {
             $status = $this->presidentApprovalStatus;
@@ -70,7 +109,43 @@ class RkapApprovalReview extends Component
 
     public function requestRevision(): void
     {
+        // 2. the approver can only reject if there is one or more rejected activities
+        // 3. the approver must give revision notes
+        $hasRejected = false;
+        foreach ($this->submission->workPlans as $wp) {
+            $status = $this->activityStatuses[$wp->id] ?? 'pending';
+            if ($status === 'rejected') {
+                $hasRejected = true;
+                $notes = trim($this->activityRevisionNotes[$wp->id] ?? '');
+                if (empty($notes)) {
+                    session()->flash('error', 'Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.');
+                    return;
+                }
+            }
+        }
+
+        if (!$hasRejected) {
+            session()->flash('error', 'Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.');
+            return;
+        }
+
         $this->validate(['revisionReason' => 'required|string|min:10']);
+
+        // Save the activity statuses and revision notes to the database
+        foreach ($this->submission->workPlans as $wp) {
+            $status = $this->activityStatuses[$wp->id] ?? 'pending';
+            if ($status === 'rejected') {
+                $wp->update([
+                    'approval_status' => 'rejected',
+                    'revision_notes' => trim($this->activityRevisionNotes[$wp->id] ?? ''),
+                ]);
+            } else {
+                $wp->update([
+                    'approval_status' => $status,
+                    'revision_notes' => null,
+                ]);
+            }
+        }
 
         $user = Auth::user();
 

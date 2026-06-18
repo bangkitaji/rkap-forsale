@@ -153,6 +153,52 @@
   </div>
   @endif
 
+  {{-- Rejection / Revision Banner --}}
+  @if ($submission && str_ends_with($submission->status, '_revision'))
+    @php
+      $latestRevision = $submission->approvals->firstWhere('action', 'revision_requested');
+      $revisionReason = $latestRevision?->comments;
+      $revisionByName = $latestRevision?->user?->name ?? 'Reviewer';
+      $revisionAt = $latestRevision?->created_at?->format('d M Y, H:i');
+      $rejectedCount = $submission->workPlans->filter(fn($wp) => ($wp->approval_status ?? 'pending') === 'rejected')->count();
+      $approvedCount = $submission->workPlans->filter(fn($wp) => ($wp->approval_status ?? 'pending') === 'approved')->count();
+    @endphp
+    <div class="alert alert-danger border-danger mb-4 p-0 overflow-hidden" role="alert">
+      <div class="d-flex align-items-center gap-3 px-4 py-3 bg-danger text-white">
+        <i class="bx bx-x-circle fs-2 flex-shrink-0"></i>
+        <div>
+          <h5 class="mb-0 fw-bold">Pengajuan Dikembalikan untuk Perbaikan</h5>
+          <div class="small opacity-90 mt-1">
+            Dikembalikan oleh <strong>{{ $revisionByName }}</strong>
+            @if($revisionAt) pada {{ $revisionAt }} @endif
+          </div>
+        </div>
+      </div>
+      <div class="px-4 py-3">
+        @if($revisionReason)
+          <div class="mb-3">
+            <div class="fw-semibold text-danger mb-1"><i class="bx bx-comment-error me-1"></i>Alasan Pengembalian:</div>
+            <p class="mb-0 text-dark" style="white-space: pre-line;">{{ $revisionReason }}</p>
+          </div>
+        @endif
+        <div class="d-flex flex-wrap gap-3">
+          @if($rejectedCount > 0)
+            <div class="d-flex align-items-center gap-2 bg-danger bg-opacity-10 rounded px-3 py-2">
+              <i class="bx bx-x-circle text-danger"></i>
+              <span class="small"><strong class="text-danger">{{ $rejectedCount }} kegiatan</strong> perlu diperbaiki — cek catatan revisi di tiap kegiatan.</span>
+            </div>
+          @endif
+          @if($approvedCount > 0)
+            <div class="d-flex align-items-center gap-2 bg-success bg-opacity-10 rounded px-3 py-2">
+              <i class="bx bx-check-circle text-success"></i>
+              <span class="small"><strong class="text-success">{{ $approvedCount }} kegiatan</strong> sudah disetujui dan tidak dapat diubah.</span>
+            </div>
+          @endif
+        </div>
+      </div>
+    </div>
+  @endif
+
   {{-- Grand Total Banner --}}
   <div class="card mb-4 bg-primary text-white">
     <div class="card-body d-flex justify-content-between align-items-center">
@@ -163,6 +209,7 @@
       <i class="bx bx-money bx-lg opacity-50"></i>
     </div>
   </div>
+
 
   {{-- Notes --}}
   <div class="card mb-4">
@@ -178,6 +225,7 @@
   @php
   $rowWorkPlanOptions = $this->getWorkPlanOptionsForIndex($wpIdx);
   $selectedWorkPlan = $workPlanOptions->firstWhere('id', $wp['work_plan_id']);
+  $hasApproved = collect($wp['activities'])->contains(fn($a) => ($a['approval_status'] ?? 'pending') === 'approved');
   @endphp
 
   <div class="card mb-4 border-start border-primary border-3" wire:key="wp-card-{{ $wpIdx }}">
@@ -202,8 +250,8 @@
               <input type="text"
                 class="form-control @error('workPlans.' . $wpIdx . '.work_plan_id') is-invalid @enderror"
                 placeholder="Cari program kerja..." x-model="search" @focus="open = true" @click.outside="open = false"
-                @input="open = true" autocomplete="off" id="wp-search-{{ $wpIdx }}">
-              @if ($wp['work_plan_id'])
+                @input="open = true" autocomplete="off" id="wp-search-{{ $wpIdx }}" @disabled($hasApproved)>
+              @if ($wp['work_plan_id'] && !$hasApproved)
               <button type="button" class="btn btn-outline-secondary"
                 wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)" @click="search = ''"
                 title="Hapus pilihan">
@@ -287,7 +335,7 @@
               @endif
             </span>
           </span>
-          @if (count($workPlans) > 1)
+          @if (count($workPlans) > 1 && !$hasApproved)
           <button type="button" wire:click="removeWorkPlan({{ $wpIdx }})"
             class="btn btn-sm btn-outline-danger" title="Hapus program kerja">
             <i class="bx bx-trash me-1"></i> Hapus Program
@@ -302,6 +350,8 @@
       @foreach ($wp['activities'] as $actIdx => $act)
       @php
       $selectedActivity = $act['activity_id'] ? \App\Models\Activity::find($act['activity_id']) : null;
+      $isApproved = ($act['approval_status'] ?? 'pending') === 'approved';
+      $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
       @endphp
 
       <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wpIdx }}-act-card-{{ $actIdx }}">
@@ -309,8 +359,13 @@
           <div class="d-flex align-items-center gap-2">
             <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
             <h6 class="mb-0 fw-bold">Kegiatan {{ $actIdx + 1 }}</h6>
+            @if ($isApproved)
+              <span class="badge bg-label-success ms-2"><i class="bx bx-check-circle me-1"></i>Disetujui</span>
+            @elseif ($isRejected)
+              <span class="badge bg-label-danger ms-2"><i class="bx bx-x-circle me-1"></i>Revisi</span>
+            @endif
           </div>
-          @if (count($wp['activities']) > 1)
+          @if (count($wp['activities']) > 1 && !$isApproved)
           <button type="button" wire:click="removeActivity({{ $wpIdx }}, {{ $actIdx }})"
             class="btn btn-xs btn-outline-danger" title="Hapus Kegiatan">
             <i class="bx bx-trash me-1"></i> Hapus Kegiatan
@@ -335,8 +390,8 @@
                 <input type="text"
                   class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.activity_id') is-invalid @enderror"
                   placeholder="Cari kegiatan..." x-model="search" @focus="open = true" @input="open = true"
-                  autocomplete="off" id="act-search-{{ $wpIdx }}-{{ $actIdx }}">
-                @if ($act['activity_id'])
+                  autocomplete="off" id="act-search-{{ $wpIdx }}-{{ $actIdx }}" @disabled($isApproved)>
+                @if ($act['activity_id'] && !$isApproved)
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                   wire:click="$set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id', null)"
                   @click="search = ''" title="Hapus pilihan">
@@ -431,19 +486,19 @@
             <label class="form-label small fw-semibold">Deskripsi / Tujuan</label>
             <textarea class="form-control form-control-sm"
               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.description" rows="2"
-              placeholder="Deskripsi kegiatan..."></textarea>
+              placeholder="Deskripsi kegiatan..." @disabled($isApproved)></textarea>
           </div>
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Target Output</label>
             <input type="text" class="form-control form-control-sm"
               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.output_target"
-              placeholder="Misal: 1 sistem, 100 user">
+              placeholder="Misal: 1 sistem, 100 user" @disabled($isApproved)>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Volume</label>
             <input type="number" class="form-control form-control-sm"
               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.quantity"
-              min="1">
+              min="1" @disabled($isApproved)>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Satuan</label>
@@ -451,9 +506,19 @@
               wire:model.live.debounce.300="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
               list="satuan-options"
               placeholder="Paket, Unit, ..."
-              autocomplete="off">
+              autocomplete="off" @disabled($isApproved)>
           </div>
         </div>
+
+        @if ($isRejected && !empty($act['revision_notes']))
+        <div class="alert alert-danger d-flex align-items-start mb-3 p-3 animate__animated animate__fadeIn" role="alert">
+          <span class="badge bg-danger text-white me-3 p-1 mt-0.5"><i class="bx bx-error-circle fs-5"></i></span>
+          <div>
+            <h6 class="alert-heading mb-1 fw-bold text-danger">Catatan Revisi dari Reviewer:</h6>
+            <span class="text-dark">{{ $act['revision_notes'] }}</span>
+          </div>
+        </div>
+        @endif
 
         {{-- Budget Items section --}}
         @if (!empty($wp['work_plan_id']) && !empty($act['activity_id']))
@@ -557,8 +622,9 @@
                           class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $firstIdx . '.coa_id') is-invalid @enderror"
                           placeholder="Cari akun/belanja..." x-model="search"
                           @focus="open = true; $dispatch('coa-dropdown-open')"
-                          @input="open = true; $dispatch('coa-dropdown-open')" autocomplete="off">
-                        @if ($firstBi['coa_id'])
+                          @input="open = true; $dispatch('coa-dropdown-open')" autocomplete="off"
+                          @disabled($isApproved)>
+                        @if ($firstBi['coa_id'] && !$isApproved)
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                           wire:click="updateGroupCoa({{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, null)"
                           @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
@@ -644,7 +710,7 @@
                     <button type="button"
                       wire:click="removeGroup({{ $wpIdx }}, {{ $actIdx }}, {{ $indicesJson }})"
                       @click="isDirty = true" class="btn btn-sm btn-icon btn-text-danger rounded-pill"
-                      title="Hapus grup akun belanja" @if ($totalItemsCount <=$itemCount) disabled @endif>
+                      title="Hapus grup akun belanja" @disabled($totalItemsCount <=$itemCount || $isApproved)>
                       <i class="bx bx-minus-circle fs-4"></i>
                     </button>
                   </td>
@@ -672,20 +738,20 @@
                   <td class="border-top-0">
                     <input type="text" class="form-control form-control-sm"
                       wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
-                      placeholder="Detail Belanja / Ket...">
+                      placeholder="Detail Belanja / Ket..." @disabled($isApproved)>
                   </td>
                   <td class="border-top-0" style="min-width: 80px;">
                     {{-- Vol 1 --}}
                     <input type="number"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity"
-                      min="1" placeholder="Vol 1">
+                      min="1" placeholder="Vol 1" @disabled($isApproved)>
 
                     {{-- Vol 2 --}}
                     <input type="number"
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity_2') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity_2"
-                      min="1" placeholder="Vol 2">
+                      min="1" placeholder="Vol 2" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0" style="position: relative; min-width: 120px;">
                     {{-- Satuan 1 --}}
@@ -694,7 +760,7 @@
                       wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit"
                       list="satuan-options"
                       placeholder="Satuan 1"
-                      autocomplete="off">
+                      autocomplete="off" @disabled($isApproved)>
 
                     {{-- Satuan 2 --}}
                     <input type="text"
@@ -702,7 +768,7 @@
                       wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2"
                       list="satuan-options"
                       placeholder="Satuan 2 (opsional)"
-                      autocomplete="off">
+                      autocomplete="off" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0">
                     <input type="number"
@@ -710,7 +776,8 @@
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price"
                       min="0" step="1000"
                       oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
-                      onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }">
+                      onblur="if (this.value === '' || this.value === null) { this.value = 0; this.dispatchEvent(new Event('input')); }"
+                      @disabled($isApproved)>
                   </td>
                   <td class="text-end text-nowrap border-top-0">
                     <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
@@ -723,7 +790,7 @@
                         <i class="bx bx-detail"></i>
                       </button>
 
-                      @if ($itemCount > 1)
+                      @if ($itemCount > 1 && !$isApproved)
                       <button type="button"
                         wire:click="removeBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-danger"
@@ -732,7 +799,7 @@
                       </button>
                       @endif
 
-                      @if ($itemIdx === $itemCount - 1)
+                      @if ($itemIdx === $itemCount - 1 && !$isApproved)
                       <button type="button"
                         wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-success"
@@ -854,29 +921,31 @@
                           @endif
                           @endif
                           <button type="button"
-                            wire:click="distributeEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                            class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;"
-                            @if ($biTotal <=0) disabled @endif>
-                            <i class="bx bx-equalizer me-1"></i>Bagi Rata
-                          </button>
+                             wire:click="distributeEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                             class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;"
+                             @disabled($biTotal <= 0 || $isApproved)>
+                             <i class="bx bx-equalizer me-1"></i>Bagi Rata
+                           </button>
                     </div>
                   </div>
                   <div class="d-flex align-items-center justify-content-between mb-1">
                     <label class="form-label small text-muted mb-0">Pilih Bulan Distribusi Beban:</label>
                     <button type="button"
-                      wire:click="selectAllMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;">
-                      {{ count($selectedMonths) === 12 ? 'Deselect All' : 'Select All' }}
-                    </button>
+                       wire:click="selectAllMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
+                       class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
+                       @disabled($isApproved)>
+                       {{ count($selectedMonths) === 12 ? 'Deselect All' : 'Select All' }}
+                     </button>
                   </div>
                   <div class="d-flex flex-wrap gap-1 mb-2">
                     @foreach ($monthLabels as $monthNum => $monthLabel)
                     <button type="button"
-                      wire:click="toggleMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                      class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
-                      {{ $monthLabel }}
-                    </button>
+                       wire:click="toggleMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
+                       class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
+                       style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
+                       @disabled($isApproved)>
+                       {{ $monthLabel }}
+                     </button>
                     @endforeach
                   </div>
                   @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx .
@@ -912,7 +981,7 @@
                           <button type="button"
                             wire:click="distributeCashOutEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                             class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;"
-                            @if ($biTotal <=0) disabled @endif>
+                            @disabled($biTotal <= 0 || $isApproved)>
                             <i class="bx bx-equalizer me-1"></i>Bagi Rata
                           </button>
                     </div>
@@ -921,7 +990,8 @@
                     <label class="form-label small text-muted mb-0">Pilih Bulan Pembayaran:</label>
                     <button type="button"
                       wire:click="selectAllCashOutMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;">
+                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
+                      @disabled($isApproved)>
                       {{ count($selectedCashOutMonths) === 12 ? 'Deselect All' : 'Select All' }}
                     </button>
                   </div>
@@ -930,7 +1000,8 @@
                     <button type="button"
                       wire:click="toggleCashOutMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
                       class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
+                      @disabled($isApproved)>
                       {{ $monthLabel }}
                     </button>
                     @endforeach
@@ -964,7 +1035,7 @@
                           <button type="button"
                             wire:click="distributeRealizationEvenly({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                             class="btn btn-xs btn-outline-success py-0 px-2" style="font-size:0.72rem;"
-                            @if ($biTotal <=0) disabled @endif>
+                            @disabled($biTotal <= 0 || $isApproved)>
                             <i class="bx bx-equalizer me-1"></i>Bagi Rata
                           </button>
                     </div>
@@ -973,7 +1044,8 @@
                     <label class="form-label small text-muted mb-0">Pilih Bulan Realisasi:</label>
                     <button type="button"
                       wire:click="selectAllRealizationMonths({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
-                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;">
+                      class="btn btn-xs btn-link p-0 text-decoration-none" style="font-size: 0.72rem;"
+                      @disabled($isApproved)>
                       {{ count($selectedRealizationMonths) === 12 ? 'Deselect All' : 'Select All' }}
                     </button>
                   </div>
@@ -982,7 +1054,8 @@
                     <button type="button"
                       wire:click="toggleRealizationMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
                       class="btn btn-sm {{ in_array($monthNum, $selectedRealizationMonths) ? 'btn-success' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;">
+                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
+                      @disabled($isApproved)>
                       {{ $monthLabel }}
                     </button>
                     @endforeach
@@ -1018,7 +1091,7 @@
                             <input type="number" class="form-control form-control-sm text-end"
                               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
                               min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;">
+                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
                           </div>
                           @else
                           <span class="text-muted small">—</span>
@@ -1032,7 +1105,7 @@
                             <input type="number" class="form-control form-control-sm text-end"
                               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
                               min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;">
+                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
                           </div>
                           @else
                           <span class="text-muted small">—</span>
@@ -1046,7 +1119,7 @@
                             <input type="number" class="form-control form-control-sm text-end"
                               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.realization_distribution.{{ $monthNum }}"
                               min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;">
+                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
                           </div>
                           @else
                           <span class="text-muted small">—</span>
@@ -1101,10 +1174,12 @@
           </div>
           @endforeach
 
+          @if (!$isApproved)
           <button type="button" wire:click="addBudgetItem({{ $wpIdx }}, {{ $actIdx }})"
             class="btn btn-sm btn-label-secondary mt-2">
             <i class="bx bx-plus me-1"></i> Tambah Item Belanja
           </button>
+          @endif
 
         </div>
         @else
@@ -1120,7 +1195,7 @@
       @endforeach
 
       {{-- Add Activity Button inside the Work Plan card --}}
-      @if ($wp['work_plan_id'])
+      @if ($wp['work_plan_id'] && !$hasApproved)
       @php $availableActivities = $this->getActivitiesForIndex($wpIdx); @endphp
       @if ($availableActivities->count() > 0)
       <div class="text-center my-2">

@@ -240,9 +240,21 @@ class RkapReviewTest extends TestCase
     {
         $this->submission->update(['status' => 'pdir_review']);
 
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG01',
+            'program_name' => 'Program Test',
+            'description' => 'Test',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'approval_status' => 'pending',
+        ]);
+
         $this->actingAs($this->president);
 
         Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->set('activityStatuses.' . $wp->id, 'rejected')
+            ->set('activityRevisionNotes.' . $wp->id, 'Need more details on training expenses.')
             ->set('revisionReason', 'Need more details on training expenses.')
             ->call('requestRevision');
 
@@ -258,6 +270,16 @@ class RkapReviewTest extends TestCase
     public function test_finance_director_requesting_revision_transitions_to_draft(): void
     {
         $this->submission->update(['status' => 'pdir_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG01',
+            'program_name' => 'Program Test',
+            'description' => 'Test',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'approval_status' => 'pending',
+        ]);
 
         // Create Finance Director
         $dirFinanceRole = Role::firstOrCreate(['name' => 'direksi']);
@@ -277,6 +299,8 @@ class RkapReviewTest extends TestCase
         $this->actingAs($financeUser);
 
         Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->set('activityStatuses.' . $wp->id, 'rejected')
+            ->set('activityRevisionNotes.' . $wp->id, 'Budget allocation for travel is too high.')
             ->set('revisionReason', 'Budget allocation for travel is too high.')
             ->call('requestRevision');
 

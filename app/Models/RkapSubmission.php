@@ -95,6 +95,8 @@ class RkapSubmission extends Model
                 'unit' => $wp->unit,
                 'quantity' => $wp->quantity,
                 'sort_order' => $wp->sort_order,
+                'approval_status' => $wp->approval_status,
+                'revision_notes' => $wp->revision_notes,
                 'budget_items' => $wp->budgetItems->map(function ($bi) {
                     return [
                         'id' => $bi->id,

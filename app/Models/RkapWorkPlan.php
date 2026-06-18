@@ -19,6 +19,8 @@ class RkapWorkPlan extends Model
         'unit',
         'quantity',
         'sort_order',
+        'approval_status',
+        'revision_notes',
     ];
 
     protected function casts(): array

@@ -184,7 +184,16 @@
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
                                 <div>
-                                    <h6 class="mb-0 fw-bold">Kegiatan {{ $actIdx + 1 }}</h6>
+                                    <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                                        Kegiatan {{ $actIdx + 1 }}
+                                        @if(($wp->approval_status ?? 'pending') === 'approved')
+                                            <span class="badge bg-label-success ms-2" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;"><i class="bx bx-check-circle me-1"></i>Disetujui</span>
+                                        @elseif(($wp->approval_status ?? 'pending') === 'rejected')
+                                            <span class="badge bg-label-danger ms-2" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;"><i class="bx bx-x-circle me-1"></i>Revisi</span>
+                                        @else
+                                            <span class="badge bg-label-secondary ms-2" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;"><i class="bx bx-time-five me-1"></i>Pending</span>
+                                        @endif
+                                    </h6>
                                     <span class="text-muted small">{{ $activityCode }} — {{ $activityTitle }}</span>
                                 </div>
                             </div>
@@ -224,6 +233,16 @@
                             </div>
                         </div>
 
+                        @if (($wp->approval_status ?? 'pending') === 'rejected' && !empty($wp->revision_notes))
+                        <div class="alert alert-danger d-flex align-items-start mb-3 p-3 animate__animated animate__fadeIn" role="alert">
+                            <span class="badge bg-danger text-white me-3 p-1 mt-0.5"><i class="bx bx-error-circle fs-5"></i></span>
+                            <div>
+                                <h6 class="alert-heading mb-1 fw-bold text-danger">Catatan Revisi dari Reviewer:</h6>
+                                <span class="text-dark">{{ $wp->revision_notes }}</span>
+                            </div>
+                        </div>
+                        @endif
+
                         @if($wp->description)
                         <div class="mb-3">
                             <label class="text-muted small d-block">Deskripsi / Tujuan</label>
@@ -244,13 +263,12 @@
                             <table class="table table-sm table-striped table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Kode Akun</th>
                                         <th>Uraian & Detail Belanja</th>
-                                        <th class="text-center">Vol 1 & 2</th>
-                                        <th>Satuan 1 & 2</th>
-                                        <th class="text-end">Harga Satuan</th>
-                                        <th class="text-end">Total</th>
-                                        <th class="text-center">Aksi</th>
+                                        <th class="text-center" style="width: 10%;">Vol 1 & 2</th>
+                                        <th style="width: 12%;">Satuan 1 & 2</th>
+                                        <th class="text-end" style="width: 14%;">Harga Satuan</th>
+                                        <th class="text-end" style="width: 14%;">Total</th>
+                                        <th class="text-center" style="width: 8%;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -266,7 +284,7 @@
                                     $prevPeriod = $prevData['period'] ?? null;
                                     @endphp
                                     <tr class="table-light fw-semibold">
-                                        <td colspan="7" class="text-dark bg-lighter py-2 px-3">
+                                        <td colspan="6" class="text-dark bg-lighter py-2 px-3">
                                             <div class="d-flex justify-content-between align-items-center gap-2">
                                                 <div class="d-flex align-items-center gap-1 min-w-0">
                                                     <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
@@ -316,9 +334,6 @@
                                     $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
                                     @endphp
                                     <tr>
-                                        <td class="text-center text-muted">
-                                            <span class="ps-2">•</span>
-                                        </td>
                                         <td>
                                             {{ $bi->remarks ?: $bi->description }}
                                         </td>
