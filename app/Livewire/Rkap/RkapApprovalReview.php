@@ -258,6 +258,7 @@ class RkapApprovalReview extends Component
         $activities = [];
         $coas = [];
         $itemsMap = [];
+        $itemCounters = [];
 
         foreach ($prevSubmission->workPlans as $wp) {
             $wpId = $wp->work_plan_id;
@@ -298,11 +299,15 @@ class RkapApprovalReview extends Component
                     $coas[$coaKey]['realization'] += $realizationVal;
                     $coas[$coaKey]['projection'] += $projectionVal;
 
-                    $itemKey = "{$wpId}-{$actId}-{$code}-" . trim(strtolower($bi->description));
-                    if (!isset($itemsMap[$itemKey])) {
-                        $itemsMap[$itemKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-                    }
-                    $itemsMap[$itemKey]['budget'] += $budgetVal;
+                    $baseKey = "{$wpId}-{$actId}-{$code}-" . trim(strtolower($bi->description));
+                    $itemCounters[$baseKey] = ($itemCounters[$baseKey] ?? 0) + 1;
+                    $itemKey = "{$baseKey}-" . $itemCounters[$baseKey];
+
+                    $itemsMap[$itemKey] = [
+                        'budget' => $budgetVal,
+                        'realization' => $realizationVal,
+                        'projection' => $projectionVal,
+                    ];
                 }
             }
         }
@@ -346,10 +351,9 @@ class RkapApprovalReview extends Component
             $key = "{$wp->work_plan_id}-{$wp->activity_id}";
             
             // Map budget items of this work plan
-            $items = [];
+            $itemsList = [];
             foreach ($wp->budgetItems as $bi) {
-                $itemKey = "{$bi->account_code}-" . trim(strtolower($bi->description));
-                $items[$itemKey] = [
+                $itemsList[] = [
                     'is_virtual' => false,
                     'model' => $bi,
                     'account_code' => $bi->account_code,
@@ -368,11 +372,20 @@ class RkapApprovalReview extends Component
             if ($prevSubmission) {
                 $prevWp = $prevSubmission->workPlans->first(fn($p) => "{$p->work_plan_id}-{$p->activity_id}" === $key);
                 if ($prevWp) {
+                    $pool = [];
+                    foreach ($itemsList as $idx => $item) {
+                        $matchKey = "{$item['account_code']}-" . trim(strtolower($item['description']));
+                        $pool[$matchKey][] = $idx;
+                    }
+
                     foreach ($prevWp->budgetItems as $prevBi) {
                         $prevItemKey = "{$prevBi->account_code}-" . trim(strtolower($prevBi->description));
-                        if (!isset($items[$prevItemKey])) {
+                        if (isset($pool[$prevItemKey]) && !empty($pool[$prevItemKey])) {
+                            // Consume one matching current item
+                            array_shift($pool[$prevItemKey]);
+                        } else {
                             // This budget item was dropped in the new submission
-                            $items[$prevItemKey] = [
+                            $itemsList[] = [
                                 'is_virtual' => true,
                                 'model' => null,
                                 'account_code' => $prevBi->account_code,
@@ -391,13 +404,13 @@ class RkapApprovalReview extends Component
             }
             
             // Sort items by account code
-            uksort($items, function($a, $b) {
-                return strcasecmp(explode('-', $a)[0], explode('-', $b)[0]);
+            usort($itemsList, function($a, $b) {
+                return strcasecmp($a['account_code'] ?? '', $b['account_code'] ?? '');
             });
 
             // Group items by account_code
             $groupedItems = [];
-            foreach ($items as $item) {
+            foreach ($itemsList as $item) {
                 $code = $item['account_code'] ?: '-';
                 if (!isset($groupedItems[$code])) {
                     $groupedItems[$code] = [];
@@ -427,10 +440,9 @@ class RkapApprovalReview extends Component
                 $key = "{$prevWp->work_plan_id}-{$prevWp->activity_id}";
                 if (!isset($combined[$key])) {
                     // This work plan was dropped entirely
-                    $items = [];
+                    $itemsList = [];
                     foreach ($prevWp->budgetItems as $prevBi) {
-                        $prevItemKey = "{$prevBi->account_code}-" . trim(strtolower($prevBi->description));
-                        $items[$prevItemKey] = [
+                        $itemsList[] = [
                             'is_virtual' => true,
                             'model' => null,
                             'account_code' => $prevBi->account_code,
@@ -445,13 +457,13 @@ class RkapApprovalReview extends Component
                         ];
                     }
                     
-                    uksort($items, function($a, $b) {
-                        return strcasecmp(explode('-', $a)[0], explode('-', $b)[0]);
+                    usort($itemsList, function($a, $b) {
+                        return strcasecmp($a['account_code'] ?? '', $b['account_code'] ?? '');
                     });
 
                     // Group items by account_code
                     $groupedItems = [];
-                    foreach ($items as $item) {
+                    foreach ($itemsList as $item) {
                         $code = $item['account_code'] ?: '-';
                         if (!isset($groupedItems[$code])) {
                             $groupedItems[$code] = [];

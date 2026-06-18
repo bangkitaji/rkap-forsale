@@ -721,6 +721,7 @@
                             $coaGroupSubtotal = collect($items)->sum('total_price');
                             $prevWpId = $wp['work_plan_id'] ?? null;
                             $prevCode = $accountCode;
+                            $itemCounters = [];
                           @endphp
                           <tr class="table-light fw-semibold">
                             <td colspan="8" class="text-dark bg-lighter py-2 px-3">
@@ -791,10 +792,14 @@
                           </tr>
                           @foreach ($items as $bi)
                             @php
+                              $descKey = trim(strtolower($bi['description']));
+                              $itemCounters[$descKey] = ($itemCounters[$descKey] ?? 0) + 1;
+                              $seq = $itemCounters[$descKey];
+
                               $isBiVirtual = $bi['is_virtual'] ?? false;
                               $allocationModalId =
                                   'allocationDetailModal-' .
-                                  ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
+                                  ($isBiVirtual ? md5($bi['account_code'] . $bi['description'] . $seq) : $bi['model']->id);
                               $monthNames = [
                                   1 => 'Jan',
                                   2 => 'Feb',
@@ -815,7 +820,7 @@
                               $itemKey =
                                   $prevWpId && $prevActId && $accountCode
                                       ? "{$prevWpId}-{$prevActId}-{$accountCode}-" .
-                                          trim(strtolower($bi['description']))
+                                          trim(strtolower($bi['description'])) . '-' . $seq
                                       : null;
                               $prevItemData =
                                   $itemKey && isset($prevData['map']['items'][$itemKey])
