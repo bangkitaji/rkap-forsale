@@ -89,9 +89,9 @@ class RkapDashboard extends Component
                 ->latest('updated_at')
                 ->limit(5)->get();
         } elseif ($user->isKepalaBiro()) {
-            $myActions = RkapSubmission::with(['period'])
+            $myActions = RkapSubmission::with(['bureau.department', 'period'])
                 ->where('bureau_id', $user->bureau_id)
-                ->whereIn('status', ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])
+                ->whereIn('status', ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])
                 ->latest('updated_at')
                 ->limit(5)->get();
         }

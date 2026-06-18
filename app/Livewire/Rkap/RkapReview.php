@@ -80,7 +80,7 @@ class RkapReview extends Component
         $this->revisionReason = '';
         $this->showRevisionForm = false;
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'Permintaan revisi berhasil dikirim.');
+        session()->flash('message', 'RKAP berhasil ditolak dan dikembalikan untuk revisi.');
     }
 
     public function addComment(): void

@@ -102,17 +102,34 @@
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
                         @forelse($myActions as $action)
+                            @php
+                                $isBiro = auth()->user()->isKepalaBiro();
+                                $targetRoute = $isBiro
+                                    ? route('rkap-submissions-edit', $action->id)
+                                    : route('rkap-submissions-approval-review', $action->id);
+
+                                $badgeText = 'Perlu Review';
+                                $badgeColor = 'warning';
+
+                                if ($action->status === 'draft') {
+                                    $badgeText = 'Draf';
+                                    $badgeColor = 'secondary';
+                                } elseif (in_array($action->status, ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
+                                    $badgeText = 'Perlu Revisi';
+                                    $badgeColor = 'danger';
+                                }
+                            @endphp
                             <li class="mb-3 pb-3 border-bottom">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="d-flex flex-column">
                                         <div class="d-flex align-items-center gap-2 mb-1">
-                                            <span class="badge bg-label-warning">Perlu Review</span>
+                                            <span class="badge bg-label-{{ $badgeColor }}">{{ $badgeText }}</span>
                                             <small class="text-muted">{{ $action->updated_at->diffForHumans() }}</small>
                                         </div>
-                                        <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name }}</a>
+                                        <a href="{{ $targetRoute }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name ?? '-' }}</a>
                                         <small class="text-muted">{{ $action->bureau->department->name ?? '-' }}</small>
                                     </div>
-                                    <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
+                                    <a href="{{ $targetRoute }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
                                         <i class="bx bx-chevron-right"></i>
                                     </a>
                                 </div>

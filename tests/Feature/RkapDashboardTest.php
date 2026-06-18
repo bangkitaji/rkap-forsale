@@ -457,4 +457,46 @@ class RkapDashboardTest extends TestCase
         $stats2 = $response2->viewData('stats');
         $this->assertEquals(150000.0, $stats2['total_budget']);
     }
+
+    public function test_kabiro_sees_draft_and_revision_submissions_in_tugas_saya(): void
+    {
+        // 1. Change existing submission1 to draft status
+        $this->submission1->update(['status' => 'draft']);
+
+        // 2. Create a new bureau and a revision submission for it in the same period
+        $roleKabiro = Role::where('name', 'kepala_biro')->first();
+        $department = Department::first();
+        $bureau3 = Bureau::create(['department_id' => $department->id, 'code' => 'B3', 'name' => 'Bur 3']);
+        $kabiro3 = User::create([
+            'name' => 'Kabiro 3',
+            'email' => 'kabiro3@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $bureau3->id,
+        ]);
+        $kabiro3->assignRole($roleKabiro);
+
+        $submissionRevision = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau3->id,
+            'created_by' => $kabiro3->id,
+            'status' => 'dept_revision',
+            'total_budget' => 25000,
+        ]);
+
+        // 3. Test that kabiro1 sees their draft submission
+        $this->actingAs($this->kabiro1);
+        \Livewire\Livewire::test(\App\Livewire\Rkap\RkapDashboard::class)
+            ->assertStatus(200)
+            ->assertViewHas('myActions', function ($myActions) {
+                return $myActions->contains('id', $this->submission1->id);
+            });
+
+        // 4. Test that kabiro3 sees their revision submission
+        $this->actingAs($kabiro3);
+        \Livewire\Livewire::test(\App\Livewire\Rkap\RkapDashboard::class)
+            ->assertStatus(200)
+            ->assertViewHas('myActions', function ($myActions) use ($submissionRevision) {
+                return $myActions->contains('id', $submissionRevision->id);
+            });
+    }
 }

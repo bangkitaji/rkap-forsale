@@ -1239,7 +1239,7 @@
                   <i class="bx bx-check-circle me-1"></i> Setujui RKAP
                 </button>
 
-                <button class="btn btn-outline-danger w-100" wire:click="$set('showRevisionForm', true)"
+                <button class="btn btn-outline-danger w-100" wire:click="openRevisionForm"
                   @disabled(!$hasRejected)>
                   <i class="bx bx-x-circle me-1"></i> Minta Revisi
                 </button>

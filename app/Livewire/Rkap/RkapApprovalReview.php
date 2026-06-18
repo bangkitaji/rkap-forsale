@@ -163,7 +163,31 @@ class RkapApprovalReview extends Component
         $this->revisionReason = '';
         $this->showRevisionForm = false;
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'Permintaan revisi berhasil dikirim.');
+        session()->flash('message', 'RKAP berhasil ditolak dan dikembalikan untuk revisi.');
+    }
+
+    public function openRevisionForm(): void
+    {
+        $this->showRevisionForm = true;
+
+        $notes = [];
+        foreach ($this->submission->workPlans as $wp) {
+            $status = $this->activityStatuses[$wp->id] ?? 'pending';
+            if ($status === 'rejected') {
+                $wpNotes = trim($this->activityRevisionNotes[$wp->id] ?? '');
+                if ($wpNotes !== '') {
+                    $activityCode = $wp->program_code ?: '-';
+                    $activityTitle = $wp->program_name ?: '-';
+                    $notes[] = "- [{$activityCode} — {$activityTitle}]: {$wpNotes}";
+                }
+            }
+        }
+
+        if (!empty($notes)) {
+            $this->revisionReason = "Catatan revisi kegiatan:\n" . implode("\n", $notes);
+        } else {
+            $this->revisionReason = '';
+        }
     }
 
     public function addComment(): void
