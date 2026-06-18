@@ -402,4 +402,50 @@ class RkapReviewTest extends TestCase
                 return true;
             });
     }
+
+    public function test_open_revision_form_with_empty_notes_fails_and_dispatches_event(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG01',
+            'program_name' => 'Program Test',
+            'description' => 'Test',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'approval_status' => 'pending',
+        ]);
+
+        $this->actingAs($this->president);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->set('activityStatuses.' . $wp->id, 'rejected')
+            ->set('activityRevisionNotes.' . $wp->id, '')
+            ->call('openRevisionForm')
+            ->assertDispatched('focus-activity-revision-note', id: $wp->id);
+    }
+
+    public function test_request_revision_with_empty_notes_fails_and_dispatches_event(): void
+    {
+        $this->submission->update(['status' => 'pdir_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG01',
+            'program_name' => 'Program Test',
+            'description' => 'Test',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'approval_status' => 'pending',
+        ]);
+
+        $this->actingAs($this->president);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->set('activityStatuses.' . $wp->id, 'rejected')
+            ->set('activityRevisionNotes.' . $wp->id, '')
+            ->call('requestRevision')
+            ->assertDispatched('focus-activity-revision-note', id: $wp->id);
+    }
 }

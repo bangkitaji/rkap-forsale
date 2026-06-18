@@ -9,365 +9,365 @@ use App\Models\Traits\Searchable;
 
 class RkapSubmission extends Model
 {
-    use Searchable;
+  use Searchable;
 
-    protected $fillable = [
-        'rkap_period_id',
-        'bureau_id',
-        'created_by',
-        'current_version',
-        'status',
-        'total_budget',
-        'notes',
+  protected $fillable = [
+    'rkap_period_id',
+    'bureau_id',
+    'created_by',
+    'current_version',
+    'status',
+    'total_budget',
+    'notes',
+  ];
+
+  protected $attributes = [
+    'current_version' => 1,
+  ];
+
+  protected function casts(): array
+  {
+    return [
+      'current_version' => 'integer',
+      'total_budget' => 'decimal:2',
     ];
+  }
 
-    protected $attributes = [
-        'current_version' => 1,
-    ];
+  // ── Relationships ──
 
-    protected function casts(): array
-    {
-        return [
-            'current_version' => 'integer',
-            'total_budget' => 'decimal:2',
-        ];
+  public function period(): BelongsTo
+  {
+    return $this->belongsTo(RkapPeriod::class, 'rkap_period_id');
+  }
+
+  public function bureau(): BelongsTo
+  {
+    return $this->belongsTo(Bureau::class);
+  }
+
+  public function creator(): BelongsTo
+  {
+    return $this->belongsTo(User::class, 'created_by');
+  }
+
+  public function workPlans(): HasMany
+  {
+    return $this->hasMany(RkapWorkPlan::class)->orderBy('sort_order');
+  }
+
+  public function versions(): HasMany
+  {
+    return $this->hasMany(RkapVersion::class)->orderByDesc('version_number');
+  }
+
+  public function approvals(): HasMany
+  {
+    return $this->hasMany(RkapApproval::class)->orderByDesc('created_at');
+  }
+
+  public function comments(): HasMany
+  {
+    return $this->hasMany(RkapComment::class)->orderByDesc('created_at');
+  }
+
+  // ── Budget Calculation ──
+
+  public function calculateTotalBudget(): float
+  {
+    $total = 0;
+    foreach ($this->workPlans as $workPlan) {
+      $total += $workPlan->budgetItems->sum('total_price');
+    }
+    $this->update(['total_budget' => $total]);
+    return $total;
+  }
+
+  // ── Version Control ──
+
+  public function createVersion(string $changeType, ?string $changeReason = null): RkapVersion
+  {
+    $snapshotData = $this->workPlans->load(['budgetItems.monthlies', 'budgetItems.cashOuts'])->map(function ($wp) {
+      return [
+        'work_plan_id' => $wp->work_plan_id,
+        'activity_id' => $wp->activity_id,
+        'program_code' => $wp->program_code,
+        'program_name' => $wp->program_name,
+        'description' => $wp->description,
+        'output_target' => $wp->output_target,
+        'unit' => $wp->unit,
+        'quantity' => $wp->quantity,
+        'sort_order' => $wp->sort_order,
+        'approval_status' => $wp->approval_status,
+        'revision_notes' => $wp->revision_notes,
+        'budget_items' => $wp->budgetItems->map(function ($bi) {
+          return [
+            'id' => $bi->id,
+            'account_code' => $bi->account_code,
+            'description' => $bi->description,
+            'unit' => $bi->unit,
+            'quantity' => $bi->quantity,
+            'unit_price' => $bi->unit_price,
+            'total_price' => $bi->total_price,
+            'remarks' => $bi->remarks,
+            'monthly_distribution' => $bi->monthlies->pluck('amount', 'month')->toArray(),
+            'cash_out_distribution' => $bi->cashOuts->pluck('amount', 'month')->toArray(),
+          ];
+        })->toArray(),
+      ];
+    })->toArray();
+
+    return RkapVersion::create([
+      'rkap_submission_id' => $this->id,
+      'version_number' => $this->current_version,
+      'created_by' => auth()->id(),
+      'change_type' => $changeType,
+      'change_reason' => $changeReason,
+      'total_budget' => $this->total_budget,
+      'snapshot_data' => $snapshotData,
+    ]);
+  }
+
+  // ── Status Transitions ──
+
+  public function submit(): void
+  {
+    $this->calculateTotalBudget();
+    $this->createVersion('initial', 'Pengajuan awal');
+    $this->update(['status' => 'submitted']);
+  }
+
+  public function approveByDept(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'kepala_departemen',
+      'action' => 'approved',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'dept_approved']);
+  }
+
+  public function requestRevisionByDept(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'kepala_departemen',
+      'action' => 'revision_requested',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'dept_revision']);
+  }
+
+  public function approveByDir(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direksi',
+      'action' => 'approved',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'dir_approved']);
+  }
+
+  public function requestRevisionByDir(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direksi',
+      'action' => 'revision_requested',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'dir_revision']);
+  }
+
+  public function approveFinal(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'verifikator',
+      'action' => 'approved',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'verifikator_approved']);
+  }
+
+  public function requestRevisionByVerificator(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'verifikator',
+      'action' => 'revision_requested',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'final_revision']);
+  }
+
+  public function hasApprovedCurrentVersion(User $user): bool
+  {
+    $role = null;
+    if ($user->isPresidentDirector()) {
+      $role = 'direktur_utama';
+    } elseif ($user->isDirekturFinance()) {
+      $role = 'direktur_keuangan';
     }
 
-    // ── Relationships ──
-
-    public function period(): BelongsTo
-    {
-        return $this->belongsTo(RkapPeriod::class, 'rkap_period_id');
+    if (!$role) {
+      return false;
     }
 
-    public function bureau(): BelongsTo
-    {
-        return $this->belongsTo(Bureau::class);
+    return $this->approvals()
+      ->where('version_number', $this->current_version)
+      ->where('role', $role)
+      ->where('action', 'approved')
+      ->exists();
+  }
+
+  public function approveByPresident(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direktur_utama',
+      'action' => 'approved',
+      'comments' => $comments,
+    ]);
+    $this->checkParallelApprovalAndFinalize();
+  }
+
+  public function requestRevisionByPresident(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direktur_utama',
+      'action' => 'revision_requested',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'pdir_revision']);
+  }
+
+  public function approveByFinance(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direktur_keuangan',
+      'action' => 'approved',
+      'comments' => $comments,
+    ]);
+    $this->checkParallelApprovalAndFinalize();
+  }
+
+  public function requestRevisionByFinance(User $user, ?string $comments = null): void
+  {
+    $this->approvals()->create([
+      'user_id' => $user->id,
+      'version_number' => $this->current_version,
+      'role' => 'direktur_keuangan',
+      'action' => 'revision_requested',
+      'comments' => $comments,
+    ]);
+    $this->update(['status' => 'pdir_revision']);
+  }
+
+  public function checkParallelApprovalAndFinalize(): void
+  {
+    $hasDirut = $this->approvals()
+      ->where('version_number', $this->current_version)
+      ->where('role', 'direktur_utama')
+      ->where('action', 'approved')
+      ->exists();
+
+    $hasFinance = $this->approvals()
+      ->where('version_number', $this->current_version)
+      ->where('role', 'direktur_keuangan')
+      ->where('action', 'approved')
+      ->exists();
+
+    if ($hasDirut && $hasFinance) {
+      $this->update(['status' => 'approved']);
+    } else {
+      $this->update(['status' => 'pdir_review']);
     }
+  }
 
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
+  public function revise(): void
+  {
+    $this->increment('current_version');
+    $this->update(['status' => 'draft']);
+  }
+
+  // ── Authorization Helpers ──
+
+  public function canBeEditedBy(User $user): bool
+  {
+    if (!in_array($this->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
+      return false;
     }
+    return $user->bureau_id === $this->bureau_id;
+  }
 
-    public function workPlans(): HasMany
-    {
-        return $this->hasMany(RkapWorkPlan::class)->orderBy('sort_order');
+  public function canBeReviewedBy(User $user): bool
+  {
+    // Kepala Departemen
+    if ($this->status === 'submitted' && $user->hasRole('kepala_departemen')) {
+      return $user->department_id === $this->bureau->department_id;
     }
-
-    public function versions(): HasMany
-    {
-        return $this->hasMany(RkapVersion::class)->orderByDesc('version_number');
+    // Direksi
+    if ($this->status === 'dir_review' && $user->hasRole('direksi')) {
+      return $user->directorate_id === $this->bureau->department->directorate_id;
     }
-
-    public function approvals(): HasMany
-    {
-        return $this->hasMany(RkapApproval::class)->orderByDesc('created_at');
+    // Verifikator
+    if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
+      return true;
     }
-
-    public function comments(): HasMany
-    {
-        return $this->hasMany(RkapComment::class)->orderByDesc('created_at');
+    // President Director & Direktur Finance
+    if ($this->status === 'pdir_review') {
+      if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
+        return !$this->hasApprovedCurrentVersion($user);
+      }
     }
+    return false;
+  }
 
-    // ── Budget Calculation ──
+  // ── Status Helpers ──
 
-    public function calculateTotalBudget(): float
-    {
-        $total = 0;
-        foreach ($this->workPlans as $workPlan) {
-            $total += $workPlan->budgetItems->sum('total_price');
-        }
-        $this->update(['total_budget' => $total]);
-        return $total;
-    }
+  public function getStatusLabelAttribute(): string
+  {
+    return match ($this->status) {
+      'draft' => 'Draft',
+      'submitted' => 'Diajukan',
+      'dept_review' => 'Review General Manager',
+      'dept_approved' => 'Disetujui General Manager',
+      'dept_revision' => 'Revisi General Manager',
+      'dir_review' => 'Review Direksi',
+      'dir_approved' => 'Disetujui Direksi',
+      'dir_revision' => 'Revisi Direksi',
+      'final_review' => 'Verifikasi Final',
+      'final_revision' => 'Revisi Verifikator',
+      'verifikator_approved' => 'Verifikasi Selesai',
+      'pdir_review' => 'Review Dirut / Dirkeu',
+      'pdir_revision' => 'Revisi Dirut / Dirkeu',
+      'approved' => 'Disetujui',
+      default => $this->status,
+    };
+  }
 
-    // ── Version Control ──
-
-    public function createVersion(string $changeType, ?string $changeReason = null): RkapVersion
-    {
-        $snapshotData = $this->workPlans->load(['budgetItems.monthlies', 'budgetItems.cashOuts'])->map(function ($wp) {
-            return [
-                'work_plan_id' => $wp->work_plan_id,
-                'activity_id' => $wp->activity_id,
-                'program_code' => $wp->program_code,
-                'program_name' => $wp->program_name,
-                'description' => $wp->description,
-                'output_target' => $wp->output_target,
-                'unit' => $wp->unit,
-                'quantity' => $wp->quantity,
-                'sort_order' => $wp->sort_order,
-                'approval_status' => $wp->approval_status,
-                'revision_notes' => $wp->revision_notes,
-                'budget_items' => $wp->budgetItems->map(function ($bi) {
-                    return [
-                        'id' => $bi->id,
-                        'account_code' => $bi->account_code,
-                        'description' => $bi->description,
-                        'unit' => $bi->unit,
-                        'quantity' => $bi->quantity,
-                        'unit_price' => $bi->unit_price,
-                        'total_price' => $bi->total_price,
-                        'remarks' => $bi->remarks,
-                        'monthly_distribution' => $bi->monthlies->pluck('amount', 'month')->toArray(),
-                        'cash_out_distribution' => $bi->cashOuts->pluck('amount', 'month')->toArray(),
-                    ];
-                })->toArray(),
-            ];
-        })->toArray();
-
-        return RkapVersion::create([
-            'rkap_submission_id' => $this->id,
-            'version_number' => $this->current_version,
-            'created_by' => auth()->id(),
-            'change_type' => $changeType,
-            'change_reason' => $changeReason,
-            'total_budget' => $this->total_budget,
-            'snapshot_data' => $snapshotData,
-        ]);
-    }
-
-    // ── Status Transitions ──
-
-    public function submit(): void
-    {
-        $this->calculateTotalBudget();
-        $this->createVersion('initial', 'Pengajuan awal');
-        $this->update(['status' => 'submitted']);
-    }
-
-    public function approveByDept(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'kepala_departemen',
-            'action' => 'approved',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'dept_approved']);
-    }
-
-    public function requestRevisionByDept(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'kepala_departemen',
-            'action' => 'revision_requested',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'dept_revision']);
-    }
-
-    public function approveByDir(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direksi',
-            'action' => 'approved',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'dir_approved']);
-    }
-
-    public function requestRevisionByDir(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direksi',
-            'action' => 'revision_requested',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'dir_revision']);
-    }
-
-    public function approveFinal(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'verifikator',
-            'action' => 'approved',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'verifikator_approved']);
-    }
-
-    public function requestRevisionByVerificator(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'verifikator',
-            'action' => 'revision_requested',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'final_revision']);
-    }
-
-    public function hasApprovedCurrentVersion(User $user): bool
-    {
-        $role = null;
-        if ($user->isPresidentDirector()) {
-            $role = 'direktur_utama';
-        } elseif ($user->isDirekturFinance()) {
-            $role = 'direktur_keuangan';
-        }
-
-        if (!$role) {
-            return false;
-        }
-
-        return $this->approvals()
-            ->where('version_number', $this->current_version)
-            ->where('role', $role)
-            ->where('action', 'approved')
-            ->exists();
-    }
-
-    public function approveByPresident(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direktur_utama',
-            'action' => 'approved',
-            'comments' => $comments,
-        ]);
-        $this->checkParallelApprovalAndFinalize();
-    }
-
-    public function requestRevisionByPresident(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direktur_utama',
-            'action' => 'revision_requested',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'pdir_revision']);
-    }
-
-    public function approveByFinance(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direktur_keuangan',
-            'action' => 'approved',
-            'comments' => $comments,
-        ]);
-        $this->checkParallelApprovalAndFinalize();
-    }
-
-    public function requestRevisionByFinance(User $user, ?string $comments = null): void
-    {
-        $this->approvals()->create([
-            'user_id' => $user->id,
-            'version_number' => $this->current_version,
-            'role' => 'direktur_keuangan',
-            'action' => 'revision_requested',
-            'comments' => $comments,
-        ]);
-        $this->update(['status' => 'pdir_revision']);
-    }
-
-    public function checkParallelApprovalAndFinalize(): void
-    {
-        $hasDirut = $this->approvals()
-            ->where('version_number', $this->current_version)
-            ->where('role', 'direktur_utama')
-            ->where('action', 'approved')
-            ->exists();
-
-        $hasFinance = $this->approvals()
-            ->where('version_number', $this->current_version)
-            ->where('role', 'direktur_keuangan')
-            ->where('action', 'approved')
-            ->exists();
-
-        if ($hasDirut && $hasFinance) {
-            $this->update(['status' => 'approved']);
-        } else {
-            $this->update(['status' => 'pdir_review']);
-        }
-    }
-
-    public function revise(): void
-    {
-        $this->increment('current_version');
-        $this->update(['status' => 'draft']);
-    }
-
-    // ── Authorization Helpers ──
-
-    public function canBeEditedBy(User $user): bool
-    {
-        if (!in_array($this->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
-            return false;
-        }
-        return $user->bureau_id === $this->bureau_id;
-    }
-
-    public function canBeReviewedBy(User $user): bool
-    {
-        // Kepala Departemen
-        if ($this->status === 'submitted' && $user->hasRole('kepala_departemen')) {
-            return $user->department_id === $this->bureau->department_id;
-        }
-        // Direksi
-        if ($this->status === 'dir_review' && $user->hasRole('direksi')) {
-            return $user->directorate_id === $this->bureau->department->directorate_id;
-        }
-        // Verifikator
-        if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
-            return true;
-        }
-        // President Director & Direktur Finance
-        if ($this->status === 'pdir_review') {
-            if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
-                return !$this->hasApprovedCurrentVersion($user);
-            }
-        }
-        return false;
-    }
-
-    // ── Status Helpers ──
-
-    public function getStatusLabelAttribute(): string
-    {
-        return match ($this->status) {
-            'draft' => 'Draft',
-            'submitted' => 'Diajukan',
-            'dept_review' => 'Review Kadep',
-            'dept_approved' => 'Disetujui Kadep',
-            'dept_revision' => 'Revisi Kadep',
-            'dir_review' => 'Review Direksi',
-            'dir_approved' => 'Disetujui Direksi',
-            'dir_revision' => 'Revisi Direksi',
-            'final_review' => 'Verifikasi Final',
-            'final_revision' => 'Revisi Verifikator',
-            'verifikator_approved' => 'Disetujui Verifikator',
-            'pdir_review' => 'Review Dirut',
-            'pdir_revision' => 'Revisi Dirut',
-            'approved' => 'Disetujui',
-            default => $this->status,
-        };
-    }
-
-    public function getStatusColorAttribute(): string
-    {
-        return match ($this->status) {
-            'draft' => 'secondary',
-            'submitted', 'dept_review', 'dir_review', 'final_review', 'pdir_review' => 'info',
-            'dept_approved', 'dir_approved', 'verifikator_approved' => 'primary',
-            'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision' => 'warning',
-            'approved' => 'success',
-            default => 'secondary',
-        };
-    }
+  public function getStatusColorAttribute(): string
+  {
+    return match ($this->status) {
+      'draft' => 'secondary',
+      'submitted', 'dept_review', 'dir_review', 'final_review', 'pdir_review' => 'info',
+      'dept_approved', 'dir_approved', 'verifikator_approved' => 'primary',
+      'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision' => 'warning',
+      'approved' => 'success',
+      default => 'secondary',
+    };
+  }
 }

@@ -119,6 +119,7 @@ class RkapApprovalReview extends Component
                 $notes = trim($this->activityRevisionNotes[$wp->id] ?? '');
                 if (empty($notes)) {
                     session()->flash('error', 'Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.');
+                    $this->dispatch('focus-activity-revision-note', id: $wp->id);
                     return;
                 }
             }
@@ -168,6 +169,32 @@ class RkapApprovalReview extends Component
 
     public function openRevisionForm(): void
     {
+        $hasRejected = false;
+        $missingNotesWpId = null;
+
+        foreach ($this->submission->workPlans as $wp) {
+            $status = $this->activityStatuses[$wp->id] ?? 'pending';
+            if ($status === 'rejected') {
+                $hasRejected = true;
+                $notes = trim($this->activityRevisionNotes[$wp->id] ?? '');
+                if ($notes === '') {
+                    $missingNotesWpId = $wp->id;
+                    break;
+                }
+            }
+        }
+
+        if ($missingNotesWpId !== null) {
+            session()->flash('error', 'Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.');
+            $this->dispatch('focus-activity-revision-note', id: $missingNotesWpId);
+            return;
+        }
+
+        if (!$hasRejected) {
+            session()->flash('error', 'Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.');
+            return;
+        }
+
         $this->showRevisionForm = true;
 
         $notes = [];

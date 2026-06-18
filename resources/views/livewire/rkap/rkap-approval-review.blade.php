@@ -1,4 +1,12 @@
-<div>
+<div @focus-activity-revision-note.window="
+  $nextTick(() => {
+    const el = document.getElementById('activity-revision-note-' + $event.detail.id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
+    }
+  });
+">
   <style>
     /* Custom CSS Tooltip styling */
     .has-tooltip {
@@ -460,7 +468,8 @@
                       @endphp
                       @if ($prevProgramData)
                         <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
-                          ({{ $prevPeriod }})</div>
+                          ({{ $prevPeriod }})
+                        </div>
                         <div class="row text-center">
                           <div class="col-4 border-end">
                             <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
@@ -623,12 +632,14 @@
                               <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }}
                               ({{ $item['quantity'] }} {{ $item['unit'] }} @ Rp
                               {{ number_format($item['unit_price'], 0, ',', '.') }} = Rp
-                              {{ number_format($item['total_price'], 0, ',', '.') }})</li>
+                              {{ number_format($item['total_price'], 0, ',', '.') }})
+                            </li>
                           @endforeach
                           @foreach ($actChanges['removed_items'] as $item)
                             <li class="text-danger"><i class="bx bx-minus-circle me-1"></i> Menghapus anggaran:
                               <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }} (Sebelumnya:
-                              Rp {{ number_format($item['total_price'], 0, ',', '.') }})</li>
+                              Rp {{ number_format($item['total_price'], 0, ',', '.') }})
+                            </li>
                           @endforeach
                           @foreach ($actChanges['modified_items'] as $item)
                             <li>
@@ -637,13 +648,15 @@
                               <ul class="mb-0 ps-3" style="list-style-type: circle;">
                                 @if (($item['old']['description'] ?? '') !== ($item['new']['description'] ?? ''))
                                   <li>Deskripsi: <code>{{ $item['old']['description'] }}</code> →
-                                    <code>{{ $item['new']['description'] }}</code></li>
+                                    <code>{{ $item['new']['description'] }}</code>
+                                  </li>
                                 @endif
                                 @if (
                                     ($item['old']['quantity'] ?? 0) != ($item['new']['quantity'] ?? 0) ||
                                         ($item['old']['unit'] ?? '') !== ($item['new']['unit'] ?? ''))
                                   <li>Volume: <code>{{ $item['old']['quantity'] }} {{ $item['old']['unit'] }}</code> →
-                                    <code>{{ $item['new']['quantity'] }} {{ $item['new']['unit'] }}</code></li>
+                                    <code>{{ $item['new']['quantity'] }} {{ $item['new']['unit'] }}</code>
+                                  </li>
                                 @endif
                                 @if (($item['old']['unit_price'] ?? 0) != ($item['new']['unit_price'] ?? 0))
                                   <li>Harga Satuan: <code>Rp
@@ -657,7 +670,8 @@
                                 @endif
                                 @if (($item['old']['remarks'] ?? '') !== ($item['new']['remarks'] ?? ''))
                                   <li>Catatan: <code>{{ $item['old']['remarks'] ?: '-' }}</code> →
-                                    <code>{{ $item['new']['remarks'] ?: '-' }}</code></li>
+                                    <code>{{ $item['new']['remarks'] ?: '-' }}</code>
+                                  </li>
                                 @endif
                               </ul>
                             </li>
@@ -685,7 +699,7 @@
                       <label class="form-label text-danger fw-semibold small">Catatan Revisi Kegiatan <span
                           class="text-danger">*</span></label>
                       @if ($this->canApprove())
-                        <textarea class="form-control bg-white" wire:model.blur="activityRevisionNotes.{{ $wp['model']?->id }}"
+                        <textarea id="activity-revision-note-{{ $wp['model']?->id }}" class="form-control bg-white" wire:model.blur="activityRevisionNotes.{{ $wp['model']?->id }}"
                           rows="2" placeholder="Tuliskan catatan perbaikan untuk kegiatan ini..."></textarea>
                       @else
                         <p class="mb-0 text-dark small">
@@ -799,7 +813,9 @@
                               $isBiVirtual = $bi['is_virtual'] ?? false;
                               $allocationModalId =
                                   'allocationDetailModal-' .
-                                  ($isBiVirtual ? md5($bi['account_code'] . $bi['description'] . $seq) : $bi['model']->id);
+                                  ($isBiVirtual
+                                      ? md5($bi['account_code'] . $bi['description'] . $seq)
+                                      : $bi['model']->id);
                               $monthNames = [
                                   1 => 'Jan',
                                   2 => 'Feb',
@@ -820,7 +836,9 @@
                               $itemKey =
                                   $prevWpId && $prevActId && $accountCode
                                       ? "{$prevWpId}-{$prevActId}-{$accountCode}-" .
-                                          trim(strtolower($bi['description'])) . '-' . $seq
+                                          trim(strtolower($bi['description'])) .
+                                          '-' .
+                                          $seq
                                       : null;
                               $prevItemData =
                                   $itemKey && isset($prevData['map']['items'][$itemKey])
@@ -1159,19 +1177,21 @@
           </div>
           <div class="card-body mt-3">
             @if ($showRevisionForm)
-              <div class="mb-3">
+              <div class="mb-3" wire:key="revision-reason-wrapper">
                 <label class="form-label text-danger">Alasan Permintaan Revisi <span
                     class="text-danger">*</span></label>
                 <textarea class="form-control @error('revisionReason') is-invalid @enderror" wire:model="revisionReason"
-                  rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..."></textarea>
+                  rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..." wire:key="revision-reason-textarea"
+                  readonly></textarea>
                 @error('revisionReason')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
               </div>
-              <div class="d-flex gap-2">
-                <button class="btn btn-label-secondary w-50"
+              <div class="d-flex gap-2" wire:key="revision-action-buttons">
+                <button class="btn btn-label-secondary w-50" wire:key="btn-cancel-revision"
                   wire:click="$set('showRevisionForm', false)">Batal</button>
-                <button class="btn btn-danger w-50" wire:click="requestRevision" wire:loading.attr="disabled">Kirim
+                <button class="btn btn-danger w-50" wire:key="btn-submit-revision" wire:click="requestRevision"
+                  wire:confirm="Yakin ingin menolak dan meminta revisi RKAP ini?" wire:loading.attr="disabled">Kirim
                   Permintaan</button>
               </div>
             @else
@@ -1234,13 +1254,13 @@
                   @endif
                 </div>
 
-                <button class="btn btn-success w-100" wire:click="approve" wire:loading.attr="disabled"
-                  wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
+                <button class="btn btn-success w-100" wire:key="btn-approve-rkap" wire:click="approve"
+                  wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
                   <i class="bx bx-check-circle me-1"></i> Setujui RKAP
                 </button>
 
-                <button class="btn btn-outline-danger w-100" wire:click="openRevisionForm"
-                  @disabled(!$hasRejected)>
+                <button class="btn btn-outline-danger w-100" wire:key="btn-open-revision-form"
+                  wire:click="openRevisionForm" @disabled(!$hasRejected)>
                   <i class="bx bx-x-circle me-1"></i> Minta Revisi
                 </button>
                 @if (!$hasRejected)
@@ -1310,7 +1330,8 @@
                     <small class="text-muted">{{ $approval->created_at->format('d M Y, H:i') }}</small>
                   </div>
                   <p class="mb-0 small">Oleh: <strong>{{ $approval->user->name }}</strong>
-                    ({{ \Illuminate\Support\Str::headline($approval->role) }})</p>
+                    ({{ \Illuminate\Support\Str::headline($approval->role) }})
+                  </p>
                   @if ($approval->comments)
                     <div
                       class="mt-2 p-2 bg-lighter rounded small border-start border-{{ $approval->action_color }} border-3">
