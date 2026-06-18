@@ -311,4 +311,95 @@ class RkapReviewTest extends TestCase
         $this->assertEquals('revision_requested', $latestApproval->action);
         $this->assertEquals('Budget allocation for travel is too high.', $latestApproval->comments);
     }
+
+    public function test_approver_sees_inline_revision_changes_on_review(): void
+    {
+        $this->actingAs($this->creator);
+
+        // 1. Setup initial activity & budget item
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG01',
+            'program_name' => 'Program Test',
+            'description' => 'Test V1',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'approval_status' => 'pending',
+            'sort_order' => 1,
+        ]);
+
+        $bi = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => '510101',
+            'description' => 'Travel Expense',
+            'quantity' => 1,
+            'unit' => 'Pax',
+            'unit_price' => 1000000,
+            'total_price' => 1000000,
+        ]);
+
+        // Capture Version 1 snapshot
+        $this->submission->load('workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts');
+        $this->submission->createVersion('initial', 'Pengajuan Awal');
+
+        // 2. Simulate revision changes (version 2)
+        $this->submission->increment('current_version');
+
+        // Edit description
+        $wp->update(['description' => 'Test V2']);
+
+        // Modify travel expense quantity from 1 to 2
+        $bi->update([
+            'quantity' => 2,
+            'total_price' => 2000000,
+        ]);
+
+        // Add a new budget item
+        $newBi = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => '510102',
+            'description' => 'Accommodation',
+            'quantity' => 1,
+            'unit' => 'Night',
+            'unit_price' => 500000,
+            'total_price' => 500000,
+        ]);
+
+        // Capture Version 2 snapshot
+        $this->submission->load('workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts');
+        $this->submission->createVersion('revision', 'Pengisian Revisi');
+
+        // 3. Act as reviewer and load the Livewire component
+        $this->actingAs($this->kadept);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->assertSet('submission.current_version', 2)
+            ->assertSet('prevVersionSnapshot', $this->submission->versions->firstWhere('version_number', 1)->snapshot_data)
+            ->assertViewHas('revisionChanges', function ($changes) use ($wp, $bi, $newBi) {
+                $actChanges = $changes[$wp->id] ?? null;
+                if (!$actChanges || !$actChanges['has_changes']) {
+                    return false;
+                }
+
+                // Check description change registered
+                $descChange = collect($actChanges['activity_level_changes'])->firstWhere('field', 'Deskripsi / Tujuan');
+                if (!$descChange || $descChange['old'] !== 'Test V1' || $descChange['new'] !== 'Test V2') {
+                    return false;
+                }
+
+                // Check new budget item added
+                $added = collect($actChanges['added_items'])->firstWhere('account_code', '510102');
+                if (!$added || $added['description'] !== 'Accommodation') {
+                    return false;
+                }
+
+                // Check modified budget item
+                $modified = collect($actChanges['modified_items'])->firstWhere('id', $bi->id);
+                if (!$modified || $modified['old']['quantity'] != 1 || $modified['new']['quantity'] != 2) {
+                    return false;
+                }
+
+                return true;
+            });
+    }
 }

@@ -88,6 +88,8 @@ class RkapSubmission extends Model
     {
         $snapshotData = $this->workPlans->load(['budgetItems.monthlies', 'budgetItems.cashOuts'])->map(function ($wp) {
             return [
+                'work_plan_id' => $wp->work_plan_id,
+                'activity_id' => $wp->activity_id,
                 'program_code' => $wp->program_code,
                 'program_name' => $wp->program_name,
                 'description' => $wp->description,

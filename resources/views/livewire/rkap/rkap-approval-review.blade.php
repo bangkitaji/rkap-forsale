@@ -522,6 +522,53 @@
                             </div>
                             @endif
 
+                            {{-- Revision Changes Summary --}}
+                            @if(!$isWpVirtual && isset($revisionChanges[$wp['model']?->id]))
+                                @php
+                                    $actChanges = $revisionChanges[$wp['model']->id];
+                                @endphp
+                                @if($actChanges['has_changes'])
+                                    <div class="alert alert-warning border-warning p-3 mb-3" style="background-color: #fffdf5;">
+                                        <h6 class="alert-heading fw-bold text-warning mb-2 d-flex align-items-center">
+                                            <i class="bx bx-edit-alt me-1"></i> Perubahan pada Revisi Ini (Versi {{ $submission->current_version - 1 }} → {{ $submission->current_version }})
+                                        </h6>
+                                        <ul class="mb-0 ps-3 small text-dark" style="list-style-type: disc;">
+                                            @foreach($actChanges['activity_level_changes'] as $c)
+                                                <li><strong>{{ $c['field'] }}</strong> diubah dari <code>{{ $c['old'] }}</code> menjadi <code>{{ $c['new'] }}</code></li>
+                                            @endforeach
+                                            @foreach($actChanges['added_items'] as $item)
+                                                <li class="text-success"><i class="bx bx-plus-circle me-1"></i> Menambahkan anggaran: <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }} ({{ $item['quantity'] }} {{ $item['unit'] }} @ Rp {{ number_format($item['unit_price'], 0, ',', '.') }} = Rp {{ number_format($item['total_price'], 0, ',', '.') }})</li>
+                                            @endforeach
+                                            @foreach($actChanges['removed_items'] as $item)
+                                                <li class="text-danger"><i class="bx bx-minus-circle me-1"></i> Menghapus anggaran: <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }} (Sebelumnya: Rp {{ number_format($item['total_price'], 0, ',', '.') }})</li>
+                                            @endforeach
+                                            @foreach($actChanges['modified_items'] as $item)
+                                                <li>
+                                                    <i class="bx bx-pencil text-warning me-1"></i> Mengubah anggaran <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }}:
+                                                    <ul class="mb-0 ps-3" style="list-style-type: circle;">
+                                                        @if(($item['old']['description'] ?? '') !== ($item['new']['description'] ?? ''))
+                                                            <li>Deskripsi: <code>{{ $item['old']['description'] }}</code> → <code>{{ $item['new']['description'] }}</code></li>
+                                                        @endif
+                                                        @if(($item['old']['quantity'] ?? 0) != ($item['new']['quantity'] ?? 0) || ($item['old']['unit'] ?? '') !== ($item['new']['unit'] ?? ''))
+                                                            <li>Volume: <code>{{ $item['old']['quantity'] }} {{ $item['old']['unit'] }}</code> → <code>{{ $item['new']['quantity'] }} {{ $item['new']['unit'] }}</code></li>
+                                                        @endif
+                                                        @if(($item['old']['unit_price'] ?? 0) != ($item['new']['unit_price'] ?? 0))
+                                                            <li>Harga Satuan: <code>Rp {{ number_format($item['old']['unit_price'], 0, ',', '.') }}</code> → <code>Rp {{ number_format($item['new']['unit_price'], 0, ',', '.') }}</code></li>
+                                                        @endif
+                                                        @if(($item['old']['total_price'] ?? 0) != ($item['new']['total_price'] ?? 0))
+                                                            <li>Total: <code>Rp {{ number_format($item['old']['total_price'], 0, ',', '.') }}</code> → <code>Rp {{ number_format($item['new']['total_price'], 0, ',', '.') }}</code></li>
+                                                        @endif
+                                                        @if(($item['old']['remarks'] ?? '') !== ($item['new']['remarks'] ?? ''))
+                                                            <li>Catatan: <code>{{ $item['old']['remarks'] ?: '-' }}</code> → <code>{{ $item['new']['remarks'] ?: '-' }}</code></li>
+                                                        @endif
+                                                    </ul>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                            @endif
+
                             <div class="row g-2 mb-3 small">
                                 <div class="col-auto">
                                     <span class="text-muted">Target Output:</span> <span class="fw-medium @if($isWpVirtual) text-danger @else text-dark @endif">{{ $wp['output_target'] ?? '-' }}</span>
@@ -625,24 +672,37 @@
                                         </tr>
                                         @foreach($items as $bi)
                                         @php
-                                        $isBiVirtual = $bi['is_virtual'] ?? false;
-                                        $allocationModalId = 'allocationDetailModal-' . ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
-                                        $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
-                                        
-                                        $prevActId = $wp['activity_id'] ?? null;
-                                        $itemKey = ($prevWpId && $prevActId && $accountCode) ? "{$prevWpId}-{$prevActId}-{$accountCode}-" . trim(strtolower($bi['description'])) : null;
-                                        $prevItemData = ($itemKey && isset($prevData['map']['items'][$itemKey])) ? $prevData['map']['items'][$itemKey] : null;
-                                        $prevItemBudget = $prevItemData ? (float) $prevItemData['budget'] : null;
-                                        $itemDiff = $prevItemBudget !== null ? ($bi['total_price'] - $prevItemBudget) : null;
-                                        $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
+                                         $isBiVirtual = $bi['is_virtual'] ?? false;
+                                         $allocationModalId = 'allocationDetailModal-' . ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
+                                         $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                         
+                                         $prevWpId = $wp['work_plan_id'] ?? null;
+                                         $prevActId = $wp['activity_id'] ?? null;
+                                         $itemKey = ($prevWpId && $prevActId && $accountCode) ? "{$prevWpId}-{$prevActId}-{$accountCode}-" . trim(strtolower($bi['description'])) : null;
+                                         $prevItemData = ($itemKey && isset($prevData['map']['items'][$itemKey])) ? $prevData['map']['items'][$itemKey] : null;
+                                         $prevItemBudget = $prevItemData ? (float) $prevItemData['budget'] : null;
+                                         $itemDiff = $prevItemBudget !== null ? ($bi['total_price'] - $prevItemBudget) : null;
+                                         $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
+
+                                         // Dynamic revision tracking comparisons
+                                         $actChanges = isset($revisionChanges[$wp['model']?->id]) ? $revisionChanges[$wp['model']->id] : null;
+                                         $biModelId = !$isBiVirtual && $bi['model'] ? $bi['model']->id : null;
+                                         $isBiRevisionAdded = $biModelId && $actChanges && in_array($biModelId, $actChanges['added_bi_ids']);
+                                         $biRevisionModifiedData = $biModelId && $actChanges && isset($actChanges['modified_bi_map'][$biModelId]) ? $actChanges['modified_bi_map'][$biModelId] : null;
                                         @endphp
-                                        <tr @if($isBiVirtual) style="background-color: #fff9f9;" @endif>
+                                        <tr @if($isBiVirtual) style="background-color: #fff9f9;" @elseif($isBiRevisionAdded) style="background-color: #e8f5e9;" @elseif($biRevisionModifiedData) style="background-color: #fffde7;" @endif>
                                             <td>
                                                 <span class="@if($isBiVirtual) text-danger text-decoration-line-through @endif">
                                                     {{ $bi['remarks'] ?: $bi['description'] }}
                                                 </span>
                                                 @if($isBiVirtual)
                                                     <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
+                                                @endif
+                                                @if($isBiRevisionAdded)
+                                                    <span class="badge bg-success ms-1" style="font-size: 0.6rem;">Baru</span>
+                                                @endif
+                                                @if($biRevisionModifiedData)
+                                                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">Diubah</span>
                                                 @endif
                                             </td>
                                             <td class="text-center @if($isBiVirtual) text-danger @endif">
@@ -652,6 +712,9 @@
                                                 @else
                                                     {{ $bi['quantity'] }}
                                                 @endif
+                                                @if($biRevisionModifiedData && ($biRevisionModifiedData['quantity'] != $bi['quantity']))
+                                                    <div class="text-muted small text-decoration-line-through">Sblm: {{ $biRevisionModifiedData['quantity'] }}</div>
+                                                @endif
                                             </td>
                                             <td class="@if($isBiVirtual) text-danger @endif">
                                                 @if(!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
@@ -660,10 +723,21 @@
                                                 @else
                                                     {{ $bi['unit'] }}
                                                 @endif
+                                                @if($biRevisionModifiedData && (($biRevisionModifiedData['unit'] ?? '') !== ($bi['unit'] ?? '')))
+                                                    <div class="text-muted small text-decoration-line-through">Sblm: {{ $biRevisionModifiedData['unit'] }}</div>
+                                                @endif
                                             </td>
-                                            <td class="text-end @if($isBiVirtual) text-danger @endif">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
+                                            <td class="text-end @if($isBiVirtual) text-danger @endif">
+                                                Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}
+                                                @if($biRevisionModifiedData && ($biRevisionModifiedData['unit_price'] != $bi['unit_price']))
+                                                    <div class="text-muted small text-decoration-line-through text-end">Sblm: Rp {{ number_format($biRevisionModifiedData['unit_price'], 0, ',', '.') }}</div>
+                                                @endif
+                                            </td>
                                             <td class="text-end">
                                                 <div class="fw-semibold @if($isBiVirtual) text-danger @else text-primary @endif">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</div>
+                                                @if($biRevisionModifiedData && ($biRevisionModifiedData['total_price'] != $bi['total_price']))
+                                                    <div class="text-muted small text-decoration-line-through text-end">Sblm: Rp {{ number_format($biRevisionModifiedData['total_price'], 0, ',', '.') }}</div>
+                                                @endif
                                             </td>
                                             <!-- RKAP Sblm -->
                                             <td class="text-end text-secondary" style="font-size: 0.8rem;">
@@ -836,6 +910,33 @@
                                             </td>
                                         </tr>
                                         @endforeach
+
+                                        {{-- Removed Budget Items in Revision --}}
+                                        @if($actChanges && !empty($actChanges['removed_items']))
+                                            @foreach($actChanges['removed_items'] as $removedBi)
+                                                <tr style="background-color: #fff5f5;">
+                                                    <td class="text-danger">
+                                                        <span class="text-decoration-line-through">
+                                                            <strong>{{ $removedBi['account_code'] }}</strong> - {{ $removedBi['remarks'] ?: $removedBi['description'] }}
+                                                        </span>
+                                                        <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus pada Revisi</span>
+                                                    </td>
+                                                    <td class="text-center text-danger">
+                                                        {{ $removedBi['quantity'] }}
+                                                    </td>
+                                                    <td class="text-danger">
+                                                        {{ $removedBi['unit'] }}
+                                                    </td>
+                                                    <td class="text-end text-danger">
+                                                        Rp {{ number_format($removedBi['unit_price'], 0, ',', '.') }}
+                                                    </td>
+                                                    <td class="text-end text-danger text-decoration-line-through fw-semibold">
+                                                        Rp {{ number_format($removedBi['total_price'], 0, ',', '.') }}
+                                                    </td>
+                                                    <td colspan="3"></td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
                                         @endforeach
                                     </tbody>
                                 </table>

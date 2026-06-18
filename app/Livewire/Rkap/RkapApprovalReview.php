@@ -655,12 +655,196 @@ class RkapApprovalReview extends Component
         ];
     }
 
+    public function getPrevVersionSnapshotProperty(): ?array
+    {
+        if ($this->submission->current_version <= 1) {
+            return null;
+        }
+
+        $prevVersion = $this->submission->versions->firstWhere('version_number', $this->submission->current_version - 1);
+        return $prevVersion ? $prevVersion->snapshot_data : null;
+    }
+
+    public function getRevisionChangesProperty(): array
+    {
+        $prevSnapshot = $this->prevVersionSnapshot;
+        if (!$prevSnapshot) {
+            return [];
+        }
+
+        $prevMap = [];
+        foreach ($prevSnapshot as $wp) {
+            $key = (!empty($wp['work_plan_id']) && !empty($wp['activity_id']))
+                ? "{$wp['work_plan_id']}-{$wp['activity_id']}"
+                : "{$wp['program_code']}-" . trim(strtolower($wp['program_name']));
+            $prevMap[$key] = $wp;
+        }
+
+        $changes = [];
+
+        foreach ($this->submission->workPlans as $wp) {
+            $key = "{$wp->work_plan_id}-{$wp->activity_id}";
+            $fallbackKey = "{$wp->program_code}-" . trim(strtolower($wp->program_name));
+
+            $prevWp = $prevMap[$key] ?? ($prevMap[$fallbackKey] ?? null);
+
+            $wpChanges = [
+                'has_changes' => false,
+                'activity_level_changes' => [],
+                'added_items' => [],
+                'removed_items' => [],
+                'modified_items' => [],
+                'added_bi_ids' => [],
+                'modified_bi_map' => [],
+            ];
+
+            if ($prevWp) {
+                // Check activity level changes
+                if (($prevWp['description'] ?? '') !== ($wp->description ?? '')) {
+                    $wpChanges['activity_level_changes'][] = [
+                        'field' => 'Deskripsi / Tujuan',
+                        'old' => $prevWp['description'] ?? '-',
+                        'new' => $wp->description ?? '-',
+                    ];
+                    $wpChanges['has_changes'] = true;
+                }
+                if (($prevWp['output_target'] ?? '') !== ($wp->output_target ?? '')) {
+                    $wpChanges['activity_level_changes'][] = [
+                        'field' => 'Target Output',
+                        'old' => $prevWp['output_target'] ?? '-',
+                        'new' => $wp->output_target ?? '-',
+                    ];
+                    $wpChanges['has_changes'] = true;
+                }
+                if ((float)($prevWp['quantity'] ?? 0) !== (float)($wp->quantity ?? 0) || ($prevWp['unit'] ?? '') !== ($wp->unit ?? '')) {
+                    $wpChanges['activity_level_changes'][] = [
+                        'field' => 'Volume / Unit Kegiatan',
+                        'old' => ($prevWp['quantity'] ?? 0) . ' ' . ($prevWp['unit'] ?? ''),
+                        'new' => $wp->quantity . ' ' . $wp->unit,
+                    ];
+                    $wpChanges['has_changes'] = true;
+                }
+
+                // Match budget items
+                $prevBis = $prevWp['budget_items'] ?? [];
+                $currBis = $wp->budgetItems;
+
+                $prevBiMap = [];
+                foreach ($prevBis as $bi) {
+                    $biKey = !empty($bi['id']) ? 'id:' . $bi['id'] : (!empty($bi['account_code']) ? $bi['account_code'] : 'desc:' . trim(strtolower($bi['description'])));
+                    $prevBiMap[$biKey][] = $bi;
+                }
+
+                // Check added & modified
+                foreach ($currBis as $bi) {
+                    $biKey = 'id:' . $bi->id;
+                    $matchedBi = null;
+
+                    if (!empty($prevBiMap[$biKey])) {
+                        $matchedBi = array_shift($prevBiMap[$biKey]);
+                    } else {
+                        // Fallback match
+                        $fallbackBiKey = !empty($bi->account_code) ? $bi->account_code : 'desc:' . trim(strtolower($bi->description));
+                        if (!empty($prevBiMap[$fallbackBiKey])) {
+                            $matchedBi = array_shift($prevBiMap[$fallbackBiKey]);
+                        }
+                    }
+
+                    if (!$matchedBi) {
+                        $wpChanges['added_items'][] = [
+                            'account_code' => $bi->account_code,
+                            'description' => $bi->description,
+                            'quantity' => $bi->quantity,
+                            'unit' => $bi->unit,
+                            'unit_price' => $bi->unit_price,
+                            'total_price' => $bi->total_price,
+                        ];
+                        $wpChanges['added_bi_ids'][] = $bi->id;
+                        $wpChanges['has_changes'] = true;
+                    } else {
+                        $isModified = ($matchedBi['quantity'] != $bi->quantity) ||
+                                      ($matchedBi['unit_price'] != $bi->unit_price) ||
+                                      (($matchedBi['unit'] ?? '') != ($bi->unit ?? '')) ||
+                                      (($matchedBi['description'] ?? '') != ($bi->description ?? '')) ||
+                                      (($matchedBi['remarks'] ?? '') != ($bi->remarks ?? ''));
+
+                        if ($isModified) {
+                            $wpChanges['modified_items'][] = [
+                                'id' => $bi->id,
+                                'account_code' => $bi->account_code,
+                                'description' => $bi->description,
+                                'old' => [
+                                    'description' => $matchedBi['description'],
+                                    'quantity' => $matchedBi['quantity'],
+                                    'unit' => $matchedBi['unit'] ?? '',
+                                    'unit_price' => $matchedBi['unit_price'],
+                                    'total_price' => $matchedBi['total_price'],
+                                    'remarks' => $matchedBi['remarks'] ?? '',
+                                ],
+                                'new' => [
+                                    'description' => $bi->description,
+                                    'quantity' => $bi->quantity,
+                                    'unit' => $bi->unit,
+                                    'unit_price' => $bi->unit_price,
+                                    'total_price' => $bi->total_price,
+                                    'remarks' => $bi->remarks,
+                                ]
+                            ];
+                            $wpChanges['modified_bi_map'][$bi->id] = $matchedBi;
+                            $wpChanges['has_changes'] = true;
+                        }
+                    }
+                }
+
+                // Remaining in $prevBiMap are removed
+                foreach ($prevBiMap as $key => $items) {
+                    foreach ($items as $matchedBi) {
+                        $wpChanges['removed_items'][] = [
+                            'account_code' => $matchedBi['account_code'],
+                            'description' => $matchedBi['description'],
+                            'quantity' => $matchedBi['quantity'],
+                            'unit' => $matchedBi['unit'] ?? '',
+                            'unit_price' => $matchedBi['unit_price'],
+                            'total_price' => $matchedBi['total_price'],
+                            'remarks' => $matchedBi['remarks'] ?? '',
+                        ];
+                        $wpChanges['has_changes'] = true;
+                    }
+                }
+            } else {
+                // This is a brand new activity in this version
+                $wpChanges['has_changes'] = true;
+                $wpChanges['activity_level_changes'][] = [
+                    'field' => 'Kegiatan Baru',
+                    'old' => '-',
+                    'new' => 'Kegiatan ini ditambahkan pada revisi ini.',
+                ];
+                foreach ($wp->budgetItems as $bi) {
+                    $wpChanges['added_items'][] = [
+                        'account_code' => $bi->account_code,
+                        'description' => $bi->description,
+                        'quantity' => $bi->quantity,
+                        'unit' => $bi->unit,
+                        'unit_price' => $bi->unit_price,
+                        'total_price' => $bi->total_price,
+                    ];
+                    $wpChanges['added_bi_ids'][] = $bi->id;
+                }
+            }
+
+            $changes[$wp->id] = $wpChanges;
+        }
+
+        return $changes;
+    }
+
     public function render()
     {
         return view('livewire.rkap.rkap-approval-review', [
             'combinedWorkPlans' => $this->getCombinedWorkPlans(),
             'prevData' => $this->buildPreviousMap(),
             'helicopterViewData' => $this->getHelicopterViewData(),
+            'revisionChanges' => $this->revisionChanges,
         ])->layout('layouts.contentNavbarLayout');
     }
 }
