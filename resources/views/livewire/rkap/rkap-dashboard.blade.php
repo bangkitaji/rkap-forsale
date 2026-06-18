@@ -86,47 +86,131 @@
         </div>
     </div>
 
-    @if(auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance() || auth()->user()->isVerifikator() || auth()->user()->isAdmin())
-        <!-- Helicopter Progress & Department Tabulation for Management -->
-        <div class="row mb-4">
-            <!-- Progress Card -->
-            <div class="col-12 col-md-4 mb-4 mb-md-0">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title mb-1">Status Pengajuan Departemen</h5>
-                        <p class="text-muted small">Status verifikasi RKAP per departemen</p>
-                        
-                        <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
-                            <span class="fw-semibold">Terverifikasi</span>
-                            <span class="badge bg-label-success">{{ $verifiedDeptCount }} dari {{ $totalDeptCount }} Departemen</span>
-                        </div>
-                        
-                        @php
-                            $progressPercent = $totalDeptCount > 0 ? ($verifiedDeptCount / $totalDeptCount) * 100 : 0;
-                        @endphp
-                        
-                        <div class="progress mb-3" style="height: 12px;">
-                            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
+    @php
+        $isManagement = auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance() || auth()->user()->isVerifikator() || auth()->user()->isAdmin();
+        $colClass = $isManagement ? 'col-xl-4 col-lg-4 col-md-6 mb-4' : 'col-xl-6 col-lg-6 col-md-6 mb-4';
+    @endphp
 
-                        @if($verifiedDeptCount < $totalDeptCount)
-                            <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.75rem;">
-                                <i class="bx bx-lock-alt me-1"></i>
-                                Persetujuan akhir oleh Direktur Utama ditangguhkan hingga seluruh {{ $totalDeptCount }} departemen terverifikasi.
-                            </div>
-                        @else
-                            <div class="alert alert-success py-2 px-3 mb-0" style="font-size: 0.75rem;">
-                                <i class="bx bx-check-double me-1"></i>
-                                Seluruh departemen telah terverifikasi. Direktur Utama dapat memberikan persetujuan akhir.
-                            </div>
-                        @endif
-                    </div>
+    <div class="row mb-4">
+        <!-- Pending Actions / Tasks -->
+        <div class="{{ $colClass }}">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Tugas Saya</h5>
+                    <small class="text-muted">Butuh Perhatian</small>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        @forelse($myActions as $action)
+                            <li class="mb-3 pb-3 border-bottom">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-label-warning">Perlu Review</span>
+                                            <small class="text-muted">{{ $action->updated_at->diffForHumans() }}</small>
+                                        </div>
+                                        <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name }}</a>
+                                        <small class="text-muted">{{ $action->bureau->department->name ?? '-' }}</small>
+                                    </div>
+                                    <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
+                                        <i class="bx bx-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="text-center text-muted py-4">
+                                <i class="bx bx-check-circle bx-lg text-success mb-2 opacity-50"></i>
+                                <p class="mb-0">Tidak ada tugas yang menunggu Anda saat ini.</p>
+                            </li>
+                        @endforelse
+                    </ul>
+                    @if($myActions->count() > 0)
+                        <div class="mt-3 text-center">
+                            <a href="{{ route('rkap-submissions') }}" class="btn btn-sm btn-label-secondary w-100">Lihat Semua Pengajuan</a>
+                        </div>
+                    @endif
                 </div>
             </div>
+        </div>
 
+        <!-- Status Pengajuan Departemen -->
+        @if($isManagement)
+        <div class="{{ $colClass }}">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-1">Status Pengajuan Departemen</h5>
+                    <p class="text-muted small">Status verifikasi RKAP per departemen</p>
+                    
+                    <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+                        <span class="fw-semibold">Terverifikasi</span>
+                        <span class="badge bg-label-success">{{ $verifiedDeptCount }} dari {{ $totalDeptCount }} Departemen</span>
+                    </div>
+                    
+                    @php
+                        $progressPercent = $totalDeptCount > 0 ? ($verifiedDeptCount / $totalDeptCount) * 100 : 0;
+                    @endphp
+                    
+                    <div class="progress mb-3" style="height: 12px;">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    @if($verifiedDeptCount < $totalDeptCount)
+                        <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.75rem;">
+                            <i class="bx bx-lock-alt me-1"></i>
+                            Persetujuan akhir oleh Direktur Utama ditangguhkan hingga seluruh {{ $totalDeptCount }} departemen terverifikasi.
+                        </div>
+                    @else
+                        <div class="alert alert-success py-2 px-3 mb-0" style="font-size: 0.75rem;">
+                            <i class="bx bx-check-double me-1"></i>
+                            Seluruh departemen telah terverifikasi. Direktur Utama dapat memberikan persetujuan akhir.
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Recent Activity -->
+        <div class="{{ $colClass }}">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="mb-0">Aktivitas Terbaru</h5>
+                </div>
+                <div class="card-body mt-3" style="max-height: 400px; overflow-y: auto;">
+                    <ul class="timeline mb-0">
+                        @forelse($recentActivity as $activity)
+                            <li class="timeline-item timeline-item-transparent ps-4">
+                                <span class="timeline-point timeline-point-{{ $activity->status_color }}"></span>
+                                <div class="timeline-event">
+                                    <div class="timeline-header mb-1">
+                                        <h6 class="mb-0">Status: {{ $activity->status_label }}</h6>
+                                        <small class="text-muted">{{ $activity->updated_at->diffForHumans() }}</small>
+                                    </div>
+                                    <p class="mb-0 small">Biro: <strong>{{ $activity->bureau->name ?? '-' }}</strong></p>
+                                    <div class="mt-2">
+                                        <a href="{{ route('rkap-submissions-review', $activity->id) }}" class="text-body small d-flex align-items-center">
+                                            <i class="bx bx-link me-1"></i> Lihat Detail
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="text-center text-muted py-4 list-unstyled">
+                                <p class="mb-0">Belum ada aktivitas.</p>
+                            </li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helicopter Progress & Department Tabulation for Management -->
+    @if($isManagement)
+        <div class="row mb-4">
             <!-- Tabulation Card -->
-            <div class="col-12 col-md-8">
-                <div class="card h-100 border-0 shadow-sm">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
                     <div class="card-header p-0">
                         <div class="nav-align-top">
                             <ul class="nav nav-tabs" role="tablist">
@@ -344,88 +428,11 @@
         </div>
     @endif
 
-    <div class="row mb-4">
-        <!-- Pending Actions / Tasks -->
-        <div class="col-lg-6 mb-4 mb-lg-0">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Tugas Saya</h5>
-                    <small class="text-muted">Butuh Perhatian</small>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        @forelse($myActions as $action)
-                            <li class="mb-3 pb-3 border-bottom">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex flex-column">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <span class="badge bg-label-warning">Perlu Review</span>
-                                            <small class="text-muted">{{ $action->updated_at->diffForHumans() }}</small>
-                                        </div>
-                                        <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="h6 mb-0 text-primary">RKAP {{ $action->bureau->name }}</a>
-                                        <small class="text-muted">{{ $action->bureau->department->name ?? '-' }}</small>
-                                    </div>
-                                    <a href="{{ route('rkap-submissions-approval-review', $action->id) }}" class="btn btn-sm btn-icon btn-primary rounded-pill">
-                                        <i class="bx bx-chevron-right"></i>
-                                    </a>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="text-center text-muted py-4">
-                                <i class="bx bx-check-circle bx-lg text-success mb-2 opacity-50"></i>
-                                <p class="mb-0">Tidak ada tugas yang menunggu Anda saat ini.</p>
-                            </li>
-                        @endforelse
-                    </ul>
-                    @if($myActions->count() > 0)
-                        <div class="mt-3 text-center">
-                            <a href="{{ route('rkap-submissions') }}" class="btn btn-sm btn-label-secondary w-100">Lihat Semua Pengajuan</a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center border-bottom">
-                    <h5 class="mb-0">Aktivitas Terbaru</h5>
-                </div>
-                <div class="card-body mt-3" style="max-height: 400px; overflow-y: auto;">
-                    <ul class="timeline mb-0">
-                        @forelse($recentActivity as $activity)
-                            <li class="timeline-item timeline-item-transparent ps-4">
-                                <span class="timeline-point timeline-point-{{ $activity->status_color }}"></span>
-                                <div class="timeline-event">
-                                    <div class="timeline-header mb-1">
-                                        <h6 class="mb-0">Status: {{ $activity->status_label }}</h6>
-                                        <small class="text-muted">{{ $activity->updated_at->diffForHumans() }}</small>
-                                    </div>
-                                    <p class="mb-0 small">Biro: <strong>{{ $activity->bureau->name ?? '-' }}</strong></p>
-                                    <div class="mt-2">
-                                        <a href="{{ route('rkap-submissions-review', $activity->id) }}" class="text-body small d-flex align-items-center">
-                                            <i class="bx bx-link me-1"></i> Lihat Detail
-                                        </a>
-                                    </div>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="text-center text-muted py-4 list-unstyled">
-                                <p class="mb-0">Belum ada aktivitas.</p>
-                            </li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Budget Chart for Admins/Verificators -->
     @if(auth()->user()->isAdmin() || auth()->user()->isVerifikator())
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card border-0 shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center border-bottom">
                     <h5 class="mb-0">Rekapitulasi Anggaran per Direktorat</h5>
                 </div>

@@ -34,7 +34,7 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
 
-        if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
+        if (($user->isPresidentDirector() || $user->isDirekturFinance()) && $this->submission->status === 'pdir_review') {
             $status = $this->presidentApprovalStatus;
             if (!$status['is_ready']) {
                 session()->flash('error', 'Gagal menyetujui: Belum semua departemen menyelesaikan pengajuan RKAP yang terverifikasi.');
@@ -112,7 +112,7 @@ class RkapApprovalReview extends Component
             return false;
         }
 
-        if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
+        if (($user->isPresidentDirector() || $user->isDirekturFinance()) && $this->submission->status === 'pdir_review') {
             $status = $this->presidentApprovalStatus;
             if (!$status['is_ready']) {
                 return false;

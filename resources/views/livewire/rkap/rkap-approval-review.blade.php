@@ -90,7 +90,7 @@
     </div>
     @endif
 
-    @if((auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance()) && !$this->presidentApprovalStatus['is_ready'])
+    @if((auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance()) && $submission->status === 'pdir_review' && !$this->presidentApprovalStatus['is_ready'])
     <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
         <span class="badge bg-warning text-white me-3 p-1"><i class="bx bx-error fs-4"></i></span>
         <div>
@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            @if(auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance())
+            @if((auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance()) && in_array($submission->status, ['pdir_review', 'approved']))
                 <!-- Helicopter View -->
                 <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                     <div>
