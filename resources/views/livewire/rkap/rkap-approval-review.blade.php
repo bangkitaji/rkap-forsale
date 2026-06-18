@@ -55,6 +55,16 @@
         .table-responsive, .card, .card-header {
             overflow: visible !important;
         }
+        .activity-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .activity-card:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            border-color: #cbd5e1;
+        }
     </style>
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0">
@@ -353,53 +363,56 @@
                     </div>
                 @endif
 
-            @else
+                @else
                 <!-- Work Plans -->
                 <h5 class="mb-3">Rincian Program Kerja</h5>
-                @foreach($combinedWorkPlans as $idx => $wp)
                 @php
-                    $isWpVirtual = $wp['is_virtual'] ?? false;
+                    $groupedCombinedWorkPlans = collect($combinedWorkPlans)->groupBy('work_plan_id');
                 @endphp
-                <div class="card mb-3 border-start border-primary border-3 @if($isWpVirtual) border-danger @endif" style="@if($isWpVirtual) border-left-color: #ff3e1d !important; background-color: #fff5f5; @endif">
-                    <div class="card-header border-bottom" style="@if($isWpVirtual) background-color: #fff0f0; @endif">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1 @if($isWpVirtual) text-danger @else text-primary @endif">
-                                    {{ $wp['program_code'] }} - {{ $wp['program_name'] }}
-                                    @if($isWpVirtual)
+                @foreach($groupedCombinedWorkPlans as $wpId => $wpGroup)
+                @php
+                    $firstWp = $wpGroup->first();
+                    $programCode = $firstWp['program_code'];
+                    $programName = $firstWp['program_name'];
+                    $wpGroupSubtotal = collect($wpGroup)->where('is_virtual', false)->sum('total_budget');
+                    $isProgramVirtual = collect($wpGroup)->every(fn($item) => $item['is_virtual'] ?? false);
+                @endphp
+                <div class="card mb-4 border-start border-primary border-3 @if($isProgramVirtual) border-danger @endif" style="@if($isProgramVirtual) border-left-color: #ff3e1d !important; background-color: #fff5f5; @endif">
+                    <div class="card-header border-bottom py-3" style="@if($isProgramVirtual) background-color: #fff0f0; @endif">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bx bx-list-ul @if($isProgramVirtual) text-danger @else text-primary @endif flex-shrink-0"></i>
+                                    <strong class="text-nowrap">Program Kerja {{ $loop->iteration }}</strong>
+                                    @if($isProgramVirtual)
                                         <span class="badge bg-danger ms-2">Tidak Diajukan Kembali</span>
                                     @endif
-                                </h6>
-                                @if($wp['description'])
-                                <p class="text-muted small mb-0">{{ $wp['description'] }}</p>
-                                @endif
+                                </div>
+                                <div class="fw-semibold @if($isProgramVirtual) text-danger @else text-dark @endif fs-5 mt-1">{{ $programCode }} — {{ $programName }}</div>
                             </div>
                             <div class="text-end">
-                                <span class="text-muted small d-block">Subtotal Kegiatan</span>
-                                <strong class="text-dark has-tooltip">
-                                    Rp {{ number_format($wp['total_budget'], 0, ',', '.') }}
+                                <span class="text-muted small d-block">Subtotal Program</span>
+                                <strong class="text-primary fs-5 has-tooltip @if($isProgramVirtual) text-danger @endif">
+                                    Rp {{ number_format($wpGroupSubtotal, 0, ',', '.') }}
                                     <span class="custom-tooltip-content tooltip-align-right">
                                         @php
-                                            $prevWpId = $wp['work_plan_id'] ?? null;
-                                            $prevActId = $wp['activity_id'] ?? null;
-                                            $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
-                                            $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
+                                            $prevProgramData = ($wpId && isset($prevData['map']['programs'][$wpId])) ? $prevData['map']['programs'][$wpId] : null;
                                             $prevPeriod = $prevData['period'] ?? '-';
                                         @endphp
-                                        @if ($prevActivityData)
+                                        @if ($prevProgramData)
                                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
                                             <div class="row text-center">
                                                 <div class="col-4 border-end">
                                                     <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['budget'], 0, ',', '.') }}</div>
+                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevProgramData['budget'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4 border-end">
                                                     <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['realization'], 0, ',', '.') }}</div>
+                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevProgramData['realization'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4">
                                                     <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}</div>
                                                 </div>
                                             </div>
                                         @else
@@ -409,307 +422,394 @@
                                 </strong>
                             </div>
                         </div>
-                        <div class="row mt-2 g-2 small">
-                            <div class="col-auto">
-                                <span class="text-muted">Target Output:</span> <span class="fw-medium">{{ $wp['output_target'] ?? '-' }}</span>
-                            </div>
-                            <div class="col-auto">
-                                <span class="text-muted">Volume:</span> <span class="fw-medium">{{ $wp['quantity'] }} {{ $wp['unit'] }}</span>
-                            </div>
-                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Kode Akun</th>
-                                        <th>Uraian & Detail Belanja</th>
-                                        <th class="text-center">Vol</th>
-                                        <th>Satuan</th>
-                                        <th class="text-end">Harga Satuan</th>
-                                        <th class="text-end">Total</th>
-                                        <th class="text-end" style="width: 12%;">RKAP Sblm</th>
-                                        <th class="text-end" style="width: 12%;">Selisih (Δ)</th>
-                                        <th class="text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($wp['grouped_items'] as $accountCode => $items)
-                                    @php
-                                    $firstItem = $items[0];
-                                    $coaGroupSubtotal = collect($items)->sum('total_price');
-                                    $prevWpId   = $wp['work_plan_id'] ?? null;
-                                    $prevCode   = $accountCode;
-                                    @endphp
-                                    <tr class="table-light fw-semibold">
-                                        <td colspan="9" class="text-dark bg-lighter py-2 px-3">
-                                            <div class="d-flex justify-content-between align-items-center gap-2">
-                                                <div class="d-flex align-items-center gap-1 min-w-0">
-                                                    <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
-                                                    <span class="text-truncate"><strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem['description'] }}</span>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-3 flex-shrink-0 text-end">
-                                                    @php
-                                                        $prevActId = $wp['activity_id'] ?? null;
-                                                        $coaKey = ($prevWpId && $prevActId && $prevCode) ? "{$prevWpId}-{$prevActId}-{$prevCode}" : null;
-                                                        $prevCoaData = ($coaKey && isset($prevData['map']['coas'][$coaKey])) ? $prevData['map']['coas'][$coaKey] : null;
-                                                        $prevPeriod = $prevData['period'] ?? '-';
-                                                        
-                                                        $prevCoaBudget = $prevCoaData ? (float) $prevCoaData['budget'] : 0.0;
-                                                        $coaDiff = $coaGroupSubtotal - $prevCoaBudget;
-                                                        $coaPct = $prevCoaBudget > 0 ? ($coaDiff / $prevCoaBudget) * 100 : 0;
-                                                    @endphp
-                                                    
-                                                    @if($prevCoaData)
-                                                    <div style="font-size:0.75rem; line-height:1.2;">
-                                                        <span class="text-muted" style="font-size:0.68rem;">Sblm ({{ $prevPeriod }}):</span>
-                                                        <span class="fw-semibold text-secondary">Rp {{ number_format($prevCoaBudget, 0, ',', '.') }}</span>
-                                                    </div>
-                                                    <div style="font-size:0.75rem; line-height:1.2;">
-                                                        <span class="text-muted" style="font-size:0.68rem;">Selisih:</span>
-                                                        <span class="fw-bold @if($coaDiff > 0) text-danger @elseif($coaDiff < 0) text-success @else text-muted @endif">
-                                                            @if($coaDiff > 0)
-                                                                ↑ +{{ number_format($coaPct, 1) }}%
-                                                            @elseif($coaDiff < 0)
-                                                                ↓ -{{ number_format(abs($coaPct), 1) }}%
-                                                            @else
-                                                                = 0%
-                                                            @endif
-                                                        </span>
-                                                    </div>
-                                                    @endif
 
-                                                    <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
-                                                        <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
-                                                        <span class="fw-bold text-primary">
-                                                            Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}
-                                                        </span>
-                                                        <span class="custom-tooltip-content tooltip-align-right">
-                                                            @if ($prevCoaData)
-                                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
-                                                                <div class="row text-center">
-                                                                    <div class="col-4 border-end">
-                                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['budget'], 0, ',', '.') }}</div>
+                    <div class="card-body bg-light-gray p-3" style="background-color: #f8fafc;">
+                        @foreach($wpGroup as $actIdx => $wp)
+                        @php
+                            $isWpVirtual = $wp['is_virtual'] ?? false;
+                            $activity = $wp['model'] ? $wp['model']->activity : null;
+                            $activityCode = $activity ? $activity->code : ($wp['program_code'] ?: '-');
+                            $activityTitle = $activity ? $activity->title : ($wp['program_name'] ?: '-');
+                            $actSubtotal = (float) $wp['total_budget'];
+                        @endphp
+                        <div class="activity-card p-3 mb-3 @if($isWpVirtual) border-danger @endif" style="@if($isWpVirtual) border-color: #ff3e1d !important; background-color: #fff9f9; @else background-color: #ffffff; @endif">
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge @if($isWpVirtual) bg-label-danger @else bg-label-primary @endif rounded-circle p-2"><i class="bx bx-task"></i></span>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold @if($isWpVirtual) text-danger @endif">Kegiatan {{ $actIdx + 1 }}</h6>
+                                        <span class="@if($isWpVirtual) text-danger @else text-muted @endif small">{{ $activityCode }} — {{ $activityTitle }}</span>
+                                        @if($isWpVirtual)
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.6rem;">Tidak Diajukan Kembali</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="text-muted small d-block">Subtotal Kegiatan</span>
+                                    <strong class="text-dark has-tooltip @if($isWpVirtual) text-danger @endif">
+                                        Rp {{ number_format($actSubtotal, 0, ',', '.') }}
+                                        <span class="custom-tooltip-content tooltip-align-right">
+                                            @php
+                                                $prevWpId = $wp['work_plan_id'] ?? null;
+                                                $prevActId = $wp['activity_id'] ?? null;
+                                                $actKey = ($prevWpId && $prevActId) ? "{$prevWpId}-{$prevActId}" : null;
+                                                $prevActivityData = ($actKey && isset($prevData['map']['activities'][$actKey])) ? $prevData['map']['activities'][$actKey] : null;
+                                                $prevPeriod = $prevData['period'] ?? '-';
+                                            @endphp
+                                            @if ($prevActivityData)
+                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                                                <div class="row text-center">
+                                                    <div class="col-4 border-end">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['budget'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                    <div class="col-4 border-end">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['realization'], 0, ',', '.') }}</div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                            @endif
+                                        </span>
+                                    </strong>
+                                </div>
+                            </div>
+
+                            @if($wp['description'])
+                            <div class="mb-3">
+                                <label class="text-muted small d-block">Deskripsi / Tujuan</label>
+                                <p class="mb-0 text-dark @if($isWpVirtual) text-danger @endif" style="white-space: pre-line;">{{ $wp['description'] }}</p>
+                            </div>
+                            @endif
+
+                            <div class="row g-2 mb-3 small">
+                                <div class="col-auto">
+                                    <span class="text-muted">Target Output:</span> <span class="fw-medium @if($isWpVirtual) text-danger @else text-dark @endif">{{ $wp['output_target'] ?? '-' }}</span>
+                                </div>
+                                <div class="col-auto ms-3">
+                                    <span class="text-muted">Volume:</span> <span class="fw-medium @if($isWpVirtual) text-danger @else text-dark @endif">{{ $wp['quantity'] }} {{ $wp['unit'] }}</span>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Kode Akun</th>
+                                            <th>Uraian & Detail Belanja</th>
+                                            <th class="text-center">Vol 1 & 2</th>
+                                            <th>Satuan 1 & 2</th>
+                                            <th class="text-end">Harga Satuan</th>
+                                            <th class="text-end">Total</th>
+                                            <th class="text-end" style="width: 12%;">RKAP Sblm</th>
+                                            <th class="text-end" style="width: 12%;">Selisih (Δ)</th>
+                                            <th class="text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($wp['grouped_items'] as $accountCode => $items)
+                                        @php
+                                        $firstItem = $items[0];
+                                        $coaGroupSubtotal = collect($items)->sum('total_price');
+                                        $prevWpId   = $wp['work_plan_id'] ?? null;
+                                        $prevCode   = $accountCode;
+                                        @endphp
+                                        <tr class="table-light fw-semibold">
+                                            <td colspan="9" class="text-dark bg-lighter py-2 px-3">
+                                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                                    <div class="d-flex align-items-center gap-1 min-w-0">
+                                                        <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
+                                                        <span class="text-truncate"><strong>{{ $accountCode ?? '-' }}</strong> — {{ $firstItem['description'] }}</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-3 flex-shrink-0 text-end">
+                                                        @php
+                                                            $prevActId = $wp['activity_id'] ?? null;
+                                                            $coaKey = ($prevWpId && $prevActId && $prevCode) ? "{$prevWpId}-{$prevActId}-{$prevCode}" : null;
+                                                            $prevCoaData = ($coaKey && isset($prevData['map']['coas'][$coaKey])) ? $prevData['map']['coas'][$coaKey] : null;
+                                                            $prevPeriod = $prevData['period'] ?? '-';
+                                                            
+                                                            $prevCoaBudget = $prevCoaData ? (float) $prevCoaData['budget'] : 0.0;
+                                                            $coaDiff = $coaGroupSubtotal - $prevCoaBudget;
+                                                            $coaPct = $prevCoaBudget > 0 ? ($coaDiff / $prevCoaBudget) * 100 : 0;
+                                                        @endphp
+                                                        
+                                                        @if($prevCoaData)
+                                                        <div style="font-size:0.75rem; line-height:1.2;">
+                                                            <span class="text-muted" style="font-size:0.68rem;">Sblm ({{ $prevPeriod }}):</span>
+                                                            <span class="fw-semibold text-secondary">Rp {{ number_format($prevCoaBudget, 0, ',', '.') }}</span>
+                                                        </div>
+                                                        <div style="font-size:0.75rem; line-height:1.2;">
+                                                            <span class="text-muted" style="font-size:0.68rem;">Selisih:</span>
+                                                            <span class="fw-bold @if($coaDiff > 0) text-danger @elseif($coaDiff < 0) text-success @else text-muted @endif">
+                                                                @if($coaDiff > 0)
+                                                                    ↑ +{{ number_format($coaPct, 1) }}%
+                                                                @elseif($coaDiff < 0)
+                                                                    ↓ -{{ number_format(abs($coaPct), 1) }}%
+                                                                @else
+                                                                    = 0%
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                        @endif
+
+                                                        <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
+                                                            <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
+                                                            <span class="fw-bold text-primary">
+                                                                Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}
+                                                            </span>
+                                                            <span class="custom-tooltip-content tooltip-align-right">
+                                                                @if ($prevCoaData)
+                                                                    <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                                                                    <div class="row text-center">
+                                                                        <div class="col-4 border-end">
+                                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                                            <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['budget'], 0, ',', '.') }}</div>
+                                                                        </div>
+                                                                        <div class="col-4 border-end">
+                                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                                            <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
+                                                                        </div>
+                                                                        <div class="col-4">
+                                                                            <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                                            <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="col-4 border-end">
-                                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                                @else
+                                                                    <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @foreach($items as $bi)
+                                        @php
+                                        $isBiVirtual = $bi['is_virtual'] ?? false;
+                                        $allocationModalId = 'allocationDetailModal-' . ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
+                                        $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
+                                        
+                                        $prevActId = $wp['activity_id'] ?? null;
+                                        $itemKey = ($prevWpId && $prevActId && $accountCode) ? "{$prevWpId}-{$prevActId}-{$accountCode}-" . trim(strtolower($bi['description'])) : null;
+                                        $prevItemData = ($itemKey && isset($prevData['map']['items'][$itemKey])) ? $prevData['map']['items'][$itemKey] : null;
+                                        $prevItemBudget = $prevItemData ? (float) $prevItemData['budget'] : null;
+                                        $itemDiff = $prevItemBudget !== null ? ($bi['total_price'] - $prevItemBudget) : null;
+                                        $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
+                                        @endphp
+                                        <tr @if($isBiVirtual) style="background-color: #fff9f9;" @endif>
+                                            <td class="text-center text-muted">
+                                                <span class="ps-2">•</span>
+                                            </td>
+                                            <td>
+                                                <span class="@if($isBiVirtual) text-danger text-decoration-line-through @endif">
+                                                    {{ $bi['remarks'] ?: $bi['description'] }}
+                                                </span>
+                                                @if($isBiVirtual)
+                                                    <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center @if($isBiVirtual) text-danger @endif">
+                                                @if(!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
+                                                    <div>{{ $bi['quantity'] }}</div>
+                                                    <div class="text-muted small border-top mt-1 pt-1">{{ $bi['model']->quantity_2 }}</div>
+                                                @else
+                                                    {{ $bi['quantity'] }}
+                                                @endif
+                                            </td>
+                                            <td class="@if($isBiVirtual) text-danger @endif">
+                                                @if(!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
+                                                    <div>{{ $bi['unit'] }}</div>
+                                                    <div class="text-muted small border-top mt-1 pt-1">{{ $bi['model']->unit_2 }}</div>
+                                                @else
+                                                    {{ $bi['unit'] }}
+                                                @endif
+                                            </td>
+                                            <td class="text-end @if($isBiVirtual) text-danger @endif">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
+                                            <td class="text-end">
+                                                <div class="fw-semibold @if($isBiVirtual) text-danger @else text-primary @endif">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</div>
+                                            </td>
+                                            <!-- RKAP Sblm -->
+                                            <td class="text-end text-secondary" style="font-size: 0.8rem;">
+                                                @if($prevItemBudget !== null)
+                                                    Rp {{ number_format($prevItemBudget, 0, ',', '.') }}
+                                                @else
+                                                    <span class="text-muted small">-</span>
+                                                @endif
+                                            </td>
+                                            <!-- Selisih (Δ) -->
+                                            <td class="text-end fw-semibold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-muted @endif" style="font-size: 0.8rem;">
+                                                @if($itemDiff !== null)
+                                                    @if($itemDiff > 0)
+                                                        ↑ +{{ number_format($itemPct, 1) }}%
+                                                    @elseif($itemDiff < 0)
+                                                        ↓ -{{ number_format(abs($itemPct), 1) }}%
+                                                    @else
+                                                        = 0%
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted small">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-center">
+                                                @if(!$isBiVirtual && ($bi['monthlies']->isNotEmpty() || $bi['cashOuts']->isNotEmpty()))
+                                                <div class="d-flex justify-content-center">
+                                                    <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#{{ $allocationModalId }}" title="Detail Alokasi">
+                                                        <i class="bx bx-detail"></i>
+                                                    </button>
+                                                    <!-- Modal Detail Alokasi (Merged) -->
+                                                    <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1" aria-hidden="true" wire:key="allocation-modal-{{ $bi['model']->id }}">
+                                                        <div class="modal-content text-start">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title d-flex align-items-center">
+                                                                    <i class="bx bx-info-circle me-2 text-primary fs-4"></i>Detail Alokasi Anggaran
+                                                                </h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <!-- Banner Informasi Rincian Belanja -->
+                                                                <div class="card bg-lighter shadow-none border mb-4">
+                                                                    <div class="card-body py-3 px-4">
+                                                                        <div class="row g-3 small">
+                                                                            <div class="col-md-3 border-end">
+                                                                                <span class="text-muted d-block mb-1">Kode Akun</span>
+                                                                                <span class="fw-semibold text-dark fs-6">{{ $bi['account_code'] ?? '-' }}</span>
+                                                                            </div>
+                                                                            <div class="col-md-5 border-end">
+                                                                                <span class="text-muted d-block mb-1">Deskripsi / Detail Belanja</span>
+                                                                                <span class="fw-semibold text-dark fs-6 text-wrap">{{ $bi['description'] }}</span>
+                                                                                @if($bi['remarks'])
+                                                                                <div class="text-muted mt-1 small">Ket: {{ $bi['remarks'] }}</div>
+                                                                                @endif
+                                                                            </div>
+                                                                            <div class="col-md-2 border-end">
+                                                                                <span class="text-muted d-block mb-1">Volume</span>
+                                                                                <span class="fw-semibold text-dark fs-6">
+                                                                                    @if(!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
+                                                                                        {{ $bi['quantity'] }} {{ $bi['unit'] }} x {{ $bi['model']->quantity_2 }} {{ $bi['model']->unit_2 }}
+                                                                                    @else
+                                                                                        {{ $bi['quantity'] }} {{ $bi['unit'] }}
+                                                                                    @endif
+                                                                                </span>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <span class="text-muted d-block mb-1">Total Anggaran</span>
+                                                                                <span class="fw-bold text-primary fs-6">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</span>
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            @else
-                                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
-                                                            @endif
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @foreach($items as $bi)
-                                    @php
-                                    $isBiVirtual = $bi['is_virtual'] ?? false;
-                                    $allocationModalId = 'allocationDetailModal-' . ($isBiVirtual ? md5($bi['account_code'] . $bi['description']) : $bi['model']->id);
-                                    $monthNames = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'Mei',6=>'Jun',7=>'Jul',8=>'Agu',9=>'Sep',10=>'Okt',11=>'Nov',12=>'Des'];
-                                    
-                                    $prevActId = $wp['activity_id'] ?? null;
-                                    $itemKey = ($prevWpId && $prevActId && $accountCode) ? "{$prevWpId}-{$prevActId}-{$accountCode}-" . trim(strtolower($bi['description'])) : null;
-                                    $prevItemData = ($itemKey && isset($prevData['map']['items'][$itemKey])) ? $prevData['map']['items'][$itemKey] : null;
-                                    $prevItemBudget = $prevItemData ? (float) $prevItemData['budget'] : null;
-                                    $itemDiff = $prevItemBudget !== null ? ($bi['total_price'] - $prevItemBudget) : null;
-                                    $itemPct = ($prevItemBudget !== null && $prevItemBudget > 0) ? ($itemDiff / $prevItemBudget) * 100 : 0;
-                                    @endphp
-                                    <tr @if($isBiVirtual) style="background-color: #fff9f9;" @endif>
-                                        <td class="text-center text-muted">
-                                            <span class="ps-2">•</span>
-                                        </td>
-                                        <td>
-                                            <span class="@if($isBiVirtual) text-danger text-decoration-line-through @endif">
-                                                {{ $bi['remarks'] ?: $bi['description'] }}
-                                            </span>
-                                            @if($isBiVirtual)
-                                                <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center @if($isBiVirtual) text-danger @endif">{{ $bi['quantity'] }}</td>
-                                        <td class="@if($isBiVirtual) text-danger @endif">{{ $bi['unit'] }}</td>
-                                        <td class="text-end @if($isBiVirtual) text-danger @endif">Rp {{ number_format($bi['unit_price'], 0, ',', '.') }}</td>
-                                        <td class="text-end">
-                                            <div class="fw-semibold @if($isBiVirtual) text-danger @else text-primary @endif">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</div>
-                                        </td>
-                                        <!-- RKAP Sblm -->
-                                        <td class="text-end text-secondary" style="font-size: 0.8rem;">
-                                            @if($prevItemBudget !== null)
-                                                Rp {{ number_format($prevItemBudget, 0, ',', '.') }}
-                                            @else
-                                                <span class="text-muted small">-</span>
-                                            @endif
-                                        </td>
-                                        <!-- Selisih (Δ) -->
-                                        <td class="text-end fw-semibold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-muted @endif" style="font-size: 0.8rem;">
-                                            @if($itemDiff !== null)
-                                                @if($itemDiff > 0)
-                                                    ↑ +{{ number_format($itemPct, 1) }}%
-                                                @elseif($itemDiff < 0)
-                                                    ↓ -{{ number_format(abs($itemPct), 1) }}%
-                                                @else
-                                                    = 0%
-                                                @endif
-                                            @else
-                                                <span class="text-muted small">-</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            @if(!$isBiVirtual && ($bi['monthlies']->isNotEmpty() || $bi['cashOuts']->isNotEmpty()))
-                                            <div class="d-flex justify-content-center">
-                                                <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#{{ $allocationModalId }}" title="Detail Alokasi">
-                                                    <i class="bx bx-detail"></i>
-                                                </button>
-                                                <!-- Modal Detail Alokasi (Merged) -->
-                                                <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1" aria-hidden="true" wire:key="allocation-modal-{{ $bi['model']->id }}">
-                                                    <div class="modal-content text-start">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title d-flex align-items-center">
-                                                                <i class="bx bx-info-circle me-2 text-primary fs-4"></i>Detail Alokasi Anggaran
-                                                            </h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <!-- Banner Informasi Rincian Belanja -->
-                                                            <div class="card bg-lighter shadow-none border mb-4">
-                                                                <div class="card-body py-3 px-4">
-                                                                    <div class="row g-3 small">
-                                                                        <div class="col-md-3 border-end">
-                                                                            <span class="text-muted d-block mb-1">Kode Akun</span>
-                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi['account_code'] ?? '-' }}</span>
-                                                                        </div>
-                                                                        <div class="col-md-5 border-end">
-                                                                            <span class="text-muted d-block mb-1">Deskripsi / Detail Belanja</span>
-                                                                            <span class="fw-semibold text-dark fs-6 text-wrap">{{ $bi['description'] }}</span>
-                                                                            @if($bi['remarks'])
-                                                                            <div class="text-muted mt-1 small">Ket: {{ $bi['remarks'] }}</div>
+                                                                <!-- Side-by-side Tables -->
+                                                                <div class="row g-4">
+                                                                    <!-- Left Column: Distribusi Bulanan -->
+                                                                    <div class="col-md-6">
+                                                                        <div class="border rounded p-3 h-100">
+                                                                            <h6 class="fw-semibold mb-3 text-primary d-flex align-items-center">
+                                                                                <i class="bx bx-calendar me-2"></i>Distribusi Bulanan
+                                                                            </h6>
+                                                                            @php
+                                                                            $activeMonthlies = $bi['monthlies']->filter(fn($m) => (float) $m->amount > 0);
+                                                                            @endphp
+                                                                            @if($activeMonthlies->isEmpty())
+                                                                            <div class="text-center text-muted py-4">
+                                                                                <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
+                                                                                <span class="small">Tidak ada data distribusi bulanan</span>
+                                                                            </div>
+                                                                            @else
+                                                                            <div class="table-responsive">
+                                                                                <table class="table table-sm table-hover align-middle mb-0">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>Bulan</th>
+                                                                                            <th class="text-end">Jumlah</th>
+                                                                                            <th class="text-center" style="width: 25%">Porsi</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        @foreach($activeMonthlies as $monthlyRecord)
+                                                                                        @php
+                                                                                        $percentage = $bi['total_price'] > 0 ? ($monthlyRecord->amount / $bi['total_price']) * 100 : 0;
+                                                                                        @endphp
+                                                                                        <tr class="fw-medium text-primary">
+                                                                                            <td>{{ $monthNames[$monthlyRecord->month] }}</td>
+                                                                                            <td class="text-end">Rp {{ number_format($monthlyRecord->amount, 0, ',', '.') }}</td>
+                                                                                            <td class="text-center">
+                                                                                                <span class="badge bg-label-primary">{{ number_format($percentage, 0) }}%</span>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        @endforeach
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
                                                                             @endif
                                                                         </div>
-                                                                        <div class="col-md-2 border-end">
-                                                                            <span class="text-muted d-block mb-1">Volume</span>
-                                                                            <span class="fw-semibold text-dark fs-6">{{ $bi['quantity'] }} {{ $bi['unit'] }}</span>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <span class="text-muted d-block mb-1">Total Anggaran</span>
-                                                                            <span class="fw-bold text-primary fs-6">Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</span>
+                                                                    </div>
+                                                                    <!-- Right Column: Rencana Kas Keluar -->
+                                                                    <div class="col-md-6">
+                                                                        <div class="border rounded p-3 h-100">
+                                                                            <h6 class="fw-semibold mb-3 text-success d-flex align-items-center">
+                                                                                <i class="bx bx-wallet me-2"></i>Rencana Kas Keluar
+                                                                            </h6>
+                                                                            @php
+                                                                            $activeCashOuts = $bi['cashOuts']->filter(fn($c) => (float) $c->amount > 0);
+                                                                            @endphp
+                                                                            @if($activeCashOuts->isEmpty())
+                                                                            <div class="text-center text-muted py-4">
+                                                                                <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
+                                                                                <span class="small">Tidak ada data rencana kas keluar</span>
+                                                                            </div>
+                                                                            @else
+                                                                            <div class="table-responsive">
+                                                                                <table class="table table-sm table-hover align-middle mb-0">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>Bulan</th>
+                                                                                            <th class="text-end">Jumlah</th>
+                                                                                            <th class="text-center" style="width: 25%">Porsi</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        @foreach($activeCashOuts as $cashOutRecord)
+                                                                                        @php
+                                                                                        $percentage = $bi['total_price'] > 0 ? ($cashOutRecord->amount / $bi['total_price']) * 100 : 0;
+                                                                                        @endphp
+                                                                                        <tr class="fw-medium text-success">
+                                                                                            <td>{{ $monthNames[$cashOutRecord->month] }}</td>
+                                                                                            <td class="text-end">Rp {{ number_format($cashOutRecord->amount, 0, ',', '.') }}</td>
+                                                                                            <td class="text-center">
+                                                                                                <span class="badge bg-label-success">{{ number_format($percentage, 0) }}%</span>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        @endforeach
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                            @endif
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <!-- Side-by-side Tables -->
-                                                            <div class="row g-4">
-                                                                <!-- Left Column: Distribusi Bulanan -->
-                                                                <div class="col-md-6">
-                                                                    <div class="border rounded p-3 h-100">
-                                                                        <h6 class="fw-semibold mb-3 text-primary d-flex align-items-center">
-                                                                            <i class="bx bx-calendar me-2"></i>Distribusi Bulanan
-                                                                        </h6>
-                                                                        @php
-                                                                        $activeMonthlies = $bi['monthlies']->filter(fn($m) => (float) $m->amount > 0);
-                                                                        @endphp
-                                                                        @if($activeMonthlies->isEmpty())
-                                                                        <div class="text-center text-muted py-4">
-                                                                            <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                                                            <span class="small">Tidak ada data distribusi bulanan</span>
-                                                                        </div>
-                                                                        @else
-                                                                        <div class="table-responsive">
-                                                                            <table class="table table-sm table-hover align-middle mb-0">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th>Bulan</th>
-                                                                                        <th class="text-end">Jumlah</th>
-                                                                                        <th class="text-center" style="width: 25%">Porsi</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    @foreach($activeMonthlies as $monthlyRecord)
-                                                                                    @php
-                                                                                    $percentage = $bi['total_price'] > 0 ? ($monthlyRecord->amount / $bi['total_price']) * 100 : 0;
-                                                                                    @endphp
-                                                                                    <tr class="fw-medium text-primary">
-                                                                                        <td>{{ $monthNames[$monthlyRecord->month] }}</td>
-                                                                                        <td class="text-end">Rp {{ number_format($monthlyRecord->amount, 0, ',', '.') }}</td>
-                                                                                        <td class="text-center">
-                                                                                            <span class="badge bg-label-primary">{{ number_format($percentage, 0) }}%</span>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    @endforeach
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </div>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-                                                                <!-- Right Column: Rencana Kas Keluar -->
-                                                                <div class="col-md-6">
-                                                                    <div class="border rounded p-3 h-100">
-                                                                        <h6 class="fw-semibold mb-3 text-success d-flex align-items-center">
-                                                                            <i class="bx bx-wallet me-2"></i>Rencana Kas Keluar
-                                                                        </h6>
-                                                                        @php
-                                                                        $activeCashOuts = $bi['cashOuts']->filter(fn($c) => (float) $c->amount > 0);
-                                                                        @endphp
-                                                                        @if($activeCashOuts->isEmpty())
-                                                                        <div class="text-center text-muted py-4">
-                                                                            <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                                                            <span class="small">Tidak ada data rencana kas keluar</span>
-                                                                        </div>
-                                                                        @else
-                                                                        <div class="table-responsive">
-                                                                            <table class="table table-sm table-hover align-middle mb-0">
-                                                                                <thead>
-                                                                                    <tr>
-                                                                                        <th>Bulan</th>
-                                                                                        <th class="text-end">Jumlah</th>
-                                                                                        <th class="text-center" style="width: 25%">Porsi</th>
-                                                                                    </tr>
-                                                                                </thead>
-                                                                                <tbody>
-                                                                                    @foreach($activeCashOuts as $cashOutRecord)
-                                                                                    @php
-                                                                                    $percentage = $bi['total_price'] > 0 ? ($cashOutRecord->amount / $bi['total_price']) * 100 : 0;
-                                                                                    @endphp
-                                                                                    <tr class="fw-medium text-success">
-                                                                                        <td>{{ $monthNames[$cashOutRecord->month] }}</td>
-                                                                                        <td class="text-end">Rp {{ number_format($cashOutRecord->amount, 0, ',', '.') }}</td>
-                                                                                        <td class="text-center">
-                                                                                            <span class="badge bg-label-success">{{ number_format($percentage, 0) }}%</span>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                    @endforeach
-                                                                                </tbody>
-                                                                            </table>
-                                                                        </div>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
                                                             </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                        @endforeach
                     </div>
                 </div>
                 @endforeach

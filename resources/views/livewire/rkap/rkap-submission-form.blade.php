@@ -440,16 +440,18 @@
               placeholder="Misal: 1 sistem, 100 user">
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-semibold">Satuan</label>
-            <input type="text" class="form-control form-control-sm"
-              wire:model.live.debounce.300="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
-              placeholder="Paket, Unit, ...">
-          </div>
-          <div class="col-md-3">
             <label class="form-label small fw-semibold">Volume</label>
             <input type="number" class="form-control form-control-sm"
               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.quantity"
               min="1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Satuan</label>
+            <input type="text" class="form-control form-control-sm"
+              wire:model.live.debounce.300="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
+              list="satuan-options"
+              placeholder="Paket, Unit, ..."
+              autocomplete="off">
           </div>
         </div>
 
@@ -468,8 +470,8 @@
               <thead class="table-primary text-white fw-semibold">
                 <tr>
                   <th style="width:30%">Uraian & Detail Belanja <span class="text-warning">*</span></th>
-                  <th style="width:12%">Satuan 1 & 2</th>
                   <th style="width:8%" class="text-center">Vol 1 & 2 <span class="text-warning">*</span></th>
+                  <th style="width:12%">Satuan 1 & 2</th>
                   <th style="width:140px" class="text-end">Harga Satuan (Rp) <span class="text-warning">*</span></th>
                   <th style="width:160px" class="text-end">Total (Rp)</th>
                   <th style="width:120px" class="text-center">Detail</th>
@@ -672,71 +674,6 @@
                       wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
                       placeholder="Detail Belanja / Ket...">
                   </td>
-                  <td class="border-top-0" style="position: relative; min-width: 120px;">
-                    {{-- Satuan 1 --}}
-                    <div x-data="{
-                                open: false,
-                                search: '{{ $bi['unit'] ?? '' }}',
-                            }" class="position-relative mb-2" @click.outside="open = false"
-                      wire:key="wp-{{ $wpIdx }}-act-{{ $actIdx }}-bi-{{ $biIdx }}-unit-{{ $bi['unit'] ?? 'empty' }}">
-
-                      <input type="text" class="form-control form-control-sm" placeholder="Satuan 1"
-                        x-model="search" @focus="open = true; $dispatch('coa-dropdown-open');"
-                        @input="open = true; $dispatch('coa-dropdown-open'); $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit', search);"
-                        autocomplete="off">
-
-                      <div x-show="open" x-cloak
-                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                        style="z-index: 1055; max-height: 180px; overflow-y: auto;">
-                        @foreach ($this->satuanOptions as $satuanOpt)
-                        <div
-                          class="px-2 py-1_5 cursor-pointer dropdown-item small {{ ($bi['unit'] ?? '') == $satuanOpt->name ? 'bg-primary text-white' : '' }}"
-                          x-show="'{{ strtolower($satuanOpt->name) }}'.includes(search.toLowerCase())"
-                          @click="
-                                                        $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit', '{{ $satuanOpt->name }}');
-                                                        search = '{{ $satuanOpt->name }}';
-                                                        open = false;
-                                                        $dispatch('coa-dropdown-close');
-                                                        isDirty = true;
-                                                    ">
-                          {{ $satuanOpt->name }}
-                        </div>
-                        @endforeach
-                      </div>
-                    </div>
-
-                    {{-- Satuan 2 --}}
-                    <div x-data="{
-                                open: false,
-                                search: '{{ $bi['unit_2'] ?? '' }}',
-                            }" class="position-relative" @click.outside="open = false"
-                      wire:key="wp-{{ $wpIdx }}-act-{{ $actIdx }}-bi-{{ $biIdx }}-unit2-{{ $bi['unit_2'] ?? 'empty' }}">
-
-                      <input type="text" class="form-control form-control-sm" placeholder="Satuan 2 (opsional)"
-                        x-model="search" @focus="open = true; $dispatch('coa-dropdown-open');"
-                        @input="open = true; $dispatch('coa-dropdown-open'); $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2', search);"
-                        autocomplete="off">
-
-                      <div x-show="open" x-cloak
-                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                        style="z-index: 1055; max-height: 180px; overflow-y: auto;">
-                        @foreach ($this->satuanOptions as $satuanOpt)
-                        <div
-                          class="px-2 py-1_5 cursor-pointer dropdown-item small {{ ($bi['unit_2'] ?? '') == $satuanOpt->name ? 'bg-primary text-white' : '' }}"
-                          x-show="'{{ strtolower($satuanOpt->name) }}'.includes(search.toLowerCase())"
-                          @click="
-                                                        $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2', '{{ $satuanOpt->name }}');
-                                                        search = '{{ $satuanOpt->name }}';
-                                                        open = false;
-                                                        $dispatch('coa-dropdown-close');
-                                                        isDirty = true;
-                                                    ">
-                          {{ $satuanOpt->name }}
-                        </div>
-                        @endforeach
-                      </div>
-                    </div>
-                  </td>
                   <td class="border-top-0" style="min-width: 80px;">
                     {{-- Vol 1 --}}
                     <input type="number"
@@ -749,6 +686,23 @@
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity_2') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity_2"
                       min="1" placeholder="Vol 2">
+                  </td>
+                  <td class="border-top-0" style="position: relative; min-width: 120px;">
+                    {{-- Satuan 1 --}}
+                    <input type="text"
+                      class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit') is-invalid @enderror"
+                      wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit"
+                      list="satuan-options"
+                      placeholder="Satuan 1"
+                      autocomplete="off">
+
+                    {{-- Satuan 2 --}}
+                    <input type="text"
+                      class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_2') is-invalid @enderror"
+                      wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2"
+                      list="satuan-options"
+                      placeholder="Satuan 2 (opsional)"
+                      autocomplete="off">
                   </td>
                   <td class="border-top-0">
                     <input type="number"
@@ -1217,4 +1171,11 @@
       </div>
     </div>
   </div>
+
+  {{-- Shared datalist for Satuan selection --}}
+  <datalist id="satuan-options">
+    @foreach ($this->satuanOptions as $satuanOpt)
+      <option value="{{ $satuanOpt->name }}"></option>
+    @endforeach
+  </datalist>
 </div>
