@@ -330,4 +330,63 @@ class RkapRealizationUploadTest extends TestCase
             'id' => $realization->id,
         ]);
     }
+
+    public function test_can_upload_realization_for_past_finalized_period(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        // 1. Create a finalized period for a past year
+        $pastYear = (int)date('Y') - 1;
+        $pastPeriod = RkapPeriod::create([
+            'year' => $pastYear,
+            'title' => 'RKAP ' . $pastYear,
+            'status' => 'finalized',
+            'submission_start' => now()->subYear(),
+            'submission_end' => now()->subYear()->addMonth(),
+        ]);
+
+        // 2. Setup approved submission and items for this past period
+        $directorate = Directorate::create(['code' => 'D_PAST', 'name' => 'Dir Past']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP_PAST', 'name' => 'Dept Past']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B_PAST', 'name' => 'Bur Past']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $pastPeriod->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 50000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP_PAST',
+            'title' => 'Work Plan Past',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP_PAST',
+            'program_name' => 'Work Plan Past',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Past Item Description',
+            'quantity' => 1,
+            'unit_price' => 50000,
+        ]);
+
+        // 3. Test that this past period is in the period options
+        $component = Livewire::test(RkapRealizationUpload::class);
+        $periodOptions = $component->get('periodOptions');
+        
+        $this->assertTrue($periodOptions->contains('id', $pastPeriod->id));
+
+        // 4. Test upload and validation works for this past period
+        $component->set('periodId', $pastPeriod->id)
+            ->set('month', 1)
+            ->assertHasNoErrors();
+    }
 }

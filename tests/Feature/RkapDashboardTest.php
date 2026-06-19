@@ -528,6 +528,17 @@ class RkapDashboardTest extends TestCase
         $response->assertSee('RKAP ' . date('Y'));
         $response->assertSee('RKAP 2025');
 
+        // Assert cumulative realization on current year period
+        $cumulativeRealizationCurrent = $response->viewData('cumulativeRealization');
+        $currentMonth = (int) date('n');
+        $this->assertCount(12, $cumulativeRealizationCurrent);
+        for ($i = 0; $i < $currentMonth; $i++) {
+            $this->assertNotNull($cumulativeRealizationCurrent[$i]);
+        }
+        for ($i = $currentMonth; $i < 12; $i++) {
+            $this->assertNull($cumulativeRealizationCurrent[$i]);
+        }
+
         // Request with period_id of the previous year period
         $responseWithPeriod = $this->actingAs($this->admin)->get('/analytics?period_id=' . $previousYearPeriod->id);
 
@@ -536,5 +547,12 @@ class RkapDashboardTest extends TestCase
         // Total budget should be the sum of submissions in 2025 (75000)
         $this->assertEquals(75000.0, $stats['total_budget']);
         $responseWithPeriod->assertSee('Menampilkan visualisasi data untuk periode: <strong>RKAP 2025</strong>', false);
+
+        // Assert cumulative realization on past year period (all 12 months should be non-null)
+        $cumulativeRealization2025 = $responseWithPeriod->viewData('cumulativeRealization');
+        $this->assertCount(12, $cumulativeRealization2025);
+        foreach ($cumulativeRealization2025 as $val) {
+            $this->assertNotNull($val);
+        }
     }
 }

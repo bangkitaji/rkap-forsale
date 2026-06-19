@@ -68,25 +68,13 @@ class RkapRealizationUpload extends Component
 
     public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
     {
-        $currentYear = (int) date('Y');
-
-        $period = RkapPeriod::where('year', $currentYear)
-            ->where('status', 'finalized')
-            ->first();
-
-        if ($period) {
-            // Check if there is at least one approved (finalized) submission for this period
-            $hasApproved = \App\Models\RkapSubmission::where('rkap_period_id', $period->id)
-                ->where('status', 'approved')
-                ->exists();
-
-            if ($hasApproved) {
-                return RkapPeriod::where('id', $period->id)->get();
-            }
-        }
-
-        // Return empty collection if conditions not met
-        return RkapPeriod::whereRaw('1=0')->get();
+        return RkapPeriod::where('status', 'finalized')
+            ->whereHas('submissions', function ($query) {
+                $query->where('status', 'approved');
+            })
+            ->orderBy('year', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function getMonthOptionsProperty(): array
@@ -142,14 +130,11 @@ class RkapRealizationUpload extends Component
             'month.between'     => 'Bulan tidak valid.',
         ]);
 
-        // Validate that the period matches current year and status is finalized
-        $currentYear = (int) date('Y');
-        $validPeriod = RkapPeriod::where('year', $currentYear)
-            ->where('status', 'finalized')
-            ->first();
+        // Validate that the period is finalized
+        $validPeriod = RkapPeriod::where('status', 'finalized')->find($this->periodId);
 
-        if (!$validPeriod || (int)$this->periodId !== $validPeriod->id) {
-            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP tahun ini (' . $currentYear . ') dengan status Finalized.';
+        if (!$validPeriod) {
+            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP dengan status Finalized.';
             return;
         }
 

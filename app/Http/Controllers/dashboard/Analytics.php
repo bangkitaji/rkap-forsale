@@ -616,13 +616,15 @@ class Analytics extends Controller
     $sumBudget = 0.0;
     $sumReal = 0.0;
     $sumProj = 0.0;
+    $currentYear = (int) date('Y');
     $currentMonth = (int) date('n');
+    $isPastPeriod = $activePeriod && ($activePeriod->year < $currentYear);
 
     for ($i = 1; $i <= 12; $i++) {
       $sumBudget += $monthlyBudgetData[$i];
       $cumulativeBudget[] = $sumBudget;
 
-      if ($monthlyRealizationData[$i] > 0 || $i <= $currentMonth) {
+      if ($isPastPeriod || $i <= $currentMonth) {
         $sumReal += $monthlyRealizationData[$i];
         $cumulativeRealization[] = $sumReal;
       } else {
