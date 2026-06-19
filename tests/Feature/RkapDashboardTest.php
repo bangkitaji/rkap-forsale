@@ -555,4 +555,152 @@ class RkapDashboardTest extends TestCase
             $this->assertNotNull($val);
         }
     }
+
+    public function test_annual_rkap_comparison_chart_data(): void
+    {
+        $currentYear = (int) date('Y');
+
+        // Create last year's period and next year's period (current year period already exists in setUp)
+        $lastYearPeriod = RkapPeriod::create([
+            'year' => $currentYear - 1,
+            'title' => 'RKAP ' . ($currentYear - 1),
+            'status' => 'finalized',
+            'submission_start' => now()->subYear(),
+            'submission_end' => now()->subYear()->addMonth(),
+        ]);
+
+        $nextYearPeriod = RkapPeriod::create([
+            'year' => $currentYear + 1,
+            'title' => 'RKAP ' . ($currentYear + 1),
+            'status' => 'finalized',
+            'submission_start' => now()->addYear(),
+            'submission_end' => now()->addYear()->addMonth(),
+        ]);
+
+        // Create approved submissions, work plans, items, realizations, projections for last year
+        $subLastYear = RkapSubmission::create([
+            'rkap_period_id' => $lastYearPeriod->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 50000,
+        ]);
+        $wpLast = RkapWorkPlan::create([
+            'rkap_submission_id' => $subLastYear->id,
+            'program_code' => 'WPLAST',
+            'program_name' => 'WPLAST',
+        ]);
+        $biLast = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wpLast->id,
+            'account_code' => '521111',
+            'description' => 'Last Year Item',
+            'quantity' => 1,
+            'unit_price' => 50000,
+        ]);
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $biLast->id,
+            'rkap_period_id' => $lastYearPeriod->id,
+            'month' => 6,
+            'amount' => 30000,
+            'uploaded_by' => $this->admin->id,
+            'uploaded_at' => now(),
+        ]);
+        RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $biLast->id,
+            'rkap_period_id' => $lastYearPeriod->id,
+            'month' => 12,
+            'amount' => 45000,
+            'inputted_by' => $this->kabiro1->id,
+        ]);
+
+        // Create draft submissions, work plans, items, realizations, projections for next year
+        // We set status = 'draft' to verify that comparison chart includes next year data even when status is not approved
+        $subNextYear = RkapSubmission::create([
+            'rkap_period_id' => $nextYearPeriod->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'draft',
+            'total_budget' => 90000,
+        ]);
+        $wpNext = RkapWorkPlan::create([
+            'rkap_submission_id' => $subNextYear->id,
+            'program_code' => 'WPNEXT',
+            'program_name' => 'WPNEXT',
+        ]);
+        $biNext = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wpNext->id,
+            'account_code' => '521111',
+            'description' => 'Next Year Item',
+            'quantity' => 1,
+            'unit_price' => 90000,
+        ]);
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $biNext->id,
+            'rkap_period_id' => $nextYearPeriod->id,
+            'month' => 6,
+            'amount' => 10000,
+            'uploaded_by' => $this->admin->id,
+            'uploaded_at' => now(),
+        ]);
+        RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $biNext->id,
+            'rkap_period_id' => $nextYearPeriod->id,
+            'month' => 12,
+            'amount' => 85000,
+            'inputted_by' => $this->kabiro1->id,
+        ]);
+
+        // 1. Assert admin (global view) sees aggregated data for all three years
+        $responseAdmin = $this->actingAs($this->admin)->get('/analytics');
+        $responseAdmin->assertStatus(200);
+        $responseAdmin->assertViewHas('comparisonData');
+        $responseAdmin->assertSee('Komparasi RKAP Antar Tahun');
+        $responseAdmin->assertSee('id="annualComparisonChart"', false);
+
+        $compDataAdmin = $responseAdmin->viewData('comparisonData');
+        $this->assertCount(3, $compDataAdmin);
+
+        // Last Year details (index 0)
+        $this->assertEquals($currentYear - 1, $compDataAdmin[0]['year']);
+        $this->assertEquals(($currentYear - 1) . ' (Tahun Lalu)', $compDataAdmin[0]['label']);
+        $this->assertEquals(50000.0, $compDataAdmin[0]['budget']);
+        $this->assertEquals(30000.0, $compDataAdmin[0]['realization']);
+        $this->assertEquals(45000.0, $compDataAdmin[0]['projection']);
+
+        // Current Year details (index 1)
+        $this->assertEquals($currentYear, $compDataAdmin[1]['year']);
+        $this->assertEquals($currentYear . ' (Tahun Berjalan)', $compDataAdmin[1]['label']);
+        $this->assertEquals(100000.0, $compDataAdmin[1]['budget']);
+        $this->assertEquals(25000.0, $compDataAdmin[1]['realization']);
+        $this->assertEquals(88000.0, $compDataAdmin[1]['projection']);
+
+        // Next Year details (index 2)
+        $this->assertEquals($currentYear + 1, $compDataAdmin[2]['year']);
+        $this->assertEquals(($currentYear + 1) . ' (Tahun Depan)', $compDataAdmin[2]['label']);
+        $this->assertEquals(90000.0, $compDataAdmin[2]['budget']);
+        $this->assertEquals(10000.0, $compDataAdmin[2]['realization']);
+        $this->assertEquals(85000.0, $compDataAdmin[2]['projection']);
+
+        // 2. Assert kabiro1 scoping limits data to Bureau 1 for all three years
+        $responseKabiro = $this->actingAs($this->kabiro1)->get('/analytics');
+        $responseKabiro->assertStatus(200);
+        $compDataKabiro = $responseKabiro->viewData('comparisonData');
+
+        $this->assertCount(3, $compDataKabiro);
+        
+        // Last Year Bureau 1
+        $this->assertEquals(50000.0, $compDataKabiro[0]['budget']);
+        $this->assertEquals(30000.0, $compDataKabiro[0]['realization']);
+        $this->assertEquals(45000.0, $compDataKabiro[0]['projection']);
+
+        // Current Year Bureau 1
+        $this->assertEquals(60000.0, $compDataKabiro[1]['budget']);
+        $this->assertEquals(15000.0, $compDataKabiro[1]['realization']);
+        $this->assertEquals(50000.0, $compDataKabiro[1]['projection']);
+
+        // Next Year Bureau 1
+        $this->assertEquals(90000.0, $compDataKabiro[2]['budget']);
+        $this->assertEquals(10000.0, $compDataKabiro[2]['realization']);
+        $this->assertEquals(85000.0, $compDataKabiro[2]['projection']);
+    }
 }

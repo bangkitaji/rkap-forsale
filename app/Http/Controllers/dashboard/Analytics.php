@@ -18,6 +18,16 @@ class Analytics extends Controller
       abort(403);
     }
 
+    $currentYear = (int) date('Y');
+
+    // Define scoped bureau IDs based on user role
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
+    }
+
     // Get all finalized periods for dropdown selection
     $finalizedPeriods = RkapPeriod::where('status', 'finalized')
       ->orderBy('year', 'desc')
@@ -33,7 +43,6 @@ class Analytics extends Controller
     }
 
     if (!$activePeriod) {
-      $currentYear = (int) date('Y');
       $activePeriod = RkapPeriod::where('year', $currentYear)->first()
         ?? RkapPeriod::where('status', 'finalized')->latest()->first()
         ?? RkapPeriod::latest()->first();
@@ -63,14 +72,6 @@ class Analytics extends Controller
 
     if ($activePeriod) {
       $periodId = $activePeriod->id;
-
-      // Define scoped bureau IDs based on user role
-      $bureauIds = null;
-      if ($user->isKepalaBiro()) {
-        $bureauIds = [$user->bureau_id];
-      } elseif ($user->isKepalaDepartemen()) {
-        $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
-      }
 
       // Define scoped filters for high-level comparison charts (directorate and department level)
       // Both views should use the same directorate scope so totals are consistent
@@ -616,7 +617,6 @@ class Analytics extends Controller
     $sumBudget = 0.0;
     $sumReal = 0.0;
     $sumProj = 0.0;
-    $currentYear = (int) date('Y');
     $currentMonth = (int) date('n');
     $isPastPeriod = $activePeriod && ($activePeriod->year < $currentYear);
 
@@ -635,6 +635,61 @@ class Analytics extends Controller
       $cumulativeProjection[] = $sumProj;
     }
 
+    // Calculate annual comparison data (Tahun Lalu, Tahun Berjalan, Tahun Depan)
+    $yearsToCompare = [$currentYear - 1, $currentYear, $currentYear + 1];
+    $comparisonData = [];
+
+    foreach ($yearsToCompare as $yr) {
+      $period = RkapPeriod::where('year', $yr)->first();
+      if ($period) {
+        $isNextYear = ($yr === $currentYear + 1);
+
+        $budget = (float) DB::table('rkap_submissions')
+          ->where('rkap_period_id', $period->id)
+          ->unless($isNextYear, fn($q) => $q->where('status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('bureau_id', $bureauIds))
+          ->sum('total_budget');
+
+        $realization = (float) DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $period->id)
+          ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->sum('rkap_budget_item_realizations.amount');
+
+        $projection = (float) DB::table('rkap_budget_item_projections')
+          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->where('rkap_budget_item_projections.rkap_period_id', $period->id)
+          ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->sum('rkap_budget_item_projections.amount');
+      } else {
+        $budget = 0.0;
+        $realization = 0.0;
+        $projection = 0.0;
+      }
+
+      if ($yr === $currentYear - 1) {
+        $label = $yr . ' (Tahun Lalu)';
+      } elseif ($yr === $currentYear) {
+        $label = $yr . ' (Tahun Berjalan)';
+      } else {
+        $label = $yr . ' (Tahun Depan)';
+      }
+
+      $comparisonData[] = [
+        'year' => $yr,
+        'label' => $label,
+        'budget' => $budget,
+        'realization' => $realization,
+        'projection' => $projection,
+      ];
+    }
+
     return view('content.dashboard.dashboards-analytics', compact(
       'activePeriod',
       'finalizedPeriods',
@@ -651,7 +706,8 @@ class Analytics extends Controller
       'coaData',
       'plGroups',
       'plSummary',
-      'unmappedGroup'
+      'unmappedGroup',
+      'comparisonData'
     ));
   }
 }

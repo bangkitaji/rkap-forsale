@@ -115,6 +115,21 @@
         </div>
     </div>
 
+    {{-- Row 4: Annual RKAP Comparison (Relocated below resume cards) --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header border-bottom py-3">
+                    <h5 class="card-title mb-0">Komparasi RKAP Antar Tahun</h5>
+                    <small class="text-muted">Perbandingan Anggaran, Realisasi YTD, dan Proyeksi Akhir Tahun (Tahun Lalu, Tahun Berjalan, dan Tahun Depan)</small>
+                </div>
+                <div class="card-body pt-3">
+                    <div id="annualComparisonChart" style="min-height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Row 1: Line / Burn-Up & Radial Gauge --}}
     <div class="row mb-4 g-4">
         <!-- Line / Burn-Up Chart -->
@@ -594,9 +609,9 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-    @endif@else
+    @endif
+
+    @else
     <div class="card py-5 text-center">
         <div class="card-body">
             <i class="bx bx-error-circle bx-lg text-warning mb-3"></i>
@@ -793,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return formatValueShort(val);
                 }
             },
-            colors: ['#a1acb8', '#71dd37', '#ffab00'],
+            colors: ['#1a1f5e', '#ED1C24', '#ffab00'],
             xaxis: {
                 categories: labels,
                 labels: {
@@ -868,6 +883,74 @@ document.addEventListener('DOMContentLoaded', function() {
             if(this.checked) switchDivisionChart('department');
         });
     }
+
+    // 4. Annual Comparison Chart Setup
+    const annualComparisonChartOptions = {
+        series: [
+            {
+                name: 'Anggaran',
+                data: @json(array_column($comparisonData, 'budget'))
+            },
+            {
+                name: 'Realisasi YTD',
+                data: @json(array_column($comparisonData, 'realization'))
+            },
+            {
+                name: 'Proyeksi Akhir Tahun',
+                data: @json(array_column($comparisonData, 'projection'))
+            }
+        ],
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '55%',
+                endingShape: 'rounded',
+                borderRadius: 4
+            },
+        },
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+        },
+        colors: ['#1a1f5e', '#ED1C24', '#ffab00'],
+        xaxis: {
+            categories: @json(array_column($comparisonData, 'label')),
+        },
+        yaxis: {
+            labels: {
+                formatter: function (value) {
+                    if (value >= 1e9) return 'Rp ' + (value / 1e9).toFixed(1) + ' M';
+                    if (value >= 1e6) return 'Rp ' + (value / 1e6).toFixed(0) + ' Jt';
+                    return 'Rp ' + value.toLocaleString('id-ID');
+                }
+            }
+        },
+        fill: {
+            opacity: 1
+        },
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    return 'Rp ' + val.toLocaleString('id-ID');
+                }
+            }
+        },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'left'
+        }
+    };
+    const annualComparisonChart = new ApexCharts(document.querySelector("#annualComparisonChart"), annualComparisonChartOptions);
+    annualComparisonChart.render();
 
     // Note: COA Expense Category Allocation donut chart replaced by Profit & Loss Summary card widget.
 });
