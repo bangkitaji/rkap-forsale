@@ -76,6 +76,15 @@ class CoaProfitLossMappingSeeder extends Seeder
         '5104000002' => 'direct_cost_traction',      // Opera Electric Overhead Catenary System
         '5501000006' => 'indirect_cost_marketing',   // Sales expenses - Marketing Activities
         '5803000001' => 'indirect_cost_marketing',   // Advertising Business Expenses
+        
+        // Specific alignment overrides
+        '5103000001' => 'direct_cost_crew',          // Salary and Benefit HSR (Crew/Direct staff)
+        '5103000008' => 'direct_cost_crew',          // Tax Benefits HSR
+        '5104000003' => 'direct_cost_others',        // Station Water Supply
+        '5702000001' => 'direct_cost_others',        // Security on Trains
+        '5702000002' => 'direct_cost_others',        // Security at the Station
+        '5702000003' => 'direct_cost_others',        // Security in Office and Company Environments
+        '5202100001' => 'direct_cost_others',        // Operational Insurance Expenses
     ];
 
     /**
