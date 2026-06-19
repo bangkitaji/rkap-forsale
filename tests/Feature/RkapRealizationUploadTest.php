@@ -389,4 +389,86 @@ class RkapRealizationUploadTest extends TestCase
             ->set('month', 1)
             ->assertHasNoErrors();
     }
+
+    public function test_realization_list_shows_department_accumulation_and_filters(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        // Setup submission and budget items
+        $directorate = Directorate::create(['code' => 'D_ACC', 'name' => 'Dir Acc']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP_ACC', 'name' => 'Dept Acc']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B_ACC', 'name' => 'Bur Acc']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP_ACC',
+            'title' => 'Work Plan Acc',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP_ACC',
+            'program_name' => 'Work Plan Acc',
+        ]);
+
+        $bi1 = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Item 1',
+            'quantity' => 1,
+            'unit_price' => 10000,
+        ]);
+
+        $bi2 = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521112',
+            'description' => 'Item 2',
+            'quantity' => 1,
+            'unit_price' => 20000,
+        ]);
+
+        // Create realizations for Bureau B_ACC under Department DP_ACC (total 5000 + 7500 = 12500)
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $bi1->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 4,
+            'amount' => 5000,
+            'uploaded_by' => $this->verifikator->id,
+            'uploaded_at' => now(),
+        ]);
+
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $bi2->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 4,
+            'amount' => 7500,
+            'uploaded_by' => $this->verifikator->id,
+            'uploaded_at' => now(),
+        ]);
+
+        // Test that Livewire component has the accumulations and renders them
+        $component = Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id);
+
+        $accumulations = $component->get('departmentAccumulations');
+        $this->assertNotEmpty($accumulations);
+        $this->assertEquals('DP_ACC', $accumulations->first()->code);
+        $this->assertEquals(12500.0, $accumulations->first()->total_amount);
+
+        $component->assertSee('Ringkasan Akumulasi Realisasi per Departemen')
+            ->assertSee('DP_ACC')
+            ->assertSee('Rp 12.500');
+
+        // Test filter by department triggers and filters the detail list
+        $component->set('filterDepartmentId', $department->id)
+            ->assertSee('Departemen: ' . $department->name);
+    }
 }

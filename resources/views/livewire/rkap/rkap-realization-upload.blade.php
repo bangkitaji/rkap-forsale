@@ -171,10 +171,58 @@
         </div>
       </div>
 
+      {{-- Department Accumulation Summary Card --}}
+      @if($periodId && $this->departmentAccumulations->isNotEmpty())
+        <div class="card mt-4">
+          <div class="card-header py-3">
+            <h5 class="mb-0">Ringkasan Akumulasi Realisasi per Departemen</h5>
+            <small class="text-muted">Klik nama departemen untuk memfilter rincian realisasi di bawah ini</small>
+          </div>
+          <div class="table-responsive text-nowrap">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Departemen</th>
+                  <th class="text-end" style="width: 250px;">Total Realisasi (Rp)</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach($this->departmentAccumulations as $accum)
+                  <tr>
+                    <td>
+                      <a href="javascript:void(0);" wire:click="$set('filterDepartmentId', {{ $accum->id }})" class="fw-bold text-primary text-decoration-none hover-underline d-inline-flex align-items-center gap-1">
+                        <i class="bx bx-filter-alt"></i>
+                        <span>{{ $accum->code }} — {{ $accum->name }}</span>
+                      </a>
+                    </td>
+                    <td class="text-end fw-bold text-primary font-monospace">
+                      Rp {{ number_format($accum->total_amount, 0, ',', '.') }}
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
+        </div>
+      @endif
+
       {{-- Realization List Card --}}
       <div class="card mt-4">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <h5 class="mb-0">Daftar Realisasi Terunggah</h5>
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0">Daftar Realisasi Terunggah</h5>
+            @if($filterDepartmentId)
+              @php
+                $filteredDept = \App\Models\Department::find($filterDepartmentId);
+              @endphp
+              @if($filteredDept)
+                <span class="badge bg-label-primary d-flex align-items-center gap-1">
+                  Departemen: {{ $filteredDept->name }}
+                  <button type="button" class="btn-close text-primary" style="font-size: 0.5rem; padding: 0.15rem; box-shadow: none;" wire:click="$set('filterDepartmentId', null)" aria-label="Close"></button>
+                </span>
+              @endif
+            @endif
+          </div>
           @if($periodId)
             <div class="d-flex align-items-center gap-2 flex-wrap">
               {{-- Month filter for list --}}

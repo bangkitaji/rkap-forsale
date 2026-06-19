@@ -24,6 +24,7 @@ class RkapRealizationUpload extends Component
     public ?int $filterMonth = null;
     public ?string $importedMonthName = null;
     public ?string $search = '';
+    public ?int $filterDepartmentId = null;
 
     public array $errorsList    = [];
     public array $importSummary = [];
@@ -47,7 +48,13 @@ class RkapRealizationUpload extends Component
         $this->resetPage();
         $this->month = null;
         $this->filterMonth = null;
+        $this->filterDepartmentId = null;
         $this->resetState();
+    }
+
+    public function updatedFilterDepartmentId(): void
+    {
+        $this->resetPage();
     }
 
     public function updatedMonth(): void
@@ -417,6 +424,37 @@ class RkapRealizationUpload extends Component
         }
     }
 
+    public function getDepartmentAccumulationsProperty(): \Illuminate\Support\Collection
+    {
+        if (!$this->periodId) {
+            return collect();
+        }
+
+        return RkapBudgetItemRealization::query()
+            ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+            ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+            ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+            ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+            ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+            ->where('rkap_budget_item_realizations.rkap_period_id', $this->periodId)
+            ->when($this->filterMonth, fn($q) => $q->where('rkap_budget_item_realizations.month', $this->filterMonth))
+            ->when($this->search, function ($q) {
+                $search = $this->search;
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('rkap_budget_items.account_code', 'like', '%' . $search . '%')
+                        ->orWhere('rkap_budget_items.description', 'like', '%' . $search . '%')
+                        ->orWhere('bureaus.code', 'like', '%' . $search . '%')
+                        ->orWhere('bureaus.name', 'like', '%' . $search . '%')
+                        ->orWhere('departments.code', 'like', '%' . $search . '%')
+                        ->orWhere('departments.name', 'like', '%' . $search . '%');
+                });
+            })
+            ->selectRaw('departments.id, departments.code, departments.name, SUM(rkap_budget_item_realizations.amount) as total_amount')
+            ->groupBy('departments.id', 'departments.code', 'departments.name')
+            ->orderBy('total_amount', 'desc')
+            ->get();
+    }
+
     public function render(): View
     {
         $realizations = collect();
@@ -430,6 +468,12 @@ class RkapRealizationUpload extends Component
 
             if ($this->filterMonth) {
                 $query->where('month', $this->filterMonth);
+            }
+
+            if ($this->filterDepartmentId) {
+                $query->whereHas('budgetItem.workPlan.submission.bureau', function ($bQuery) {
+                    $bQuery->where('department_id', $this->filterDepartmentId);
+                });
             }
 
             if ($this->search) {
