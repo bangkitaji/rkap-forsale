@@ -26,20 +26,6 @@
       "permission": "rkap.show"
     },
     {
-      "url": "rkap/requests",
-      "icon": "menu-icon icon-base bx bx-git-pull-request",
-      "name": "Usulan Program & Kegiatan",
-      "slug": "rkap-requests",
-      "permission": "rkap.show"
-    },
-    {
-      "url": "rkap/compilation",
-      "icon": "menu-icon icon-base bx bx-layer",
-      "name": "Kompilasi RKAP",
-      "slug": "rkap-submissions-compilation",
-      "permission": "rkap.compilation.dept"
-    },
-    {
       "url": "rkap/realization-upload",
       "icon": "menu-icon icon-base bx bx-trending-up",
       "name": "Realisasi",
@@ -54,11 +40,11 @@
       "permission": "rkap.projection.view"
     },
     {
-      "url": "rkap/periods",
-      "icon": "menu-icon icon-base bx bx-calendar",
-      "name": "Periode RKAP",
-      "slug": "rkap-periods",
-      "permission": "rkap.manage.period"
+      "url": "rkap/compilation",
+      "icon": "menu-icon icon-base bx bx-layer",
+      "name": "Kompilasi RKAP",
+      "slug": "rkap-submissions-compilation",
+      "permission": "rkap.compilation.dept"
     },
     {
       "menuHeader": "Master Data",
@@ -107,6 +93,13 @@
       "permission": "masterdata.activity.manage"
     },
     {
+      "url": "rkap/requests",
+      "icon": "menu-icon icon-base bx bx-git-pull-request",
+      "name": "Usulan Program & Kegiatan",
+      "slug": "rkap-requests",
+      "permission": "rkap.show"
+    },
+    {
       "menuHeader": "Settings",
       "permission": "settings.show"
     },
@@ -140,6 +133,13 @@
       "name": "Satuan",
       "slug": "settings-satuans",
       "permission": "settings.satuan.manage"
+    },
+    {
+      "url": "rkap/periods",
+      "icon": "menu-icon icon-base bx bx-calendar",
+      "name": "Periode RKAP",
+      "slug": "rkap-periods",
+      "permission": "rkap.manage.period"
     },
     {
       "url": "settings/data-migration-upload",
