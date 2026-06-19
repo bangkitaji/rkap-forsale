@@ -11,18 +11,33 @@ use Illuminate\Support\Facades\DB;
 
 class Analytics extends Controller
 {
-  public function index()
+  public function index(Request $request)
   {
     $user = Auth::user();
     if (!$user) {
       abort(403);
     }
 
-    // 1. Get the current year RKAP period (or latest finalized, or latest period)
-    $currentYear = (int) date('Y');
-    $activePeriod = RkapPeriod::where('year', $currentYear)->first()
-      ?? RkapPeriod::where('status', 'finalized')->latest()->first()
-      ?? RkapPeriod::latest()->first();
+    // Get all finalized periods for dropdown selection
+    $finalizedPeriods = RkapPeriod::where('status', 'finalized')
+      ->orderBy('year', 'desc')
+      ->orderBy('created_at', 'desc')
+      ->get();
+
+    // 1. Get the requested period if specified and finalized, otherwise default
+    $selectedPeriodId = $request->query('period_id');
+    $activePeriod = null;
+
+    if ($selectedPeriodId) {
+      $activePeriod = RkapPeriod::where('status', 'finalized')->find($selectedPeriodId);
+    }
+
+    if (!$activePeriod) {
+      $currentYear = (int) date('Y');
+      $activePeriod = RkapPeriod::where('year', $currentYear)->first()
+        ?? RkapPeriod::where('status', 'finalized')->latest()->first()
+        ?? RkapPeriod::latest()->first();
+    }
 
     // High-level statistics
     $stats = [
@@ -620,6 +635,7 @@ class Analytics extends Controller
 
     return view('content.dashboard.dashboards-analytics', compact(
       'activePeriod',
+      'finalizedPeriods',
       'stats',
       'monthlyBudgetData',
       'monthlyRealizationData',

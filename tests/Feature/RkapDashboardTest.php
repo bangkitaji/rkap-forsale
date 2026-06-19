@@ -499,4 +499,42 @@ class RkapDashboardTest extends TestCase
                 return $myActions->contains('id', $submissionRevision->id);
             });
     }
+
+    public function test_user_can_select_finalized_rkap_period_on_analytics_dashboard(): void
+    {
+        // Create an additional finalized period for previous year (e.g. 2025)
+        $previousYearPeriod = RkapPeriod::create([
+            'year' => 2025,
+            'title' => 'RKAP 2025',
+            'status' => 'finalized',
+            'submission_start' => now()->subYear(),
+            'submission_end' => now()->subYear()->addMonth(),
+        ]);
+
+        // Create an approved submission for the previous year period
+        $submission2025 = RkapSubmission::create([
+            'rkap_period_id' => $previousYearPeriod->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 75000,
+        ]);
+
+        // Access the analytics dashboard as admin
+        $response = $this->actingAs($this->admin)->get('/analytics');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('finalizedPeriods');
+        $response->assertSee('RKAP ' . date('Y'));
+        $response->assertSee('RKAP 2025');
+
+        // Request with period_id of the previous year period
+        $responseWithPeriod = $this->actingAs($this->admin)->get('/analytics?period_id=' . $previousYearPeriod->id);
+
+        $responseWithPeriod->assertStatus(200);
+        $stats = $responseWithPeriod->viewData('stats');
+        // Total budget should be the sum of submissions in 2025 (75000)
+        $this->assertEquals(75000.0, $stats['total_budget']);
+        $responseWithPeriod->assertSee('Menampilkan visualisasi data untuk periode: <strong>RKAP 2025</strong>', false);
+    }
 }

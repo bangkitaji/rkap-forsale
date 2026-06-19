@@ -18,7 +18,7 @@
         border-color: #696cff !important;
     }
 </style>
-<div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+<div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
         <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Analytics</h4>
         @if($activePeriod)
@@ -29,6 +29,29 @@
             </div>
         @endif
     </div>
+
+    @if($finalizedPeriods->isNotEmpty())
+    <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
+        <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1" style="font-size: 0.9rem;">
+            <i class="bx bx-calendar text-primary fs-4"></i>
+            <span>Pilih Periode RKAP:</span>
+        </label>
+        <form action="{{ route('dashboard-analytics') }}" method="GET" id="periodForm" class="m-0">
+            <select name="period_id" id="periodSelect" class="form-select form-select-sm border-0 fw-semibold text-primary cursor-pointer focus-ring-none" onchange="this.form.submit()" style="font-size: 0.9rem; padding-right: 2.5rem; background-position: right 0.75rem center;">
+                @if($activePeriod && !$finalizedPeriods->contains('id', $activePeriod->id))
+                    <option value="" disabled selected>
+                        -- Pilih Periode Finalized (Saat ini: {{ $activePeriod->title }}) --
+                    </option>
+                @endif
+                @foreach($finalizedPeriods as $p)
+                    <option value="{{ $p->id }}" {{ $activePeriod && $activePeriod->id == $p->id ? 'selected' : '' }}>
+                        {{ $p->title }} ({{ $p->year }})
+                    </option>
+                @endforeach
+            </select>
+        </form>
+    </div>
+    @endif
 </div>
 
 @if($activePeriod)
