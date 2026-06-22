@@ -310,6 +310,9 @@ class RkapApprovalReview extends Component
         $coas = [];
         $itemsMap = [];
         $itemCounters = [];
+        $totalBudget = 0.0;
+        $totalRealization = 0.0;
+        $totalProjection = 0.0;
 
         foreach ($prevSubmission->workPlans as $wp) {
             $wpId = $wp->work_plan_id;
@@ -341,6 +344,10 @@ class RkapApprovalReview extends Component
                 $activities[$actKey]['realization'] += $realizationVal;
                 $activities[$actKey]['projection'] += $projectionVal;
 
+                $totalBudget += $budgetVal;
+                $totalRealization += $realizationVal;
+                $totalProjection += $projectionVal;
+
                 if ($code) {
                     $coaKey = "{$wpId}-{$actId}-{$code}";
                     if (!isset($coas[$coaKey])) {
@@ -371,7 +378,9 @@ class RkapApprovalReview extends Component
                 'items' => $itemsMap,
             ],
             'period' => $prevSubmission->period?->title ?? '-',
-            'total_budget' => (float) $prevSubmission->total_budget,
+            'total_budget' => $totalBudget,
+            'total_realization' => $totalRealization,
+            'total_projection' => $totalProjection,
         ];
     }
 

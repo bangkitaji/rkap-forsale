@@ -2,3 +2,8 @@
 .nav-pills .nav-link.active:hover {
     color: #fff !important;
 }
+
+/* Make all tables have smaller font size globally */
+table.table {
+    font-size: 0.8rem !important;
+}

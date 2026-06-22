@@ -157,7 +157,34 @@
             </div>
             <div class="col-sm-3">
               <label class="text-muted small">Total Anggaran Ajuan</label>
-              <div class="fw-bold text-primary fs-5">Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
+              <div class="fw-bold text-primary fs-5 has-tooltip">Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
+                <span class="custom-tooltip-content tooltip-align-right">
+                  @php
+                    $prevPeriod = $prevData['period'] ?? '-';
+                    $prevTotal = $prevData['total_budget'] ?? 0;
+                    $prevRealization = $prevData['total_realization'] ?? 0;
+                    $prevProjection = $prevData['total_projection'] ?? 0;
+                  @endphp
+                  @if ($prevTotal > 0)
+                    <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                    <div class="row text-center">
+                      <div class="col-4 border-end">
+                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevTotal, 0, ',', '.') }}</div>
+                      </div>
+                      <div class="col-4 border-end">
+                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevRealization, 0, ',', '.') }}</div>
+                      </div>
+                      <div class="col-4">
+                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevProjection, 0, ',', '.') }}</div>
+                      </div>
+                    </div>
+                  @else
+                    <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  @endif
+                </span>
               </div>
 
               @if (isset($prevData['total_budget']))
