@@ -8,7 +8,7 @@
 
     .custom-tooltip-content {
       visibility: hidden;
-      width: 400px;
+      width: 520px;
       background-color: #2f3349;
       color: #ffffff;
       text-align: left;

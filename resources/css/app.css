@@ -1,9 +1,15 @@
 /* Keep active nav-pill text white on hover */
 .nav-pills .nav-link.active:hover {
-    color: #fff !important;
+  color: #fff !important;
 }
 
 /* Make all tables have smaller font size globally */
 table.table {
-    font-size: 0.8rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* Make custom tooltips wider to prevent text wrapping */
+.custom-tooltip-content {
+  width: 520px !important;
+  white-space: normal !important;
 }

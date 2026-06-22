@@ -13,7 +13,7 @@
 
     .custom-tooltip-content {
       visibility: hidden;
-      width: 400px;
+      width: 520px;
       background-color: #2f3349;
       color: #ffffff;
       text-align: left;
@@ -276,31 +276,41 @@
               </td>
               <td><small class="text-muted">{{ $submission->updated_at->diffForHumans() }}</small></td>
               <td>
-                <div class="d-flex gap-1">
-                  @if ($submission->canBeEditedBy(Auth::user()))
-                    <a href="{{ route('rkap-submissions-edit', $submission->id) }}"
-                      class="btn btn-sm btn-icon btn-text-primary rounded-pill" title="Edit">
-                      <i class="bx bx-edit-alt"></i>
-                    </a>
-                  @endif
-                  @if ($submission->canBeReviewedBy(Auth::user()))
-                    <a href="{{ route('rkap-submissions-approval-review', $submission->id) }}"
-                      class="btn btn-sm btn-icon btn-text-success rounded-pill" title="Review">
-                      <i class="bx bx-check-circle"></i>
-                    </a>
-                  @endif
-                  <a href="{{ route('rkap-submissions-review', $submission->id) }}"
-                    class="btn btn-sm btn-icon btn-text-secondary rounded-pill" title="Detail">
-                    <i class="bx bx-show"></i>
-                  </a>
-                  <a href="{{ route('rkap-submissions-versions', $submission->id) }}"
-                    class="btn btn-sm btn-icon btn-text-info rounded-pill" title="Riwayat Versi">
-                    <i class="bx bx-history"></i>
-                  </a>
-                  <button type="button" wire:click="exportExcel({{ $submission->id }})"
-                    class="btn btn-sm btn-icon btn-text-warning rounded-pill" title="Export Excel">
-                    <i class="bx bx-download"></i>
+                <div class="dropdown">
+                  <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Aksi
                   </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    @if ($submission->canBeEditedBy(Auth::user()))
+                      <li>
+                        <a class="dropdown-item text-primary" href="{{ route('rkap-submissions-edit', $submission->id) }}">
+                          <i class="bx bx-edit-alt me-2"></i> Edit
+                        </a>
+                      </li>
+                    @endif
+                    @if ($submission->canBeReviewedBy(Auth::user()))
+                      <li>
+                        <a class="dropdown-item text-success" href="{{ route('rkap-submissions-approval-review', $submission->id) }}">
+                          <i class="bx bx-check-circle me-2"></i> Review
+                        </a>
+                      </li>
+                    @endif
+                    <li>
+                      <a class="dropdown-item text-secondary" href="{{ route('rkap-submissions-review', $submission->id) }}">
+                        <i class="bx bx-show me-2"></i> Detail
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item text-info" href="{{ route('rkap-submissions-versions', $submission->id) }}">
+                        <i class="bx bx-history me-2"></i> Riwayat Versi
+                      </a>
+                    </li>
+                    <li>
+                      <button type="button" class="dropdown-item text-warning" wire:click="exportExcel({{ $submission->id }})">
+                        <i class="bx bx-download me-2"></i> Export Excel
+                      </button>
+                    </li>
+                  </ul>
                 </div>
               </td>
             </tr>
