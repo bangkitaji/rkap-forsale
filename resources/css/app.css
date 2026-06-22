@@ -13,3 +13,30 @@ table.table {
   width: 520px !important;
   white-space: normal !important;
 }
+
+/* Fix vertical menu scrollability and style a custom slim scrollbar */
+.menu-inner {
+  overflow-y: auto !important;
+}
+.menu-inner::-webkit-scrollbar {
+  width: 4px;
+}
+.menu-inner::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+.menu-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Hide default browser up/down spinner arrows for number input fields globally */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+
