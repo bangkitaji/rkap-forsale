@@ -556,12 +556,11 @@
                   <thead class="table-primary text-white fw-semibold">
                     <tr>
                       <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span class="text-warning">*</span></th>
-                      <th style="width:8%" class="text-center align-middle">Vol <span class="text-warning">*</span></th>
-                      <th style="width:12%" class="text-center align-middle">Satuan</th>
+                      <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span></th>
+                      <th style="width:10%" class="text-center align-middle">Satuan</th>
                       <th style="width:140px" class="text-center align-middle">Harga Satuan (Rp) <span class="text-warning">*</span></th>
                       <th style="width:160px" class="text-center align-middle">Total (Rp)</th>
                       <th style="width:120px" class="text-center align-middle">Detail</th>
-                      <th style="width:2%" class="text-center align-middle"><i class="bx bx-menu"></i></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -636,6 +635,9 @@
                                     ? $prevData['map'][$prevWpId][$prevCode]
                                     : null;
                             $prevPeriod = $prevData['period'] ?? null;
+                            $totalItemsCount = count($act['budget_items']);
+                            $indices = array_column($group['items'], 'index');
+                            $indicesJson = json_encode($indices);
                           @endphp
                           <div class="position-relative">
                             <div class="input-group input-group-sm">
@@ -651,6 +653,14 @@
                                   @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
                                   title="Hapus pilihan">
                                   <i class="bx bx-x"></i>
+                                </button>
+                              @endif
+                              @if (!$isApproved && $totalItemsCount > $itemCount)
+                                <button type="button"
+                                  wire:click="removeGroup({{ $wpIdx }}, {{ $actIdx }}, {{ $indicesJson }})"
+                                  @click="isDirty = true" class="btn btn-sm btn-outline-danger"
+                                  title="Hapus grup akun belanja">
+                                  <i class="bx bx-trash"></i>
                                 </button>
                               @endif
                               @php
@@ -711,7 +721,7 @@
                               @endforeach
                             </select>
                             <div x-show="open" x-cloak
-                              class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                               class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
                               style="z-index: 1050; max-height: 220px; overflow-y: auto;">
                               @foreach ($filteredCoasOrdered as $coa)
                                 <div
@@ -731,20 +741,6 @@
                               @endforeach
                             </div>
                           </div>
-                        </td>
-
-                        <td rowspan="{{ 1 + $itemCount }}" class="text-center align-middle border-bottom-0">
-                          @php
-                            $totalItemsCount = count($act['budget_items']);
-                            $indices = array_column($group['items'], 'index');
-                            $indicesJson = json_encode($indices);
-                          @endphp
-                          <button type="button"
-                            wire:click="removeGroup({{ $wpIdx }}, {{ $actIdx }}, {{ $indicesJson }})"
-                            @click="isDirty = true" class="btn btn-sm btn-icon btn-text-danger rounded-pill"
-                            title="Hapus grup akun belanja" @disabled($totalItemsCount <= $itemCount || $isApproved)>
-                            <i class="bx bx-minus-circle fs-4"></i>
-                          </button>
                         </td>
                       </tr>
 
@@ -772,7 +768,7 @@
                               wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
                               placeholder="Detail Belanja / Ket..." @disabled($isApproved)>
                           </td>
-                          <td class="border-top-0" style="min-width: 80px;">
+                          <td class="border-top-0" style="min-width: 120px;">
                             {{-- Vol 1 --}}
                             <input type="number"
                               class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity') is-invalid @enderror"
