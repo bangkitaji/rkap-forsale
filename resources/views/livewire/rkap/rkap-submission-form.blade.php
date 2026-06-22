@@ -215,7 +215,7 @@
   <div class="card mb-4">
     <div class="card-header"><strong>Catatan Umum</strong></div>
     <div class="card-body">
-      <textarea class="form-control" wire:model.live="notes" rows="2"
+      <textarea class="form-control" wire:model="notes" rows="2"
         placeholder="Catatan atau keterangan umum untuk pengajuan ini..."></textarea>
     </div>
   </div>
@@ -485,25 +485,25 @@
           <div class="col-md-12">
             <label class="form-label small fw-semibold">Deskripsi / Tujuan</label>
             <textarea class="form-control form-control-sm"
-              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.description" rows="2"
+              wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.description" rows="2"
               placeholder="Deskripsi kegiatan..." @disabled($isApproved)></textarea>
           </div>
           <div class="col-md-6">
             <label class="form-label small fw-semibold">Target Output</label>
             <input type="text" class="form-control form-control-sm"
-              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.output_target"
+              wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.output_target"
               placeholder="Misal: 1 sistem, 100 user" @disabled($isApproved)>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Volume</label>
             <input type="number" class="form-control form-control-sm"
-              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.quantity"
+              wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.quantity"
               min="1" @disabled($isApproved)>
           </div>
           <div class="col-md-3">
             <label class="form-label small fw-semibold">Satuan</label>
             <input type="text" class="form-control form-control-sm"
-              wire:model.live.debounce.300="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
+              wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit"
               list="satuan-options"
               placeholder="Paket, Unit, ..."
               autocomplete="off" @disabled($isApproved)>
@@ -737,7 +737,7 @@
                   class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
                   <td class="border-top-0">
                     <input type="text" class="form-control form-control-sm"
-                      wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
+                      wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
                       placeholder="Detail Belanja / Ket..." @disabled($isApproved)>
                   </td>
                   <td class="border-top-0" style="min-width: 80px;">
@@ -757,7 +757,7 @@
                     {{-- Satuan 1 --}}
                     <input type="text"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit') is-invalid @enderror"
-                      wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit"
+                      wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit"
                       list="satuan-options"
                       placeholder="Satuan 1"
                       autocomplete="off" @disabled($isApproved)>
@@ -765,30 +765,48 @@
                     {{-- Satuan 2 --}}
                     <input type="text"
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_2') is-invalid @enderror"
-                      wire:model.live.debounce.300ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2"
+                      wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2"
                       list="satuan-options"
                       placeholder="Satuan 2 (opsional)"
                       autocomplete="off" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0">
-                    <div x-data="{ price: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') }">
-                      <input type="number"
-                        class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
-                        wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price"
-                        min="0" step="1000"
-                        @input="price = $event.target.value"
-                        oninput="this.value = this.value.replace(/^0+(?=\d)/, '')"
-                        onblur="if (this.value === '' || this.value === null) { this.value = 0; price = 0; this.dispatchEvent(new Event('input')); }"
-                        @disabled($isApproved)>
-                      <div x-show="price && price > 0"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 transform -translate-y-1"
-                        x-transition:enter-end="opacity-100 transform translate-y-0"
-                        class="mt-1 d-flex align-items-center"
-                        style="min-height: 18px;">
-                        <span class="badge bg-label-success rounded-pill fw-semibold" style="font-size: 0.65rem; padding: 0.15rem 0.4rem; white-space: nowrap;">
-                          <span class="opacity-75">Rp</span> <span x-text="new Intl.NumberFormat('id-ID').format(price)"></span>
-                        </span>
+                    <div x-data="{
+                        raw: {{ (int)($bi['unit_price'] ?? 0) }},
+                        display: '',
+                        timer: null,
+                        fmt(n) { return n > 0 ? new Intl.NumberFormat('id-ID').format(n) : '' },
+                        sync() {
+                            clearTimeout(this.timer);
+                            this.timer = setTimeout(() => {
+                                $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price', this.raw);
+                            }, 500);
+                        },
+                        onInput(e) {
+                            let d = e.target.value.replace(/\D/g, '');
+                            this.raw = parseInt(d) || 0;
+                            this.display = this.fmt(this.raw);
+                            e.target.value = this.display;
+                            this.sync();
+                        },
+                        onBlur(e) {
+                            if (!this.raw) this.raw = 0;
+                            e.target.value = this.fmt(this.raw);
+                            clearTimeout(this.timer);
+                            $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_price', this.raw);
+                        }
+                    }" x-init="display = fmt(raw)">
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text" style="font-size: 0.75rem;">Rp</span>
+                        <input type="text"
+                          class="form-control form-control-sm text-end @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
+                          :value="display"
+                          @input="onInput($event)"
+                          @blur="onBlur($event)"
+                          @focus="$event.target.select()"
+                          placeholder="0"
+                          inputmode="numeric"
+                          @disabled($isApproved)>
                       </div>
                     </div>
                   </td>
