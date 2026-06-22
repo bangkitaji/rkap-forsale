@@ -42,15 +42,13 @@ export default defineConfig({
         'resources/css/app.css',
         'resources/assets/css/demo.css',
         'resources/js/app.js',
-        ...pageJsFiles,
-        ...vendorJsFiles,
-        ...LibsJsFiles,
-        ...CoreScssFiles,
-        ...LibsScssFiles,
-        ...LibsCssFiles,
-        ...FontsScssFiles,
-        ...FontsJsFiles,
-        ...FontsCssFiles
+        'resources/assets/vendor/fonts/iconify/iconify.css',
+        'resources/assets/vendor/scss/core.scss',
+        'resources/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.scss',
+        'resources/assets/vendor/scss/pages/page-misc.scss',
+        'resources/assets/vendor/scss/pages/page-auth.scss',
+        'resources/assets/vendor/libs/apex-charts/apex-charts.scss',
+        'resources/assets/vendor/libs/apex-charts/apexcharts.js'
       ],
       refresh: true
     }),

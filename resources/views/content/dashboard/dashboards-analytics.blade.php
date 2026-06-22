@@ -743,8 +743,10 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: { useSeriesColors: true }
         }
     };
-    const utilizationGauge = new ApexCharts(document.querySelector("#utilizationGauge"), utilizationGaugeOptions);
-    utilizationGauge.render();
+    setTimeout(() => {
+        const utilizationGauge = new ApexCharts(document.querySelector("#utilizationGauge"), utilizationGaugeOptions);
+        utilizationGauge.render();
+    }, 100);
 
     // 3. Division Absorption Bar Chart Setup
     const directorateData = @json($directorateData);
@@ -844,11 +846,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create initial chart with appropriate data based on role
     const isKadept = @json(auth()->user()->isKepalaDepartemen());
-    let divisionChart = new ApexCharts(
-        document.querySelector("#divisionChart"),
-        buildDivisionChartOptions(isKadept ? departmentData : directorateData)
-    );
-    divisionChart.render();
+    let divisionChart = null;
+    setTimeout(() => {
+        divisionChart = new ApexCharts(
+            document.querySelector("#divisionChart"),
+            buildDivisionChartOptions(isKadept ? departmentData : directorateData)
+        );
+        divisionChart.render();
+    }, 200);
 
     // Destroy and recreate chart to avoid ApexCharts horizontal bar update bugs
     function switchDivisionChart(type) {
@@ -860,7 +865,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (type === 'bureau') {
             data = bureauData;
         }
-        divisionChart.destroy();
+        if (divisionChart) {
+            divisionChart.destroy();
+        }
         divisionChart = new ApexCharts(
             document.querySelector("#divisionChart"),
             buildDivisionChartOptions(data)
@@ -949,8 +956,10 @@ document.addEventListener('DOMContentLoaded', function() {
             horizontalAlign: 'left'
         }
     };
-    const annualComparisonChart = new ApexCharts(document.querySelector("#annualComparisonChart"), annualComparisonChartOptions);
-    annualComparisonChart.render();
+    setTimeout(() => {
+        const annualComparisonChart = new ApexCharts(document.querySelector("#annualComparisonChart"), annualComparisonChartOptions);
+        annualComparisonChart.render();
+    }, 300);
 
     // Note: COA Expense Category Allocation donut chart replaced by Profit & Loss Summary card widget.
 });
