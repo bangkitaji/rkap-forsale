@@ -1,4 +1,5 @@
-<div @focus-activity-revision-note.window="
+<div
+  @focus-activity-revision-note.window="
   $nextTick(() => {
     const el = document.getElementById('activity-revision-note-' + $event.detail.id);
     if (el) {
@@ -157,7 +158,8 @@
             </div>
             <div class="col-sm-3">
               <label class="text-muted small">Total Anggaran Ajuan</label>
-              <div class="fw-bold text-primary fs-5 has-tooltip">Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
+              <div class="fw-bold text-primary fs-5 has-tooltip">Rp
+                {{ number_format($submission->total_budget, 0, ',', '.') }}
                 <span class="custom-tooltip-content tooltip-align-right">
                   @php
                     $prevPeriod = $prevData['period'] ?? '-';
@@ -166,19 +168,23 @@
                     $prevProjection = $prevData['total_projection'] ?? 0;
                   @endphp
                   @if ($prevTotal > 0)
-                    <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                    <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                      ({{ $prevPeriod }})</div>
                     <div class="row text-center">
                       <div class="col-4 border-end">
                         <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevTotal, 0, ',', '.') }}</div>
+                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                          {{ number_format($prevTotal, 0, ',', '.') }}</div>
                       </div>
                       <div class="col-4 border-end">
                         <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevRealization, 0, ',', '.') }}</div>
+                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                          {{ number_format($prevRealization, 0, ',', '.') }}</div>
                       </div>
                       <div class="col-4">
                         <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevProjection, 0, ',', '.') }}</div>
+                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                          {{ number_format($prevProjection, 0, ',', '.') }}</div>
                       </div>
                     </div>
                   @else
@@ -726,8 +732,9 @@
                       <label class="form-label text-danger fw-semibold small">Catatan Revisi Kegiatan <span
                           class="text-danger">*</span></label>
                       @if ($this->canApprove())
-                        <textarea id="activity-revision-note-{{ $wp['model']?->id }}" class="form-control bg-white" wire:model.blur="activityRevisionNotes.{{ $wp['model']?->id }}"
-                          rows="2" placeholder="Tuliskan catatan perbaikan untuk kegiatan ini..."></textarea>
+                        <textarea id="activity-revision-note-{{ $wp['model']?->id }}" class="form-control bg-white"
+                          wire:model.blur="activityRevisionNotes.{{ $wp['model']?->id }}" rows="2"
+                          placeholder="Tuliskan catatan perbaikan untuk kegiatan ini..."></textarea>
                       @else
                         <p class="mb-0 text-dark small">
                           {{ $wp['model']?->revision_notes ?: 'Tidak ada catatan revisi.' }}</p>
@@ -746,8 +753,8 @@
                       <thead>
                         <tr>
                           <th>Uraian & Detail Belanja</th>
-                          <th class="text-center" style="width: 10%;">Vol 1 & 2</th>
-                          <th style="width: 12%;">Satuan 1 & 2</th>
+                          <th class="text-center" style="width: 10%;">Vol</th>
+                          <th style="width: 12%;">Satuan</th>
                           <th class="text-end" style="width: 14%;">Harga Satuan</th>
                           <th class="text-end" style="width: 14%;">Total</th>
                           <th class="text-end" style="width: 12%;">RKAP Sblm</th>
