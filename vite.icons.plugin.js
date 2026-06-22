@@ -12,8 +12,8 @@ export default function iconifyPlugin() {
       console.log('🔨 Scanning templates and scripts for used Boxicons...');
 
       try {
-        // 1. Scan blade templates and javascript files for icon classes (bx-*, bxs-*, bxl-*)
-        const files = glob.sync('resources/{views,js}/**/*.{php,js}');
+        // 1. Scan blade templates, js scripts and menu configs for icon classes (bx-*, bxs-*, bxl-*)
+        const files = glob.sync('resources/{views,js,menu}/**/*.{php,js,json}');
         const iconRegex = /\bbx[sl]?-[a-z0-9-]+/g;
         const usedIconClasses = new Set();
 
