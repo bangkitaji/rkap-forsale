@@ -78,6 +78,148 @@
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
       border-color: #cbd5e1;
     }
+
+    /* Scoped Horizontal Timeline Styles */
+    .timeline-steps-container {
+      overflow-x: auto;
+      padding: 15px 5px;
+      width: 100%;
+    }
+
+    .timeline-steps-wrapper {
+      position: relative;
+      padding: 10px 0;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .timeline-steps-line {
+      position: absolute;
+      top: 25px;
+      height: 4px;
+      background: #e2e8f0;
+      z-index: 1;
+      border-radius: 2px;
+    }
+
+    .timeline-step-item {
+      width: 200px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+    }
+
+    .timeline-step-item:hover {
+      transform: translateY(-4px);
+    }
+
+    .timeline-step-dot {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: #fff;
+      border: 4px solid #fff;
+      box-shadow: 0 0 0 2px #e2e8f0, 0 4px 10px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      color: #fff;
+      transition: all 0.2s ease;
+    }
+
+    .timeline-step-dot.bg-success {
+      background-color: #28c76f !important;
+      box-shadow: 0 0 0 2px rgba(40, 199, 111, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .timeline-step-dot.bg-danger {
+      background-color: #ea5455 !important;
+      box-shadow: 0 0 0 2px rgba(234, 84, 85, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .timeline-step-dot.bg-warning {
+      background-color: #ff9f43 !important;
+      box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .timeline-step-dot.bg-secondary {
+      background-color: #8592a3 !important;
+      box-shadow: 0 0 0 2px rgba(133, 146, 163, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .timeline-step-item:hover .timeline-step-dot.bg-success {
+      box-shadow: 0 0 0 4px rgba(40, 199, 111, 0.3), 0 6px 15px rgba(40, 199, 111, 0.2);
+    }
+    .timeline-step-item:hover .timeline-step-dot.bg-danger {
+      box-shadow: 0 0 0 4px rgba(234, 84, 85, 0.3), 0 6px 15px rgba(234, 84, 85, 0.2);
+    }
+    .timeline-step-item:hover .timeline-step-dot.bg-warning {
+      box-shadow: 0 0 0 4px rgba(255, 159, 67, 0.3), 0 6px 15px rgba(255, 159, 67, 0.2);
+    }
+    .timeline-step-item:hover .timeline-step-dot.bg-secondary {
+      box-shadow: 0 0 0 4px rgba(133, 146, 163, 0.3), 0 6px 15px rgba(133, 146, 163, 0.2);
+    }
+
+    .timeline-step-content {
+      margin-top: 12px;
+    }
+
+    .timeline-step-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.35em 0.8em;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    .timeline-step-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #4b4b4b;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .timeline-step-subtitle {
+      font-size: 0.72rem;
+      color: #a1a1a1;
+      font-weight: 500;
+    }
+
+    .timeline-step-time {
+      font-size: 0.68rem;
+      color: #b3b3b3;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .timeline-step-comment {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background-color: #fdfdfd;
+      border: 1px solid #eef2f6;
+      border-left: 3px solid;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.72rem;
+      text-align: left;
+      max-width: 180px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      font-style: italic;
+      color: #5c5c5c;
+      word-break: break-word;
+    }
+    .timeline-step-comment.border-success { border-left-color: #28c76f !important; }
+    .timeline-step-comment.border-danger { border-left-color: #ea5455 !important; }
+    .timeline-step-comment.border-warning { border-left-color: #ff9f43 !important; }
+    .timeline-step-comment.border-secondary { border-left-color: #8592a3 !important; }
   </style>
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
@@ -99,7 +241,7 @@
 
   <div class="row">
     <!-- Main Content: RKAP Details -->
-    <div class="col-xl-9 col-lg-8">
+    <div class="col-12">
       <!-- Header Info -->
       <div class="card mb-4">
         <div class="card-body">
@@ -156,6 +298,70 @@
             <label class="text-muted small">Catatan Pengajuan</label>
             <p class="mb-0">{{ $submission->notes }}</p>
           @endif
+        </div>
+      </div>
+
+      <!-- Riwayat Persetujuan -->
+      <div class="card mb-4">
+        <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
+          <small class="text-muted">Kronologi persetujuan dari kiri ke kanan</small>
+        </div>
+        <div class="card-body py-4 timeline-steps-container">
+          <div class="timeline-steps-wrapper">
+            @if ($submission->approvals->count() > 0)
+              <div class="timeline-steps-line" style="width: {{ 260 * $submission->approvals->count() }}px; left: 100px;"></div>
+            @endif
+
+            <div class="d-flex align-items-start justify-content-start" style="gap: 60px;">
+              <!-- Start Node: Diajukan -->
+              <div class="timeline-step-item">
+                <div class="timeline-step-dot bg-secondary">
+                  <i class="bx bx-send" style="font-size: 1.25rem;"></i>
+                </div>
+                <div class="timeline-step-content">
+                  <span class="timeline-step-badge bg-label-secondary">Diajukan</span>
+                  <div class="timeline-step-title" title="{{ $submission->creator->name ?? '-' }}">{{ $submission->creator->name ?? '-' }}</div>
+                  <div class="timeline-step-subtitle">Pembuat Pengajuan</div>
+                  <div class="timeline-step-time">
+                    <i class="bx bx-calendar"></i>
+                    <span>{{ $submission->created_at->format('d M Y, H:i') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Approval Steps (Chronological) -->
+              @foreach ($submission->approvals->reverse() as $approval)
+                <div class="timeline-step-item">
+                  <div class="timeline-step-dot bg-{{ $approval->action_color }}">
+                    @if($approval->action === 'approved')
+                      <i class="bx bx-check" style="font-size: 1.25rem;"></i>
+                    @elseif($approval->action === 'revision_requested')
+                      <i class="bx bx-refresh" style="font-size: 1.25rem;"></i>
+                    @elseif($approval->action === 'rejected')
+                      <i class="bx bx-x" style="font-size: 1.25rem;"></i>
+                    @else
+                      <i class="bx bx-time-five" style="font-size: 1.25rem;"></i>
+                    @endif
+                  </div>
+                  <div class="timeline-step-content">
+                    <span class="timeline-step-badge bg-label-{{ $approval->action_color }}">{{ $approval->action_label }}</span>
+                    <div class="timeline-step-title" title="{{ $approval->user->name }}">{{ $approval->user->name }}</div>
+                    <div class="timeline-step-subtitle">{{ \Illuminate\Support\Str::headline($approval->role) }}</div>
+                    <div class="timeline-step-time">
+                      <i class="bx bx-calendar"></i>
+                      <span>{{ $approval->created_at->format('d M Y, H:i') }}</span>
+                    </div>
+                    @if ($approval->comments)
+                      <div class="timeline-step-comment border-{{ $approval->action_color }}">
+                        {{ $approval->comments }}
+                      </div>
+                    @endif
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
         </div>
       </div>
 
@@ -645,93 +851,6 @@
         </div>
       @endforeach
     </div>
-
-    <!-- Sidebar: Actions & History -->
-    <div class="col-xl-3 col-lg-4">
-
-
-
-      <!-- Comments / Discussion -->
-      <div class="card mb-4">
-        <div class="card-header border-bottom">
-          <h5 class="mb-0"><i class="bx bx-message-rounded-dots me-2"></i>Pembahasan</h5>
-        </div>
-        <div class="card-body mt-3" style="max-height: 400px; overflow-y: auto;">
-          @forelse($submission->comments as $comment)
-            <div class="d-flex mb-3">
-              <div class="avatar avatar-sm me-3 flex-shrink-0">
-                <span
-                  class="avatar-initial rounded-circle bg-label-primary">{{ substr($comment->user->name, 0, 2) }}</span>
-              </div>
-              <div class="w-100">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <h6 class="mb-0">{{ $comment->user->name }}</h6>
-                  <small class="text-muted">{{ $comment->created_at->diffForHumans() }}</small>
-                </div>
-                <div class="p-2 bg-lighter rounded small">
-                  {{ $comment->content }}
-                </div>
-              </div>
-            </div>
-          @empty
-            <div class="text-center text-muted my-3">
-              <small>Belum ada pembahasan.</small>
-            </div>
-          @endforelse
-        </div>
-        <div class="card-footer border-top">
-          <div class="input-group">
-            <input type="text" class="form-control @error('newComment') is-invalid @enderror"
-              wire:model.defer="newComment" placeholder="Ketik pesan..." wire:keydown.enter="addComment">
-            <button class="btn btn-primary" type="button" wire:click="addComment"><i
-                class="bx bx-send"></i></button>
-          </div>
-          @error('newComment')
-            <div class="text-danger small mt-1">{{ $message }}</div>
-          @enderror
-        </div>
-      </div>
-
-      <!-- Approval History -->
-      <div class="card">
-        <div class="card-header border-bottom">
-          <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
-        </div>
-        <div class="card-body mt-3">
-          <ul class="timeline mb-0">
-            @foreach ($submission->approvals as $approval)
-              <li class="timeline-item timeline-item-transparent ps-4">
-                <span class="timeline-point timeline-point-{{ $approval->action_color }}"></span>
-                <div class="timeline-event">
-                  <div class="timeline-header mb-1">
-                    <h6 class="mb-0">{{ $approval->action_label }}</h6>
-                    <small class="text-muted">{{ $approval->created_at->format('d M Y, H:i') }}</small>
-                  </div>
-                  <p class="mb-0 small">Oleh: <strong>{{ $approval->user->name }}</strong>
-                    ({{ \Illuminate\Support\Str::headline($approval->role) }})</p>
-                  @if ($approval->comments)
-                    <div
-                      class="mt-2 p-2 bg-lighter rounded small border-start border-{{ $approval->action_color }} border-3">
-                      <em>"{{ $approval->comments }}"</em>
-                    </div>
-                  @endif
-                </div>
-              </li>
-            @endforeach
-            <li class="timeline-item timeline-item-transparent ps-4">
-              <span class="timeline-point timeline-point-secondary"></span>
-              <div class="timeline-event pb-0">
-                <div class="timeline-header mb-1">
-                  <h6 class="mb-0">Diajukan</h6>
-                  <small class="text-muted">{{ $submission->created_at->format('d M Y, H:i') }}</small>
-                </div>
-                <p class="mb-0 small">Oleh: <strong>{{ $submission->creator->name ?? '-' }}</strong></p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-    </div>
   </div>
 </div>
+

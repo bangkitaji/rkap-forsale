@@ -476,7 +476,8 @@
                   @endphp
                   @if ($prevActivityData)
                     <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
-                      ({{ $prevPeriod }})</div>
+                      ({{ $prevPeriod }})
+                    </div>
                     <div class="row text-center">
                       <div class="col-4 border-end">
                         <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
@@ -555,10 +556,13 @@
                 <table class="table table-sm table-bordered align-middle mb-2">
                   <thead class="table-primary text-white fw-semibold">
                     <tr>
-                      <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span class="text-warning">*</span></th>
-                      <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span></th>
-                      <th style="width:10%" class="text-center align-middle">Satuan</th>
-                      <th style="width:140px" class="text-center align-middle">Harga Satuan (Rp) <span class="text-warning">*</span></th>
+                      <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span
+                          class="text-warning">*</span></th>
+                      <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span>
+                      </th>
+                      <th style="width:8%" class="text-center align-middle">Satuan</th>
+                      <th style="width:180px" class="text-center align-middle">Harga Satuan (Rp) <span
+                          class="text-warning">*</span></th>
                       <th style="width:160px" class="text-center align-middle">Total (Rp)</th>
                       <th style="width:120px" class="text-center align-middle">Detail</th>
                     </tr>
@@ -721,7 +725,7 @@
                               @endforeach
                             </select>
                             <div x-show="open" x-cloak
-                               class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                              class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
                               style="z-index: 1050; max-height: 220px; overflow-y: auto;">
                               @foreach ($filteredCoasOrdered as $coa)
                                 <div
@@ -796,7 +800,7 @@
                               list="satuan-options" placeholder="Satuan 2 (opsional)" autocomplete="off"
                               @disabled($isApproved)>
                           </td>
-                          <td class="border-top-0">
+                          <td class="border-top-0" style="min-width: 180px;">
                             <div x-data="{
                                 raw: {{ (int) ($bi['unit_price'] ?? 0) }},
                                 display: '',
