@@ -429,15 +429,14 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray());
 
-      // Budget per COA group
-      $cgBudgets = $baseJoin()
-        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_items.total_price) as total')
-        ->groupBy('coa_groups.id')
-        ->pluck('total', 'coa_group_id')
-        ->toArray();
+      // Budget per COA group and code
+      $cgBudgetsRaw = $baseJoin()
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_items.total_price) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
+        ->get();
 
-      // Realization per COA group
-      $cgRealizations = DB::table('rkap_budget_item_realizations')
+      // Realization per COA group and code
+      $cgRealizationsRaw = DB::table('rkap_budget_item_realizations')
         ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -448,13 +447,12 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray())
-        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_item_realizations.amount) as total')
-        ->groupBy('coa_groups.id')
-        ->pluck('total', 'coa_group_id')
-        ->toArray();
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
+        ->get();
 
-      // Projection per COA group
-      $cgProjections = DB::table('rkap_budget_item_projections')
+      // Projection per COA group and code
+      $cgProjectionsRaw = DB::table('rkap_budget_item_projections')
         ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -465,10 +463,44 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray())
-        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_item_projections.amount) as total')
-        ->groupBy('coa_groups.id')
-        ->pluck('total', 'coa_group_id')
-        ->toArray();
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_item_projections.amount) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
+        ->get();
+
+      $aggregateCgData = function ($rawItems) {
+        $aggregated = [];
+        foreach ($rawItems as $item) {
+          $cgId = $item->coa_group_id;
+          $cgCode = $item->coa_group_code;
+          $coaCode = $item->coa_code;
+          $amount = (float) $item->total;
+
+          if (!isset($aggregated[$cgId])) {
+            $aggregated[$cgId] = 0.0;
+          }
+
+          $isOtherGroup = in_array($cgCode, ['7000', '7001', '7001A', '7002', '7002A', '7003', '7004', '7005']);
+
+          if ($isOtherGroup) {
+            if ($cgCode === '7005') {
+              if (str_starts_with($coaCode, '71')) {
+                $aggregated[$cgId] += $amount;
+              } elseif (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+                $aggregated[$cgId] -= $amount;
+              }
+            } else {
+              $aggregated[$cgId] += $amount;
+            }
+          } else {
+            $aggregated[$cgId] += $amount;
+          }
+        }
+        return $aggregated;
+      };
+
+      $cgBudgets = $aggregateCgData($cgBudgetsRaw);
+      $cgRealizations = $aggregateCgData($cgRealizationsRaw);
+      $cgProjections = $aggregateCgData($cgProjectionsRaw);
 
       // Color palette for COA group items within each report group
       $colorPalette = ['primary', 'info', 'success', 'warning', 'danger', 'secondary', 'dark'];
@@ -489,9 +521,16 @@ class Analytics extends Controller
           $realization = (float) ($cgRealizations[$cg->id] ?? 0.0);
           $projection = (float) ($cgProjections[$cg->id] ?? 0.0);
 
-          $budgetSubtotal += $budget;
-          $realizationSubtotal += $realization;
-          $projectionSubtotal += $projection;
+          if ($rg->code === 'PL0004') {
+            $isExpenseGroup = in_array($cg->code, ['7000', '7001', '7001A', '7002', '7002A', '7004']);
+            $budgetSubtotal += $isExpenseGroup ? -$budget : $budget;
+            $realizationSubtotal += $isExpenseGroup ? -$realization : $realization;
+            $projectionSubtotal += $isExpenseGroup ? -$projection : $projection;
+          } else {
+            $budgetSubtotal += $budget;
+            $realizationSubtotal += $realization;
+            $projectionSubtotal += $projection;
+          }
 
           $items[] = [
             'id' => $cg->id,
@@ -514,30 +553,6 @@ class Analytics extends Controller
           'budget_subtotal' => $budgetSubtotal,
           'realization_subtotal' => $realizationSubtotal,
           'projection_subtotal' => $projectionSubtotal,
-        ];
-      }
-
-      // Calculate unmapped amounts
-      $unmappedBudget = max(0.0, $stats['total_budget'] - $mappedBudgetSum);
-      $unmappedRealization = max(0.0, $stats['total_realization'] - $mappedRealizationSum);
-      $unmappedProjection = max(0.0, $stats['total_projection'] - $mappedProjectionSum);
-
-      if ($unmappedBudget > 0 || $unmappedRealization > 0 || $unmappedProjection > 0) {
-        $unmappedGroup = [
-          'label' => 'Belum Dipetakan / Lainnya',
-          'items' => [
-            [
-              'label' => 'Lainnya / Belum Dipetakan',
-              'group' => 'Unmapped',
-              'color' => 'secondary',
-              'budget' => $unmappedBudget,
-              'realization' => $unmappedRealization,
-              'projection' => $unmappedProjection,
-            ]
-          ],
-          'budget_subtotal' => $unmappedBudget,
-          'realization_subtotal' => $unmappedRealization,
-          'projection_subtotal' => $unmappedProjection,
         ];
       }
 

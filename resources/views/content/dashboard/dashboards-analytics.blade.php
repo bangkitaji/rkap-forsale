@@ -366,7 +366,8 @@
                                         $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
                                         $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
                                         
-                                        $itemVariance = $groupKey === 'Revenue' ? ($itemProj - $itemBudget) : ($itemBudget - $itemProj);
+                                        $isExpense = ($groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost' || in_array($item['key'], ['7000', '7001', '7001A', '7002', '7002A', '7004']));
+                                        $itemVariance = $isExpense ? ($itemBudget - $itemProj) : ($itemProj - $itemBudget);
                                     @endphp
                                     <tr>
                                         <td class="ps-4">
@@ -410,7 +411,8 @@
                                     $subRealPct = $subBudget > 0 ? ($subReal / $subBudget) * 100 : 0;
                                     $subProjPct = $subBudget > 0 ? ($subProj / $subBudget) * 100 : 0;
                                     
-                                    $subVariance = $groupKey === 'Revenue' ? ($subProj - $subBudget) : ($subBudget - $subProj);
+                                    $isGroupExpense = ($groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost');
+                                    $subVariance = $isGroupExpense ? ($subBudget - $subProj) : ($subProj - $subBudget);
                                 @endphp
                                 <tr class="fw-semibold bg-lighter">
                                     <td class="ps-3 text-secondary">
@@ -529,58 +531,7 @@
                                     </tr>
                                 @endif
                             @endforeach
- 
-                            <!-- Show unmapped if present -->
-                            @if ($unmappedGroup)
-                                <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
-                                    <td colspan="7">
-                                        <i class="bx bx-question-mark me-2 text-secondary"></i>{{ $unmappedGroup['label'] }}
-                                    </td>
-                                </tr>
-                                @foreach ($unmappedGroup['items'] as $item)
-                                    @php
-                                        $itemBudget = $item['budget'];
-                                        $itemReal = $item['realization'];
-                                        $itemProj = $item['projection'];
-                                        $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
-                                        $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
-                                        $itemVariance = $itemBudget - $itemProj;
-                                    @endphp
-                                    <tr>
-                                        <td class="ps-4">
-                                            <i class="bx bxs-circle text-{{ $item['color'] }} me-2" style="font-size: 8px; vertical-align: middle;"></i>
-                                            {{ $item['label'] }}
-                                        </td>
-                                        <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
-                                        <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
-                                        <td class="text-center font-monospace text-muted">
-                                            @if($itemBudget > 0)
-                                                {{ number_format($itemRealPct, 1, ',', '.') }}%
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
-                                        <td class="text-center font-monospace text-muted">
-                                            @if($itemBudget > 0)
-                                                {{ number_format($itemProjPct, 1, ',', '.') }}%
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td class="text-end font-monospace">
-                                            @if($itemVariance > 0)
-                                                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($itemVariance, 0, ',', '.') }}</span>
-                                            @elseif($itemVariance < 0)
-                                                <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp {{ number_format(abs($itemVariance), 0, ',', '.') }})</span>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
- 
+  
                             <!-- Final Net Profit Summary Row -->
                             @php
                                 $np = $plSummary['net_profit'];

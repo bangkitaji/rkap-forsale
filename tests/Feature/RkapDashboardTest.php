@@ -727,4 +727,101 @@ class RkapDashboardTest extends TestCase
         $this->assertEquals(10000.0, $compDataKabiro[2]['realization']);
         $this->assertEquals(85000.0, $compDataKabiro[2]['projection']);
     }
+
+    public function test_analytics_profit_and_loss_formulas_calculation(): void
+    {
+        // 1. Create Report Groups
+        $rgRev = \App\Models\ReportGroup::create(['code' => 'PL0001', 'type' => 'PL', 'name' => 'Revenue']);
+        $rgDc = \App\Models\ReportGroup::create(['code' => 'PL0002', 'type' => 'PL', 'name' => 'Direct Cost']);
+        $rgIdc = \App\Models\ReportGroup::create(['code' => 'PL0003', 'type' => 'PL', 'name' => 'Indirect Cost']);
+        $rgOther = \App\Models\ReportGroup::create(['code' => 'PL0004', 'type' => 'PL', 'name' => 'Other Income (exp)']);
+
+        // 2. Create COA groups
+        $cgRev = \App\Models\CoaGroup::create(['code' => '4000', 'name' => 'Revenue Group', 'report_group_id' => $rgRev->id]);
+        $cgDc = \App\Models\CoaGroup::create(['code' => '5000', 'name' => 'Direct Cost Group', 'report_group_id' => $rgDc->id]);
+        $cgIntInc = \App\Models\CoaGroup::create(['code' => '7003', 'name' => 'Pendapatan Bunga', 'report_group_id' => $rgOther->id]);
+        $cgIntExp = \App\Models\CoaGroup::create(['code' => '7000', 'name' => 'FINANCING COST', 'report_group_id' => $rgOther->id]);
+        $cgLainnya = \App\Models\CoaGroup::create(['code' => '7005', 'name' => 'LAINNYA', 'report_group_id' => $rgOther->id]);
+
+        // 3. Create COAs
+        $coaRev = \App\Models\Coa::create(['coa_group_id' => $cgRev->id, 'code' => '410001', 'title' => 'Revenue COA']);
+        $coaDc = \App\Models\Coa::create(['coa_group_id' => $cgDc->id, 'code' => '510001', 'title' => 'Direct Cost COA']);
+        $coaIntInc = \App\Models\Coa::create(['coa_group_id' => $cgIntInc->id, 'code' => '710001', 'title' => 'Interest Income COA']);
+        $coaIntExp = \App\Models\Coa::create(['coa_group_id' => $cgIntExp->id, 'code' => '760001', 'title' => 'Interest Expense COA']);
+        $coaLainnyaInc = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '710002', 'title' => 'Other Income COA']);
+        $coaLainnyaExp = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '760002', 'title' => 'Other Expense COA']);
+        $coaLainnyaCapex = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '810001', 'title' => 'Capex COA (exclude)']);
+
+        // 4. Create active finalized period and submission
+        $period = \App\Models\RkapPeriod::create([
+            'year' => 2026,
+            'title' => 'RKAP 2026',
+            'status' => 'finalized',
+            'submission_start' => now()->subDay(),
+            'submission_end' => now()->addDay(),
+        ]);
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $period->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 300000.0,
+        ]);
+        $workPlan = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'program_name' => 'Work Plan',
+            'program_code' => 'WP1',
+        ]);
+
+        // 5. Create budget items
+        $createBudgetItem = fn($coaCode, $amount) => \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => $coaCode,
+            'description' => 'Item ' . $coaCode,
+            'quantity' => 1,
+            'unit_price' => $amount,
+        ]);
+
+        $createBudgetItem('410001', 100000.0);
+        $createBudgetItem('510001', 40000.0);
+        $createBudgetItem('710001', 5000.0);
+        $createBudgetItem('760001', 3000.0);
+        $createBudgetItem('710002', 10000.0);
+        $createBudgetItem('760002', 4000.0);
+        $createBudgetItem('810001', 25000.0); // Should be excluded from P&L group PL0004!
+
+        $response = $this->actingAs($this->admin)->get('/analytics?period_id=' . $period->id);
+        $response->assertStatus(200);
+
+        $plGroups = $response->viewData('plGroups');
+        $plSummary = $response->viewData('plSummary');
+
+        // Revenue subtotal
+        $this->assertEquals(100000.0, $plGroups['Revenue']['budget_subtotal']);
+
+        // Direct Cost subtotal
+        $this->assertEquals(40000.0, $plGroups['Direct Cost']['budget_subtotal']);
+
+        // Gross Profit
+        $this->assertEquals(60000.0, $plSummary['gross_profit']['budget']);
+
+        // EBITDA
+        $this->assertEquals(60000.0, $plSummary['operating_profit']['budget']);
+
+        // Check individual items inside PL0004 (Other Income (exp))
+        // Pendapatan Bunga (7003) = 5000
+        $this->assertEquals(5000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7003')['budget']);
+
+        // FINANCING COST (7000) = 3000
+        $this->assertEquals(3000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7000')['budget']);
+
+        // LAINNYA (7005) = 10000 (income) - 4000 (expense) = 6000 (excludes CapEx 25000)
+        $this->assertEquals(6000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7005')['budget']);
+
+        // Other Income (exp) subtotal = 5000 (cgIntInc) - 3000 (cgIntExp) + 6000 (cgLainnya net) = 8000
+        $this->assertEquals(8000.0, $plGroups['Other Income (exp)']['budget_subtotal']);
+
+        // Net Profit = EBITDA (60000) + Other Income (exp) subtotal (8000) = 68000
+        $this->assertEquals(68000.0, $plSummary['net_profit']['budget']);
+    }
 }
