@@ -284,7 +284,7 @@
 
   <div class="row">
     <!-- Main Content: RKAP Details -->
-    <div class="col-xl-9 col-lg-8">
+    <div class="col-12">
       <!-- Header Info with Comparison -->
       <div class="card mb-4">
         <div class="card-body">
@@ -433,6 +433,112 @@
           </div>
         </div>
       </div>
+
+      <!-- Review Actions (Only if user can review) -->
+      @if ($this->canApprove())
+        <div class="card mb-4 border-primary shadow-sm">
+          <div class="card-header bg-label-primary py-3">
+            <h5 class="mb-0 text-primary fw-bold"><i class="bx bx-check-shield me-2"></i>Aksi Review</h5>
+          </div>
+          <div class="card-body mt-3">
+            @if ($showRevisionForm)
+              <div class="mb-3" wire:key="revision-reason-wrapper">
+                <label class="form-label text-danger fw-semibold">Alasan Permintaan Revisi <span
+                    class="text-danger">*</span></label>
+                <textarea class="form-control @error('revisionReason') is-invalid @enderror" wire:model="revisionReason"
+                  rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..." wire:key="revision-reason-textarea"
+                  readonly></textarea>
+                @error('revisionReason')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="d-flex gap-2" wire:key="revision-action-buttons">
+                <button class="btn btn-label-secondary w-50" wire:key="btn-cancel-revision"
+                  wire:click="$set('showRevisionForm', false)">Batal</button>
+                <button class="btn btn-danger w-50" wire:key="btn-submit-revision" wire:click="requestRevision"
+                  wire:confirm="Yakin ingin menolak dan meminta revisi RKAP ini?" wire:loading.attr="disabled">Kirim
+                  Permintaan</button>
+              </div>
+            @else
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Catatan Review (Opsional)</label>
+                <textarea class="form-control" wire:model="reviewComments" rows="2"
+                  placeholder="Tinggalkan catatan untuk persetujuan..."></textarea>
+              </div>
+              @php
+                $allApproved = collect($submission->workPlans)->every(
+                    fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved',
+                );
+                $hasRejected = collect($submission->workPlans)->contains(
+                    fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected',
+                );
+              @endphp
+              <div class="d-flex flex-column gap-2">
+                @php
+                  $totalActivities = $submission->workPlans->count();
+                  $approvedCount = collect($submission->workPlans)
+                      ->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved')
+                      ->count();
+                  $rejectedCount = collect($submission->workPlans)
+                      ->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected')
+                      ->count();
+                  $pendingCount = $totalActivities - $approvedCount - $rejectedCount;
+                @endphp
+
+                {{-- Activity progress summary --}}
+                <div class="bg-lighter rounded p-3 mb-2 border">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted fw-semibold">Status Kegiatan</small>
+                    <small
+                      class="fw-bold text-{{ $allApproved ? 'success' : 'secondary' }}">{{ $approvedCount }}/{{ $totalActivities }}
+                      Disetujui</small>
+                  </div>
+                  <div class="progress mb-2" style="height: 6px;">
+                    @if ($totalActivities > 0)
+                      <div class="progress-bar bg-success"
+                        style="width: {{ ($approvedCount / $totalActivities) * 100 }}%;"></div>
+                      <div class="progress-bar bg-danger"
+                        style="width: {{ ($rejectedCount / $totalActivities) * 100 }}%;"></div>
+                    @endif
+                  </div>
+                  @if ($rejectedCount > 0 || $pendingCount > 0)
+                    <div class="d-flex gap-3" style="font-size: 0.75rem;">
+                      @if ($approvedCount > 0)
+                        <span class="text-success fw-medium"><i class="bx bx-check-circle me-1"></i>{{ $approvedCount }}
+                          Disetujui</span>
+                      @endif
+                      @if ($rejectedCount > 0)
+                        <span class="text-danger fw-medium"><i class="bx bx-x-circle me-1"></i>{{ $rejectedCount }}
+                          Ditolak</span>
+                      @endif
+                      @if ($pendingCount > 0)
+                        <span class="text-secondary fw-medium"><i class="bx bx-time-five me-1"></i>{{ $pendingCount }}
+                          Pending</span>
+                      @endif
+                    </div>
+                  @endif
+                </div>
+
+                <div class="d-flex gap-3 mt-2">
+                  <button class="btn btn-success flex-grow-1 py-2" wire:key="btn-approve-rkap" wire:click="approve"
+                    wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
+                    <i class="bx bx-check-circle me-1"></i> Setujui RKAP
+                  </button>
+
+                  <button class="btn btn-outline-danger flex-grow-1 py-2" wire:key="btn-open-revision-form"
+                    wire:click="openRevisionForm" @disabled(!$hasRejected)>
+                    <i class="bx bx-x-circle me-1"></i> Minta Revisi
+                  </button>
+                </div>
+                @if (!$hasRejected)
+                  <small class="text-center text-muted mt-1"><i class="bx bx-info-circle me-1"></i>Tolak minimal satu
+                    kegiatan untuk meminta revisi.</small>
+                @endif
+              </div>
+            @endif
+          </div>
+        </div>
+      @endif
 
       @if (
           (auth()->user()->isPresidentDirector() || auth()->user()->isDirekturFinance()) &&
@@ -962,9 +1068,7 @@
                           <th class="text-center" style="width: 10%;">Vol</th>
                           <th style="width: 12%;">Satuan</th>
                           <th class="text-end" style="width: 14%;">Harga Satuan</th>
-                          <th class="text-end" style="width: 14%;">Total</th>
-                          <th class="text-end" style="width: 12%;">RKAP Sblm</th>
-                          <th class="text-end" style="width: 12%;">Selisih (Δ)</th>
+                          <th class="text-end" style="width: 16%;">Total</th>
                           <th class="text-center" style="width: 8%;">Aksi</th>
                         </tr>
                       </thead>
@@ -978,7 +1082,7 @@
                             $itemCounters = [];
                           @endphp
                           <tr class="table-light fw-semibold">
-                            <td colspan="8" class="text-dark bg-lighter py-2 px-3">
+                            <td colspan="6" class="text-dark bg-lighter py-2 px-3">
                               <div class="d-flex justify-content-between align-items-center gap-2">
                                 <div class="d-flex align-items-center gap-1 min-w-0">
                                   <i class="bx bx-subdirectory-right text-primary flex-shrink-0"></i>
@@ -1153,37 +1257,38 @@
                                     {{ number_format($biRevisionModifiedData['unit_price'], 0, ',', '.') }}</div>
                                 @endif
                               </td>
-                              <td class="text-end">
-                                <div
-                                  class="fw-semibold @if ($isBiVirtual) text-danger @else text-primary @endif">
-                                  Rp {{ number_format($bi['total_price'], 0, ',', '.') }}</div>
+                              <td class="text-end text-nowrap">
+                                <div class="fw-semibold @if ($isBiVirtual) text-danger @else text-primary @endif has-tooltip">
+                                  Rp {{ number_format($bi['total_price'], 0, ',', '.') }}
+                                  <span class="custom-tooltip-content tooltip-align-right" style="width: 280px; font-weight: normal;">
+                                    @if ($prevItemBudget !== null)
+                                      <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                                      <div class="row text-center" style="min-width: 250px;">
+                                        <div class="col-6 border-end">
+                                          <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran Sblm</div>
+                                          <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevItemBudget, 0, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                          <div class="text-white-50 small" style="font-size: 0.65rem;">Selisih (Δ)</div>
+                                          <div class="fw-bold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-white @endif" style="font-size: 0.75rem;">
+                                            @if ($itemDiff > 0)
+                                              ↑ +{{ number_format($itemPct, 1) }}%<br><span style="font-size: 0.68rem;">(+Rp {{ number_format($itemDiff, 0, ',', '.') }})</span>
+                                            @elseif ($itemDiff < 0)
+                                              ↓ -{{ number_format(abs($itemPct), 1) }}%<br><span style="font-size: 0.68rem;">(-Rp {{ number_format(abs($itemDiff), 0, ',', '.') }})</span>
+                                            @else
+                                              = 0%<br><span style="font-size: 0.68rem;">(Rp 0)</span>
+                                            @endif
+                                          </div>
+                                        </div>
+                                      </div>
+                                    @else
+                                      <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                    @endif
+                                  </span>
+                                </div>
                                 @if ($biRevisionModifiedData && $biRevisionModifiedData['total_price'] != $bi['total_price'])
-                                  <div class="text-muted small text-decoration-line-through text-end">Sblm: Rp
+                                  <div class="text-muted small text-decoration-line-through text-end" style="font-size: 0.75rem;">Sblm: Rp
                                     {{ number_format($biRevisionModifiedData['total_price'], 0, ',', '.') }}</div>
-                                @endif
-                              </td>
-                              <!-- RKAP Sblm -->
-                              <td class="text-end text-secondary" style="font-size: 0.8rem;">
-                                @if ($prevItemBudget !== null)
-                                  Rp {{ number_format($prevItemBudget, 0, ',', '.') }}
-                                @else
-                                  <span class="text-muted small">-</span>
-                                @endif
-                              </td>
-                              <!-- Selisih (Δ) -->
-                              <td
-                                class="text-end fw-semibold @if ($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-muted @endif"
-                                style="font-size: 0.8rem;">
-                                @if ($itemDiff !== null)
-                                  @if ($itemDiff > 0)
-                                    ↑ +{{ number_format($itemPct, 1) }}%
-                                  @elseif($itemDiff < 0)
-                                    ↓ -{{ number_format(abs($itemPct), 1) }}%
-                                  @else
-                                    = 0%
-                                  @endif
-                                @else
-                                  <span class="text-muted small">-</span>
                                 @endif
                               </td>
                               <td class="text-center">
@@ -1390,7 +1495,7 @@
                                 <td class="text-end text-danger text-decoration-line-through fw-semibold">
                                   Rp {{ number_format($removedBi['total_price'], 0, ',', '.') }}
                                 </td>
-                                <td colspan="3"></td>
+                                <td></td>
                               </tr>
                             @endforeach
                           @endif
@@ -1405,117 +1510,6 @@
         @endforeach
       @endif
     </div>
-
-    <!-- Sidebar: Actions & History -->
-    <div class="col-xl-3 col-lg-4">
-
-      <!-- Review Actions (Only if user can review) -->
-      @if ($this->canApprove())
-        <div class="card mb-4 border-primary">
-          <div class="card-header bg-label-primary">
-            <h5 class="mb-0 text-primary"><i class="bx bx-check-shield me-2"></i>Aksi Review</h5>
-          </div>
-          <div class="card-body mt-3">
-            @if ($showRevisionForm)
-              <div class="mb-3" wire:key="revision-reason-wrapper">
-                <label class="form-label text-danger">Alasan Permintaan Revisi <span
-                    class="text-danger">*</span></label>
-                <textarea class="form-control @error('revisionReason') is-invalid @enderror" wire:model="revisionReason"
-                  rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..." wire:key="revision-reason-textarea"
-                  readonly></textarea>
-                @error('revisionReason')
-                  <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-              </div>
-              <div class="d-flex gap-2" wire:key="revision-action-buttons">
-                <button class="btn btn-label-secondary w-50" wire:key="btn-cancel-revision"
-                  wire:click="$set('showRevisionForm', false)">Batal</button>
-                <button class="btn btn-danger w-50" wire:key="btn-submit-revision" wire:click="requestRevision"
-                  wire:confirm="Yakin ingin menolak dan meminta revisi RKAP ini?" wire:loading.attr="disabled">Kirim
-                  Permintaan</button>
-              </div>
-            @else
-              <div class="mb-3">
-                <label class="form-label">Catatan Review (Opsional)</label>
-                <textarea class="form-control" wire:model="reviewComments" rows="2"
-                  placeholder="Tinggalkan catatan untuk persetujuan..."></textarea>
-              </div>
-              @php
-                $allApproved = collect($submission->workPlans)->every(
-                    fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved',
-                );
-                $hasRejected = collect($submission->workPlans)->contains(
-                    fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected',
-                );
-              @endphp
-              <div class="d-flex flex-column gap-2">
-                @php
-                  $totalActivities = $submission->workPlans->count();
-                  $approvedCount = collect($submission->workPlans)
-                      ->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'approved')
-                      ->count();
-                  $rejectedCount = collect($submission->workPlans)
-                      ->filter(fn($wp) => ($this->activityStatuses[$wp->id] ?? 'pending') === 'rejected')
-                      ->count();
-                  $pendingCount = $totalActivities - $approvedCount - $rejectedCount;
-                @endphp
-
-                {{-- Activity progress summary --}}
-                <div class="bg-lighter rounded p-2 mb-1">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <small class="text-muted fw-semibold">Status Kegiatan</small>
-                    <small
-                      class="fw-bold text-{{ $allApproved ? 'success' : 'secondary' }}">{{ $approvedCount }}/{{ $totalActivities }}
-                      Disetujui</small>
-                  </div>
-                  <div class="progress" style="height: 6px;">
-                    @if ($totalActivities > 0)
-                      <div class="progress-bar bg-success"
-                        style="width: {{ ($approvedCount / $totalActivities) * 100 }}%;"></div>
-                      <div class="progress-bar bg-danger"
-                        style="width: {{ ($rejectedCount / $totalActivities) * 100 }}%;"></div>
-                    @endif
-                  </div>
-                  @if ($rejectedCount > 0 || $pendingCount > 0)
-                    <div class="d-flex gap-2 mt-1" style="font-size: 0.7rem;">
-                      @if ($approvedCount > 0)
-                        <span class="text-success"><i class="bx bx-check-circle me-1"></i>{{ $approvedCount }}
-                          Disetujui</span>
-                      @endif
-                      @if ($rejectedCount > 0)
-                        <span class="text-danger"><i class="bx bx-x-circle me-1"></i>{{ $rejectedCount }}
-                          Ditolak</span>
-                      @endif
-                      @if ($pendingCount > 0)
-                        <span class="text-secondary"><i class="bx bx-time-five me-1"></i>{{ $pendingCount }}
-                          Pending</span>
-                      @endif
-                    </div>
-                  @endif
-                </div>
-
-                <button class="btn btn-success w-100" wire:key="btn-approve-rkap" wire:click="approve"
-                  wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
-                  <i class="bx bx-check-circle me-1"></i> Setujui RKAP
-                </button>
-
-                <button class="btn btn-outline-danger w-100" wire:key="btn-open-revision-form"
-                  wire:click="openRevisionForm" @disabled(!$hasRejected)>
-                  <i class="bx bx-x-circle me-1"></i> Minta Revisi
-                </button>
-                @if (!$hasRejected)
-                  <small class="text-center text-muted"><i class="bx bx-info-circle me-1"></i>Tolak minimal satu
-                    kegiatan untuk meminta revisi.</small>
-                @endif
-              </div>
-            @endif
-          </div>
-        </div>
-      @endif
-
-
-
-
 
     </div>
   </div>
