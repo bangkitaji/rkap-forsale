@@ -160,7 +160,7 @@
                       <tr><td><code>sum_of_uploaded_realization</code></td><td class="text-center"><span class="badge bg-secondary">Tidak</span></td><td>Total realisasi terunggah sebelumnya (diabaikan)</td></tr>
                       <tr><td><code>notes</code></td><td class="text-center"><span class="badge bg-secondary">Opsional</span></td><td>Catatan (diabaikan, hanya untuk referensi)</td></tr>
                       <tr><td><code>month</code></td><td class="text-center"><span class="badge bg-danger">Ya</span></td><td>Bulan angka 1–12</td></tr>
-                      <tr><td><code>amount</code></td><td class="text-center"><span class="badge bg-danger">Ya</span></td><td>Jumlah realisasi bulan ini (angka ≥ 0)</td></tr>
+                      <tr><td><code>amount</code></td><td class="text-center"><span class="badge bg-danger">Ya</span></td><td>Jumlah realisasi bulan ini (boleh negatif untuk koreksi)</td></tr>
                     </tbody>
                   </table>
                 </div>

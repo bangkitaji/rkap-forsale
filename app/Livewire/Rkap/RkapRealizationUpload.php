@@ -341,12 +341,7 @@ class RkapRealizationUpload extends Component
                 }
             }
 
-            // Amount must be >= 0
-            $rawAmount = $row['amount'] ?? '';
-            $amount = $this->sanitizeAmount($rawAmount);
-            if ($amount < 0) {
-                $this->errorsList[] = "Baris {$rowNo}: amount tidak boleh negatif.";
-            }
+            // Amount: negative values are allowed for budget corrections (no sign check)
         }
     }
 

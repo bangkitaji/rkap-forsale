@@ -7,7 +7,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 1,
@@ -2547,7 +2547,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 255,
@@ -2557,7 +2557,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 256,
@@ -2567,7 +2567,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 257,
@@ -2577,7 +2577,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 258,
@@ -2587,7 +2587,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 259,
@@ -2597,7 +2597,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 260,
@@ -2607,7 +2607,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 261,
@@ -2617,7 +2617,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 262,
@@ -2627,7 +2627,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 263,
@@ -2637,7 +2637,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 264,
@@ -2647,7 +2647,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 265,
@@ -2657,7 +2657,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 266,
@@ -2667,7 +2667,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 267,
@@ -2677,7 +2677,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 268,
@@ -2687,7 +2687,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 269,
@@ -2697,7 +2697,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 270,
@@ -2707,7 +2707,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 271,
@@ -2717,7 +2717,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 272,
@@ -2727,7 +2727,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 273,
@@ -2737,7 +2737,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 274,
@@ -2747,7 +2747,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 275,
@@ -2757,7 +2757,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 276,
@@ -2767,7 +2767,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 277,
@@ -2777,7 +2777,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 278,
@@ -2787,7 +2787,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 279,
@@ -2797,7 +2797,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 280,
@@ -2807,7 +2807,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 281,
@@ -2817,7 +2817,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 282,
@@ -2827,7 +2827,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 283,
@@ -2837,7 +2837,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 284,
@@ -2847,7 +2847,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 285,
@@ -2857,7 +2857,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 286,
@@ -2867,7 +2867,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 287,
@@ -2877,7 +2877,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 288,
@@ -2887,7 +2887,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 289,
@@ -2897,7 +2897,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 290,
@@ -2907,7 +2907,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 291,
@@ -2917,7 +2917,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 292,
@@ -2927,7 +2927,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 293,
@@ -2937,7 +2937,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 294,
@@ -2947,7 +2947,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 295,
@@ -2957,7 +2957,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:49",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 296,
@@ -2967,7 +2967,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 297,
@@ -2977,7 +2977,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 298,
@@ -2987,7 +2987,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 299,
@@ -2997,7 +2997,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 300,
@@ -3007,7 +3007,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 301,
@@ -3017,7 +3017,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 302,
@@ -3027,7 +3027,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 303,
@@ -3037,7 +3037,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 304,
@@ -3047,7 +3047,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 305,
@@ -3057,7 +3057,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 306,
@@ -3067,7 +3067,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 307,
@@ -3077,7 +3077,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 308,
@@ -3087,7 +3087,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 309,
@@ -3097,7 +3097,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 310,
@@ -3107,7 +3107,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 311,
@@ -3117,7 +3117,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 312,
@@ -3127,7 +3127,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 313,
@@ -3137,7 +3137,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 314,
@@ -3147,7 +3147,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 315,
@@ -3157,7 +3157,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 316,
@@ -3167,7 +3167,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 317,
@@ -3177,7 +3177,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 318,
@@ -3187,7 +3187,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 319,
@@ -3197,7 +3197,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 320,
@@ -3207,7 +3207,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 321,
@@ -3217,7 +3217,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 322,
@@ -3227,7 +3227,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 323,
@@ -3237,7 +3237,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 325,
@@ -3247,7 +3247,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 326,
@@ -3257,7 +3257,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 327,
@@ -3267,7 +3267,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 328,
@@ -3277,7 +3277,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 329,
@@ -3287,7 +3287,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 330,
@@ -3297,7 +3297,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 331,
@@ -3307,7 +3307,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 332,
@@ -3317,7 +3317,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 333,
@@ -3327,7 +3327,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 334,
@@ -3337,7 +3337,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 335,
@@ -3347,7 +3347,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 336,
@@ -3357,7 +3357,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 337,
@@ -3367,7 +3367,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 338,
@@ -3377,7 +3377,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 339,
@@ -3387,7 +3387,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 340,
@@ -3397,7 +3397,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 341,
@@ -3407,7 +3407,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 342,
@@ -3417,7 +3417,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 343,
@@ -3427,7 +3427,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 344,
@@ -3437,7 +3437,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 345,
@@ -3447,7 +3447,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 346,
@@ -3457,7 +3457,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 347,
@@ -3467,7 +3467,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 348,
@@ -3477,7 +3477,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 349,
@@ -3487,7 +3487,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 350,
@@ -3497,7 +3497,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 351,
@@ -3507,7 +3507,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 352,
@@ -3517,7 +3517,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 353,
@@ -3527,7 +3527,7 @@
         "created_at": "2026-06-14 11:39:55",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 32
     },
     {
         "id": 354,
@@ -7212,12 +7212,12 @@
     {
         "id": 722,
         "code": "2101030203",
-        "title": "Short-Term CDS to Shareholder BY ",
+        "title": "Short-Term CDS to Shareholder BY\u00a0",
         "description": null,
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 723,
@@ -7227,7 +7227,7 @@
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 724,
@@ -7237,7 +7237,7 @@
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 725,
@@ -7247,7 +7247,7 @@
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 726,
@@ -7257,7 +7257,7 @@
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 727,
@@ -7267,7 +7267,7 @@
         "created_at": "2026-06-14 11:39:56",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 728,
@@ -7277,7 +7277,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 729,
@@ -7297,7 +7297,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 731,
@@ -7307,7 +7307,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 732,
@@ -7317,7 +7317,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 733,
@@ -7327,7 +7327,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 734,
@@ -7337,7 +7337,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 735,
@@ -7347,7 +7347,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 736,
@@ -7357,7 +7357,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 737,
@@ -7387,7 +7387,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 740,
@@ -7397,7 +7397,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 741,
@@ -7407,7 +7407,7 @@
         "created_at": "2026-06-14 11:39:57",
         "updated_at": "2026-06-14 11:46:50",
         "deleted_at": null,
-        "coa_group_id": null
+        "coa_group_id": 31
     },
     {
         "id": 742,
