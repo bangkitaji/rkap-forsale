@@ -91,7 +91,7 @@
     /* Scoped Horizontal Timeline Styles */
     .timeline-steps-container {
       overflow-x: auto;
-      padding: 20px 10px;
+      padding: 10px 10px;
       width: 100%;
       background: #fafbfc;
       border-radius: 8px;
@@ -110,13 +110,13 @@
       min-width: 100%;
       display: flex;
       align-items: stretch;    /* stretch so columns share full height */
-      height: 260px;
+      height: 160px;
     }
 
-    /* Horizontal axis line sits at vertical center (130px from top) */
+    /* Horizontal axis line sits at vertical center */
     .timeline-steps-line {
       position: absolute;
-      top: 130px;
+      top: calc(50% - 2px);
       height: 4px;
       background: #2b354e;
       z-index: 1;
@@ -135,7 +135,7 @@
 
     /* Top half: card area for "above" steps */
     .timeline-zone-top {
-      height: 118px;          /* 130px axis - 12px (half axis-zone) */
+      height: 68px;          /* (160px wrapper - 24px axis) / 2 */
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -160,7 +160,7 @@
 
     /* Bottom half: card area for "below" steps */
     .timeline-zone-bottom {
-      height: 118px;
+      height: 68px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -282,27 +282,6 @@
       z-index: 5;
     }
 
-    /* Tooltip popping up (for bottom cards) */
-    .tooltip-pop-up {
-      top: auto !important;
-      bottom: 115% !important;
-    }
-    .tooltip-pop-up::after {
-      top: 100% !important;
-      bottom: auto !important;
-      border-color: #2f3349 transparent transparent transparent !important;
-    }
-
-    /* Tooltip popping down (for top cards) */
-    .tooltip-pop-down {
-      top: 115% !important;
-      bottom: auto !important;
-    }
-    .tooltip-pop-down::after {
-      top: auto !important;
-      bottom: 100% !important;
-      border-color: transparent transparent #2f3349 transparent !important;
-    }
   </style>
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
@@ -450,7 +429,7 @@
           <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
           <small class="text-muted">Kronologi persetujuan dari kiri ke kanan</small>
         </div>
-        <div class="card-body py-4 timeline-steps-container">
+        <div class="card-body py-2 timeline-steps-container">
           <div class="timeline-steps-wrapper">
             @php
               $allTimelineSteps = collect();
@@ -522,7 +501,7 @@
 
                     {{-- Top zone: card floats to bottom of this zone --}}
                     <div class="timeline-zone-top">
-                      <div class="timeline-card arrow-down has-tooltip" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
+                      <div class="timeline-card arrow-down" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
                         <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
                           <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
                         </div>
@@ -531,15 +510,6 @@
                             <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
                           </div>
                         </div>
-                        <span class="custom-tooltip-content tooltip-pop-down" style="width: 220px; font-weight: normal; text-align: left;">
-                          <div class="fw-bold text-white mb-1" style="font-size: 0.75rem;">{{ $step['name'] }}</div>
-                          <div class="text-white-50 small mb-1" style="font-size: 0.68rem;">{{ $step['role'] }}</div>
-                          @if ($step['comment'])
-                            <div class="border-top pt-1 mt-1 text-white-50" style="font-style: italic; font-size: 0.68rem; word-break: break-word;">
-                              "{{ $step['comment'] }}"
-                            </div>
-                          @endif
-                        </span>
                       </div>
                     </div>
 
@@ -570,7 +540,7 @@
 
                     {{-- Bottom zone: card floats to top of this zone --}}
                     <div class="timeline-zone-bottom">
-                      <div class="timeline-card arrow-up has-tooltip" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
+                      <div class="timeline-card arrow-up" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
                         <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
                           <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
                         </div>
@@ -579,15 +549,6 @@
                             <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
                           </div>
                         </div>
-                        <span class="custom-tooltip-content tooltip-pop-up" style="width: 220px; font-weight: normal; text-align: left;">
-                          <div class="fw-bold text-white mb-1" style="font-size: 0.75rem;">{{ $step['name'] }}</div>
-                          <div class="text-white-50 small mb-1" style="font-size: 0.68rem;">{{ $step['role'] }}</div>
-                          @if ($step['comment'])
-                            <div class="border-top pt-1 mt-1 text-white-50" style="font-style: italic; font-size: 0.68rem; word-break: break-word;">
-                              "{{ $step['comment'] }}"
-                            </div>
-                          @endif
-                        </span>
                       </div>
                     </div>
                   @endif

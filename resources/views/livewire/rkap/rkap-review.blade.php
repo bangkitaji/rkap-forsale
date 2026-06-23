@@ -82,144 +82,196 @@
     /* Scoped Horizontal Timeline Styles */
     .timeline-steps-container {
       overflow-x: auto;
-      padding: 15px 5px;
+      padding: 10px 10px;
       width: 100%;
+      background: #fafbfc;
+      border-radius: 8px;
     }
 
+    /* 
+     * Each column is split into 3 zones:
+     *   [card-zone-top]   -- card extends upward (for odd/above steps)
+     *   [axis-zone]       -- node dot + numbered circle, right on the axis
+     *   [card-zone-bottom]-- card extends downward (for even/below steps)
+     */
     .timeline-steps-wrapper {
       position: relative;
       padding: 10px 0;
       width: max-content;
       min-width: 100%;
+      display: flex;
+      align-items: stretch;    /* stretch so columns share full height */
+      height: 160px;
     }
 
+    /* Horizontal axis line sits at vertical center */
     .timeline-steps-line {
       position: absolute;
-      top: 25px;
+      top: calc(50% - 2px);
       height: 4px;
-      background: #e2e8f0;
+      background: #2b354e;
       z-index: 1;
       border-radius: 2px;
     }
 
-    .timeline-step-item {
-      width: 200px;
-      text-align: center;
+    .timeline-step-column {
+      width: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       position: relative;
       z-index: 2;
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       flex-shrink: 0;
     }
 
-    .timeline-step-item:hover {
-      transform: translateY(-4px);
+    /* Top half: card area for "above" steps */
+    .timeline-zone-top {
+      height: 68px;          /* (160px wrapper - 24px axis) / 2 */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;  /* card sits at bottom of top zone */
+      align-items: center;
+      padding-bottom: 4px;
+      position: relative;
     }
 
-    .timeline-step-dot {
-      width: 50px;
-      height: 50px;
+    /* Axis zone: holds node-dot and numbered circle, sits right on the axis */
+    .timeline-zone-axis {
+      height: 24px;           /* node-dot area, vertically centred */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      gap: 2px;
+      z-index: 4;
+    }
+
+    /* Bottom half: card area for "below" steps */
+    .timeline-zone-bottom {
+      height: 68px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start; /* card sits at top of bottom zone */
+      align-items: center;
+      padding-top: 4px;
+      position: relative;
+    }
+
+    .timeline-step-circle {
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background-color: #fff;
-      border: 4px solid #fff;
-      box-shadow: 0 0 0 2px #e2e8f0, 0 4px 10px rgba(0, 0, 0, 0.08);
+      border: 2.5px solid #8592a3;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0,0,0,0.05);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto;
-      color: #fff;
-      transition: all 0.2s ease;
-    }
-
-    .timeline-step-dot.bg-success {
-      background-color: #28c76f !important;
-      box-shadow: 0 0 0 2px rgba(40, 199, 111, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .timeline-step-dot.bg-danger {
-      background-color: #ea5455 !important;
-      box-shadow: 0 0 0 2px rgba(234, 84, 85, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .timeline-step-dot.bg-warning {
-      background-color: #ff9f43 !important;
-      box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .timeline-step-dot.bg-secondary {
-      background-color: #8592a3 !important;
-      box-shadow: 0 0 0 2px rgba(133, 146, 163, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-
-    .timeline-step-item:hover .timeline-step-dot.bg-success {
-      box-shadow: 0 0 0 4px rgba(40, 199, 111, 0.3), 0 6px 15px rgba(40, 199, 111, 0.2);
-    }
-    .timeline-step-item:hover .timeline-step-dot.bg-danger {
-      box-shadow: 0 0 0 4px rgba(234, 84, 85, 0.3), 0 6px 15px rgba(234, 84, 85, 0.2);
-    }
-    .timeline-step-item:hover .timeline-step-dot.bg-warning {
-      box-shadow: 0 0 0 4px rgba(255, 159, 67, 0.3), 0 6px 15px rgba(255, 159, 67, 0.2);
-    }
-    .timeline-step-item:hover .timeline-step-dot.bg-secondary {
-      box-shadow: 0 0 0 4px rgba(133, 146, 163, 0.3), 0 6px 15px rgba(133, 146, 163, 0.2);
-    }
-
-    .timeline-step-content {
-      margin-top: 12px;
-    }
-
-    .timeline-step-badge {
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 0.35em 0.8em;
-      border-radius: 4px;
-      display: inline-block;
-      margin-bottom: 6px;
-    }
-
-    .timeline-step-title {
-      font-size: 0.82rem;
       font-weight: 700;
-      color: #4b4b4b;
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .timeline-step-subtitle {
       font-size: 0.72rem;
-      color: #a1a1a1;
-      font-weight: 500;
+      color: #2b354e;
+      transition: all 0.25s ease;
+      z-index: 3;
+      flex-shrink: 0;
     }
 
-    .timeline-step-time {
-      font-size: 0.68rem;
-      color: #b3b3b3;
-      margin-top: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
+    .timeline-step-circle.border-success { border-color: #28c76f !important; color: #28c76f !important; }
+    .timeline-step-circle.border-danger { border-color: #ea5455 !important; color: #ea5455 !important; }
+    .timeline-step-circle.border-warning { border-color: #ff9f43 !important; color: #ff9f43 !important; }
+    .timeline-step-circle.border-secondary { border-color: #8592a3 !important; color: #8592a3 !important; }
+    .timeline-step-circle.border-primary { border-color: #7367f0 !important; color: #7367f0 !important; }
+
+    .timeline-node-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #8592a3;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1.5px #2b354e;
+      z-index: 4;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
     }
 
-    .timeline-step-comment {
-      margin-top: 8px;
-      padding: 8px 10px;
-      background-color: #fdfdfd;
-      border: 1px solid #eef2f6;
-      border-left: 3px solid;
-      border-radius: 0 4px 4px 0;
-      font-size: 0.72rem;
-      text-align: left;
-      max-width: 180px;
-      margin-left: auto;
-      margin-right: auto;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-      font-style: italic;
-      color: #5c5c5c;
-      word-break: break-word;
+    .timeline-node-dot.bg-success { background-color: #28c76f !important; }
+    .timeline-node-dot.bg-danger { background-color: #ea5455 !important; }
+    .timeline-node-dot.bg-warning { background-color: #ff9f43 !important; }
+    .timeline-node-dot.bg-secondary { background-color: #8592a3 !important; }
+    .timeline-node-dot.bg-primary { background-color: #7367f0 !important; }
+
+    .timeline-card {
+      width: 135px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      position: relative;
+      transition: all 0.25s ease;
     }
-    .timeline-step-comment.border-success { border-left-color: #28c76f !important; }
-    .timeline-step-comment.border-danger { border-left-color: #ea5455 !important; }
-    .timeline-step-comment.border-warning { border-left-color: #ff9f43 !important; }
-    .timeline-step-comment.border-secondary { border-left-color: #8592a3 !important; }
+    
+    .timeline-card:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .timeline-card-header {
+      padding: 3px 6px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-align: center;
+      border-top-left-radius: 3px;
+      border-top-right-radius: 3px;
+    }
+
+    .timeline-card-body {
+      padding: 6px;
+    }
+
+    .timeline-card-body h6 {
+      font-size: 0.65rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .timeline-card-body .text-muted {
+      font-size: 0.58rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .timeline-card-body .small {
+      font-size: 0.52rem !important;
+    }
+
+    /* Arrow pointing DOWN from the card (card is above axis) */
+    .timeline-card.arrow-down::after {
+      content: "";
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 7px 6px 0 6px;
+      border-style: solid;
+      border-color: var(--theme-color) transparent transparent transparent;
+      z-index: 5;
+    }
+
+    /* Arrow pointing UP from the card (card is below axis) */
+    .timeline-card.arrow-up::after {
+      content: "";
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 6px 7px 6px;
+      border-style: solid;
+      border-color: transparent transparent var(--theme-color) transparent;
+      z-index: 5;
+    }
   </style>
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
@@ -307,57 +359,130 @@
           <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
           <small class="text-muted">Kronologi persetujuan dari kiri ke kanan</small>
         </div>
-        <div class="card-body py-4 timeline-steps-container">
+        <div class="card-body py-2 timeline-steps-container">
           <div class="timeline-steps-wrapper">
-            @if ($submission->approvals->count() > 0)
-              <div class="timeline-steps-line" style="width: {{ 260 * $submission->approvals->count() }}px; left: 100px;"></div>
+            @php
+              $allTimelineSteps = collect();
+              
+              $allTimelineSteps->push([
+                  'type' => 'creator',
+                  'role' => 'Pembuat Pengajuan',
+                  'name' => $submission->creator->name ?? '-',
+                  'status' => 'Diajukan',
+                  'color' => 'secondary',
+                  'time' => $submission->created_at->format('d M Y, H:i'),
+                  'comment' => null,
+                  'icon' => 'bx bx-send'
+              ]);
+              
+              foreach ($submission->approvals->reverse() as $approval) {
+                  $icon = 'bx bx-time-five';
+                  if ($approval->action === 'approved') {
+                      $icon = 'bx bx-check';
+                  } elseif ($approval->action === 'revision_requested') {
+                      $icon = 'bx bx-refresh';
+                  } elseif ($approval->action === 'rejected') {
+                      $icon = 'bx bx-x';
+                  }
+                  
+                  $allTimelineSteps->push([
+                      'type' => 'approval',
+                      'role' => \Illuminate\Support\Str::headline($approval->role),
+                      'name' => $approval->user->name,
+                      'status' => $approval->action_label,
+                      'color' => $approval->action_color,
+                      'time' => $approval->created_at->format('d M Y, H:i'),
+                      'comment' => $approval->comments,
+                      'icon' => $icon
+                  ]);
+              }
+            @endphp
+
+            @if ($allTimelineSteps->count() > 1)
+              <div class="timeline-steps-line" style="width: {{ 165 * ($allTimelineSteps->count() - 1) }}px; left: 75px;"></div>
             @endif
 
-            <div class="d-flex align-items-start justify-content-start" style="gap: 60px;">
-              <!-- Start Node: Diajukan -->
-              <div class="timeline-step-item">
-                <div class="timeline-step-dot bg-secondary">
-                  <i class="bx bx-send" style="font-size: 1.25rem;"></i>
-                </div>
-                <div class="timeline-step-content">
-                  <span class="timeline-step-badge bg-label-secondary">Diajukan</span>
-                  <div class="timeline-step-title" title="{{ $submission->creator->name ?? '-' }}">{{ $submission->creator->name ?? '-' }}</div>
-                  <div class="timeline-step-subtitle">Pembuat Pengajuan</div>
-                  <div class="timeline-step-time">
-                    <i class="bx bx-calendar"></i>
-                    <span>{{ $submission->created_at->format('d M Y, H:i') }}</span>
-                  </div>
-                </div>
-              </div>
+            {{--
+              Layout per column (top-to-bottom, 260px total height):
+              [timeline-zone-top    118px] — card floats down to bottom edge for ODD steps
+              [timeline-zone-axis    24px] — node-dot on top, numbered-circle below (or reversed for even)
+              [timeline-zone-bottom 118px] — card floats up to top edge for EVEN steps
 
-              <!-- Approval Steps (Chronological) -->
-              @foreach ($submission->approvals->reverse() as $approval)
-                <div class="timeline-step-item">
-                  <div class="timeline-step-dot bg-{{ $approval->action_color }}">
-                    @if($approval->action === 'approved')
-                      <i class="bx bx-check" style="font-size: 1.25rem;"></i>
-                    @elseif($approval->action === 'revision_requested')
-                      <i class="bx bx-refresh" style="font-size: 1.25rem;"></i>
-                    @elseif($approval->action === 'rejected')
-                      <i class="bx bx-x" style="font-size: 1.25rem;"></i>
-                    @else
-                      <i class="bx bx-time-five" style="font-size: 1.25rem;"></i>
-                    @endif
-                  </div>
-                  <div class="timeline-step-content">
-                    <span class="timeline-step-badge bg-label-{{ $approval->action_color }}">{{ $approval->action_label }}</span>
-                    <div class="timeline-step-title" title="{{ $approval->user->name }}">{{ $approval->user->name }}</div>
-                    <div class="timeline-step-subtitle">{{ \Illuminate\Support\Str::headline($approval->role) }}</div>
-                    <div class="timeline-step-time">
-                      <i class="bx bx-calendar"></i>
-                      <span>{{ $approval->created_at->format('d M Y, H:i') }}</span>
-                    </div>
-                    @if ($approval->comments)
-                      <div class="timeline-step-comment border-{{ $approval->action_color }}">
-                        {{ $approval->comments }}
+              ODD  steps (1, 3, 5…): card is ABOVE the axis → top zone has card, axis has dot-above-circle
+              EVEN steps (2, 4, 6…): card is BELOW the axis → bottom zone has card, axis has circle-above-dot
+            --}}
+            <div class="d-flex align-items-stretch justify-content-start" style="gap: 15px; z-index: 2; position: relative;">
+              @foreach ($allTimelineSteps as $step)
+                @php
+                  $isOdd = $loop->iteration % 2 !== 0;
+                  $themeColor = match($step['color']) {
+                      'success' => '#28c76f',
+                      'danger' => '#ea5455',
+                      'warning' => '#ff9f43',
+                      'secondary' => '#8592a3',
+                      default => '#7367f0',
+                  };
+                @endphp
+
+                <div class="timeline-step-column">
+
+                  @if ($isOdd)
+                    {{-- ODD: card above axis, circle just above node-dot --}}
+
+                    {{-- Top zone: card floats to bottom of this zone --}}
+                    <div class="timeline-zone-top">
+                      <div class="timeline-card arrow-down" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
+                        <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
+                          <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                        </div>
+                        <div class="timeline-card-body text-center py-1 px-2">
+                          <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
+                            <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                          </div>
+                        </div>
                       </div>
-                    @endif
-                  </div>
+                    </div>
+
+                    {{-- Axis zone: numbered circle (top), then node-dot (bottom) --}}
+                    <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                      <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
+                        {{ $loop->iteration }}
+                      </div>
+                      <div class="timeline-node-dot bg-{{ $step['color'] }}"></div>
+                    </div>
+
+                    {{-- Bottom zone: empty for odd steps --}}
+                    <div class="timeline-zone-bottom"></div>
+
+                  @else
+                    {{-- EVEN: card below axis, circle just below node-dot --}}
+
+                    {{-- Top zone: empty for even steps --}}
+                    <div class="timeline-zone-top"></div>
+
+                    {{-- Axis zone: node-dot (top), then numbered circle (bottom) --}}
+                    <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                      <div class="timeline-node-dot bg-{{ $step['color'] }}"></div>
+                      <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
+                        {{ $loop->iteration }}
+                      </div>
+                    </div>
+
+                    {{-- Bottom zone: card floats to top of this zone --}}
+                    <div class="timeline-zone-bottom">
+                      <div class="timeline-card arrow-up" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
+                        <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
+                          <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                        </div>
+                        <div class="timeline-card-body text-center py-1 px-2">
+                          <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
+                            <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  @endif
+
                 </div>
               @endforeach
             </div>
