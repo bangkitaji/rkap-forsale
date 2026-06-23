@@ -113,7 +113,7 @@
         "settings-user-management-roles",
         "settings-user-management-permissions"
       ],
-      "permission": "settings.show"
+      "permission": "settings.usermanagement.show"
     },
     {
       "url": "settings/organization",
@@ -125,7 +125,14 @@
         "settings-organization-departments",
         "settings-organization-bureaus"
       ],
-      "permission": "settings.show"
+      "permission": "settings.organization.show"
+    },
+    {
+      "url": "settings/report-groups",
+      "icon": "menu-icon icon-base bx bx-receipt",
+      "name": "Report Group",
+      "slug": "settings-report-groups",
+      "permission": "settings.reportgroup.manage"
     },
     {
       "url": "settings/satuans",
@@ -146,7 +153,7 @@
       "icon": "menu-icon icon-base bx bx-upload",
       "name": "Upload Data Migration",
       "slug": "settings-data-migration-upload",
-      "permission": "settings.show"
+      "permission": "settings.usermanagement.show"
     }
   ]
 }

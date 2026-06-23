@@ -17,7 +17,7 @@ class MasterDataSeeder extends Seeder
         Schema::disableForeignKeyConstraints();
 
         // 1. Truncate tables in reverse dependency order
-        $tables = ['activity_coa', 'activities', 'coas', 'work_plans', 'coa_groups'];
+        $tables = ['activity_coa', 'activities', 'coas', 'work_plans', 'coa_groups', 'report_groups'];
         foreach ($tables as $table) {
             DB::table($table)->truncate();
         }
@@ -49,6 +49,7 @@ class MasterDataSeeder extends Seeder
         };
 
         // 2. Seed tables in dependency order
+        $seedTable('report_groups');
         $seedTable('coa_groups');
         $seedTable('work_plans');
         $seedTable('coas');
@@ -57,7 +58,7 @@ class MasterDataSeeder extends Seeder
 
         // 3. Reset PostgreSQL sequences to avoid primary key out-of-sync unique constraint violations
         if (DB::getDriverName() === 'pgsql') {
-            $tables = ['coa_groups', 'work_plans', 'coas', 'activities'];
+            $tables = ['report_groups', 'coa_groups', 'work_plans', 'coas', 'activities'];
             foreach ($tables as $table) {
                 if (Schema::hasColumn($table, 'id')) {
                     DB::statement("SELECT setval(pg_get_serial_sequence('$table', 'id'), COALESCE(MAX(id), 1)) FROM $table");

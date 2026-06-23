@@ -81,6 +81,10 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('permission:settings.show');
     });
 
+    Route::get('/settings/report-groups', \App\Livewire\Settings\ReportGroups::class)
+        ->name('settings-report-groups')
+        ->middleware('permission:settings.reportgroup.manage');
+
     // RKAP routes
     Route::prefix('rkap')->group(function () {
         Route::get('/dashboard-rkap', \App\Livewire\Rkap\RkapDashboard::class)->name('dashboard-rkap');

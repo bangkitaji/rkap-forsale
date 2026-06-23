@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "code": "PL0001",
+    "type": "PL",
+    "name": "Revenue",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 2,
+    "code": "PL0002",
+    "type": "PL",
+    "name": "Direct Cost",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 3,
+    "code": "PL0003",
+    "type": "PL",
+    "name": "Indirect Cost",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 4,
+    "code": "PL0004",
+    "type": "PL",
+    "name": "Other Income (exp)",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 5,
+    "code": "BS0001",
+    "type": "BS",
+    "name": "Aset Lancar",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 6,
+    "code": "BS0002",
+    "type": "BS",
+    "name": "Aset Tidak lancar",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 7,
+    "code": "BS0003",
+    "type": "BS",
+    "name": "Liabilitas Lancar",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 8,
+    "code": "BS0004",
+    "type": "BS",
+    "name": "Liabilitas Tidak Lancar",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 9,
+    "code": "BS0005",
+    "type": "BS",
+    "name": "Ekuitas",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  }
+]
