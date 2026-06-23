@@ -407,204 +407,211 @@ class Analytics extends Controller
         ];
       }
 
-      // --- 6. Profit and Loss Category Summaries ---
-      $categoryBudgets = DB::table('rkap_budget_items')
+      // --- 6. Profit and Loss Summary using report_groups (type = PL) ---
+      // Fetch all PL report groups with their mapped COA groups
+      $plReportGroups = \App\Models\ReportGroup::where('type', 'PL')
+        ->orderBy('code')
+        ->with(['coaGroups' => fn($q) => $q->orderBy('code')])
+        ->get();
+
+      // Get all COA group IDs that belong to PL report groups
+      $plCoaGroupIds = $plReportGroups->flatMap(fn($rg) => $rg->coaGroups->pluck('id'))->toArray();
+
+      // Build the base query joining budget items → coas → coa_groups for PL report groups
+      $baseJoin = fn() => DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->selectRaw('coas.coa_category_id, SUM(rkap_budget_items.total_price) as total')
-        ->groupBy('coas.coa_category_id')
-        ->pluck('total', 'coa_category_id')
+        ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray());
+
+      // Budget per COA group
+      $cgBudgets = $baseJoin()
+        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_items.total_price) as total')
+        ->groupBy('coa_groups.id')
+        ->pluck('total', 'coa_group_id')
         ->toArray();
 
-      $categoryRealizations = DB::table('rkap_budget_item_realizations')
+      // Realization per COA group
+      $cgRealizations = DB::table('rkap_budget_item_realizations')
         ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
         ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->selectRaw('coas.coa_category_id, SUM(rkap_budget_item_realizations.amount) as total')
-        ->groupBy('coas.coa_category_id')
-        ->pluck('total', 'coa_category_id')
+        ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray())
+        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coa_groups.id')
+        ->pluck('total', 'coa_group_id')
         ->toArray();
 
-      $categoryProjections = DB::table('rkap_budget_item_projections')
+      // Projection per COA group
+      $cgProjections = DB::table('rkap_budget_item_projections')
         ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
         ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->selectRaw('coas.coa_category_id, SUM(rkap_budget_item_projections.amount) as total')
-        ->groupBy('coas.coa_category_id')
-        ->pluck('total', 'coa_category_id')
+        ->whereIn('coa_groups.report_group_id', $plReportGroups->pluck('id')->toArray())
+        ->selectRaw('coa_groups.id as coa_group_id, SUM(rkap_budget_item_projections.amount) as total')
+        ->groupBy('coa_groups.id')
+        ->pluck('total', 'coa_group_id')
         ->toArray();
 
-      $coaCategories = \App\Models\CoaCategory::ordered()->get();
-      $plCategories = [];
+      // Color palette for COA group items within each report group
+      $colorPalette = ['primary', 'info', 'success', 'warning', 'danger', 'secondary', 'dark'];
+
+      // Build plGroups structure from report_groups
       $mappedBudgetSum = 0.0;
       $mappedRealizationSum = 0.0;
       $mappedProjectionSum = 0.0;
 
-      foreach ($coaCategories as $cat) {
-        $budget = (float) ($categoryBudgets[$cat->id] ?? 0.0);
-        $realization = (float) ($categoryRealizations[$cat->id] ?? 0.0);
-        $projection = (float) ($categoryProjections[$cat->id] ?? 0.0);
+      foreach ($plReportGroups as $rg) {
+        $items = [];
+        $budgetSubtotal = 0.0;
+        $realizationSubtotal = 0.0;
+        $projectionSubtotal = 0.0;
 
-        $mappedBudgetSum += $budget;
-        $mappedRealizationSum += $realization;
-        $mappedProjectionSum += $projection;
+        foreach ($rg->coaGroups as $idx => $cg) {
+          $budget = (float) ($cgBudgets[$cg->id] ?? 0.0);
+          $realization = (float) ($cgRealizations[$cg->id] ?? 0.0);
+          $projection = (float) ($cgProjections[$cg->id] ?? 0.0);
 
-        $plCategories[] = [
-          'id' => $cat->id,
-          'key' => $cat->key,
-          'label' => $cat->label,
-          'group' => $cat->group,
-          'color' => $cat->color,
-          'budget' => $budget,
-          'realization' => $realization,
-          'projection' => $projection,
+          $budgetSubtotal += $budget;
+          $realizationSubtotal += $realization;
+          $projectionSubtotal += $projection;
+
+          $items[] = [
+            'id' => $cg->id,
+            'key' => $cg->code,
+            'label' => $cg->name,
+            'color' => $colorPalette[$idx % count($colorPalette)],
+            'budget' => $budget,
+            'realization' => $realization,
+            'projection' => $projection,
+          ];
+        }
+
+        $mappedBudgetSum += $budgetSubtotal;
+        $mappedRealizationSum += $realizationSubtotal;
+        $mappedProjectionSum += $projectionSubtotal;
+
+        $plGroups[$rg->name] = [
+          'label' => $rg->name,
+          'items' => $items,
+          'budget_subtotal' => $budgetSubtotal,
+          'realization_subtotal' => $realizationSubtotal,
+          'projection_subtotal' => $projectionSubtotal,
         ];
       }
 
+      // Calculate unmapped amounts
       $unmappedBudget = max(0.0, $stats['total_budget'] - $mappedBudgetSum);
       $unmappedRealization = max(0.0, $stats['total_realization'] - $mappedRealizationSum);
       $unmappedProjection = max(0.0, $stats['total_projection'] - $mappedProjectionSum);
 
-      $plUnmapped = null;
       if ($unmappedBudget > 0 || $unmappedRealization > 0 || $unmappedProjection > 0) {
-        $plUnmapped = [
-          'label' => 'Lainnya / Belum Dipetakan',
-          'group' => 'Unmapped',
-          'color' => 'secondary',
-          'budget' => $unmappedBudget,
-          'realization' => $unmappedRealization,
-          'projection' => $unmappedProjection,
-        ];
-      }
-
-      $plGroups = [
-        'Revenue' => [
-          'label' => 'Pendapatan',
-          'items' => [],
-          'budget_subtotal' => 0.0,
-          'realization_subtotal' => 0.0,
-          'projection_subtotal' => 0.0,
-        ],
-        'Direct Cost' => [
-          'label' => 'Beban Langsung',
-          'items' => [],
-          'budget_subtotal' => 0.0,
-          'realization_subtotal' => 0.0,
-          'projection_subtotal' => 0.0,
-        ],
-        'Indirect Cost' => [
-          'label' => 'Beban Tidak Langsung',
-          'items' => [],
-          'budget_subtotal' => 0.0,
-          'realization_subtotal' => 0.0,
-          'projection_subtotal' => 0.0,
-        ],
-        'Non-Operating' => [
-          'label' => 'Non-Operasional',
-          'items' => [],
-          'budget_subtotal' => 0.0,
-          'realization_subtotal' => 0.0,
-          'projection_subtotal' => 0.0,
-        ],
-      ];
-
-      foreach ($plCategories as $item) {
-        $grp = $item['group'];
-        if (isset($plGroups[$grp])) {
-          $plGroups[$grp]['items'][] = $item;
-          $plGroups[$grp]['budget_subtotal'] += $item['budget'];
-          $plGroups[$grp]['realization_subtotal'] += $item['realization'];
-          $plGroups[$grp]['projection_subtotal'] += $item['projection'];
-        }
-      }
-
-      if ($plUnmapped) {
         $unmappedGroup = [
           'label' => 'Belum Dipetakan / Lainnya',
-          'items' => [$plUnmapped],
+          'items' => [
+            [
+              'label' => 'Lainnya / Belum Dipetakan',
+              'group' => 'Unmapped',
+              'color' => 'secondary',
+              'budget' => $unmappedBudget,
+              'realization' => $unmappedRealization,
+              'projection' => $unmappedProjection,
+            ]
+          ],
           'budget_subtotal' => $unmappedBudget,
           'realization_subtotal' => $unmappedRealization,
           'projection_subtotal' => $unmappedProjection,
         ];
       }
 
-      $noRevenueBudget = 0.0; $noRevenueReal = 0.0; $noRevenueProj = 0.0;
-      $noExpenseBudget = 0.0; $noExpenseReal = 0.0; $noExpenseProj = 0.0;
-      foreach ($plGroups['Non-Operating']['items'] as $item) {
-        if ($item['key'] === 'non_operating_revenue') {
-          $noRevenueBudget = $item['budget'];
-          $noRevenueReal = $item['realization'];
-          $noRevenueProj = $item['projection'];
-        } elseif ($item['key'] === 'non_operating_expense') {
-          $noExpenseBudget = $item['budget'];
-          $noExpenseReal = $item['realization'];
-          $noExpenseProj = $item['projection'];
-        }
-      }
+      // Build P&L summary (Revenue = PL0001, Direct Cost = PL0002, Indirect Cost = PL0003, Other Income (exp) = PL0004)
+      $revenueBudget = $plGroups['Revenue']['budget_subtotal'] ?? 0.0;
+      $revenueReal = $plGroups['Revenue']['realization_subtotal'] ?? 0.0;
+      $revenueProj = $plGroups['Revenue']['projection_subtotal'] ?? 0.0;
+
+      $directCostBudget = $plGroups['Direct Cost']['budget_subtotal'] ?? 0.0;
+      $directCostReal = $plGroups['Direct Cost']['realization_subtotal'] ?? 0.0;
+      $directCostProj = $plGroups['Direct Cost']['projection_subtotal'] ?? 0.0;
+
+      $indirectCostBudget = $plGroups['Indirect Cost']['budget_subtotal'] ?? 0.0;
+      $indirectCostReal = $plGroups['Indirect Cost']['realization_subtotal'] ?? 0.0;
+      $indirectCostProj = $plGroups['Indirect Cost']['projection_subtotal'] ?? 0.0;
+
+      $otherBudget = $plGroups['Other Income (exp)']['budget_subtotal'] ?? 0.0;
+      $otherReal = $plGroups['Other Income (exp)']['realization_subtotal'] ?? 0.0;
+      $otherProj = $plGroups['Other Income (exp)']['projection_subtotal'] ?? 0.0;
+
+      $grossProfitBudget = $revenueBudget - $directCostBudget;
+      $grossProfitReal = $revenueReal - $directCostReal;
+      $grossProfitProj = $revenueProj - $directCostProj;
+
+      $ebitdaBudget = $grossProfitBudget - $indirectCostBudget;
+      $ebitdaReal = $grossProfitReal - $indirectCostReal;
+      $ebitdaProj = $grossProfitProj - $indirectCostProj;
+
+      $netProfitBudget = $ebitdaBudget + $otherBudget;
+      $netProfitReal = $ebitdaReal + $otherReal;
+      $netProfitProj = $ebitdaProj + $otherProj;
 
       $plSummary = [
         'revenue' => [
           'label' => 'Total Pendapatan',
-          'budget' => $plGroups['Revenue']['budget_subtotal'],
-          'realization' => $plGroups['Revenue']['realization_subtotal'],
-          'projection' => $plGroups['Revenue']['projection_subtotal'],
+          'budget' => $revenueBudget,
+          'realization' => $revenueReal,
+          'projection' => $revenueProj,
         ],
         'direct_cost' => [
           'label' => 'Total Beban Langsung',
-          'budget' => $plGroups['Direct Cost']['budget_subtotal'],
-          'realization' => $plGroups['Direct Cost']['realization_subtotal'],
-          'projection' => $plGroups['Direct Cost']['projection_subtotal'],
+          'budget' => $directCostBudget,
+          'realization' => $directCostReal,
+          'projection' => $directCostProj,
         ],
         'gross_profit' => [
           'label' => 'Laba Kotor (Gross Profit)',
-          'budget' => $plGroups['Revenue']['budget_subtotal'] - $plGroups['Direct Cost']['budget_subtotal'],
-          'realization' => $plGroups['Revenue']['realization_subtotal'] - $plGroups['Direct Cost']['realization_subtotal'],
-          'projection' => $plGroups['Revenue']['projection_subtotal'] - $plGroups['Direct Cost']['projection_subtotal'],
+          'budget' => $grossProfitBudget,
+          'realization' => $grossProfitReal,
+          'projection' => $grossProfitProj,
         ],
         'indirect_cost' => [
           'label' => 'Total Beban Tidak Langsung',
-          'budget' => $plGroups['Indirect Cost']['budget_subtotal'],
-          'realization' => $plGroups['Indirect Cost']['realization_subtotal'],
-          'projection' => $plGroups['Indirect Cost']['projection_subtotal'],
+          'budget' => $indirectCostBudget,
+          'realization' => $indirectCostReal,
+          'projection' => $indirectCostProj,
         ],
         'operating_profit' => [
           'label' => 'Laba Usaha (EBITDA)',
-          'budget' => ($plGroups['Revenue']['budget_subtotal'] - $plGroups['Direct Cost']['budget_subtotal']) - $plGroups['Indirect Cost']['budget_subtotal'],
-          'realization' => ($plGroups['Revenue']['realization_subtotal'] - $plGroups['Direct Cost']['realization_subtotal']) - $plGroups['Indirect Cost']['realization_subtotal'],
-          'projection' => ($plGroups['Revenue']['projection_subtotal'] - $plGroups['Direct Cost']['projection_subtotal']) - $plGroups['Indirect Cost']['projection_subtotal'],
+          'budget' => $ebitdaBudget,
+          'realization' => $ebitdaReal,
+          'projection' => $ebitdaProj,
         ],
-        'non_operating_revenue' => [
-          'label' => 'Pendapatan Non-Operasional',
-          'budget' => $noRevenueBudget,
-          'realization' => $noRevenueReal,
-          'projection' => $noRevenueProj,
-        ],
-        'non_operating_expense' => [
-          'label' => 'Beban Non-Operasional / Keuangan',
-          'budget' => $noExpenseBudget,
-          'realization' => $noExpenseReal,
-          'projection' => $noExpenseProj,
+        'other_income_exp' => [
+          'label' => 'Pendapatan / (Beban) Lainnya',
+          'budget' => $otherBudget,
+          'realization' => $otherReal,
+          'projection' => $otherProj,
         ],
         'net_profit' => [
           'label' => 'Laba Bersih (Net Profit)',
-          'budget' => (($plGroups['Revenue']['budget_subtotal'] - $plGroups['Direct Cost']['budget_subtotal']) - $plGroups['Indirect Cost']['budget_subtotal']) + $noRevenueBudget - $noExpenseBudget,
-          'realization' => (($plGroups['Revenue']['realization_subtotal'] - $plGroups['Direct Cost']['realization_subtotal']) - $plGroups['Indirect Cost']['realization_subtotal']) + $noRevenueReal - $noExpenseReal,
-          'projection' => (($plGroups['Revenue']['projection_subtotal'] - $plGroups['Direct Cost']['projection_subtotal']) - $plGroups['Indirect Cost']['projection_subtotal']) + $noRevenueProj - $noExpenseProj,
+          'budget' => $netProfitBudget,
+          'realization' => $netProfitReal,
+          'projection' => $netProfitProj,
         ],
       ];
     }

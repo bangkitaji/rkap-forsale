@@ -215,27 +215,51 @@ class RkapDashboardTest extends TestCase
 
     public function test_admin_sees_profit_and_loss_summary(): void
     {
-        // 1. Create COAs mapped to categories
-        $coaGroup = \App\Models\CoaGroup::create([
-            'code' => '500000',
-            'name' => 'Biaya Operasional',
+        // 1. Create Report Groups (PL type)
+        $rgRevenue = \App\Models\ReportGroup::create([
+            'code' => 'PL0001',
+            'type' => 'PL',
+            'name' => 'Revenue',
+        ]);
+        $rgDirectCost = \App\Models\ReportGroup::create([
+            'code' => 'PL0002',
+            'type' => 'PL',
+            'name' => 'Direct Cost',
+        ]);
+        $rgIndirectCost = \App\Models\ReportGroup::create([
+            'code' => 'PL0003',
+            'type' => 'PL',
+            'name' => 'Indirect Cost',
+        ]);
+        $rgOther = \App\Models\ReportGroup::create([
+            'code' => 'PL0004',
+            'type' => 'PL',
+            'name' => 'Other Income (exp)',
         ]);
 
-        $catRevenue = \App\Models\CoaCategory::where('key', 'revenue_passenger')->first();
-        $catCost = \App\Models\CoaCategory::where('key', 'direct_cost_traction')->first();
+        // 2. Create COA groups mapped to report groups
+        $cgRevenue = \App\Models\CoaGroup::create([
+            'code' => '4000',
+            'name' => 'PENDAPATAN PENUMPANG',
+            'report_group_id' => $rgRevenue->id,
+        ]);
+        $cgDirectCost = \App\Models\CoaGroup::create([
+            'code' => '5000',
+            'name' => 'PEGAWAI LANGSUNG',
+            'report_group_id' => $rgDirectCost->id,
+        ]);
 
+        // 3. Create COAs mapped to COA groups
         \App\Models\Coa::create([
-            'coa_group_id' => $coaGroup->id,
+            'coa_group_id' => $cgRevenue->id,
             'code' => '521111',
             'title' => 'Tiket KA',
-            'coa_category_id' => $catRevenue->id,
         ]);
 
         \App\Models\Coa::create([
-            'coa_group_id' => $coaGroup->id,
+            'coa_group_id' => $cgDirectCost->id,
             'code' => '522222',
             'title' => 'Energi Traksi',
-            'coa_category_id' => $catCost->id,
         ]);
 
         $response = $this->actingAs($this->admin)->get('/analytics');
@@ -248,10 +272,10 @@ class RkapDashboardTest extends TestCase
         $plSummary = $response->viewData('plSummary');
 
         // Check revenue is correct
-        // bi1 (60000) is mapped to revenue_passenger via 521111
+        // bi1 (60000) is mapped to PENDAPATAN PENUMPANG via 521111
         $this->assertEquals(60000.0, $plGroups['Revenue']['budget_subtotal']);
 
-        // bi2 (40000) is mapped to direct_cost_traction via 522222
+        // bi2 (40000) is mapped to PEGAWAI LANGSUNG via 522222
         $this->assertEquals(40000.0, $plGroups['Direct Cost']['budget_subtotal']);
 
         // Gross Profit: Revenue (60000) - Direct Cost (40000) = 20000
@@ -260,12 +284,12 @@ class RkapDashboardTest extends TestCase
         // Check if values are rendered in the HTML
         $response->assertSee('Laporan Laba Rugi');
         $response->assertSee('Ringkasan Laba Rugi');
-        $response->assertSee('Pendapatan');
-        $response->assertSee('Beban Langsung');
+        $response->assertSee('Revenue');
+        $response->assertSee('Direct Cost');
         $response->assertSee('Laba Kotor');
         $response->assertSee('Laba Bersih');
-        $response->assertSee('Pendapatan Tiket Penumpang');
-        $response->assertSee('Beban Energi Listrik Traksi');
+        $response->assertSee('PENDAPATAN PENUMPANG');
+        $response->assertSee('PEGAWAI LANGSUNG');
         $response->assertSee('Laba Kotor (Gross Profit)');
         $response->assertSee('Laba Usaha (EBITDA)');
         $response->assertSee('Laba Bersih (Net Profit)');

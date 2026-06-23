@@ -284,7 +284,24 @@
                             </div>
                         </div>
  
-                        <!-- Row 6: Laba Bersih -->
+                        <!-- Row 6: Other Income (exp) -->
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-label-secondary p-2 rounded me-3">
+                                    <i class="bx bx-transfer fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold">Lain-lain</h6>
+                                    <small class="text-muted">Other Income (exp)</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['other_income_exp']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                                <small class="text-secondary fw-medium">Real: Rp {{ number_format($plSummary['other_income_exp']['realization'] ?? 0, 0, ',', '.') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Row 7: Laba Bersih -->
                         <div class="d-flex align-items-center justify-content-between bg-label-success p-3 rounded">
                             <div class="d-flex align-items-center">
                                 <div class="badge bg-success text-white p-2 rounded me-3">
