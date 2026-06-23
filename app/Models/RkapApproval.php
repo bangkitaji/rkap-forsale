@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -35,21 +36,13 @@ class RkapApproval extends Model
 
     public function getActionLabelAttribute(): string
     {
-        return match ($this->action) {
-            'approved' => 'Disetujui',
-            'rejected' => 'Ditolak',
-            'revision_requested' => 'Minta Revisi',
-            default => $this->action,
-        };
+        $enum = ApprovalAction::tryFrom($this->action);
+        return $enum ? $enum->label() : $this->action;
     }
 
     public function getActionColorAttribute(): string
     {
-        return match ($this->action) {
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'revision_requested' => 'warning',
-            default => 'secondary',
-        };
+        $enum = ApprovalAction::tryFrom($this->action);
+        return $enum ? $enum->color() : 'secondary';
     }
 }

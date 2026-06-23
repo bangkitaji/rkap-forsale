@@ -13,8 +13,12 @@ use App\Models\Coa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use App\Livewire\Traits\HandlesDistribution;
+
 class RkapSubmissionForm extends Component
 {
+    use HandlesDistribution;
+
     public ?int $submissionId = null;
     public ?int $periodId = null;
 
@@ -47,11 +51,18 @@ class RkapSubmissionForm extends Component
 
     public function mount(?int $periodId = null, ?int $id = null): void
     {
+        $user = Auth::user();
+
         if ($id) {
             $this->submission = RkapSubmission::findOrFail($id);
             $this->submissionId = $id;
             $this->periodId = $this->submission->rkap_period_id;
             $this->period = $this->submission->period;
+
+            // Authorization: ensure current user can edit this submission
+            if (!$this->submission->canBeEditedBy($user)) {
+                abort(403, 'Anda tidak memiliki akses untuk mengedit pengajuan ini.');
+            }
 
             // Eager-load relations; scope realizations to this period explicitly
             $this->submission->load([
@@ -63,16 +74,17 @@ class RkapSubmissionForm extends Component
             $this->notes = $this->submission->notes ?? '';
             $this->loadWorkPlans();
         } elseif ($periodId) {
-            $user = Auth::user();
-            if ($user->bureau_id) {
-                $exists = RkapSubmission::where('rkap_period_id', $periodId)
-                    ->where('bureau_id', $user->bureau_id)
-                    ->exists();
-                if ($exists) {
-                    session()->flash('error', 'Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
-                    $this->redirectRoute('rkap-submissions');
-                    return;
-                }
+            if (!$user->bureau_id) {
+                abort(403, 'Anda harus terasosiasi dengan Biro untuk membuat pengajuan.');
+            }
+
+            $exists = RkapSubmission::where('rkap_period_id', $periodId)
+                ->where('bureau_id', $user->bureau_id)
+                ->exists();
+            if ($exists) {
+                session()->flash('error', 'Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
+                $this->redirectRoute('rkap-submissions');
+                return;
             }
 
             $this->periodId = $periodId;
@@ -363,222 +375,66 @@ class RkapSubmissionForm extends Component
 
     public function toggleMonth(int $wpIdx, int $actIdx, int $biIdx, int $month): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['distribution_months'] ?? [];
-
-        if (in_array($month, $months)) {
-            $months = array_values(array_diff($months, [$month]));
-            unset($this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'][$month]);
-        } else {
-            $months[] = $month;
-            sort($months);
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'][$month] = 0;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['distribution_months'] = array_values($months);
+        $this->toggleMonthDistribution($wpIdx, $actIdx, $biIdx, $month, 'distribution_months', 'monthly_distribution');
     }
 
     public function selectAllMonths(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['distribution_months'] ?? [];
-        if (count($months) === 12) {
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['distribution_months'] = [];
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'] = [];
-        } else {
-            $allMonths = range(1, 12);
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['distribution_months'] = $allMonths;
-            $distribution = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'] ?? [];
-            foreach ($allMonths as $month) {
-                if (!isset($distribution[$month])) {
-                    $distribution[$month] = 0;
-                }
-            }
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'] = $distribution;
-        }
+        $this->selectAllMonthsDistribution($wpIdx, $actIdx, $biIdx, 'distribution_months', 'monthly_distribution');
     }
 
     public function distributeEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $months = $bi['distribution_months'] ?? [];
-
-        if (empty($months) || $total <= 0) {
-            return;
-        }
-
-        $count = count($months);
-        $perMonth = floor($total / $count);
-        $remainder = $total - ($perMonth * $count);
-
-        $distribution = [];
-        foreach ($months as $i => $month) {
-            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['monthly_distribution'] = $distribution;
+        $this->distributeEvenlyDistribution($wpIdx, $actIdx, $biIdx, 'distribution_months', 'monthly_distribution');
     }
 
     public function getMonthlyRemainder(int $wpIdx, int $actIdx, int $biIdx): float
     {
-        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx] ?? null;
-        if (!$bi) {
-            return 0;
-        }
-
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $allocated = array_sum($bi['monthly_distribution'] ?? []);
-
-        return $total - $allocated;
+        return $this->getRemainderDistribution($wpIdx, $actIdx, $biIdx, 'monthly_distribution');
     }
 
     // ── Cash Out Plan Methods ──
 
     public function toggleCashOutMonth(int $wpIdx, int $actIdx, int $biIdx, int $month): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_months'] ?? [];
-
-        if (in_array($month, $months)) {
-            $months = array_values(array_diff($months, [$month]));
-            unset($this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'][$month]);
-        } else {
-            $months[] = $month;
-            sort($months);
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'][$month] = 0;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_months'] = array_values($months);
+        $this->toggleMonthDistribution($wpIdx, $actIdx, $biIdx, $month, 'cash_out_months', 'cash_out_distribution');
     }
 
     public function selectAllCashOutMonths(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_months'] ?? [];
-        if (count($months) === 12) {
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_months'] = [];
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'] = [];
-        } else {
-            $allMonths = range(1, 12);
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_months'] = $allMonths;
-            $distribution = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'] ?? [];
-            foreach ($allMonths as $month) {
-                if (!isset($distribution[$month])) {
-                    $distribution[$month] = 0;
-                }
-            }
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'] = $distribution;
-        }
+        $this->selectAllMonthsDistribution($wpIdx, $actIdx, $biIdx, 'cash_out_months', 'cash_out_distribution');
     }
 
     public function distributeCashOutEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $months = $bi['cash_out_months'] ?? [];
-
-        if (empty($months) || $total <= 0) {
-            return;
-        }
-
-        $count = count($months);
-        $perMonth = floor($total / $count);
-        $remainder = $total - ($perMonth * $count);
-
-        $distribution = [];
-        foreach ($months as $i => $month) {
-            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['cash_out_distribution'] = $distribution;
+        $this->distributeEvenlyDistribution($wpIdx, $actIdx, $biIdx, 'cash_out_months', 'cash_out_distribution');
     }
 
     public function getCashOutRemainder(int $wpIdx, int $actIdx, int $biIdx): float
     {
-        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx] ?? null;
-        if (!$bi) {
-            return 0;
-        }
-
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total     = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $allocated = array_sum($bi['cash_out_distribution'] ?? []);
-
-        return $total - $allocated;
+        return $this->getRemainderDistribution($wpIdx, $actIdx, $biIdx, 'cash_out_distribution');
     }
 
     // ── Realization Methods ──
 
     public function toggleRealizationMonth(int $wpIdx, int $actIdx, int $biIdx, int $month): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] ?? [];
-
-        if (in_array($month, $months)) {
-            $months = array_values(array_diff($months, [$month]));
-            unset($this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'][$month]);
-        } else {
-            $months[] = $month;
-            sort($months);
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'][$month] = 0;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] = array_values($months);
+        $this->toggleMonthDistribution($wpIdx, $actIdx, $biIdx, $month, 'realization_months', 'realization_distribution');
     }
 
     public function selectAllRealizationMonths(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $months = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months'] ?? [];
-        if (count($months) === 12) {
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months']      = [];
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = [];
-        } else {
-            $allMonths    = range(1, 12);
-            $distribution = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] ?? [];
-            foreach ($allMonths as $month) {
-                if (! isset($distribution[$month])) {
-                    $distribution[$month] = 0;
-                }
-            }
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_months']      = $allMonths;
-            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = $distribution;
-        }
+        $this->selectAllMonthsDistribution($wpIdx, $actIdx, $biIdx, 'realization_months', 'realization_distribution');
     }
 
     public function distributeRealizationEvenly(int $wpIdx, int $actIdx, int $biIdx): void
     {
-        $bi     = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx];
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total  = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $months = $bi['realization_months'] ?? [];
-
-        if (empty($months) || $total <= 0) {
-            return;
-        }
-
-        $count     = count($months);
-        $perMonth  = floor($total / $count);
-        $remainder = $total - ($perMonth * $count);
-
-        $distribution = [];
-        foreach ($months as $i => $month) {
-            $distribution[$month] = ($i === $count - 1) ? $perMonth + $remainder : $perMonth;
-        }
-
-        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['realization_distribution'] = $distribution;
+        $this->distributeEvenlyDistribution($wpIdx, $actIdx, $biIdx, 'realization_months', 'realization_distribution');
     }
 
     public function getRealizationRemainder(int $wpIdx, int $actIdx, int $biIdx): float
     {
-        $bi = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx] ?? null;
-        if (! $bi) {
-            return 0;
-        }
-
-        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-        $total     = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
-        $allocated = array_sum($bi['realization_distribution'] ?? []);
-
-        return $total - $allocated;
+        return $this->getRemainderDistribution($wpIdx, $actIdx, $biIdx, 'realization_distribution');
     }
 
     // ── Work Plan / Activity / Budget Item Management ──
@@ -586,6 +442,10 @@ class RkapSubmissionForm extends Component
     private function loadWorkPlans(): void
     {
         $grouped = $this->submission->workPlans->groupBy('work_plan_id');
+
+        // Pre-load COAs by account_code to avoid N+1 query
+        $accountCodes = $this->submission->workPlans->flatMap(fn($wp) => $wp->budgetItems->pluck('account_code'))->filter()->unique()->toArray();
+        $coaMap = Coa::whereIn('code', $accountCodes)->get()->keyBy('code');
 
         $this->workPlans = [];
         foreach ($grouped as $wpId => $rkapWorkPlans) {
@@ -601,8 +461,8 @@ class RkapSubmissionForm extends Component
                     'sort_order'      => $wp->sort_order,
                     'approval_status' => $wp->approval_status ?? 'pending',
                     'revision_notes'  => $wp->revision_notes ?? '',
-                    'budget_items'    => $wp->budgetItems->map(function ($bi) {
-                        $coa = Coa::where('code', $bi->account_code)->first();
+                    'budget_items'    => $wp->budgetItems->map(function ($bi) use ($coaMap) {
+                        $coa = $coaMap->get($bi->account_code);
                         return [
                             'id'                       => $bi->id,
                             'coa_id'                   => $coa ? $coa->id : null,
@@ -1001,6 +861,35 @@ class RkapSubmissionForm extends Component
                 $data
             );
 
+            // Collect IDs to pre-load and avoid N+1 queries
+            $coaIds = [];
+            $activityIds = [];
+            $wpIds = [];
+            $rkapWpIds = [];
+            foreach ($this->workPlans as $wpGroup) {
+                if (!empty($wpGroup['work_plan_id'])) {
+                    $wpIds[] = (int) $wpGroup['work_plan_id'];
+                }
+                foreach ($wpGroup['activities'] as $actData) {
+                    if (!empty($actData['id'])) {
+                        $rkapWpIds[] = (int) $actData['id'];
+                    }
+                    if (!empty($actData['activity_id'])) {
+                        $activityIds[] = (int) $actData['activity_id'];
+                    }
+                    foreach ($actData['budget_items'] as $biData) {
+                        if (!empty($biData['coa_id'])) {
+                            $coaIds[] = (int) $biData['coa_id'];
+                        }
+                    }
+                }
+            }
+
+            $coasMap = Coa::whereIn('id', array_unique($coaIds))->get()->keyBy('id');
+            $activitiesMap = Activity::whereIn('id', array_unique($activityIds))->get()->keyBy('id');
+            $workPlansMap = WorkPlan::whereIn('id', array_unique($wpIds))->get()->keyBy('id');
+            $rkapWorkPlansMap = RkapWorkPlan::whereIn('id', array_unique($rkapWpIds))->get()->keyBy('id');
+
             // Collect all activity IDs (RkapWorkPlan PKs) present in the form state
             $existingWpIds = [];
             foreach ($this->workPlans as $wpGroup) {
@@ -1018,7 +907,7 @@ class RkapSubmissionForm extends Component
 
                 foreach ($wpGroup['activities'] as $actData) {
                     if (!empty($actData['id'])) {
-                        $dbWp = RkapWorkPlan::find($actData['id']);
+                        $dbWp = $rkapWorkPlansMap->get($actData['id']);
                         if ($dbWp && $dbWp->approval_status === 'approved') {
                             $sortIdx++;
                             continue;
@@ -1028,10 +917,10 @@ class RkapSubmissionForm extends Component
                     // Resolve program_name from the selected Activity (or WorkPlan as fallback)
                     $programName = null;
                     if (!empty($actData['activity_id'])) {
-                        $programName = Activity::find($actData['activity_id'])?->title;
+                        $programName = $activitiesMap->get($actData['activity_id'])?->title;
                     }
                     if (!$programName && !empty($workPlanId)) {
-                        $programName = WorkPlan::find($workPlanId)?->title;
+                        $programName = $workPlansMap->get($workPlanId)?->title;
                     }
 
                     $workPlan = RkapWorkPlan::updateOrCreate(
@@ -1053,7 +942,7 @@ class RkapSubmissionForm extends Component
                     $workPlan->budgetItems()->whereNotIn('id', $existingBiIds)->delete();
 
                     foreach ($actData['budget_items'] as $biData) {
-                        $coa = Coa::find($biData['coa_id']);
+                        $coa = $coasMap->get($biData['coa_id']);
                         $budgetItem = RkapBudgetItem::updateOrCreate(
                             ['id' => $biData['id'] ?? null],
                             [
@@ -1124,10 +1013,6 @@ class RkapSubmissionForm extends Component
         });
     }
 
-    /**
-     * Build a lookup map of the most recent prior approved submission
-     * for the same bureau.
-     */
     public function buildPreviousMap(): array
     {
         $user = Auth::user();
@@ -1138,75 +1023,9 @@ class RkapSubmissionForm extends Component
             return [];
         }
 
-        $prevSubmission = RkapSubmission::with([
-            'workPlans.budgetItems.realizations',
-            'workPlans.budgetItems.projections',
-            'period',
-        ])
-            ->where('bureau_id', $bureauId)
-            ->where('status', 'approved')
-            ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
-            ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
-            ->first();
-
-        if (!$prevSubmission) {
-            return [];
-        }
-
-        $programs = [];
-        $activities = [];
-        $coas = [];
-
-        foreach ($prevSubmission->workPlans as $wp) {
-            $wpId = $wp->work_plan_id;
-            $actId = $wp->activity_id;
-            if (!$wpId) {
-                continue;
-            }
-
-            if (!isset($programs[$wpId])) {
-                $programs[$wpId] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-            }
-
-            $actKey = "{$wpId}-{$actId}";
-            if (!isset($activities[$actKey])) {
-                $activities[$actKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-            }
-
-            foreach ($wp->budgetItems as $bi) {
-                $code = $bi->account_code;
-                $budgetVal = (float) $bi->total_price;
-                $realizationVal = (float) $bi->realizations->sum('amount');
-                $projectionVal = (float) $bi->projections->sum('amount');
-
-                $programs[$wpId]['budget'] += $budgetVal;
-                $programs[$wpId]['realization'] += $realizationVal;
-                $programs[$wpId]['projection'] += $projectionVal;
-
-                $activities[$actKey]['budget'] += $budgetVal;
-                $activities[$actKey]['realization'] += $realizationVal;
-                $activities[$actKey]['projection'] += $projectionVal;
-
-                if ($code) {
-                    $coaKey = "{$wpId}-{$actId}-{$code}";
-                    if (!isset($coas[$coaKey])) {
-                        $coas[$coaKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-                    }
-                    $coas[$coaKey]['budget'] += $budgetVal;
-                    $coas[$coaKey]['realization'] += $realizationVal;
-                    $coas[$coaKey]['projection'] += $projectionVal;
-                }
-            }
-        }
-
-        return [
-            'map' => [
-                'programs' => $programs,
-                'activities' => $activities,
-                'coas' => $coas,
-            ],
-            'period' => $prevSubmission->period?->title ?? '-',
-        ];
+        $service = app(\App\Services\RkapPreviousDataService::class);
+        $prevSubmission = $service->getPreviousApprovedSubmission($bureauId, $currentPeriodYear);
+        return $service->buildPreviousMap($prevSubmission);
     }
 
     public function render()

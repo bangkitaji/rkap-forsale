@@ -11,6 +11,8 @@ use App\Models\Directorate;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Log;
 
 class UsersTab extends Component
 {
@@ -56,9 +58,9 @@ class UsersTab extends Component
         ];
 
         if (!$this->isEditMode) {
-            $rules['password'] = 'required|min:6';
+            $rules['password'] = ['required', Password::min(8)->mixedCase()->numbers()];
         } else {
-            $rules['password'] = 'nullable|min:6';
+            $rules['password'] = ['nullable', Password::min(8)->mixedCase()->numbers()];
         }
 
         return $rules;
@@ -135,6 +137,13 @@ class UsersTab extends Component
 
             $user->syncRoles($this->userRoles);
 
+            Log::info($this->userId ? 'User updated in settings' : 'User created in settings', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'roles' => $this->userRoles,
+                'performed_by' => auth()->id(),
+            ]);
+
             session()->flash('message', $this->userId ? 'User updated successfully.' : 'User created successfully.');
 
             $this->closeModal();
@@ -146,7 +155,16 @@ class UsersTab extends Component
     public function delete($id)
     {
         try {
-            User::findOrFail($id)->delete();
+            $user = User::findOrFail($id);
+            $userEmail = $user->email;
+            $user->delete();
+
+            Log::info('User deleted in settings', [
+                'user_id' => $id,
+                'email' => $userEmail,
+                'performed_by' => auth()->id(),
+            ]);
+
             session()->flash('message', 'User deleted successfully.');
         } catch (\Exception $e) {
             session()->flash('error', 'Unable to delete user.');

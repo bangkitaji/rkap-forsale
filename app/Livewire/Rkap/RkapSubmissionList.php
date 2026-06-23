@@ -211,42 +211,8 @@ class RkapSubmissionList extends Component
 
         $submissions = $query->orderByDesc('updated_at')->paginate($this->perPage);
 
-        // Build map of previous approved submission totals and realizations for the submissions on the current page
-        $prevDataMap = [];
-        foreach ($submissions as $sub) {
-            $bureauId = $sub->bureau_id;
-            $year = $sub->period?->year ?? 0;
-
-            $prevSubmission = RkapSubmission::with([
-                    'workPlans.budgetItems.realizations',
-                    'workPlans.budgetItems.projections',
-                    'period',
-                ])
-                ->where('bureau_id', $bureauId)
-                ->where('id', '!=', $sub->id)
-                ->where('status', 'approved')
-                ->whereHas('period', fn($q) => $q->where('year', '<', $year))
-                ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
-                ->first();
-
-            if ($prevSubmission) {
-                $totalRealization = 0;
-                $totalProjection = 0;
-                foreach ($prevSubmission->workPlans as $wp) {
-                    foreach ($wp->budgetItems as $bi) {
-                        $totalRealization += (float) $bi->realizations->sum('amount');
-                        $totalProjection += (float) $bi->projections->sum('amount');
-                    }
-                }
-
-                $prevDataMap[$sub->id] = [
-                    'period_title' => $prevSubmission->period->title,
-                    'budget' => (float) $prevSubmission->total_budget,
-                    'realization' => $totalRealization,
-                    'projection' => $totalProjection,
-                ];
-            }
-        }
+        // Build map of previous approved submission totals and realizations for the submissions on the current page using batch service to fix N+1
+        $prevDataMap = app(\App\Services\RkapPreviousDataService::class)->getBatchPreviousData($submissions);
 
         // Stats
         $statsQuery = RkapSubmission::query();

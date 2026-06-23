@@ -433,6 +433,15 @@ class DataMigrationUpload extends Component
       ];
 
       $this->imported = true;
+
+      \Illuminate\Support\Facades\Log::info('Data migration import successful', [
+          'user_id' => auth()->id(),
+          'submissions_created' => $createdSubmissions,
+          'work_plans_created' => $createdWorkPlans,
+          'budget_items_created' => $createdBudgetItems,
+          'monthlies_created' => $createdMonthlies,
+          'cash_outs_created' => $createdCashOuts,
+      ]);
     });
   }
 

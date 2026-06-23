@@ -112,87 +112,9 @@ class RkapReview extends Component
         $bureauId = $this->submission->bureau_id;
         $currentPeriodYear = $this->submission->period?->year ?? 0;
 
-        // Find the most recent prior approved submission for this bureau
-        $prevSubmission = RkapSubmission::with([
-                'workPlans.budgetItems.realizations',
-                'workPlans.budgetItems.projections',
-                'period',
-            ])
-            ->where('bureau_id', $bureauId)
-            ->where('id', '!=', $this->submission->id)
-            ->where('status', 'approved')
-            ->whereHas('period', fn($q) => $q->where('year', '<', $currentPeriodYear))
-            ->orderByDesc(DB::raw('(SELECT year FROM rkap_periods WHERE rkap_periods.id = rkap_submissions.rkap_period_id)'))
-            ->first();
-
-        if (!$prevSubmission) {
-            return [];
-        }
-
-        $programs = [];
-        $activities = [];
-        $coas = [];
-        $totalBudget = 0.0;
-        $totalRealization = 0.0;
-        $totalProjection = 0.0;
-
-        foreach ($prevSubmission->workPlans as $wp) {
-            $wpId = $wp->work_plan_id;
-            $actId = $wp->activity_id;
-            if (!$wpId) {
-                continue;
-            }
-
-            if (!isset($programs[$wpId])) {
-                $programs[$wpId] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-            }
-
-            $actKey = "{$wpId}-{$actId}";
-            if (!isset($activities[$actKey])) {
-                $activities[$actKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-            }
-
-            foreach ($wp->budgetItems as $bi) {
-                $code = $bi->account_code;
-                $budgetVal = (float) $bi->total_price;
-                $realizationVal = (float) $bi->realizations->sum('amount');
-                $projectionVal = (float) $bi->projections->sum('amount');
-
-                $programs[$wpId]['budget'] += $budgetVal;
-                $programs[$wpId]['realization'] += $realizationVal;
-                $programs[$wpId]['projection'] += $projectionVal;
-
-                $activities[$actKey]['budget'] += $budgetVal;
-                $activities[$actKey]['realization'] += $realizationVal;
-                $activities[$actKey]['projection'] += $projectionVal;
-
-                $totalBudget += $budgetVal;
-                $totalRealization += $realizationVal;
-                $totalProjection += $projectionVal;
-
-                if ($code) {
-                    $coaKey = "{$wpId}-{$actId}-{$code}";
-                    if (!isset($coas[$coaKey])) {
-                        $coas[$coaKey] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
-                    }
-                    $coas[$coaKey]['budget'] += $budgetVal;
-                    $coas[$coaKey]['realization'] += $realizationVal;
-                    $coas[$coaKey]['projection'] += $projectionVal;
-                }
-            }
-        }
-
-        return [
-            'map' => [
-                'programs' => $programs,
-                'activities' => $activities,
-                'coas' => $coas,
-            ],
-            'period' => $prevSubmission->period?->title ?? '-',
-            'total_budget' => $totalBudget,
-            'total_realization' => $totalRealization,
-            'total_projection' => $totalProjection,
-        ];
+        $service = app(\App\Services\RkapPreviousDataService::class);
+        $prevSubmission = $service->getPreviousApprovedSubmission($bureauId, $currentPeriodYear, $this->submission->id);
+        return $service->buildPreviousMap($prevSubmission);
     }
 
     public function render()

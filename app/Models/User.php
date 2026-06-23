@@ -122,7 +122,7 @@ class User extends Authenticatable
 
     public function isDirekturFinance(): bool
     {
-        return $this->isDireksi() && $this->directorate?->code === 'HF';
+        return $this->isDireksi() && $this->directorate?->code === config('rkap.finance_directorate_code', 'HF');
     }
 
     public function getOrganizationNameAttribute(): string

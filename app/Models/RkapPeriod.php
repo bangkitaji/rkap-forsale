@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PeriodStatus;
+use App\Enums\SubmissionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\Searchable;
@@ -35,24 +37,24 @@ class RkapPeriod extends Model
 
     public function isOpen(): bool
     {
-        return $this->status === 'open';
+        return $this->status === PeriodStatus::Open->value;
     }
 
     public function isClosed(): bool
     {
-        return in_array($this->status, ['closed', 'finalized']);
+        return in_array($this->status, [PeriodStatus::Closed->value, PeriodStatus::Finalized->value]);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'open');
+        return $query->where('status', PeriodStatus::Open->value);
     }
 
     public function getSubmissionProgressAttribute(): array
     {
         $total = $this->submissions()->count();
-        $approved = $this->submissions()->where('status', 'approved')->count();
-        $inProgress = $this->submissions()->whereNotIn('status', ['draft', 'approved'])->count();
+        $approved = $this->submissions()->where('status', SubmissionStatus::Approved->value)->count();
+        $inProgress = $this->submissions()->whereNotIn('status', [SubmissionStatus::Draft->value, SubmissionStatus::Approved->value])->count();
 
         return [
             'total' => $total,

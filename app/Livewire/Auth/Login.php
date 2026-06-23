@@ -4,6 +4,8 @@ namespace App\Livewire\Auth;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class Login extends Component
 {
@@ -12,7 +14,7 @@ class Login extends Component
     public $remember = false;
 
     protected $rules = [
-        'email' => 'required',
+        'email' => 'required|email',
         'password' => 'required',
     ];
 
@@ -20,13 +22,23 @@ class Login extends Component
     {
         $this->validate();
 
+        $throttleKey = Str::lower($this->email) . '|' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->addError('email', "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.");
+            return;
+        }
+
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            RateLimiter::clear($throttleKey);
             session()->regenerate();
 
             // Redirect to intended or home
             return redirect()->intended('/');
         }
 
+        RateLimiter::hit($throttleKey, 60);
         $this->addError('email', 'The provided credentials do not match our records.');
     }
 

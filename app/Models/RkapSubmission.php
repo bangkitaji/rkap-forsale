@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalAction;
+use App\Enums\ApprovalRole;
+use App\Enums\SubmissionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\Searchable;
+use Illuminate\Support\Facades\Log;
 
 class RkapSubmission extends Model
 {
@@ -133,7 +137,13 @@ class RkapSubmission extends Model
   {
     $this->calculateTotalBudget();
     $this->createVersion('initial', 'Pengajuan awal');
-    $this->update(['status' => 'submitted']);
+    $this->update(['status' => SubmissionStatus::Submitted->value]);
+    Log::info('RKAP Submission submitted', [
+        'submission_id' => $this->id,
+        'bureau_id' => $this->bureau_id,
+        'user_id' => auth()->id(),
+        'period_id' => $this->rkap_period_id,
+    ]);
   }
 
   public function approveByDept(User $user, ?string $comments = null): void
@@ -141,11 +151,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'kepala_departemen',
-      'action' => 'approved',
+      'role' => ApprovalRole::KepalaDepartemen->value,
+      'action' => ApprovalAction::Approved->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'dept_approved']);
+    $this->update(['status' => SubmissionStatus::DeptApproved->value]);
+    Log::info('RKAP Submission approved by Department Head', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function requestRevisionByDept(User $user, ?string $comments = null): void
@@ -153,11 +168,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'kepala_departemen',
-      'action' => 'revision_requested',
+      'role' => ApprovalRole::KepalaDepartemen->value,
+      'action' => ApprovalAction::RevisionRequested->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'dept_revision']);
+    $this->update(['status' => SubmissionStatus::DeptRevision->value]);
+    Log::info('RKAP Submission revision requested by Department Head', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function approveByDir(User $user, ?string $comments = null): void
@@ -165,11 +185,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direksi',
-      'action' => 'approved',
+      'role' => ApprovalRole::Direksi->value,
+      'action' => ApprovalAction::Approved->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'dir_approved']);
+    $this->update(['status' => SubmissionStatus::DirApproved->value]);
+    Log::info('RKAP Submission approved by Board of Directors', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function requestRevisionByDir(User $user, ?string $comments = null): void
@@ -177,11 +202,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direksi',
-      'action' => 'revision_requested',
+      'role' => ApprovalRole::Direksi->value,
+      'action' => ApprovalAction::RevisionRequested->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'dir_revision']);
+    $this->update(['status' => SubmissionStatus::DirRevision->value]);
+    Log::info('RKAP Submission revision requested by Board of Directors', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function approveFinal(User $user, ?string $comments = null): void
@@ -189,11 +219,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'verifikator',
-      'action' => 'approved',
+      'role' => ApprovalRole::Verifikator->value,
+      'action' => ApprovalAction::Approved->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'verifikator_approved']);
+    $this->update(['status' => SubmissionStatus::VerifikatorApproved->value]);
+    Log::info('RKAP Submission verified by Verificator', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function requestRevisionByVerificator(User $user, ?string $comments = null): void
@@ -201,20 +236,25 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'verifikator',
-      'action' => 'revision_requested',
+      'role' => ApprovalRole::Verifikator->value,
+      'action' => ApprovalAction::RevisionRequested->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'final_revision']);
+    $this->update(['status' => SubmissionStatus::FinalRevision->value]);
+    Log::info('RKAP Submission revision requested by Verificator', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function hasApprovedCurrentVersion(User $user): bool
   {
     $role = null;
     if ($user->isPresidentDirector()) {
-      $role = 'direktur_utama';
+      $role = ApprovalRole::DirekturUtama;
     } elseif ($user->isDirekturFinance()) {
-      $role = 'direktur_keuangan';
+      $role = ApprovalRole::DirekturKeuangan;
     }
 
     if (!$role) {
@@ -223,8 +263,8 @@ class RkapSubmission extends Model
 
     return $this->approvals()
       ->where('version_number', $this->current_version)
-      ->where('role', $role)
-      ->where('action', 'approved')
+      ->where('role', $role->value)
+      ->where('action', ApprovalAction::Approved->value)
       ->exists();
   }
 
@@ -233,9 +273,14 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direktur_utama',
-      'action' => 'approved',
+      'role' => ApprovalRole::DirekturUtama->value,
+      'action' => ApprovalAction::Approved->value,
       'comments' => $comments,
+    ]);
+    Log::info('RKAP Submission approved by President Director', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
     ]);
     $this->checkParallelApprovalAndFinalize();
   }
@@ -245,11 +290,16 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direktur_utama',
-      'action' => 'revision_requested',
+      'role' => ApprovalRole::DirekturUtama->value,
+      'action' => ApprovalAction::RevisionRequested->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'pdir_revision']);
+    $this->update(['status' => SubmissionStatus::PdirRevision->value]);
+    Log::info('RKAP Submission revision requested by President Director', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function approveByFinance(User $user, ?string $comments = null): void
@@ -257,9 +307,14 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direktur_keuangan',
-      'action' => 'approved',
+      'role' => ApprovalRole::DirekturKeuangan->value,
+      'action' => ApprovalAction::Approved->value,
       'comments' => $comments,
+    ]);
+    Log::info('RKAP Submission approved by Finance Director', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
     ]);
     $this->checkParallelApprovalAndFinalize();
   }
@@ -269,45 +324,57 @@ class RkapSubmission extends Model
     $this->approvals()->create([
       'user_id' => $user->id,
       'version_number' => $this->current_version,
-      'role' => 'direktur_keuangan',
-      'action' => 'revision_requested',
+      'role' => ApprovalRole::DirekturKeuangan->value,
+      'action' => ApprovalAction::RevisionRequested->value,
       'comments' => $comments,
     ]);
-    $this->update(['status' => 'pdir_revision']);
+    $this->update(['status' => SubmissionStatus::PdirRevision->value]);
+    Log::info('RKAP Submission revision requested by Finance Director', [
+        'submission_id' => $this->id,
+        'user_id' => $user->id,
+        'comments' => $comments,
+    ]);
   }
 
   public function checkParallelApprovalAndFinalize(): void
   {
     $hasDirut = $this->approvals()
       ->where('version_number', $this->current_version)
-      ->where('role', 'direktur_utama')
-      ->where('action', 'approved')
+      ->where('role', ApprovalRole::DirekturUtama->value)
+      ->where('action', ApprovalAction::Approved->value)
       ->exists();
 
     $hasFinance = $this->approvals()
       ->where('version_number', $this->current_version)
-      ->where('role', 'direktur_keuangan')
-      ->where('action', 'approved')
+      ->where('role', ApprovalRole::DirekturKeuangan->value)
+      ->where('action', ApprovalAction::Approved->value)
       ->exists();
 
     if ($hasDirut && $hasFinance) {
-      $this->update(['status' => 'approved']);
+      $this->update(['status' => SubmissionStatus::Approved->value]);
+      Log::info('RKAP Submission finalized and fully approved', [
+          'submission_id' => $this->id,
+      ]);
     } else {
-      $this->update(['status' => 'pdir_review']);
+      $this->update(['status' => SubmissionStatus::PdirReview->value]);
     }
   }
 
   public function revise(): void
   {
+    Log::info('RKAP Submission incremented for revision', [
+        'submission_id' => $this->id,
+        'new_version' => $this->current_version + 1,
+    ]);
     $this->increment('current_version');
-    $this->update(['status' => 'draft']);
+    $this->update(['status' => SubmissionStatus::Draft->value]);
   }
 
   // ── Authorization Helpers ──
 
   public function canBeEditedBy(User $user): bool
   {
-    if (!in_array($this->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
+    if (!in_array($this->status, SubmissionStatus::values(SubmissionStatus::editableStatuses()))) {
       return false;
     }
     return $user->bureau_id === $this->bureau_id;
@@ -316,19 +383,19 @@ class RkapSubmission extends Model
   public function canBeReviewedBy(User $user): bool
   {
     // Kepala Departemen
-    if ($this->status === 'submitted' && $user->hasRole('kepala_departemen')) {
+    if ($this->status === SubmissionStatus::Submitted->value && $user->hasRole('kepala_departemen')) {
       return $user->department_id === $this->bureau->department_id;
     }
     // Direksi
-    if ($this->status === 'dir_review' && $user->hasRole('direksi')) {
+    if ($this->status === SubmissionStatus::DirReview->value && $user->hasRole('direksi')) {
       return $user->directorate_id === $this->bureau->department->directorate_id;
     }
     // Verifikator
-    if ($this->status === 'final_review' && $user->hasRole('verifikator')) {
+    if ($this->status === SubmissionStatus::FinalReview->value && $user->hasRole('verifikator')) {
       return true;
     }
     // President Director & Direktur Finance
-    if ($this->status === 'pdir_review') {
+    if ($this->status === SubmissionStatus::PdirReview->value) {
       if ($user->isPresidentDirector() || $user->isDirekturFinance()) {
         return !$this->hasApprovedCurrentVersion($user);
       }
@@ -340,34 +407,13 @@ class RkapSubmission extends Model
 
   public function getStatusLabelAttribute(): string
   {
-    return match ($this->status) {
-      'draft' => 'Draft',
-      'submitted' => 'Diajukan',
-      'dept_review' => 'Review General Manager',
-      'dept_approved' => 'Disetujui General Manager',
-      'dept_revision' => 'Revisi General Manager',
-      'dir_review' => 'Review Direksi',
-      'dir_approved' => 'Disetujui Direksi',
-      'dir_revision' => 'Revisi Direksi',
-      'final_review' => 'Verifikasi Final',
-      'final_revision' => 'Revisi Verifikator',
-      'verifikator_approved' => 'Verifikasi Selesai',
-      'pdir_review' => 'Review Dirut / Dirkeu',
-      'pdir_revision' => 'Revisi Dirut / Dirkeu',
-      'approved' => 'Disetujui',
-      default => $this->status,
-    };
+    $enum = SubmissionStatus::tryFrom($this->status);
+    return $enum ? $enum->label() : $this->status;
   }
 
   public function getStatusColorAttribute(): string
   {
-    return match ($this->status) {
-      'draft' => 'secondary',
-      'submitted', 'dept_review', 'dir_review', 'final_review', 'pdir_review' => 'info',
-      'dept_approved', 'dir_approved', 'verifikator_approved' => 'primary',
-      'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision' => 'warning',
-      'approved' => 'success',
-      default => 'secondary',
-    };
+    $enum = SubmissionStatus::tryFrom($this->status);
+    return $enum ? $enum->color() : 'secondary';
   }
 }
