@@ -21,10 +21,19 @@
         }
     </style>
 
-    <div class="d-flex justify-content-between align-items-center py-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Input Proyeksi</h4>
-        <div class="text-muted small">
-            <i class="bx bx-calendar me-1"></i> Periode Perencanaan: <strong>{{ $activePeriodTitle ?? '-' }}</strong>
+        <div class="d-flex align-items-center gap-2">
+            @can('rkap.projection.input')
+                @if(Auth::user()->hasRole('admin') || Auth::user()->hasRole('verifikator'))
+                    <a href="{{ route('rkap-projection-upload') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                        <i class="bx bx-upload"></i> Upload Massal Proyeksi
+                    </a>
+                @endif
+            @endcan
+            <div class="text-muted small border-start ps-2">
+                <i class="bx bx-calendar me-1"></i> Periode Perencanaan: <strong>{{ $activePeriodTitle ?? '-' }}</strong>
+            </div>
         </div>
     </div>
 

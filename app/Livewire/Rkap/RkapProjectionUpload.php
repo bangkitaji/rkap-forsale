@@ -1,0 +1,374 @@
+<?php
+
+namespace App\Livewire\Rkap;
+
+use App\Models\RkapBudgetItem;
+use App\Models\RkapBudgetItemProjection;
+use App\Models\RkapPeriod;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+class RkapProjectionUpload extends Component
+{
+    use WithFileUploads;
+
+    public $file;
+    public ?int $periodId = null;
+
+    public array $errorsList    = [];
+    public array $importSummary = [];
+    public bool  $imported      = false;
+
+    private array $requiredColumns = [
+        'budget_item_id',
+        'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'
+    ];
+
+    public function mount(): void
+    {
+        if (! auth()->user()?->can('rkap.projection.input') ||
+            (! auth()->user()->hasRole('admin') && ! auth()->user()->hasRole('verifikator'))) {
+            abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
+        }
+    }
+
+    public function updatedPeriodId(): void
+    {
+        $this->resetState(keepPeriod: true);
+    }
+
+    public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return RkapPeriod::where('status', 'finalized')
+            ->whereHas('submissions', function ($query) {
+                $query->where('status', 'approved');
+            })
+            ->orderBy('year', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    private function getMonthName(int $month): string
+    {
+        $names = [
+            1  => 'Januari',  2  => 'Februari', 3  => 'Maret',
+            4  => 'April',    5  => 'Mei',       6  => 'Juni',
+            7  => 'Juli',     8  => 'Agustus',   9  => 'September',
+            10 => 'Oktober',  11 => 'November',  12 => 'Desember',
+        ];
+        return $names[$month] ?? '';
+    }
+
+    public function uploadAndImport(): void
+    {
+        $this->resetState(keepPeriod: true);
+
+        $this->validate([
+            'periodId' => 'required|integer|exists:rkap_periods,id',
+            'file'     => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+        ], [
+            'periodId.required' => 'Periode RKAP wajib dipilih sebelum upload.',
+            'file.required'     => 'File proyeksi wajib dipilih sebelum upload.',
+        ]);
+
+        $validPeriod = RkapPeriod::where('status', 'finalized')->find($this->periodId);
+        if (!$validPeriod) {
+            $this->errorsList[] = 'Proyeksi hanya dapat diunggah untuk periode RKAP dengan status Finalized.';
+            return;
+        }
+
+        $parsed = $this->parseFile(
+            $this->file->getRealPath(),
+            $this->file->getClientOriginalExtension()
+        );
+
+        if (empty($parsed)) {
+            $this->errorsList[] = 'File kosong atau tidak valid.';
+            return;
+        }
+
+        [$headers, $dataRows] = $parsed;
+
+        $missingColumns = array_values(array_diff($this->requiredColumns, $headers));
+        if (! empty($missingColumns)) {
+            $this->errorsList[] = 'Kolom wajib tidak ditemukan: ' . implode(', ', $missingColumns);
+            return;
+        }
+
+        $normalizedRows = $this->normalizeRows($headers, $dataRows);
+        $this->validateRows($normalizedRows);
+
+        if (! empty($this->errorsList)) {
+            return;
+        }
+
+        $this->importRows($normalizedRows);
+        $this->file = null;
+    }
+
+    private function resetState(bool $keepPeriod = false): void
+    {
+        $this->errorsList    = [];
+        $this->importSummary = [];
+        $this->imported      = false;
+
+        if (!$keepPeriod) {
+            $this->periodId = null;
+        }
+    }
+
+    private function parseFile(string $filePath, string $extension): array
+    {
+        $ext = strtolower($extension);
+
+        if (in_array($ext, ['xlsx', 'xls'])) {
+            return $this->parseExcel($filePath);
+        }
+
+        return $this->parseCsv($filePath);
+    }
+
+    private function parseExcel(string $filePath): array
+    {
+        try {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet   = $spreadsheet->getActiveSheet();
+            $rows        = $worksheet->toArray(null, true, true, false);
+
+            if (empty($rows)) {
+                return [];
+            }
+
+            $headers  = array_map(static fn ($h) => trim((string) ($h ?? '')), array_shift($rows));
+            $dataRows = [];
+
+            foreach ($rows as $row) {
+                $stringRow = array_map(static fn ($v) => (string) ($v ?? ''), $row);
+                if (count(array_filter($stringRow, static fn ($v) => trim($v) !== '')) === 0) {
+                    continue;
+                }
+                $dataRows[] = $stringRow;
+            }
+
+            return [$headers, $dataRows];
+        } catch (\Throwable $e) {
+            $this->errorsList[] = 'Gagal membaca file Excel: ' . $e->getMessage();
+            return [];
+        }
+    }
+
+    private function parseCsv(string $filePath): array
+    {
+        $handle = fopen($filePath, 'r');
+        if (! $handle) {
+            return [];
+        }
+
+        $headers = fgetcsv($handle);
+        if (! $headers) {
+            fclose($handle);
+            return [];
+        }
+
+        $headers  = array_map(static fn ($h) => trim((string) $h), $headers);
+        $dataRows = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count(array_filter($row, static fn ($v) => trim((string) $v) !== '')) === 0) {
+                continue;
+            }
+            $dataRows[] = $row;
+        }
+
+        fclose($handle);
+        return [$headers, $dataRows];
+    }
+
+    private function normalizeRows(array $headers, array $rows): array
+    {
+        $normalized = [];
+
+        foreach ($rows as $index => $row) {
+            $assoc = [];
+            foreach ($headers as $i => $header) {
+                $assoc[$header] = isset($row[$i]) ? trim((string) $row[$i]) : null;
+            }
+            if (isset($assoc['budget_item_id']) && str_starts_with($assoc['budget_item_id'], '(')) {
+                continue;
+            }
+            $assoc['_row_number'] = $index + 2;
+            $normalized[]         = $assoc;
+        }
+
+        return $normalized;
+    }
+
+    private function validateRows(array $rows): void
+    {
+        $validBudgetItemIds = $this->getValidBudgetItemIds();
+        $currentMonth = (int) date('n');
+
+        $budgetItemIds = array_filter(array_map(fn($r) => isset($r['budget_item_id']) && $r['budget_item_id'] !== '' ? (int)$r['budget_item_id'] : null, $rows));
+        $budgetItems = RkapBudgetItem::with(['monthlies', 'projections'])
+            ->whereIn('id', $budgetItemIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($rows as $row) {
+            $rowNo = $row['_row_number'];
+
+            foreach ($this->requiredColumns as $col) {
+                if (! isset($row[$col]) || $row[$col] === '') {
+                    $this->errorsList[] = "Baris {$rowNo}: kolom {$col} wajib diisi.";
+                }
+            }
+
+            $biId = $row['budget_item_id'] ?? null;
+            if ($biId === null || $biId === '') {
+                continue;
+            }
+
+            $biIdInt = (int) $biId;
+            if (! in_array($biIdInt, $validBudgetItemIds, true) || ! isset($budgetItems[$biIdInt])) {
+                $this->errorsList[] = "Baris {$rowNo}: budget_item_id {$biId} tidak ditemukan atau tidak termasuk dalam periode yang dipilih.";
+                continue;
+            }
+
+            /** @var RkapBudgetItem $budgetItem */
+            $budgetItem = $budgetItems[$biIdInt];
+            $totalBudget = (float) $budgetItem->total_price;
+
+            $totalProjections = 0.0;
+            $hasRowAmountError = false;
+
+            for ($m = 1; $m <= 12; $m++) {
+                $colKey = "m{$m}";
+                $valStr = $row[$colKey] ?? '0';
+                $valFloat = $this->sanitizeAmount($valStr);
+
+                if (!is_numeric(str_replace([' ', ','], '', $valStr)) && $valStr !== '') {
+                    $this->errorsList[] = "Baris {$rowNo}: kolom {$colKey} harus berupa angka.";
+                    $hasRowAmountError = true;
+                    continue;
+                }
+
+                if ($valFloat < 0) {
+                    $this->errorsList[] = "Baris {$rowNo}: kolom {$colKey} tidak boleh bernilai negatif.";
+                    $hasRowAmountError = true;
+                    continue;
+                }
+
+                $monthlyLimit = (float) ($budgetItem->monthlies->firstWhere('month', $m)->amount ?? 0.0);
+                if ($valFloat > $monthlyLimit) {
+                    $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") sebesar Rp " . number_format($valFloat, 0, ',', '.') . " melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").";
+                    $hasRowAmountError = true;
+                }
+
+                $isPastMonth = $m < $currentMonth;
+                if ($isPastMonth) {
+                    $existingProjAmount = (float) ($budgetItem->projections->firstWhere('month', $m)->amount ?? 0.0);
+                    if (abs($valFloat - $existingProjAmount) > 0.01) {
+                        $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") tidak dapat diubah karena merupakan bulan yang sudah lewat.";
+                        $hasRowAmountError = true;
+                    }
+                }
+
+                $totalProjections += $valFloat;
+            }
+
+            if (!$hasRowAmountError && $totalProjections > $totalBudget) {
+                $this->errorsList[] = "Baris {$rowNo}: Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($totalBudget, 0, ',', '.') . ").";
+            }
+        }
+    }
+
+    private function getValidBudgetItemIds(): array
+    {
+        return RkapBudgetItem::whereHas('workPlan.submission', function ($q) {
+            $q->where('rkap_period_id', $this->periodId)
+              ->where('status', 'approved');
+        })->pluck('id')->map(fn ($v) => (int) $v)->toArray();
+    }
+
+    private function importRows(array $rows): void
+    {
+        DB::transaction(function () use ($rows): void {
+            $updated = 0;
+            $currentMonth = (int) date('n');
+
+            foreach ($rows as $row) {
+                $biId = (int) $row['budget_item_id'];
+
+                for ($m = 1; $m <= 12; $m++) {
+                    if ($m < $currentMonth) {
+                        continue;
+                    }
+
+                    $colKey = "m{$m}";
+                    $amount = $this->sanitizeAmount($row[$colKey] ?? '0');
+
+                    RkapBudgetItemProjection::updateOrCreate(
+                        [
+                            'rkap_budget_item_id' => $biId,
+                            'month'               => $m,
+                        ],
+                        [
+                            'rkap_period_id' => $this->periodId,
+                            'amount'         => $amount,
+                            'inputted_by'    => auth()->id(),
+                        ]
+                    );
+                }
+                $updated++;
+            }
+
+            $this->importSummary = [
+                'updated' => $updated,
+            ];
+
+            $this->imported = true;
+        });
+    }
+
+    private function sanitizeAmount(string $raw): float
+    {
+        $s = trim($raw);
+
+        if ($s === '' || $s === '-') {
+            return 0.0;
+        }
+
+        $dotCount   = substr_count($s, '.');
+        $commaCount = substr_count($s, ',');
+
+        if ($dotCount > 0 && $commaCount > 0) {
+            $lastDot   = strrpos($s, '.');
+            $lastComma = strrpos($s, ',');
+
+            if ($lastDot > $lastComma) {
+                $s = str_replace(',', '', $s);
+            } else {
+                $s = str_replace('.', '', $s);
+                $s = str_replace(',', '.', $s);
+            }
+        } elseif ($dotCount > 1) {
+            $s = str_replace('.', '', $s);
+        } elseif ($commaCount > 1) {
+            $s = str_replace(',', '', $s);
+        } elseif ($commaCount === 1 && $dotCount === 0) {
+            $s = str_replace(',', '.', $s);
+        }
+
+        return (float) $s;
+    }
+
+    public function render(): View
+    {
+        return view('livewire.rkap.rkap-projection-upload', [
+            'periodOptions' => $this->periodOptions,
+        ])->layout('layouts.contentNavbarLayout');
+    }
+}
