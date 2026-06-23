@@ -156,6 +156,34 @@ class RkapDashboardTest extends TestCase
             'amount' => 38000,
             'inputted_by' => $this->kabiro2->id,
         ]);
+
+        // Setup Report Groups, COA Groups, and COAs for P&L filtering
+        $rgRevenue = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0001'],
+            ['type' => 'PL', 'name' => 'Revenue']
+        );
+        $rgDirectCost = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0002'],
+            ['type' => 'PL', 'name' => 'Direct Cost']
+        );
+
+        $cgRevenue = \App\Models\CoaGroup::firstOrCreate(
+            ['code' => '4000'],
+            ['name' => 'PENDAPATAN PENUMPANG', 'report_group_id' => $rgRevenue->id]
+        );
+        $cgDirectCost = \App\Models\CoaGroup::firstOrCreate(
+            ['code' => '5000'],
+            ['name' => 'PEGAWAI LANGSUNG', 'report_group_id' => $rgDirectCost->id]
+        );
+
+        \App\Models\Coa::firstOrCreate(
+            ['code' => '521111'],
+            ['coa_group_id' => $cgRevenue->id, 'title' => 'Tiket KA']
+        );
+        \App\Models\Coa::firstOrCreate(
+            ['code' => '522222'],
+            ['coa_group_id' => $cgDirectCost->id, 'title' => 'Energi Traksi']
+        );
     }
 
     public function test_guest_is_redirected(): void
@@ -216,51 +244,43 @@ class RkapDashboardTest extends TestCase
     public function test_admin_sees_profit_and_loss_summary(): void
     {
         // 1. Create Report Groups (PL type)
-        $rgRevenue = \App\Models\ReportGroup::create([
-            'code' => 'PL0001',
-            'type' => 'PL',
-            'name' => 'Revenue',
-        ]);
-        $rgDirectCost = \App\Models\ReportGroup::create([
-            'code' => 'PL0002',
-            'type' => 'PL',
-            'name' => 'Direct Cost',
-        ]);
-        $rgIndirectCost = \App\Models\ReportGroup::create([
-            'code' => 'PL0003',
-            'type' => 'PL',
-            'name' => 'Indirect Cost',
-        ]);
-        $rgOther = \App\Models\ReportGroup::create([
-            'code' => 'PL0004',
-            'type' => 'PL',
-            'name' => 'Other Income (exp)',
-        ]);
+        $rgRevenue = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0001'],
+            ['type' => 'PL', 'name' => 'Revenue']
+        );
+        $rgDirectCost = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0002'],
+            ['type' => 'PL', 'name' => 'Direct Cost']
+        );
+        $rgIndirectCost = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0003'],
+            ['type' => 'PL', 'name' => 'Indirect Cost']
+        );
+        $rgOther = \App\Models\ReportGroup::firstOrCreate(
+            ['code' => 'PL0004'],
+            ['type' => 'PL', 'name' => 'Other Income']
+        );
 
         // 2. Create COA groups mapped to report groups
-        $cgRevenue = \App\Models\CoaGroup::create([
-            'code' => '4000',
-            'name' => 'PENDAPATAN PENUMPANG',
-            'report_group_id' => $rgRevenue->id,
-        ]);
-        $cgDirectCost = \App\Models\CoaGroup::create([
-            'code' => '5000',
-            'name' => 'PEGAWAI LANGSUNG',
-            'report_group_id' => $rgDirectCost->id,
-        ]);
+        $cgRevenue = \App\Models\CoaGroup::firstOrCreate(
+            ['code' => '4000'],
+            ['name' => 'PENDAPATAN PENUMPANG', 'report_group_id' => $rgRevenue->id]
+        );
+        $cgDirectCost = \App\Models\CoaGroup::firstOrCreate(
+            ['code' => '5000'],
+            ['name' => 'PEGAWAI LANGSUNG', 'report_group_id' => $rgDirectCost->id]
+        );
 
         // 3. Create COAs mapped to COA groups
-        \App\Models\Coa::create([
-            'coa_group_id' => $cgRevenue->id,
-            'code' => '521111',
-            'title' => 'Tiket KA',
-        ]);
+        \App\Models\Coa::firstOrCreate(
+            ['code' => '521111'],
+            ['coa_group_id' => $cgRevenue->id, 'title' => 'Tiket KA']
+        );
 
-        \App\Models\Coa::create([
-            'coa_group_id' => $cgDirectCost->id,
-            'code' => '522222',
-            'title' => 'Energi Traksi',
-        ]);
+        \App\Models\Coa::firstOrCreate(
+            ['code' => '522222'],
+            ['coa_group_id' => $cgDirectCost->id, 'title' => 'Energi Traksi']
+        );
 
         $response = $this->actingAs($this->admin)->get('/analytics');
 
@@ -461,12 +481,24 @@ class RkapDashboardTest extends TestCase
         $otherDirectorate = Directorate::create(['code' => 'D2', 'name' => 'Dir 2']);
         $otherDept = Department::create(['directorate_id' => $otherDirectorate->id, 'code' => 'DP2', 'name' => 'Dept 2']);
         $otherBureau = Bureau::create(['department_id' => $otherDept->id, 'code' => 'B3', 'name' => 'Bur 3']);
-        RkapSubmission::create([
+        $subOther = RkapSubmission::create([
             'rkap_period_id' => $this->period->id,
             'bureau_id' => $otherBureau->id,
             'created_by' => $this->kabiro1->id,
             'status' => 'approved',
             'total_budget' => 50000,
+        ]);
+        $wpOther = RkapWorkPlan::create([
+            'rkap_submission_id' => $subOther->id,
+            'program_code' => 'WPOTHER',
+            'program_name' => 'WPOTHER',
+        ]);
+        RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wpOther->id,
+            'account_code' => '521111',
+            'description' => 'Other item',
+            'quantity' => 1,
+            'unit_price' => 50000,
         ]);
 
         // 1. Assert Direksi User sees global data (60000 + 40000 + 50000 = 150000)
@@ -542,6 +574,18 @@ class RkapDashboardTest extends TestCase
             'created_by' => $this->kabiro1->id,
             'status' => 'approved',
             'total_budget' => 75000,
+        ]);
+        $wp2025 = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission2025->id,
+            'program_code' => 'WP2025',
+            'program_name' => 'WP2025',
+        ]);
+        RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp2025->id,
+            'account_code' => '521111',
+            'description' => '2025 item',
+            'quantity' => 1,
+            'unit_price' => 75000,
         ]);
 
         // Access the analytics dashboard as admin
@@ -731,26 +775,27 @@ class RkapDashboardTest extends TestCase
     public function test_analytics_profit_and_loss_formulas_calculation(): void
     {
         // 1. Create Report Groups
-        $rgRev = \App\Models\ReportGroup::create(['code' => 'PL0001', 'type' => 'PL', 'name' => 'Revenue']);
-        $rgDc = \App\Models\ReportGroup::create(['code' => 'PL0002', 'type' => 'PL', 'name' => 'Direct Cost']);
-        $rgIdc = \App\Models\ReportGroup::create(['code' => 'PL0003', 'type' => 'PL', 'name' => 'Indirect Cost']);
-        $rgOther = \App\Models\ReportGroup::create(['code' => 'PL0004', 'type' => 'PL', 'name' => 'Other Income (exp)']);
+        $rgRev = \App\Models\ReportGroup::firstOrCreate(['code' => 'PL0001'], ['type' => 'PL', 'name' => 'Revenue']);
+        $rgDc = \App\Models\ReportGroup::firstOrCreate(['code' => 'PL0002'], ['type' => 'PL', 'name' => 'Direct Cost']);
+        $rgIdc = \App\Models\ReportGroup::firstOrCreate(['code' => 'PL0003'], ['type' => 'PL', 'name' => 'Indirect Cost']);
+        $rgOtherIncome = \App\Models\ReportGroup::firstOrCreate(['code' => 'PL0004'], ['type' => 'PL', 'name' => 'Other Income']);
+        $rgOtherExpense = \App\Models\ReportGroup::firstOrCreate(['code' => 'PL0005'], ['type' => 'PL', 'name' => 'Other Expense']);
 
         // 2. Create COA groups
-        $cgRev = \App\Models\CoaGroup::create(['code' => '4000', 'name' => 'Revenue Group', 'report_group_id' => $rgRev->id]);
-        $cgDc = \App\Models\CoaGroup::create(['code' => '5000', 'name' => 'Direct Cost Group', 'report_group_id' => $rgDc->id]);
-        $cgIntInc = \App\Models\CoaGroup::create(['code' => '7003', 'name' => 'Pendapatan Bunga', 'report_group_id' => $rgOther->id]);
-        $cgIntExp = \App\Models\CoaGroup::create(['code' => '7000', 'name' => 'FINANCING COST', 'report_group_id' => $rgOther->id]);
-        $cgLainnya = \App\Models\CoaGroup::create(['code' => '7005', 'name' => 'LAINNYA', 'report_group_id' => $rgOther->id]);
+        $cgRev = \App\Models\CoaGroup::firstOrCreate(['code' => '4000'], ['name' => 'Revenue Group', 'report_group_id' => $rgRev->id]);
+        $cgDc = \App\Models\CoaGroup::firstOrCreate(['code' => '5000'], ['name' => 'Direct Cost Group', 'report_group_id' => $rgDc->id]);
+        $cgIntInc = \App\Models\CoaGroup::firstOrCreate(['code' => '7003'], ['name' => 'Pendapatan Bunga', 'report_group_id' => $rgOtherIncome->id]);
+        $cgIntExp = \App\Models\CoaGroup::firstOrCreate(['code' => '7000'], ['name' => 'FINANCING COST', 'report_group_id' => $rgOtherExpense->id]);
+        $cgLainnya = \App\Models\CoaGroup::firstOrCreate(['code' => '7005'], ['name' => 'LAINNYA', 'report_group_id' => $rgOtherExpense->id]);
 
         // 3. Create COAs
-        $coaRev = \App\Models\Coa::create(['coa_group_id' => $cgRev->id, 'code' => '410001', 'title' => 'Revenue COA']);
-        $coaDc = \App\Models\Coa::create(['coa_group_id' => $cgDc->id, 'code' => '510001', 'title' => 'Direct Cost COA']);
-        $coaIntInc = \App\Models\Coa::create(['coa_group_id' => $cgIntInc->id, 'code' => '710001', 'title' => 'Interest Income COA']);
-        $coaIntExp = \App\Models\Coa::create(['coa_group_id' => $cgIntExp->id, 'code' => '760001', 'title' => 'Interest Expense COA']);
-        $coaLainnyaInc = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '710002', 'title' => 'Other Income COA']);
-        $coaLainnyaExp = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '760002', 'title' => 'Other Expense COA']);
-        $coaLainnyaCapex = \App\Models\Coa::create(['coa_group_id' => $cgLainnya->id, 'code' => '810001', 'title' => 'Capex COA (exclude)']);
+        $coaRev = \App\Models\Coa::firstOrCreate(['code' => '410001'], ['coa_group_id' => $cgRev->id, 'title' => 'Revenue COA']);
+        $coaDc = \App\Models\Coa::firstOrCreate(['code' => '510001'], ['coa_group_id' => $cgDc->id, 'title' => 'Direct Cost COA']);
+        $coaIntInc = \App\Models\Coa::firstOrCreate(['code' => '710001'], ['coa_group_id' => $cgIntInc->id, 'title' => 'Interest Income COA']);
+        $coaIntExp = \App\Models\Coa::firstOrCreate(['code' => '760001'], ['coa_group_id' => $cgIntExp->id, 'title' => 'Interest Expense COA']);
+        $coaLainnyaInc = \App\Models\Coa::firstOrCreate(['code' => '710002'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Other Income COA']);
+        $coaLainnyaExp = \App\Models\Coa::firstOrCreate(['code' => '760002'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Other Expense COA']);
+        $coaLainnyaCapex = \App\Models\Coa::firstOrCreate(['code' => '810001'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Capex COA (exclude)']);
 
         // 4. Create active finalized period and submission
         $period = \App\Models\RkapPeriod::create([
@@ -808,20 +853,24 @@ class RkapDashboardTest extends TestCase
         // EBITDA
         $this->assertEquals(60000.0, $plSummary['operating_profit']['budget']);
 
-        // Check individual items inside PL0004 (Other Income (exp))
+        // Check individual items inside PL0004 (Other Income)
         // Pendapatan Bunga (7003) = 5000
-        $this->assertEquals(5000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7003')['budget']);
+        $this->assertEquals(5000.0, collect($plGroups['Other Income']['items'])->firstWhere('key', '7003')['budget']);
 
+        // Check individual items inside PL0005 (Other Expense)
         // FINANCING COST (7000) = 3000
-        $this->assertEquals(3000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7000')['budget']);
+        $this->assertEquals(3000.0, collect($plGroups['Other Expense']['items'])->firstWhere('key', '7000')['budget']);
 
-        // LAINNYA (7005) = 10000 (income) - 4000 (expense) = 6000 (excludes CapEx 25000)
-        $this->assertEquals(6000.0, collect($plGroups['Other Income (exp)']['items'])->firstWhere('key', '7005')['budget']);
+        // LAINNYA (7005) = 4000 (expense) - 10000 (income) = -6000 (excludes CapEx 25000)
+        $this->assertEquals(-6000.0, collect($plGroups['Other Expense']['items'])->firstWhere('key', '7005')['budget']);
 
-        // Other Income (exp) subtotal = 5000 (cgIntInc) - 3000 (cgIntExp) + 6000 (cgLainnya net) = 8000
-        $this->assertEquals(8000.0, $plGroups['Other Income (exp)']['budget_subtotal']);
+        // Other Income subtotal = 5000
+        $this->assertEquals(5000.0, $plGroups['Other Income']['budget_subtotal']);
 
-        // Net Profit = EBITDA (60000) + Other Income (exp) subtotal (8000) = 68000
+        // Other Expense subtotal = 3000 (cgIntExp) + (-6000) (cgLainnya net) = -3000
+        $this->assertEquals(-3000.0, $plGroups['Other Expense']['budget_subtotal']);
+
+        // Net Profit = EBITDA (60000) + Other Income (5000) - Other Expense (-3000) = 68000
         $this->assertEquals(68000.0, $plSummary['net_profit']['budget']);
     }
 }

@@ -366,7 +366,7 @@
                                         $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
                                         $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
                                         
-                                        $isExpense = ($groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost' || in_array($item['key'], ['7000', '7001', '7001A', '7002', '7002A', '7004']));
+                                        $isExpense = ($groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost' || in_array($item['key'], ['7000', '7001', '7001A', '7002', '7002A', '7004', '7005']));
                                         $itemVariance = $isExpense ? ($itemBudget - $itemProj) : ($itemProj - $itemBudget);
                                     @endphp
                                     <tr>
