@@ -28,6 +28,10 @@ table.table {
 .menu-inner::-webkit-scrollbar-track {
   background: transparent;
 }
+/* Align vertical menu active indicator next to the scrollbar */
+.menu-vertical .menu-inner > .menu-item.active::before {
+  display: none !important;
+}
 
 /* Hide default browser up/down spinner arrows for number input fields globally */
 input::-webkit-outer-spin-button,
