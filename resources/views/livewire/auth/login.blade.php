@@ -108,7 +108,7 @@
         }
 
         .login-hero__title span {
-            color: #ED1C24;
+            color: #960b10ff;
         }
 
         .login-hero__subtitle {
@@ -194,7 +194,7 @@
         }
 
         .form-brand__name span {
-            color: #ED1C24;
+            color: #960b10ff;
         }
 
         .form-brand__tagline {
@@ -301,7 +301,7 @@
         }
 
         .form-input-rkap:focus {
-            border-color: #ED1C24;
+            border-color: #960b10ff;
             background: #fff;
             box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.12);
         }
@@ -315,14 +315,14 @@
         }
 
         .form-input-rkap.is-error {
-            border-color: #ED1C24;
+            border-color: #960b10ff;
             box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.10);
         }
 
         /* Error text */
         .input-error {
             font-size: 0.78rem;
-            color: #ED1C24;
+            color: #960b10ff;
             margin-top: 6px;
             display: flex;
             align-items: center;
@@ -340,7 +340,7 @@
             align-items: center;
             gap: 8px;
             font-size: 0.85rem;
-            color: #ED1C24;
+            color: #960b10ff;
             font-weight: 500;
         }
 
@@ -365,7 +365,7 @@
             width: 16px;
             height: 16px;
             border-radius: 4px;
-            accent-color: #ED1C24;
+            accent-color: #960b10ff;
             cursor: pointer;
         }
 
@@ -377,7 +377,7 @@
             gap: 8px;
             width: 100%;
             height: 50px;
-            background: linear-gradient(135deg, #ED1C24 0%, #b91c1c 100%);
+            background: linear-gradient(135deg, #960b10ff 0%, #b91c1c 100%);
             color: #fff;
             border: none;
             border-radius: 12px;

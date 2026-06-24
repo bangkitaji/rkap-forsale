@@ -1,30 +1,29 @@
 // ===================================================================================================================
 // KCIC / WHOOSH Brand Theme Override
-// Primary color: KCIC Red #ED1C24
+// Primary color: KCIC Red #960b10ff
 // Dark/Sidebar: KCIC Navy #1a1f5e (deep navy blue, matches ticket.kcic.co.id)
 // ===================================================================================================================
 
 // KCIC brand primary: vibrant red
-$primary: #ED1C24;
+$primary: #960b10ff;
 
 // KCIC navy for dark elements (sidebar, dark mode)
 $dark: #1a1f5e;
 
 // Override red sass variable with KCIC red (used in danger states etc.)
-$red: #ED1C24;
+$red: #960b10ff;
 
 // Default fonts customization (made smaller)
-$font-size-base: .85rem;   // Original: .9375rem (~15px) -> now ~13.6px
-$font-size-xs: .7rem;      // Original: .75rem (~12px) -> now ~11.2px
-$font-size-sm: .775rem;    // Original: .8125rem (~13px) -> now ~12.4px
-$font-size-lg: .975rem;    // Original: 1.0625rem (~17px) -> now ~15.6px
-$font-size-xl: 1.15rem;    // Original: 1.25rem (~20px) -> now ~18.4px
-$small-font-size: .775rem; // Original: .8125rem (~13px) -> now ~12.4px
+$font-size-base: 0.85rem; // Original: .9375rem (~15px) -> now ~13.6px
+$font-size-xs: 0.7rem; // Original: .75rem (~12px) -> now ~11.2px
+$font-size-sm: 0.775rem; // Original: .8125rem (~13px) -> now ~12.4px
+$font-size-lg: 0.975rem; // Original: 1.0625rem (~17px) -> now ~15.6px
+$font-size-xl: 1.15rem; // Original: 1.25rem (~20px) -> now ~18.4px
+$small-font-size: 0.775rem; // Original: .8125rem (~13px) -> now ~12.4px
 
 // Headings customization (scaled down proportionally)
-$h1-font-size: 2.5rem;      // Original: 2.875rem
-$h2-font-size: 2.125rem;    // Original: 2.375rem
-$h3-font-size: 1.625rem;    // Original: 1.75rem
-$h4-font-size: 1.375rem;    // Original: 1.5rem
-$h5-font-size: 1.075rem;    // Original: 1.125rem
-
+$h1-font-size: 2.5rem; // Original: 2.875rem
+$h2-font-size: 2.125rem; // Original: 2.375rem
+$h3-font-size: 1.625rem; // Original: 1.75rem
+$h4-font-size: 1.375rem; // Original: 1.5rem
+$h5-font-size: 1.075rem; // Original: 1.125rem

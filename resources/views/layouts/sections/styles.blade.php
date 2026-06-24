@@ -22,24 +22,24 @@
 <!-- END: app CSS-->
 
 <!-- ═══ KCIC / WHOOSH Brand Theme Override ═══ -->
-<!-- Primary: #ED1C24 (KCIC Red) | Sidebar: #1a1f5e (KCIC Navy) -->
+<!-- Primary: #960b10ff (KCIC Red) | Sidebar: #1a1f5e (KCIC Navy) -->
 <style>
   :root {
-    --bs-primary: #ED1C24;
+    --bs-primary: #960b10ff;
     --bs-primary-rgb: 237, 28, 36;
     --bs-primary-bg-subtle: #fde8e9;
     --bs-primary-border-subtle: #f9b4b7;
     --bs-dark: #1a1f5e;
     --bs-dark-rgb: 26, 31, 94;
-    --bs-custom-link-color: #ED1C24;
+    --bs-custom-link-color: #960b10ff;
   }
 
   /* ── Sidebar / Vertical Menu overrides removed for white theme ── */
 
   /* ── Primary buttons ── */
   .btn-primary {
-    background-color: #ED1C24 !important;
-    border-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
+    border-color: #960b10ff !important;
     color: #fff !important;
     box-shadow: 0 4px 12px rgba(237, 28, 36, .35) !important;
   }
@@ -52,70 +52,70 @@
   }
 
   .btn-outline-primary {
-    color: #ED1C24 !important;
-    border-color: #ED1C24 !important;
+    color: #960b10ff !important;
+    border-color: #960b10ff !important;
   }
 
   .btn-outline-primary:hover {
-    background-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
     color: #fff !important;
   }
 
   .btn-label-primary {
-    color: #ED1C24 !important;
+    color: #960b10ff !important;
     border-color: rgba(237, 28, 36, .2) !important;
     background-color: rgba(237, 28, 36, .12) !important;
   }
 
   /* ── Badges / labels ── */
   .bg-primary {
-    background-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
   }
 
   .bg-label-primary {
     background-color: rgba(237, 28, 36, 0.16) !important;
-    color: #ED1C24 !important;
+    color: #960b10ff !important;
   }
 
   .text-primary {
-    color: #ED1C24 !important;
+    color: #960b10ff !important;
   }
 
   .border-primary {
-    border-color: #ED1C24 !important;
+    border-color: #960b10ff !important;
   }
 
   /* ── Nav tabs active ── */
   .nav-tabs .nav-link.active {
-    border-bottom-color: #ED1C24 !important;
-    color: #ED1C24 !important;
+    border-bottom-color: #960b10ff !important;
+    color: #960b10ff !important;
   }
 
   .nav-link:hover {
-    color: #ED1C24 !important;
+    color: #960b10ff !important;
   }
 
   /* ── Form controls focus ── */
   .form-control:focus,
   .form-select:focus {
-    border-color: #ED1C24 !important;
+    border-color: #960b10ff !important;
     box-shadow: 0 0.125rem 0.25rem 0 rgba(237, 28, 36, .4) !important;
   }
 
   .form-check-input:checked {
-    background-color: #ED1C24 !important;
-    border-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
+    border-color: #960b10ff !important;
   }
 
   /* ── Pagination active ── */
   .page-item.active .page-link {
-    background-color: #ED1C24 !important;
-    border-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
+    border-color: #960b10ff !important;
   }
 
   /* ── Links ── */
   a {
-    color: #ED1C24;
+    color: #960b10ff;
   }
 
   a:hover {
@@ -124,12 +124,12 @@
 
   /* ── Progress bar ── */
   .progress-bar {
-    background-color: #ED1C24 !important;
+    background-color: #960b10ff !important;
   }
 
   /* ── Spinner / loader ── */
   .spinner-border.text-primary,
   .spinner-grow.text-primary {
-    color: #ED1C24 !important;
+    color: #960b10ff !important;
   }
 </style>

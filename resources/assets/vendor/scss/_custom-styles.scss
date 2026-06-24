@@ -1,22 +1,22 @@
 // =====================================================================
 // KCIC / WHOOSH Custom Global Styles
 // Matches https://ticket.kcic.co.id brand identity
-// Primary: #ED1C24 (KCIC Red)
+// Primary: #960b10ff (KCIC Red)
 // Sidebar/Dark: #1a1f5e (KCIC Deep Navy Blue)
 // =====================================================================
 
 // ─── CSS Variable Overrides ───────────────────────────────────────────
 :root {
   // Primary KCIC Red
-  --bs-primary:         #ED1C24;
-  --bs-primary-rgb:     237, 28, 36;
+  --bs-primary: #960b10ff;
+  --bs-primary-rgb: 237, 28, 36;
 
   // Derived primary subtones
-  --bs-primary-bg-subtle:     #fde8e9;
+  --bs-primary-bg-subtle: #fde8e9;
   --bs-primary-border-subtle: #f9b4b7;
 
   // Dark (used in sidebar, .bg-dark etc.) → KCIC Navy
-  --bs-dark:     #1a1f5e;
+  --bs-dark: #1a1f5e;
   --bs-dark-rgb: 26, 31, 94;
 }
 
@@ -27,8 +27,8 @@
 
 // ─── Buttons – primary KCIC red ──────────────────────────────────────
 .btn-primary {
-  background-color: #ED1C24 !important;
-  border-color: #ED1C24 !important;
+  background-color: #960b10ff !important;
+  border-color: #960b10ff !important;
   color: #fff !important;
 }
 
@@ -41,50 +41,50 @@
 }
 
 .btn-outline-primary {
-  color: #ED1C24 !important;
-  border-color: #ED1C24 !important;
+  color: #960b10ff !important;
+  border-color: #960b10ff !important;
 }
 
 .btn-outline-primary:hover {
-  background-color: #ED1C24 !important;
+  background-color: #960b10ff !important;
   color: #fff !important;
 }
 
 // ─── Badge label-primary (light tint) ────────────────────────────────
 .bg-label-primary {
   background-color: rgba(237, 28, 36, 0.16) !important;
-  color: #ED1C24 !important;
+  color: #960b10ff !important;
 }
 
 // ─── Nav tabs active underline ────────────────────────────────────────
 .nav-tabs .nav-link.active,
 .nav-tabs .nav-link:hover {
-  border-bottom-color: #ED1C24 !important;
-  color: #ED1C24 !important;
+  border-bottom-color: #960b10ff !important;
+  color: #960b10ff !important;
 }
 
 // ─── Form controls focus ring ─────────────────────────────────────────
 .form-control:focus,
 .form-select:focus {
-  border-color: #ED1C24 !important;
+  border-color: #960b10ff !important;
   box-shadow: 0 0.125rem 0.25rem 0 rgba(237, 28, 36, 0.4) !important;
 }
 
 // ─── Checkbox / radio checked color ──────────────────────────────────
 .form-check-input:checked {
-  background-color: #ED1C24 !important;
-  border-color: #ED1C24 !important;
+  background-color: #960b10ff !important;
+  border-color: #960b10ff !important;
 }
 
 // ─── Pagination active ────────────────────────────────────────────────
 .page-item.active .page-link {
-  background-color: #ED1C24 !important;
-  border-color: #ED1C24 !important;
+  background-color: #960b10ff !important;
+  border-color: #960b10ff !important;
 }
 
 // ─── Links ───────────────────────────────────────────────────────────
 a {
-  color: #ED1C24;
+  color: #960b10ff;
 }
 a:hover {
   color: #c7161c;
@@ -92,5 +92,5 @@ a:hover {
 
 // ─── Mobile menu overlay / hamburger ────────────────────────────────
 .layout-menu-toggle .bx {
-  color: #ED1C24;
+  color: #960b10ff;
 }
