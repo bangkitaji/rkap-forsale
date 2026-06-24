@@ -115,7 +115,8 @@
                   class="bx bx-pie-chart-alt fs-4"></i></span>
             </div>
             <h4 class="mb-1 fw-bold text-{{ $isOver ? 'danger' : 'info' }}">Rp
-              {{ number_format(abs($variance), 0, ',', '.') }}</h4>
+              {{ number_format(abs($variance), 0, ',', '.') }}
+            </h4>
             <p class="mb-0 text-muted small">{{ $isOver ? 'Melebihi Anggaran' : 'Sisa Alokasi Pagu' }}</p>
           </div>
         </div>
@@ -243,7 +244,8 @@
                   </div>
                   <div class="text-end">
                     <h6 class="mb-0 fw-bold">Rp
-                      {{ number_format($plSummary['direct_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                      {{ number_format($plSummary['direct_cost']['budget'] ?? 0, 0, ',', '.') }}
+                    </h6>
                     <small class="text-info fw-medium">Real: Rp
                       {{ number_format($plSummary['direct_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -262,7 +264,8 @@
                   </div>
                   <div class="text-end">
                     <h6 class="mb-0 fw-bold text-primary">Rp
-                      {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                      {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}
+                    </h6>
                     <small class="text-primary fw-medium">Real: Rp
                       {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -281,7 +284,8 @@
                   </div>
                   <div class="text-end">
                     <h6 class="mb-0 fw-bold">Rp
-                      {{ number_format($plSummary['indirect_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                      {{ number_format($plSummary['indirect_cost']['budget'] ?? 0, 0, ',', '.') }}
+                    </h6>
                     <small class="text-warning fw-medium">Real: Rp
                       {{ number_format($plSummary['indirect_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -301,7 +305,8 @@
                   </div>
                   <div class="text-end">
                     <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Rp
-                      {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                      {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}
+                    </h6>
                     <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp
                       {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -320,7 +325,8 @@
                   </div>
                   <div class="text-end">
                     <h6 class="mb-0 fw-bold">Rp
-                      {{ number_format($plSummary['other_income_exp']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                      {{ number_format($plSummary['other_income_exp']['budget'] ?? 0, 0, ',', '.') }}
+                    </h6>
                     <small class="text-secondary fw-medium">Real: Rp
                       {{ number_format($plSummary['other_income_exp']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -339,7 +345,8 @@
                   </div>
                   <div class="text-end">
                     <h5 class="mb-0 fw-bold text-success">Rp
-                      {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                      {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}
+                    </h5>
                     <small class="text-success fw-medium">Real: Rp
                       {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                   </div>
@@ -595,9 +602,11 @@
                       <i class="bx bx-money me-2"></i>{{ $np['label'] }}
                     </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
-                      {{ number_format($npBudget, 0, ',', '.') }}</td>
+                      {{ number_format($npBudget, 0, ',', '.') }}
+                    </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
-                      {{ number_format($npReal, 0, ',', '.') }}</td>
+                      {{ number_format($npReal, 0, ',', '.') }}
+                    </td>
                     <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
                       @if ($npBudget > 0)
                         {{ number_format($npRealPct, 1, ',', '.') }}%
@@ -606,7 +615,8 @@
                       @endif
                     </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
-                      {{ number_format($npProj, 0, ',', '.') }}</td>
+                      {{ number_format($npProj, 0, ',', '.') }}
+                    </td>
                     <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
                       @if ($npBudget > 0)
                         {{ number_format($npProjPct, 1, ',', '.') }}%
@@ -898,7 +908,7 @@
                 return formatValueShort(val);
               }
             },
-            colors: ['#1a1f5e', '#ED1C24', '#ffab00'],
+            colors: ['#1a1f5e', '#960b10ff', '#ffab00'],
             xaxis: {
               categories: labels,
               labels: {
@@ -1017,7 +1027,7 @@
             width: 2,
             colors: ['transparent']
           },
-          colors: ['#1a1f5e', '#ED1C24', '#ffab00'],
+          colors: ['#1a1f5e', '#960b10ff', '#ffab00'],
           xaxis: {
             categories: @json(array_column($comparisonData, 'label')),
           },
