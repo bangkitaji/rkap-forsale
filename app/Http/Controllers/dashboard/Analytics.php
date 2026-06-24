@@ -123,18 +123,17 @@ class Analytics extends Controller
         ->sum('rkap_budget_item_realizations.amount');
 
       // Total Projection (filtered by PL report groups)
-      $stats['total_projection'] = (float) DB::table('rkap_budget_item_projections')
-        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      $stats['total_projection'] = (float) DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->sum('rkap_budget_item_projections.amount');
+        ->sum('rkap_budget_items.projection');
 
       $stats['absorption_rate'] = $stats['total_budget'] > 0
         ? round(($stats['total_realization'] / $stats['total_budget']) * 100, 1)
@@ -187,13 +186,13 @@ class Analytics extends Controller
       }
 
       // --- 3. Monthly Projection Data ---
-      $projections = DB::table('rkap_budget_item_projections')
+      $monthlyProjSums = DB::table('rkap_budget_item_projections')
         ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
@@ -203,8 +202,56 @@ class Analytics extends Controller
         ->pluck('total', 'month')
         ->toArray();
 
-      foreach ($projections as $m => $val) {
-        $monthlyProjectionData[$m] = (float) $val;
+      foreach ($monthlyProjSums as $m => $val) {
+        $monthlyProjectionData[$m] += (float) $val;
+      }
+
+      $yearlyItems = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->where('rkap_budget_items.projection', '>', 0)
+        ->whereNotExists(function ($query) {
+          $query->select(DB::raw(1))
+            ->from('rkap_budget_item_projections')
+            ->whereRaw('rkap_budget_item_projections.rkap_budget_item_id = rkap_budget_items.id');
+        })
+        ->select('rkap_budget_items.id', 'rkap_budget_items.projection')
+        ->get();
+
+      $yearlyItemIds = $yearlyItems->pluck('id')->toArray();
+      $monthlyPlans = [];
+      if (!empty($yearlyItemIds)) {
+        $monthlyPlans = DB::table('rkap_budget_item_monthlies')
+          ->whereIn('rkap_budget_item_id', $yearlyItemIds)
+          ->select('rkap_budget_item_id', 'month', 'amount')
+          ->get()
+          ->groupBy('rkap_budget_item_id');
+      }
+
+      foreach ($yearlyItems as $item) {
+        $itemId = $item->id;
+        $projectionAmount = (float) $item->projection;
+        
+        $itemPlans = isset($monthlyPlans[$itemId]) ? $monthlyPlans[$itemId] : collect();
+        $totalPlanAmount = $itemPlans->sum('amount');
+
+        if ($totalPlanAmount > 0) {
+          foreach ($itemPlans as $plan) {
+            $m = (int) $plan->month;
+            $monthlyProjectionData[$m] += $projectionAmount * ((float)$plan->amount / $totalPlanAmount);
+          }
+        } else {
+          for ($m = 1; $m <= 12; $m++) {
+            $monthlyProjectionData[$m] += $projectionAmount / 12;
+          }
+        }
       }
 
       // --- 4a. Directorate-level budgets, realizations, projections ---
@@ -247,8 +294,7 @@ class Analytics extends Controller
         ->keyBy('label')
         ->toArray();
 
-      $directorateProjections = DB::table('rkap_budget_item_projections')
-        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      $directorateProjections = DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
@@ -256,12 +302,12 @@ class Analytics extends Controller
         ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($userDirectorateId, fn($q) => $q->where('departments.directorate_id', $userDirectorateId))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('directorates.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+        ->selectRaw('directorates.name as label, SUM(rkap_budget_items.projection) as amount')
         ->groupBy('directorates.name')
         ->get()
         ->keyBy('label')
@@ -321,20 +367,19 @@ class Analytics extends Controller
         ->keyBy('label')
         ->toArray();
 
-      $departmentProjections = DB::table('rkap_budget_item_projections')
-        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      $departmentProjections = DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('departments', 'bureaus.department_id', '=', 'departments.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($deptFilterField, fn($q) => $q->where($deptFilterField, $deptFilterVal))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('departments.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+        ->selectRaw('departments.name as label, SUM(rkap_budget_items.projection) as amount')
         ->groupBy('departments.name')
         ->get()
         ->keyBy('label')
@@ -396,19 +441,18 @@ class Analytics extends Controller
           ->keyBy('label')
           ->toArray();
 
-        $bureauProjections = DB::table('rkap_budget_item_projections')
-          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        $bureauProjections = DB::table('rkap_budget_items')
           ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
           ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
           ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
           ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
           ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-          ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+          ->where('rkap_submissions.rkap_period_id', $periodId)
           ->where('rkap_submissions.status', 'approved')
           ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
           ->whereNull('coas.deleted_at')
           ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-          ->selectRaw('bureaus.name as label, SUM(rkap_budget_item_projections.amount) as amount')
+          ->selectRaw('bureaus.name as label, SUM(rkap_budget_items.projection) as amount')
           ->groupBy('bureaus.name')
           ->get()
           ->keyBy('label')
@@ -525,18 +569,17 @@ class Analytics extends Controller
         ->get();
 
       // Projection per COA group and code
-      $cgProjectionsRaw = DB::table('rkap_budget_item_projections')
-        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      $cgProjectionsRaw = DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->where('rkap_budget_item_projections.rkap_period_id', $periodId)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_item_projections.amount) as total')
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_items.projection) as total')
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
         ->get();
 
@@ -767,18 +810,17 @@ class Analytics extends Controller
           ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
           ->sum('rkap_budget_item_realizations.amount');
 
-        $projection = (float) DB::table('rkap_budget_item_projections')
-          ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        $projection = (float) DB::table('rkap_budget_items')
           ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
           ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
           ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
           ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-          ->where('rkap_budget_item_projections.rkap_period_id', $period->id)
+          ->where('rkap_submissions.rkap_period_id', $period->id)
           ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
           ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
           ->whereNull('coas.deleted_at')
           ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-          ->sum('rkap_budget_item_projections.amount');
+          ->sum('rkap_budget_items.projection');
       } else {
         $budget = 0.0;
         $realization = 0.0;

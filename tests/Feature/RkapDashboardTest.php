@@ -108,6 +108,7 @@ class RkapDashboardTest extends TestCase
             'description' => 'Item 1',
             'quantity' => 1,
             'unit_price' => 60000,
+            'projection' => 50000,
         ]);
 
         $wp2 = RkapWorkPlan::create([
@@ -121,6 +122,7 @@ class RkapDashboardTest extends TestCase
             'description' => 'Item 2',
             'quantity' => 1,
             'unit_price' => 40000,
+            'projection' => 38000,
         ]);
 
         // Add Realization & Projection for Bureau 1
@@ -664,6 +666,7 @@ class RkapDashboardTest extends TestCase
             'description' => 'Last Year Item',
             'quantity' => 1,
             'unit_price' => 50000,
+            'projection' => 45000,
         ]);
         RkapBudgetItemRealization::create([
             'rkap_budget_item_id' => $biLast->id,
@@ -701,6 +704,7 @@ class RkapDashboardTest extends TestCase
             'description' => 'Next Year Item',
             'quantity' => 1,
             'unit_price' => 90000,
+            'projection' => 85000,
         ]);
         RkapBudgetItemRealization::create([
             'rkap_budget_item_id' => $biNext->id,
