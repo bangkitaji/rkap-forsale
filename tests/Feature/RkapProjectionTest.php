@@ -396,4 +396,76 @@ class RkapProjectionTest extends TestCase
         $savedProjectionsCount = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->count();
         $this->assertEquals(0, $savedProjectionsCount);
     }
+
+    public function test_save_yearly_projection_separately_without_monthly_distribution(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 85000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors()
+            ->assertDispatched('projections-saved');
+
+        // Check budget item projection column directly
+        $this->budgetItem->refresh();
+        $this->assertEquals(85000, (float)$this->budgetItem->projection);
+
+        // Check that monthly projections are empty/deleted
+        $savedProjectionsCount = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->count();
+        $this->assertEquals(0, $savedProjectionsCount);
+    }
+
+    public function test_cannot_save_yearly_projection_exceeding_total_price(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 120000) // Budget is 100000
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['yearlyProjection']);
+
+        // Check budget item projection is not updated
+        $this->budgetItem->refresh();
+        $this->assertEquals(0, (float)$this->budgetItem->projection);
+    }
+
+    public function test_mode_locked_to_yearly_if_yearly_projection_exists(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        // Seed yearly projection in database
+        $this->budgetItem->update(['projection' => 50000]);
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->assertSet('inputMode', 'yearly')
+            ->assertSet('yearlyProjection', 50000)
+            ->assertSet('modeLocked', true);
+    }
+
+    public function test_mode_locked_to_monthly_if_monthly_projections_exist(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        // Seed monthly projection
+        \App\Models\RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $this->budgetItem->id,
+            'rkap_period_id' => $this->activePeriod->id,
+            'month' => 5,
+            'amount' => 30000,
+            'inputted_by' => $this->kepalaBiro->id,
+        ]);
+        $this->budgetItem->update(['projection' => 30000]);
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->assertSet('inputMode', 'monthly')
+            ->assertSet('yearlyProjection', 30000)
+            ->assertSet('modeLocked', true);
+    }
 }

@@ -355,7 +355,7 @@
                                                 </td>
                                                 <td class="text-nowrap">
                                                     <div class="d-flex justify-content-end align-items-center gap-2">
-                                                        <span class="fw-bold text-dark">Rp {{ number_format($bi->projections->sum('amount'), 0, ',', '.') }}</span>
+                                                        <span class="fw-bold text-dark">Rp {{ number_format($bi->projection, 0, ',', '.') }}</span>
                                                         @can('rkap.projection.input')
                                                             <button type="button" 
                                                                     class="btn btn-xs btn-icon btn-outline-primary p-1" 
@@ -415,7 +415,7 @@
                                         <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
                                         <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
                                         @php
-                                            $totalEditingProj = array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0, $editingProjections));
+                                            $totalEditingProj = $inputMode === 'yearly' ? (float)$yearlyProjection : array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0, $editingProjections));
                                             $isOverBudget = $totalEditingProj > (float) $selectedItem->total_price;
                                         @endphp
                                         <span class="fw-bold fs-6 {{ $isOverBudget ? 'text-danger' : 'text-success' }}">
@@ -431,78 +431,122 @@
                                     </div>
                                 @enderror
 
-                                <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
-                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                        <thead class="table-light sticky-top" style="z-index: 10;">
-                                            <tr>
-                                                <th style="width: 20%;">Bulan</th>
-                                                <th style="width: 25%;" class="text-end">Rencana Anggaran (Rp)</th>
-                                                <th style="width: 25%;" class="text-end">Realisasi (Rp)</th>
-                                                <th style="width: 30%;" class="text-end">Jumlah Proyeksi (Rp)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @php
-                                                $currentMonth = (int) date('n');
-                                                $monthNames = [
-                                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
-                                                    4 => 'April', 5 => 'Mei', 6 => 'Juni',
-                                                    7 => 'Juli', 8 => 'Agustus', 9 => 'September',
-                                                    10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                                                ];
-                                            @endphp
-                                            @for($m = 1; $m <= 12; $m++)
-                                                @php
-                                                    $monthlyBudget = $selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0;
-                                                    $realizationAmount = $selectedItem->realizations->where('month', $m)->sum('amount');
-                                                    $existingProj = $selectedItem->projections->where('month', $m)->first();
-                                                    $hasProjection = $existingProj && (float)$existingProj->amount > 0;
-                                                    $isPastMonth = $m < $currentMonth;
-                                                    $isLocked = $isPastMonth || $hasProjection;
-                                                @endphp
-                                                <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
-                                                    <td class="fw-semibold text-muted">
-                                                        {{ $monthNames[$m] }}
-                                                        @if($isPastMonth)
-                                                            <span class="d-block text-secondary small" style="font-size: 0.7rem;">
-                                                                <i class="bx bx-history"></i> Terkunci (Lewat Bulan)
-                                                            </span>
-                                                        @elseif($hasProjection)
-                                                            <span class="d-block text-warning small" style="font-size: 0.7rem;">
-                                                                <i class="bx bx-lock-alt"></i> Terkunci (Proyeksi Ada)
-                                                            </span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-end text-primary fw-semibold">
-                                                        Rp {{ number_format($monthlyBudget, 0, ',', '.') }}
-                                                    </td>
-                                                    <td class="text-end text-success fw-semibold">
-                                                        Rp {{ number_format($realizationAmount, 0, ',', '.') }}
-                                                    </td>
-                                                    <td>
-                                                        <div class="input-group input-group-sm">
-                                                            <span class="input-group-text">Rp</span>
-                                                            <input type="number" 
-                                                                   class="form-control form-control-sm text-end @error('editingProjections.'.$m) is-invalid @enderror"
-                                                                   wire:model.blur="editingProjections.{{ $m }}"
-                                                                   min="0" 
-                                                                   step="0.01"
-                                                                   @disabled($isLocked)>
-                                                        </div>
-                                                        @if($hasProjection)
-                                                            <div class="small text-muted text-end mt-1" style="font-size:0.7rem;">
-                                                                Nilai Proyeksi: Rp {{ number_format($existingProj->amount, 0, ',', '.') }}
-                                                            </div>
-                                                        @endif
-                                                        @error('editingProjections.'.$m)
-                                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                                        @enderror
-                                                    </td>
-                                                </tr>
-                                            @endfor
-                                        </tbody>
-                                    </table>
+                                {{-- Input Method Toggle Selector --}}
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold d-block">Metode Input Proyeksi</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="inputMode" id="inputModeMonthly" value="monthly" wire:model.live="inputMode" @disabled($modeLocked)>
+                                        <label class="btn btn-outline-primary" for="inputModeMonthly">
+                                            <i class="bx bx-calendar me-1"></i> Per Bulan (Bulanan)
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="inputMode" id="inputModeYearly" value="yearly" wire:model.live="inputMode" @disabled($modeLocked)>
+                                        <label class="btn btn-outline-primary" for="inputModeYearly">
+                                            <i class="bx bx-calendar-event me-1"></i> Per Tahun (Tahunan)
+                                        </label>
+                                    </div>
+                                    @if($modeLocked)
+                                        <div class="form-text mt-1 text-warning">
+                                            <i class="bx bx-lock-alt me-1"></i>
+                                            Metode input terkunci karena item ini sudah memiliki proyeksi tersimpan.
+                                        </div>
+                                    @endif
                                 </div>
+
+                                @if($inputMode === 'yearly')
+                                    <div class="mb-3 p-3 bg-light rounded border">
+                                        <label class="form-label fw-bold text-dark fs-6">Proyeksi Tahunan</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-primary text-white">Rp</span>
+                                            <input type="number" 
+                                                   class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror" 
+                                                   wire:model.blur="yearlyProjection"
+                                                   placeholder="Masukkan total proyeksi pertahun..."
+                                                   min="0"
+                                                   step="0.01">
+                                        </div>
+                                        @error('yearlyProjection')
+                                            <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text mt-2 text-muted">
+                                            <i class="bx bx-info-circle me-1"></i>
+                                            Nilai proyeksi tahunan akan disimpan secara utuh tanpa didistribusikan per bulan.
+                                        </div>
+                                    </div>
+                                @else
+                                    <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
+                                        <table class="table table-sm table-bordered align-middle mb-0">
+                                            <thead class="table-light sticky-top" style="z-index: 10;">
+                                                <tr>
+                                                    <th style="width: 20%;">Bulan</th>
+                                                    <th style="width: 25%;" class="text-end">Rencana Anggaran (Rp)</th>
+                                                    <th style="width: 25%;" class="text-end">Realisasi (Rp)</th>
+                                                    <th style="width: 30%;" class="text-end">Jumlah Proyeksi (Rp)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php
+                                                    $currentMonth = (int) date('n');
+                                                    $monthNames = [
+                                                        1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
+                                                        4 => 'April', 5 => 'Mei', 6 => 'Juni',
+                                                        7 => 'Juli', 8 => 'Agustus', 9 => 'September',
+                                                        10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                                                    ];
+                                                @endphp
+                                                @for($m = 1; $m <= 12; $m++)
+                                                    @php
+                                                        $monthlyBudget = $selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0;
+                                                        $realizationAmount = $selectedItem->realizations->where('month', $m)->sum('amount');
+                                                        $existingProj = $selectedItem->projections->where('month', $m)->first();
+                                                        $hasProjection = $existingProj && (float)$existingProj->amount > 0;
+                                                        $isPastMonth = $m < $currentMonth;
+                                                        $isLocked = $isPastMonth || $hasProjection;
+                                                    @endphp
+                                                    <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                                        <td class="fw-semibold text-muted">
+                                                            {{ $monthNames[$m] }}
+                                                            @if($isPastMonth)
+                                                                <span class="d-block text-secondary small" style="font-size: 0.7rem;">
+                                                                    <i class="bx bx-history"></i> Terkunci (Lewat Bulan)
+                                                                </span>
+                                                            @elseif($hasProjection)
+                                                                <span class="d-block text-warning small" style="font-size: 0.7rem;">
+                                                                    <i class="bx bx-lock-alt"></i> Terkunci (Proyeksi Ada)
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-end text-primary fw-semibold">
+                                                            Rp {{ number_format($monthlyBudget, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="text-end text-success fw-semibold">
+                                                            Rp {{ number_format($realizationAmount, 0, ',', '.') }}
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text">Rp</span>
+                                                                <input type="number" 
+                                                                       class="form-control form-control-sm text-end @error('editingProjections.'.$m) is-invalid @enderror"
+                                                                       wire:model.blur="editingProjections.{{ $m }}"
+                                                                       min="0" 
+                                                                       step="0.01"
+                                                                       @disabled($isLocked)>
+                                                            </div>
+                                                            @if($hasProjection)
+                                                                <div class="small text-muted text-end mt-1" style="font-size:0.7rem;">
+                                                                    Nilai Proyeksi: Rp {{ number_format($existingProj->amount, 0, ',', '.') }}
+                                                                </div>
+                                                            @endif
+                                                            @error('editingProjections.'.$m)
+                                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                            @enderror
+                                                        </td>
+                                                    </tr>
+                                                @endfor
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>

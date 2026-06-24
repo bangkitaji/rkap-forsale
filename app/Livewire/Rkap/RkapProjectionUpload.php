@@ -24,6 +24,7 @@ class RkapProjectionUpload extends Component
 
     private array $requiredColumns = [
         'budget_item_id',
+        'yearly',
         'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'
     ];
 
@@ -220,10 +221,8 @@ class RkapProjectionUpload extends Component
         foreach ($rows as $row) {
             $rowNo = $row['_row_number'];
 
-            foreach ($this->requiredColumns as $col) {
-                if (! isset($row[$col]) || $row[$col] === '') {
-                    $this->errorsList[] = "Baris {$rowNo}: kolom {$col} wajib diisi.";
-                }
+            if (! isset($row['budget_item_id']) || $row['budget_item_id'] === '') {
+                $this->errorsList[] = "Baris {$rowNo}: kolom budget_item_id wajib diisi.";
             }
 
             $biId = $row['budget_item_id'] ?? null;
@@ -241,7 +240,8 @@ class RkapProjectionUpload extends Component
             $budgetItem = $budgetItems[$biIdInt];
             $totalBudget = (float) $budgetItem->total_price;
 
-            $totalProjections = 0.0;
+            $hasMonthly = false;
+            $monthlySum = 0.0;
             $hasRowAmountError = false;
 
             for ($m = 1; $m <= 12; $m++) {
@@ -255,32 +255,59 @@ class RkapProjectionUpload extends Component
                     continue;
                 }
 
-                if ($valFloat < 0) {
-                    $this->errorsList[] = "Baris {$rowNo}: kolom {$colKey} tidak boleh bernilai negatif.";
-                    $hasRowAmountError = true;
+
+
+                if (abs($valFloat) > 0.001) {
+                    $hasMonthly = true;
+                }
+                $monthlySum += $valFloat;
+            }
+
+            if ($hasRowAmountError) {
+                continue;
+            }
+
+            $yearlyValStr = $row['yearly'] ?? '0';
+            if (!is_numeric(str_replace([' ', ','], '', $yearlyValStr)) && $yearlyValStr !== '') {
+                $this->errorsList[] = "Baris {$rowNo}: kolom yearly harus berupa angka.";
+                continue;
+            }
+            $yearlyVal = $this->sanitizeAmount($yearlyValStr);
+
+            $dbHasMonthly = $budgetItem->projections->count() > 0;
+            $dbHasYearly = (float)$budgetItem->projection > 0 && !$dbHasMonthly;
+
+            if ($hasMonthly) {
+                if ($dbHasYearly) {
+                    $this->errorsList[] = "Baris {$rowNo}: Tidak dapat mengisi proyeksi bulanan karena item ini sudah diatur dengan proyeksi tahunan.";
                     continue;
                 }
 
-                $monthlyLimit = (float) ($budgetItem->monthlies->firstWhere('month', $m)->amount ?? 0.0);
-                if ($valFloat > $monthlyLimit) {
-                    $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") sebesar Rp " . number_format($valFloat, 0, ',', '.') . " melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").";
-                    $hasRowAmountError = true;
+                if (abs($yearlyVal) > 0.001 && abs($yearlyVal - $monthlySum) > 0.01) {
+                    $this->errorsList[] = "Baris {$rowNo}: Nilai kolom yearly (Rp " . number_format($yearlyVal, 0, ',', '.') . ") harus sama dengan total akumulasi bulanan (Rp " . number_format($monthlySum, 0, ',', '.') . ") jika mengisi proyeksi bulanan.";
+                    continue;
                 }
 
-                $isPastMonth = $m < $currentMonth;
-                if ($isPastMonth) {
-                    $existingProjAmount = (float) ($budgetItem->projections->firstWhere('month', $m)->amount ?? 0.0);
-                    if (abs($valFloat - $existingProjAmount) > 0.01) {
-                        $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") tidak dapat diubah karena merupakan bulan yang sudah lewat.";
-                        $hasRowAmountError = true;
+                for ($m = 1; $m <= 12; $m++) {
+                    $colKey = "m{$m}";
+                    $valFloat = $this->sanitizeAmount($row[$colKey] ?? '0');
+
+                    $isPastMonth = $m < $currentMonth;
+                    if ($isPastMonth) {
+                        $existingProjAmount = (float) ($budgetItem->projections->firstWhere('month', $m)->amount ?? 0.0);
+                        if (abs($valFloat - $existingProjAmount) > 0.01) {
+                            $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") tidak dapat diubah karena merupakan bulan yang sudah lewat.";
+                            $hasRowAmountError = true;
+                        }
                     }
                 }
-
-                $totalProjections += $valFloat;
-            }
-
-            if (!$hasRowAmountError && $totalProjections > $totalBudget) {
-                $this->errorsList[] = "Baris {$rowNo}: Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($totalBudget, 0, ',', '.') . ").";
+            } else {
+                if (abs($yearlyVal) > 0.001) {
+                    if ($dbHasMonthly) {
+                        $this->errorsList[] = "Baris {$rowNo}: Tidak dapat mengisi proyeksi tahunan karena item ini sudah diatur dengan proyeksi bulanan.";
+                        continue;
+                    }
+                }
             }
         }
     }
@@ -299,28 +326,52 @@ class RkapProjectionUpload extends Component
             $updated = 0;
             $currentMonth = (int) date('n');
 
+            $budgetItemIds = array_map(fn($r) => (int)$r['budget_item_id'], $rows);
+            $budgetItems = RkapBudgetItem::whereIn('id', $budgetItemIds)->get()->keyBy('id');
+
             foreach ($rows as $row) {
                 $biId = (int) $row['budget_item_id'];
+                $budgetItem = $budgetItems[$biId] ?? null;
+                if (!$budgetItem) {
+                    continue;
+                }
 
+                $hasMonthly = false;
                 for ($m = 1; $m <= 12; $m++) {
-                    if ($m < $currentMonth) {
-                        continue;
+                    $amount = $this->sanitizeAmount($row["m{$m}"] ?? '0');
+                    if (abs($amount) > 0.001) {
+                        $hasMonthly = true;
+                    }
+                }
+
+                if ($hasMonthly) {
+                    for ($m = 1; $m <= 12; $m++) {
+                        if ($m < $currentMonth) {
+                            continue;
+                        }
+
+                        $amount = $this->sanitizeAmount($row["m{$m}"] ?? '0');
+
+                        RkapBudgetItemProjection::updateOrCreate(
+                            [
+                                'rkap_budget_item_id' => $biId,
+                                'month'               => $m,
+                            ],
+                            [
+                                'rkap_period_id' => $this->periodId,
+                                'amount'         => $amount,
+                                'inputted_by'    => auth()->id(),
+                            ]
+                        );
                     }
 
-                    $colKey = "m{$m}";
-                    $amount = $this->sanitizeAmount($row[$colKey] ?? '0');
+                    $totalProj = RkapBudgetItemProjection::where('rkap_budget_item_id', $biId)->sum('amount');
+                    $budgetItem->update(['projection' => $totalProj]);
+                } else {
+                    $yearlyVal = $this->sanitizeAmount($row['yearly'] ?? '0');
+                    $budgetItem->update(['projection' => $yearlyVal]);
 
-                    RkapBudgetItemProjection::updateOrCreate(
-                        [
-                            'rkap_budget_item_id' => $biId,
-                            'month'               => $m,
-                        ],
-                        [
-                            'rkap_period_id' => $this->periodId,
-                            'amount'         => $amount,
-                            'inputted_by'    => auth()->id(),
-                        ]
-                    );
+                    RkapBudgetItemProjection::where('rkap_budget_item_id', $biId)->delete();
                 }
                 $updated++;
             }

@@ -141,8 +141,8 @@ class RkapProjectionUploadTest extends TestCase
         $currentMonth = (int) date('n');
 
         // Let's create a CSV that targets only future/current months
-        $csvContent = "budget_item_id,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
-        $csvContent .= "{$this->budgetItem->id}";
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},0";
         for ($m = 1; $m <= 12; $m++) {
             // Put 50000 for current/future months, 0 for past months
             $csvContent .= "," . ($m >= $currentMonth ? "50000" : "0");
@@ -165,17 +165,22 @@ class RkapProjectionUploadTest extends TestCase
 
         $this->assertNotNull($projection);
         $this->assertEquals(50000.00, (float)$projection->amount);
+
+        // Verify budget item projection was synced
+        $this->budgetItem->refresh();
+        $expectedSum = 50000 * (12 - $currentMonth + 1);
+        $this->assertEquals($expectedSum, (float)$this->budgetItem->projection);
     }
 
-    public function test_fails_if_projection_exceeds_monthly_budget_plan(): void
+    public function test_upload_monthly_projection_can_exceed_monthly_budget_plan(): void
     {
         $this->actingAs($this->adminUser);
 
         $currentMonth = (int) date('n');
 
-        // Limit is 80000. Let's send 90000 for the current month
-        $csvContent = "budget_item_id,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
-        $csvContent .= "{$this->budgetItem->id}";
+        // Limit is 80000. Let's send 90000 for the current month. It should succeed!
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},0";
         for ($m = 1; $m <= 12; $m++) {
             $csvContent .= "," . ($m === $currentMonth ? "90000" : "0");
         }
@@ -187,22 +192,27 @@ class RkapProjectionUploadTest extends TestCase
             ->set('periodId', $this->period->id)
             ->set('file', $file)
             ->call('uploadAndImport')
-            ->assertSet('imported', false)
-            ->assertSee('melebihi rencana anggaran bulanan');
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify database contains updated projection
+        $projection = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
+            ->where('month', $currentMonth)
+            ->first();
+
+        $this->assertNotNull($projection);
+        $this->assertEquals(90000.00, (float)$projection->amount);
     }
 
-    public function test_fails_if_total_projection_exceeds_total_budget(): void
+    public function test_upload_total_projection_can_exceed_total_budget(): void
     {
         $this->actingAs($this->adminUser);
 
         $currentMonth = (int) date('n');
 
-        // Set current month's monthly budget limit to 2,000,000
-        $this->budgetItem->monthlies()->where('month', $currentMonth)->first()->update(['amount' => 2000000]);
-
-        // Upload CSV with 1,050,000 for current month and 0 for others
-        $csvContent = "budget_item_id,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
-        $csvContent .= "{$this->budgetItem->id}";
+        // Upload CSV with 1,050,000 for current month and 0 for others. Total budget is 1,000,000. It should succeed!
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},0";
         for ($m = 1; $m <= 12; $m++) {
             $csvContent .= "," . ($m === $currentMonth ? "1050000" : "0");
         }
@@ -214,8 +224,16 @@ class RkapProjectionUploadTest extends TestCase
             ->set('periodId', $this->period->id)
             ->set('file', $file)
             ->call('uploadAndImport')
-            ->assertSet('imported', false)
-            ->assertSee('tidak boleh melebihi total anggaran RKAP yang disetujui');
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify database contains updated projection
+        $projection = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
+            ->where('month', $currentMonth)
+            ->first();
+
+        $this->assertNotNull($projection);
+        $this->assertEquals(1050000.00, (float)$projection->amount);
     }
 
     public function test_fails_if_past_month_projection_is_modified(): void
@@ -240,10 +258,11 @@ class RkapProjectionUploadTest extends TestCase
             'amount' => 10000,
             'inputted_by' => $this->adminUser->id,
         ]);
+        $this->budgetItem->update(['projection' => 10000]);
 
         // Upload CSV with different amount (e.g. 15000) for that past month
-        $csvContent = "budget_item_id,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
-        $csvContent .= "{$this->budgetItem->id}";
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},0";
         for ($m = 1; $m <= 12; $m++) {
             if ($m === $pastMonth) {
                 $csvContent .= ",15000";
@@ -261,5 +280,163 @@ class RkapProjectionUploadTest extends TestCase
             ->call('uploadAndImport')
             ->assertSet('imported', false)
             ->assertSee('tidak dapat diubah karena merupakan bulan yang sudah lewat');
+    }
+
+    public function test_valid_yearly_projection_upload_updates_projection_column_directly(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},450000,0,0,0,0,0,0,0,0,0,0,0,0\n";
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify budget item projection column directly
+        $this->budgetItem->refresh();
+        $this->assertEquals(450000.00, (float)$this->budgetItem->projection);
+
+        // Verify count of monthly projections is 0
+        $savedProjectionsCount = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->count();
+        $this->assertEquals(0, $savedProjectionsCount);
+    }
+
+    public function test_upload_yearly_projection_can_exceed_total_price(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // Total price is 1000000. Let's upload 1200000. It should succeed!
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},1200000,0,0,0,0,0,0,0,0,0,0,0,0\n";
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify budget item projection column directly
+        $this->budgetItem->refresh();
+        $this->assertEquals(1200000.00, (float)$this->budgetItem->projection);
+    }
+
+    public function test_upload_yearly_fails_if_item_already_has_monthly_projections(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // Seed monthly projection
+        RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $this->budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 5,
+            'amount' => 30000,
+            'inputted_by' => $this->adminUser->id,
+        ]);
+        $this->budgetItem->update(['projection' => 30000]);
+
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},40000,0,0,0,0,0,0,0,0,0,0,0,0\n";
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertSet('imported', false)
+            ->assertSee('Tidak dapat mengisi proyeksi tahunan karena item ini sudah diatur dengan proyeksi bulanan');
+    }
+
+    public function test_upload_monthly_fails_if_item_already_has_yearly_projection(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // Seed yearly projection in database directly on the item
+        $this->budgetItem->update(['projection' => 50000]);
+
+        $currentMonth = (int) date('n');
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},0";
+        for ($m = 1; $m <= 12; $m++) {
+            $csvContent .= "," . ($m === $currentMonth ? "50000" : "0");
+        }
+        $csvContent .= "\n";
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertSet('imported', false)
+            ->assertSee('Tidak dapat mengisi proyeksi bulanan karena item ini sudah diatur dengan proyeksi tahunan');
+    }
+
+    public function test_empty_cells_in_csv_are_treated_as_zero_without_validation_errors(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // Upload CSV with empty/missing cells for m1-m12 and yearly
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},,,,,,,,,,,,,\n"; // all cells are blank
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify budget item projection is 0
+        $this->budgetItem->refresh();
+        $this->assertEquals(0, (float)$this->budgetItem->projection);
+
+        // Verify count of monthly projections is 0
+        $savedProjectionsCount = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->count();
+        $this->assertEquals(0, $savedProjectionsCount);
+    }
+
+    public function test_negative_projection_upload_is_allowed(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $currentMonth = (int) date('n');
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},-15000";
+        for ($m = 1; $m <= 12; $m++) {
+            $csvContent .= "," . ($m === $currentMonth ? "-15000" : "0");
+        }
+        $csvContent .= "\n";
+
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        // Verify database contains updated negative projection
+        $projection = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
+            ->where('month', $currentMonth)
+            ->first();
+
+        $this->assertNotNull($projection);
+        $this->assertEquals(-15000.00, (float)$projection->amount);
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(-15000.00, (float)$this->budgetItem->projection);
     }
 }

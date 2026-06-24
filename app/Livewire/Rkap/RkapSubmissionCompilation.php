@@ -139,7 +139,7 @@ class RkapSubmissionCompilation extends Component
                 foreach ($prevSubmission->workPlans as $wp) {
                     foreach ($wp->budgetItems as $bi) {
                         $totalRealization += (float) $bi->realizations->sum('amount');
-                        $totalProjection += (float) $bi->projections->sum('amount');
+                        $totalProjection += (float) $bi->projection;
                     }
                 }
 

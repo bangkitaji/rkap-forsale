@@ -86,7 +86,7 @@ class RkapPreviousDataService
                 $code = $bi->account_code;
                 $budgetVal = (float) $bi->total_price;
                 $realizationVal = (float) $bi->realizations->sum('amount');
-                $projectionVal = (float) $bi->projections->sum('amount');
+                $projectionVal = (float) $bi->projection;
 
                 $programs[$wpId]['budget'] += $budgetVal;
                 $programs[$wpId]['realization'] += $realizationVal;

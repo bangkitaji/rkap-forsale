@@ -30,6 +30,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
             'coa_desc',
             'budget_item_desc',
             'amount_of_rkap',
+            'yearly',
             'm1',
             'm2',
             'm3',
@@ -55,6 +56,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
             '(otomatis diabaikan)',
             '(otomatis diabaikan)',
             '(otomatis diabaikan)',
+            '(Tahunan - Kosongkan m1-m12 jika diisi)',
             '(Januari)',
             '(Februari)',
             '(Maret)',
@@ -96,6 +98,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 $amountRkap = (float) $item->total_price;
 
                 $projectionsMap = $item->projections->pluck('amount', 'month')->toArray();
+                $hasMonthly = count($projectionsMap) > 0;
 
                 $row = [
                     $item->id,
@@ -108,10 +111,11 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                     $coaDesc,
                     $biDesc,
                     $amountRkap,
+                    (float) $item->projection,
                 ];
 
                 for ($m = 1; $m <= 12; $m++) {
-                    $row[] = isset($projectionsMap[$m]) ? (float) $projectionsMap[$m] : 0.0;
+                    $row[] = ($hasMonthly && isset($projectionsMap[$m])) ? (float) $projectionsMap[$m] : 0.0;
                 }
 
                 $rows[] = $row;
@@ -129,6 +133,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 'Belanja Bahan',
                 'Laptop developer',
                 15000000,
+                0.0,
             ];
             for ($m = 1; $m <= 12; $m++) {
                 $row[] = 0.0;
@@ -146,7 +151,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 $sheet = $event->sheet->getDelegate();
 
                 // Header styling (row 1)
-                $sheet->getStyle('A1:V1')->applyFromArray([
+                $sheet->getStyle('A1:W1')->applyFromArray([
                     'font' => [
                         'bold'  => true,
                         'color' => ['rgb' => 'FFFFFF'],
@@ -169,7 +174,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 ]);
 
                 // Hint styling (row 2)
-                $sheet->getStyle('A2:V2')->applyFromArray([
+                $sheet->getStyle('A2:W2')->applyFromArray([
                     'font' => [
                         'italic' => true,
                         'color'  => ['rgb' => '6B7280'],
@@ -193,7 +198,7 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 // Data row styling (3+)
                 $highestRow = $sheet->getHighestRow();
                 if ($highestRow >= 3) {
-                    $sheet->getStyle("A3:V{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A3:W{$highestRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => 'thin',
@@ -205,13 +210,13 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                         ],
                     ]);
 
-                    // Format amount_of_rkap
-                    $sheet->getStyle("J3:J{$highestRow}")
+                    // Format amount_of_rkap and yearly
+                    $sheet->getStyle("J3:K{$highestRow}")
                         ->getNumberFormat()
                         ->setFormatCode('#,##0');
 
                     // Format month columns
-                    $cols = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'];
+                    $cols = ['L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W'];
                     foreach ($cols as $col) {
                         $sheet->getStyle("{$col}3:{$col}{$highestRow}")
                             ->getNumberFormat()
@@ -234,9 +239,10 @@ class RkapProjectionTemplateExport implements FromArray, WithEvents, ShouldAutoS
                 $sheet->getColumnDimension('H')->setWidth(30); // coa_desc
                 $sheet->getColumnDimension('I')->setWidth(30); // budget_item_desc
                 $sheet->getColumnDimension('J')->setWidth(18); // amount_of_rkap
+                $sheet->getColumnDimension('K')->setWidth(18); // yearly
 
                 // Month columns width
-                $cols = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'];
+                $cols = ['L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W'];
                 foreach ($cols as $col) {
                     $sheet->getColumnDimension($col)->setWidth(12);
                 }
