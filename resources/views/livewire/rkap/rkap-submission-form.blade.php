@@ -683,7 +683,7 @@
                                 style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;">
                                 <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
                                 Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
-                                <span class="custom-tooltip-content">
+                                <span class="custom-tooltip-content tooltip-align-right">
                                   @if ($prevCoaData)
                                     <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP
                                       Periode Sebelumnya ({{ $prevPeriod }})</div>
@@ -935,7 +935,7 @@
                     x-transition:leave="transition ease-in duration-150"
                     x-transition:leave-start="opacity-100 translate-y-0"
                     x-transition:leave-end="opacity-0 translate-y-4" class="bg-white rounded-3 shadow-lg"
-                    style="width: 740px; max-width: 96vw; max-height: calc(100vh - 3rem); display: flex; flex-direction: column;"
+                    style="width: 900px; max-width: 96vw; max-height: calc(100vh - 3rem); display: flex; flex-direction: column;"
                     @click.stop>
                     {{-- Modal Header --}}
                     <div
@@ -1081,12 +1081,13 @@
                       {{-- 4-column summary table --}}
                       @if (!empty($allMonths))
                         <div class="border rounded-2 table-responsive">
-                          <table class="table table-sm table-bordered mb-0" style="min-width: 600px;">
+                          <table class="table table-sm table-bordered mb-0" style="min-width: 750px;">
                             <thead class="table-primary">
                               <tr>
                                 <th class="text-center" style="width:90px;">Bulan</th>
                                 <th class="text-end">Distribusi Beban (Rp)</th>
                                 <th class="text-end">Rencana Kas Keluar (Rp)</th>
+                                <th class="text-end">Selisih (Rp)</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1096,9 +1097,14 @@
                                   $isCashOutMonth = in_array($monthNum, $selectedCashOutMonths);
                                 @endphp
                                 @if ($isDistribMonth || $isCashOutMonth)
+                                  @php
+                                    $distValue = $isDistribMonth ? (float) ($bi['monthly_distribution'][$monthNum] ?? 0) : 0;
+                                    $cashOutValue = $isCashOutMonth ? (float) ($bi['cash_out_distribution'][$monthNum] ?? 0) : 0;
+                                    $selisih = $distValue - $cashOutValue;
+                                  @endphp
                                   <tr>
-                                    <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
-                                    <td class="text-end">
+                                    <td class="text-center fw-semibold small align-middle">{{ $monthLabel }}</td>
+                                    <td class="text-end align-middle">
                                       @if ($isDistribMonth)
                                         <div class="input-group input-group-sm justify-content-end">
                                           <span class="input-group-text"
@@ -1112,7 +1118,7 @@
                                         <span class="text-muted small">—</span>
                                       @endif
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end align-middle">
                                       @if ($isCashOutMonth)
                                         <div class="input-group input-group-sm justify-content-end">
                                           <span class="input-group-text"
@@ -1126,12 +1132,24 @@
                                         <span class="text-muted small">—</span>
                                       @endif
                                     </td>
-
+                                    <td class="text-end align-middle fw-semibold">
+                                      @if ($selisih < 0)
+                                        <span class="text-danger">-Rp {{ number_format(abs($selisih), 0, ',', '.') }}</span>
+                                      @elseif ($selisih > 0)
+                                        <span class="text-success">Rp {{ number_format($selisih, 0, ',', '.') }}</span>
+                                      @else
+                                        <span class="text-muted">Rp 0</span>
+                                      @endif
+                                    </td>
                                   </tr>
                                 @endif
                               @endforeach
                             </tbody>
                             <tfoot class="table-light">
+                              @php
+                                $totalSelisih = $monthlyAllocated - $cashOutAllocated;
+                                $sisaSelisih = $monthlyRemainder - $cashOutRemainder;
+                              @endphp
                               <tr>
                                 <th class="text-center small">Total</th>
                                 <th
@@ -1141,6 +1159,9 @@
                                 <th
                                   class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($cashOutAllocated, 0, ',', '.') }}
+                                </th>
+                                <th class="text-end small {{ $totalSelisih < 0 ? 'text-danger' : ($totalSelisih > 0 ? 'text-success' : 'text-muted') }}">
+                                  {{ $totalSelisih < 0 ? '-Rp ' . number_format(abs($totalSelisih), 0, ',', '.') : 'Rp ' . number_format($totalSelisih, 0, ',', '.') }}
                                 </th>
                               </tr>
                               <tr>
@@ -1152,6 +1173,9 @@
                                 <th
                                   class="text-end small {{ abs($cashOutRemainder) < 0.01 ? 'text-success' : ($cashOutRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                                   Rp {{ number_format($cashOutRemainder, 0, ',', '.') }}
+                                </th>
+                                <th class="text-end small {{ $sisaSelisih < 0 ? 'text-danger' : ($sisaSelisih > 0 ? 'text-success' : 'text-muted') }}">
+                                  {{ $sisaSelisih < 0 ? '-Rp ' . number_format(abs($sisaSelisih), 0, ',', '.') : 'Rp ' . number_format($sisaSelisih, 0, ',', '.') }}
                                 </th>
                               </tr>
                             </tfoot>
