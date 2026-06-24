@@ -1085,7 +1085,10 @@
                             <thead class="table-primary">
                               <tr>
                                 <th class="text-center" style="width:90px;">Bulan</th>
-                                <th class="text-end">Distribusi Beban (Rp)</th>
+                                <th class="text-end">
+                                  Distribusi Beban (Rp)
+                                  <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['coa_group_name'] ?: '-' }})</div>
+                                </th>
                                 <th class="text-end">Rencana Kas Keluar (Rp)</th>
                                 <th class="text-end">Selisih (Rp)</th>
                               </tr>
