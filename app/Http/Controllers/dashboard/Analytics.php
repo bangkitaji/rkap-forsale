@@ -864,4 +864,58 @@ class Analytics extends Controller
       'comparisonData'
     ));
   }
+
+  public function coaGroupDetail(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $coaGroupId = (int) $request->query('coa_group_id');
+    $periodId   = (int) $request->query('period_id');
+
+    if (!$coaGroupId || !$periodId) {
+      return response()->json(['data' => []]);
+    }
+
+    // Resolve bureau scoping same as index()
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')
+        ->where('department_id', $user->department_id)
+        ->pluck('id')
+        ->toArray();
+    }
+
+    // Fetch budget item rows for this coa_group in the given period
+    $rows = DB::table('rkap_budget_items')
+      ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+      ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+      ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+      ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+      ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      ->where('coa_groups.id', $coaGroupId)
+      ->where('rkap_submissions.rkap_period_id', $periodId)
+      ->where('rkap_submissions.status', 'approved')
+      ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+      ->whereNull('coas.deleted_at')
+      ->selectRaw('
+        coas.code as coa_code,
+        coas.title as coa_title,
+        rkap_work_plans.program_code,
+        rkap_work_plans.program_name,
+        SUM(rkap_budget_items.total_price) as budget,
+        SUM(COALESCE(rl.realization_total, 0)) as realization,
+        SUM(rkap_budget_items.projection) as projection
+      ')
+      ->groupBy('coas.code', 'coas.title', 'rkap_work_plans.program_code', 'rkap_work_plans.program_name')
+      ->orderBy('coas.code')
+      ->orderBy('rkap_work_plans.program_code')
+      ->get();
+
+    return response()->json(['data' => $rows]);
+  }
 }

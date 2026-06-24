@@ -372,7 +372,14 @@
                                     <tr>
                                         <td class="ps-4">
                                             <i class="bx bxs-circle text-{{ $item['color'] }} me-2" style="font-size: 8px; vertical-align: middle;"></i>
-                                            {{ $item['label'] }}
+                                            <a href="#"
+                                               class="coa-group-link text-decoration-none fw-medium"
+                                               data-coa-group-id="{{ $item['id'] }}"
+                                               data-coa-group-name="{{ $item['label'] }}"
+                                               data-period-id="{{ $activePeriod->id }}">
+                                               {{ $item['label'] }}
+                                               <i class="bx bx-info-circle ms-1 text-muted" style="font-size: 11px;"></i>
+                                            </a>
                                         </td>
                                         <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
                                         <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
@@ -588,6 +595,49 @@
         </div>
     </div>
 @endif
+
+{{-- Modal: COA Group Detail --}}
+<div class="modal fade" id="coaGroupDetailModal" tabindex="-1" aria-labelledby="coaGroupDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="coaGroupDetailModalLabel">
+                    <i class="bx bx-detail me-2"></i>
+                    <span id="coaGroupDetailTitle">Detail COA</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="coaGroupDetailLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-2 mb-0">Memuat data...</p>
+                </div>
+                <div id="coaGroupDetailError" class="alert alert-warning m-3 d-none">
+                    <i class="bx bx-error-circle me-1"></i> Gagal memuat data. Silakan coba lagi.
+                </div>
+                <div id="coaGroupDetailTableWrap" class="d-none">
+                    <table class="table table-hover table-sm table-bordered mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3" style="min-width:200px;">COA</th>
+                                <th style="min-width:220px;">Kegiatan</th>
+                                <th class="text-end" style="min-width:140px;">Anggaran</th>
+                                <th class="text-end" style="min-width:140px;">Realisasi YTD</th>
+                                <th class="text-end" style="min-width:140px;">Proyeksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coaGroupDetailTbody"></tbody>
+                        <tfoot id="coaGroupDetailTfoot" class="table-secondary fw-semibold"></tfoot>
+                    </table>
+                </div>
+                <p id="coaGroupDetailEmpty" class="text-center text-muted py-4 d-none">Tidak ada data untuk ditampilkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('page-script')
@@ -930,6 +980,93 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 300);
 
     // Note: COA Expense Category Allocation donut chart replaced by Profit & Loss Summary card widget.
+
+    // 5. COA Group Detail Modal
+    const coaDetailModal = new bootstrap.Modal(document.getElementById('coaGroupDetailModal'));
+    const detailTitle    = document.getElementById('coaGroupDetailTitle');
+    const detailLoading  = document.getElementById('coaGroupDetailLoading');
+    const detailError    = document.getElementById('coaGroupDetailError');
+    const detailWrap     = document.getElementById('coaGroupDetailTableWrap');
+    const detailTbody    = document.getElementById('coaGroupDetailTbody');
+    const detailTfoot    = document.getElementById('coaGroupDetailTfoot');
+    const detailEmpty    = document.getElementById('coaGroupDetailEmpty');
+
+    function formatRp(val) {
+        const num = parseFloat(val) || 0;
+        return 'Rp ' + num.toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+
+    document.querySelectorAll('.coa-group-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cgId     = this.dataset.coaGroupId;
+            const cgName   = this.dataset.coaGroupName;
+            const periodId = this.dataset.periodId;
+
+            detailTitle.textContent = cgName;
+            detailLoading.classList.remove('d-none');
+            detailError.classList.add('d-none');
+            detailWrap.classList.add('d-none');
+            detailEmpty.classList.add('d-none');
+            detailTbody.innerHTML = '';
+            detailTfoot.innerHTML = '';
+
+            coaDetailModal.show();
+
+            fetch(`/analytics/coa-group-detail?coa_group_id=${cgId}&period_id=${periodId}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
+            .then(function(json) {
+                detailLoading.classList.add('d-none');
+                const rows = json.data || [];
+
+                if (rows.length === 0) {
+                    detailEmpty.classList.remove('d-none');
+                    return;
+                }
+
+                let totalBudget = 0, totalReal = 0, totalProj = 0;
+                let tbodyHtml = '';
+
+                rows.forEach(function(row) {
+                    const b = parseFloat(row.budget) || 0;
+                    const r = parseFloat(row.realization) || 0;
+                    const p = parseFloat(row.projection) || 0;
+                    totalBudget += b; totalReal += r; totalProj += p;
+
+                    tbodyHtml += `
+                        <tr>
+                            <td class="ps-3">
+                                <div class="font-monospace fw-semibold text-primary" style="font-size:0.8rem;">${row.coa_code}</div>
+                                <div class="text-muted" style="font-size:0.85rem;">${row.coa_title || '-'}</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold" style="font-size:0.8rem;">${row.program_code || '-'}</div>
+                                <div class="text-muted" style="font-size:0.85rem;">${row.program_name || '-'}</div>
+                            </td>
+                            <td class="text-end font-monospace">${formatRp(b)}</td>
+                            <td class="text-end font-monospace text-success">${formatRp(r)}</td>
+                            <td class="text-end font-monospace text-warning">${formatRp(p)}</td>
+                        </tr>`;
+                });
+
+                detailTbody.innerHTML = tbodyHtml;
+                detailTfoot.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="ps-3">TOTAL</td>
+                        <td class="text-end font-monospace">${formatRp(totalBudget)}</td>
+                        <td class="text-end font-monospace text-success">${formatRp(totalReal)}</td>
+                        <td class="text-end font-monospace text-warning">${formatRp(totalProj)}</td>
+                    </tr>`;
+                detailWrap.classList.remove('d-none');
+            })
+            .catch(function() {
+                detailLoading.classList.add('d-none');
+                detailError.classList.remove('d-none');
+            });
+        });
+    });
 });
 </script>
 @endif
