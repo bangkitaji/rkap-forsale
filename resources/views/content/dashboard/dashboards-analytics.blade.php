@@ -1136,6 +1136,7 @@
                                 <div class="text-muted" style="font-size:0.72rem;">${row.coa_title || '-'}</div>
                             </td>
                             <td>
+                                <div class="text-muted fw-semibold mb-1" style="font-size:0.68rem; letter-spacing: 0.5px;">${row.directorate_code || '-'} - ${row.department_code || '-'} - ${row.bureau_code || '-'}</div>
                                 <div class="font-monospace fw-semibold text-primary" style="font-size:0.72rem;">${row.program_code || '-'}</div>
                                 <div class="text-muted" style="font-size:0.72rem;">${row.program_name || '-'}</div>
                             </td>

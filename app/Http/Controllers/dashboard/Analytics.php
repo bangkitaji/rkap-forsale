@@ -896,6 +896,9 @@ class Analytics extends Controller
       ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
       ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
       ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+      ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+      ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+      ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
       ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
       ->where('coa_groups.id', $coaGroupId)
       ->where('rkap_submissions.rkap_period_id', $periodId)
@@ -907,11 +910,22 @@ class Analytics extends Controller
         coas.title as coa_title,
         rkap_work_plans.program_code,
         rkap_work_plans.program_name,
+        directorates.code as directorate_code,
+        departments.code as department_code,
+        bureaus.code as bureau_code,
         SUM(rkap_budget_items.total_price) as budget,
         SUM(COALESCE(rl.realization_total, 0)) as realization,
         SUM(rkap_budget_items.projection) as projection
       ')
-      ->groupBy('coas.code', 'coas.title', 'rkap_work_plans.program_code', 'rkap_work_plans.program_name')
+      ->groupBy(
+        'coas.code',
+        'coas.title',
+        'rkap_work_plans.program_code',
+        'rkap_work_plans.program_name',
+        'directorates.code',
+        'departments.code',
+        'bureaus.code'
+      )
       ->orderBy('coas.code')
       ->orderBy('rkap_work_plans.program_code')
       ->get();
