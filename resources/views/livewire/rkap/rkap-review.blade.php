@@ -813,12 +813,12 @@
                                           <div class="card bg-lighter shadow-none border mb-4">
                                             <div class="card-body py-3 px-4">
                                               <div class="row g-3 small">
-                                                <div class="col-md-3 border-end">
+                                                <div class="col-md-auto border-end text-nowrap">
                                                   <span class="text-muted d-block mb-1">Kode Akun</span>
                                                   <span
                                                     class="fw-semibold text-dark fs-6">{{ $bi->account_code ?? '-' }}</span>
                                                 </div>
-                                                <div class="col-md-5 border-end">
+                                                <div class="col border-end">
                                                   <span class="text-muted d-block mb-1">Deskripsi / Detail
                                                     Belanja</span>
                                                   <span
@@ -827,7 +827,7 @@
                                                     <div class="text-muted mt-1 small">Ket: {{ $bi->remarks }}</div>
                                                   @endif
                                                 </div>
-                                                <div class="col-md-2 border-end">
+                                                <div class="col-md-auto border-end text-nowrap">
                                                   <span class="text-muted d-block mb-1">Volume</span>
                                                   <span class="fw-semibold text-dark fs-6">
                                                     @if ($bi->unit_2)
@@ -838,7 +838,7 @@
                                                     @endif
                                                   </span>
                                                 </div>
-                                                <div class="col-md-2">
+                                                <div class="col-md-auto text-nowrap">
                                                   <span class="text-muted d-block mb-1">Total Anggaran</span>
                                                   <span class="fw-bold text-primary fs-6">Rp
                                                     {{ number_format($bi->total_price, 0, ',', '.') }}</span>
