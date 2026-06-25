@@ -14,83 +14,107 @@
     {
       "url": "rkap/dashboard-rkap",
       "icon": "menu-icon icon-base bx bx-bar-chart-alt-2",
-      "name": "Dashboard RKAP",
+      "name": "Dashboard",
       "slug": "dashboard-rkap",
       "permission": "rkap.show"
     },
     {
-      "url": "rkap/submissions",
-      "icon": "menu-icon icon-base bx bx-file",
-      "name": "Pengajuan RKAP",
-      "slug": "rkap-submissions",
-      "permission": "rkap.show"
-    },
-    {
-      "url": "rkap/realization-upload",
-      "icon": "menu-icon icon-base bx bx-trending-up",
-      "name": "Realisasi",
-      "slug": "rkap-realization-upload",
-      "permission": "rkap.realization.upload"
-    },
-    {
-      "url": "rkap/projections",
-      "icon": "menu-icon icon-base bx bx-calculator",
-      "name": "Proyeksi",
-      "slug": "rkap-projections",
-      "permission": "rkap.projection.view"
-    },
-    {
-      "url": "rkap/compilation",
-      "icon": "menu-icon icon-base bx bx-layer",
-      "name": "Kompilasi RKAP",
-      "slug": "rkap-submissions-compilation",
-      "permission": "rkap.compilation.dept"
+      "name": "Proses RKAP",
+      "icon": "menu-icon icon-base bx bx-git-merge",
+      "slug": "rkap.process",
+      "permission": "rkap.show",
+      "submenu": [
+        {
+          "url": "rkap/requests",
+          "icon": "menu-icon icon-base bx bx-git-pull-request",
+          "name": "Usulan Program & Kegiatan",
+          "slug": "rkap-requests",
+          "permission": "rkap.show"
+        },
+        {
+          "url": "rkap/submissions",
+          "icon": "menu-icon icon-base bx bx-file",
+          "name": "Pengajuan",
+          "slug": "rkap-submissions",
+          "permission": "rkap.show"
+        },
+        {
+          "url": "rkap/compilation",
+          "icon": "menu-icon icon-base bx bx-layer",
+          "name": "Kompilasi",
+          "slug": "rkap-submissions-compilation",
+          "permission": "rkap.compilation.dept"
+        },
+        {
+          "url": "rkap/projections",
+          "icon": "menu-icon icon-base bx bx-calculator",
+          "name": "Proyeksi",
+          "slug": "rkap-projections",
+          "permission": "rkap.projection.view"
+        },
+        {
+          "url": "rkap/realization-upload",
+          "icon": "menu-icon icon-base bx bx-trending-up",
+          "name": "Realisasi",
+          "slug": "rkap-realization-upload",
+          "permission": "rkap.realization.upload"
+        }
+      ]
     },
     {
       "menuHeader": "Master Data",
       "permission": "masterdata.show"
     },
     {
-      "name": "Work Plan",
-      "icon": "menu-icon icon-base bx bx-task",
-      "url": "master-data/work-plans",
-      "slug": "master-data.work-plans",
-      "permission": "masterdata.workplan.manage"
-    },
-    {
-      "name": "Activity",
-      "icon": "menu-icon icon-base bx bx-list-check",
-      "url": "master-data/activities",
-      "slug": "master-data.activities",
-      "permission": "masterdata.activity.manage"
+      "name": "Rencana Kerja & Aktivitas",
+      "icon": "menu-icon icon-base bx bx-briefcase",
+      "slug": "master-data.workplan-activities",
+      "permission": "masterdata.show",
+      "submenu": [
+        {
+          "name": "Work Plan",
+          "icon": "menu-icon icon-base bx bx-task",
+          "url": "master-data/work-plans",
+          "slug": "master-data.work-plans",
+          "permission": "masterdata.workplan.manage"
+        },
+        {
+          "name": "Activity",
+          "icon": "menu-icon icon-base bx bx-list-check",
+          "url": "master-data/activities",
+          "slug": "master-data.activities",
+          "permission": "masterdata.activity.manage"
+        }
+      ]
     },
     {
       "name": "COA",
       "icon": "menu-icon icon-base bx bx-spreadsheet",
-      "url": "master-data/coas",
-      "slug": "master-data.coas",
-      "permission": "masterdata.coa.manage"
-    },
-    {
-      "name": "COA Group",
-      "icon": "menu-icon icon-base bx bx-group",
-      "url": "master-data/coa-groups",
-      "slug": "master-data.coa-groups",
-      "permission": "masterdata.coagroup.manage"
-    },
-    {
-      "name": "Activity ↔ COA",
-      "icon": "menu-icon icon-base bx bx-link",
-      "url": "master-data/activity-coa-mapping",
-      "slug": "master-data.activity-coa-mapping",
-      "permission": "masterdata.activity.manage"
-    },
-    {
-      "url": "rkap/requests",
-      "icon": "menu-icon icon-base bx bx-git-pull-request",
-      "name": "Usulan Program & Kegiatan",
-      "slug": "rkap-requests",
-      "permission": "rkap.show"
+      "slug": "master-data.coa",
+      "permission": "masterdata.coa.manage",
+      "submenu": [
+        {
+          "url": "master-data/coas",
+          "name": "COA",
+          "icon": "menu-icon icon-base bx bx-spreadsheet",
+          "slug": "master-data.coa.coas",
+          "permission": "masterdata.coa.manage"
+        },
+        {
+          "url": "master-data/coa-groups",
+          "name": "COA Group",
+          "icon": "menu-icon icon-base bx bx-group",
+          "slug": "master-data.coa.coa-groups",
+          "permission": "masterdata.coagroup.manage"
+        },
+        {
+          "name": "Activity ↔ COA",
+          "icon": "menu-icon icon-base bx bx-link",
+          "url": "master-data/activity-coa-mapping",
+          "slug": "master-data.coa.activity-coa-mapping",
+          "permission": "masterdata.activity.manage"
+        }
+      ]
     },
     {
       "menuHeader": "Settings",
@@ -121,32 +145,40 @@
       "permission": "settings.organization.show"
     },
     {
-      "url": "settings/report-groups",
-      "icon": "menu-icon icon-base bx bx-receipt",
-      "name": "Report Group",
-      "slug": "settings-report-groups",
-      "permission": "settings.reportgroup.manage"
-    },
-    {
-      "url": "settings/satuans",
-      "icon": "menu-icon icon-base bx bx-coin",
-      "name": "Satuan",
-      "slug": "settings-satuans",
-      "permission": "settings.satuan.manage"
-    },
-    {
-      "url": "rkap/periods",
-      "icon": "menu-icon icon-base bx bx-calendar",
-      "name": "Periode RKAP",
-      "slug": "rkap-periods",
-      "permission": "rkap.manage.period"
-    },
-    {
-      "url": "settings/data-migration-upload",
-      "icon": "menu-icon icon-base bx bx-upload",
-      "name": "Upload Data Migration",
-      "slug": "settings-data-migration-upload",
-      "permission": "settings.usermanagement.show"
+      "name": "Sistem & Parameter",
+      "icon": "menu-icon icon-base bx bx-cog",
+      "slug": "settings-system",
+      "permission": "settings.show",
+      "submenu": [
+        {
+          "url": "rkap/periods",
+          "icon": "menu-icon icon-base bx bx-calendar",
+          "name": "Periode RKAP",
+          "slug": "rkap-periods",
+          "permission": "rkap.manage.period"
+        },
+        {
+          "url": "settings/report-groups",
+          "icon": "menu-icon icon-base bx bx-receipt",
+          "name": "Report Group",
+          "slug": "settings-report-groups",
+          "permission": "settings.reportgroup.manage"
+        },
+        {
+          "url": "settings/satuans",
+          "icon": "menu-icon icon-base bx bx-coin",
+          "name": "Satuan",
+          "slug": "settings-satuans",
+          "permission": "settings.satuan.manage"
+        },
+        {
+          "url": "settings/data-migration-upload",
+          "icon": "menu-icon icon-base bx bx-upload",
+          "name": "Upload Data Migration",
+          "slug": "settings-data-migration-upload",
+          "permission": "settings.usermanagement.show"
+        }
+      ]
     }
   ]
 }

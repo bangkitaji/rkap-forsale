@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Route;
   @if (isset($menu))
     @foreach ($menu as $submenu)
 
+    {{-- permission guard --}}
+    @if (isset($submenu->permission))
+      @cannot($submenu->permission)
+        @continue
+      @endcannot
+    @endif
+
     {{-- active menu method --}}
     @php
       $activeClass = null;
