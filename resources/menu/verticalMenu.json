@@ -1,11 +1,29 @@
 {
   "menu": [
     {
-      "url": "/analytics",
       "name": "Analytics",
       "icon": "menu-icon icon-base bx bx-home-smile",
-      "slug": "dashboard-analytics",
-      "permission": "dashboard.show"
+      "slug": [
+        "dashboard-analytics",
+        "analytics-report"
+      ],
+      "permission": "dashboard.show",
+      "submenu": [
+        {
+          "url": "analytics",
+          "icon": "menu-icon icon-base bx bx-chart",
+          "name": "Dashboard",
+          "slug": "dashboard-analytics",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/report",
+          "icon": "menu-icon icon-base bx bx-file",
+          "name": "Laporan",
+          "slug": "analytics-report",
+          "permission": "dashboard.show"
+        }
+      ]
     },
     {
       "menuHeader": "RKAP",

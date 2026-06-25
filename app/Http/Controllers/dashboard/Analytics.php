@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class Analytics extends Controller
 {
-  public function index(Request $request)
+  private function getAnalyticsData(Request $request): array
   {
     $user = Auth::user();
     if (!$user) {
@@ -844,7 +844,7 @@ class Analytics extends Controller
       ];
     }
 
-    return view('content.dashboard.dashboards-analytics', compact(
+    return compact(
       'activePeriod',
       'finalizedPeriods',
       'stats',
@@ -862,7 +862,19 @@ class Analytics extends Controller
       'plSummary',
       'unmappedGroup',
       'comparisonData'
-    ));
+    );
+  }
+
+  public function index(Request $request)
+  {
+    $data = $this->getAnalyticsData($request);
+    return view('content.dashboard.dashboards-analytics', $data);
+  }
+
+  public function report(Request $request)
+  {
+    $data = $this->getAnalyticsData($request);
+    return view('content.dashboard.analytics-report', $data);
   }
 
   public function coaGroupDetail(Request $request)

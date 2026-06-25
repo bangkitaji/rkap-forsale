@@ -284,7 +284,7 @@ class RkapDashboardTest extends TestCase
             ['coa_group_id' => $cgDirectCost->id, 'title' => 'Energi Traksi']
         );
 
-        $response = $this->actingAs($this->admin)->get('/analytics');
+        $response = $this->actingAs($this->admin)->get('/analytics/report');
 
         $response->assertStatus(200);
         $response->assertViewHas('plGroups');
