@@ -1482,113 +1482,83 @@
                                                 </div>
                                               </div>
                                             </div>
-                                            <!-- Side-by-side Tables -->
-                                            <div class="row g-4">
-                                              <!-- Left Column: Distribusi Bulanan -->
-                                              <div class="col-md-6">
-                                                <div class="border rounded p-3 h-100">
-                                                  <h6 class="fw-semibold mb-3 text-primary d-flex align-items-center">
-                                                    <i class="bx bx-calendar me-2"></i>Distribusi Bulanan
-                                                  </h6>
-                                                  @php
-                                                    $activeMonthlies = $bi['monthlies']->filter(
-                                                        fn($m) => (float) $m->amount > 0,
-                                                    );
-                                                  @endphp
-                                                  @if ($activeMonthlies->isEmpty())
-                                                    <div class="text-center text-muted py-4">
-                                                      <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                                      <span class="small">Tidak ada data distribusi bulanan</span>
-                                                    </div>
-                                                  @else
-                                                    <div class="table-responsive">
-                                                      <table class="table table-sm table-hover align-middle mb-0">
-                                                        <thead>
-                                                          <tr>
-                                                            <th>Bulan</th>
-                                                            <th class="text-end">Jumlah</th>
-                                                            <th class="text-center" style="width: 25%">Porsi</th>
-                                                          </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                          @foreach ($activeMonthlies as $monthlyRecord)
-                                                            @php
-                                                              $percentage =
-                                                                  $bi['total_price'] > 0
-                                                                      ? ($monthlyRecord->amount / $bi['total_price']) *
-                                                                          100
-                                                                      : 0;
-                                                            @endphp
-                                                            <tr class="fw-medium text-primary">
-                                                              <td>{{ $monthNames[$monthlyRecord->month] }}</td>
-                                                              <td class="text-end">Rp
-                                                                {{ number_format($monthlyRecord->amount, 0, ',', '.') }}
-                                                              </td>
-                                                              <td class="text-center">
-                                                                <span
-                                                                  class="badge bg-label-primary">{{ number_format($percentage, 0) }}%</span>
-                                                              </td>
-                                                            </tr>
-                                                          @endforeach
-                                                        </tbody>
-                                                      </table>
-                                                    </div>
-                                                  @endif
-                                                </div>
+                                            @php
+                                              $monthliesByMonth = $bi['monthlies']->keyBy('month');
+                                              $cashOutsByMonth = $bi['cashOuts']->keyBy('month');
+                                              $hasAnyValue = false;
+                                              foreach (range(1, 12) as $mNum) {
+                                                  if (
+                                                      (isset($monthliesByMonth[$mNum]) && (float) $monthliesByMonth[$mNum]->amount > 0) ||
+                                                      (isset($cashOutsByMonth[$mNum]) && (float) $cashOutsByMonth[$mNum]->amount > 0)
+                                                  ) {
+                                                      $hasAnyValue = true;
+                                                      break;
+                                                  }
+                                              }
+                                              $coa = $bi['model']?->coa ?? \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->where('code', $bi['account_code'])->first();
+                                            @endphp
+
+                                            @if (!$hasAnyValue)
+                                              <div class="text-center text-muted py-4">
+                                                <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
+                                                <span class="small">Tidak ada data alokasi anggaran</span>
                                               </div>
-                                              <!-- Right Column: Rencana Kas Keluar -->
-                                              <div class="col-md-6">
-                                                <div class="border rounded p-3 h-100">
-                                                  <h6 class="fw-semibold mb-3 text-success d-flex align-items-center">
-                                                    <i class="bx bx-wallet me-2"></i>Rencana Kas Keluar
-                                                  </h6>
-                                                  @php
-                                                    $activeCashOuts = $bi['cashOuts']->filter(
-                                                        fn($c) => (float) $c->amount > 0,
-                                                    );
-                                                  @endphp
-                                                  @if ($activeCashOuts->isEmpty())
-                                                    <div class="text-center text-muted py-4">
-                                                      <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                                      <span class="small">Tidak ada data rencana kas keluar</span>
-                                                    </div>
-                                                  @else
-                                                    <div class="table-responsive">
-                                                      <table class="table table-sm table-hover align-middle mb-0">
-                                                        <thead>
-                                                          <tr>
-                                                            <th>Bulan</th>
-                                                            <th class="text-end">Jumlah</th>
-                                                            <th class="text-center" style="width: 25%">Porsi</th>
-                                                          </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                          @foreach ($activeCashOuts as $cashOutRecord)
-                                                            @php
-                                                              $percentage =
-                                                                  $bi['total_price'] > 0
-                                                                      ? ($cashOutRecord->amount / $bi['total_price']) *
-                                                                          100
-                                                                      : 0;
-                                                            @endphp
-                                                            <tr class="fw-medium text-success">
-                                                              <td>{{ $monthNames[$cashOutRecord->month] }}</td>
-                                                              <td class="text-end">Rp
-                                                                {{ number_format($cashOutRecord->amount, 0, ',', '.') }}
-                                                              </td>
-                                                              <td class="text-center">
-                                                                <span
-                                                                  class="badge bg-label-success">{{ number_format($percentage, 0) }}%</span>
-                                                              </td>
-                                                            </tr>
-                                                          @endforeach
-                                                        </tbody>
-                                                      </table>
-                                                    </div>
-                                                  @endif
-                                                </div>
+                                            @else
+                                              <div class="border rounded-2 table-responsive mb-2">
+                                                <table class="table table-sm table-bordered align-middle mb-0" style="min-width: 750px;">
+                                                  <thead class="table-primary">
+                                                    <tr>
+                                                      <th class="text-center" style="width: 90px;">Bulan</th>
+                                                      <th class="text-end">
+                                                        Distribusi Beban (Rp)
+                                                        <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->coaGroup?->name ?: '-' }})</div>
+                                                      </th>
+                                                      <th class="text-end">
+                                                        Rencana Kas Keluar (Rp)
+                                                        <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->cashflowGroup?->name ?: '-' }})</div>
+                                                      </th>
+                                                      <th class="text-end">
+                                                        Selisih (Rp)
+                                                        <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
+                                                      </th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    @foreach ($monthNames as $monthNum => $monthLabel)
+                                                      @php
+                                                        $distValue = isset($monthliesByMonth[$monthNum]) ? (float) $monthliesByMonth[$monthNum]->amount : 0;
+                                                        $cashOutValue = isset($cashOutsByMonth[$monthNum]) ? (float) $cashOutsByMonth[$monthNum]->amount : 0;
+                                                      @endphp
+                                                      @if ($distValue > 0 || $cashOutValue > 0)
+                                                        @php
+                                                          $selisih = $distValue - $cashOutValue;
+                                                        @endphp
+                                                        <tr>
+                                                          <td class="text-center fw-semibold small">{{ $monthLabel }}</td>
+                                                          <td class="text-end font-monospace">
+                                                            @if ($distValue > 0)
+                                                              Rp {{ number_format($distValue, 0, ',', '.') }}
+                                                            @else
+                                                              <span class="text-muted small">-</span>
+                                                            @endif
+                                                          </td>
+                                                          <td class="text-end font-monospace">
+                                                            @if ($cashOutValue > 0)
+                                                              Rp {{ number_format($cashOutValue, 0, ',', '.') }}
+                                                            @else
+                                                              <span class="text-muted small">-</span>
+                                                            @endif
+                                                          </td>
+                                                          <td class="text-end font-monospace fw-semibold {{ $selisih == 0 ? 'text-success' : 'text-danger' }}">
+                                                            Rp {{ number_format($selisih, 0, ',', '.') }}
+                                                          </td>
+                                                        </tr>
+                                                      @endif
+                                                    @endforeach
+                                                  </tbody>
+                                                </table>
                                               </div>
-                                            </div>
+                                            @endif
                                           </div>
                                           <div class="modal-footer">
                                             <button type="button" class="btn btn-outline-secondary"

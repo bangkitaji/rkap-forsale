@@ -27,6 +27,9 @@ class RkapApprovalReview extends Component
             'creator',
             'workPlans.budgetItems.monthlies',
             'workPlans.budgetItems.cashOuts',
+            'workPlans.budgetItems.coa.coaGroup',
+            'workPlans.budgetItems.coa.cashflowGroup',
+            'workPlans.budgetItems.coa.differenceGroup',
             'versions.creator',
             'approvals.user',
             'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
@@ -64,7 +67,7 @@ class RkapApprovalReview extends Component
                 $wp->update(['revision_notes' => null]);
             }
         }
-        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts']);
+        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup']);
     }
 
     public function updateActivityRevisionNotes(int $workPlanId, string $notes): void
@@ -118,7 +121,7 @@ class RkapApprovalReview extends Component
         }
 
         $this->reviewComments = '';
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', 'RKAP berhasil disetujui.');
     }
 
@@ -178,7 +181,7 @@ class RkapApprovalReview extends Component
 
         $this->revisionReason = '';
         $this->showRevisionForm = false;
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', 'RKAP berhasil ditolak dan dikembalikan untuk revisi.');
     }
 

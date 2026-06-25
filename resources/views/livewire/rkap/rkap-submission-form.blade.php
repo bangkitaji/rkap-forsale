@@ -1089,8 +1089,14 @@
                                   Distribusi Beban (Rp)
                                   <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['coa_group_name'] ?: '-' }})</div>
                                 </th>
-                                <th class="text-end">Rencana Kas Keluar (Rp)</th>
-                                <th class="text-end">Selisih (Rp)</th>
+                                <th class="text-end">
+                                  Rencana Kas Keluar (Rp)
+                                  <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['cashflow_group_name'] ?: '-' }})</div>
+                                </th>
+                                <th class="text-end">
+                                  Selisih (Rp)
+                                  <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['difference_group_name'] ?: '-' }})</div>
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
