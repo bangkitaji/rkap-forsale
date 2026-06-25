@@ -12,7 +12,7 @@ class Coa extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['code', 'title', 'description', 'coa_group_id', 'coa_category_id'];
+    protected $fillable = ['code', 'title', 'description', 'coa_group_id', 'coa_category_id', 'cashflow_group_id'];
 
     public function coaGroup(): BelongsTo
     {
@@ -25,6 +25,11 @@ class Coa extends Model
     public function coaCategory(): BelongsTo
     {
         return $this->belongsTo(CoaCategory::class, 'coa_category_id');
+    }
+
+    public function cashflowGroup(): BelongsTo
+    {
+        return $this->belongsTo(CashflowGroup::class, 'cashflow_group_id');
     }
 
     public function activities(): BelongsToMany

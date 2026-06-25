@@ -48,6 +48,10 @@ Route::middleware(['auth'])->group(function () {
     ->name('settings-report-groups')
     ->middleware('permission:settings.reportgroup.manage');
 
+  Route::get('/settings/cashflow-groups', \App\Livewire\Settings\CashflowGroups::class)
+    ->name('settings-cashflow-groups')
+    ->middleware('permission:settings.cashflowgroup.manage');
+
   // RKAP routes
   Route::prefix('rkap')->group(function () {
     Route::get('/dashboard-rkap', \App\Livewire\Rkap\RkapDashboard::class)->name('dashboard-rkap');

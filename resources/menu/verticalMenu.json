@@ -170,6 +170,7 @@
       "slug": [
         "rkap-periods",
         "settings-report-groups",
+        "settings-cashflow-groups",
         "settings-satuans",
         "settings-data-migration-upload"
       ],
@@ -188,6 +189,13 @@
           "name": "Report Group",
           "slug": "settings-report-groups",
           "permission": "settings.reportgroup.manage"
+        },
+        {
+          "url": "settings/cashflow-groups",
+          "icon": "menu-icon icon-base bx bx-wallet",
+          "name": "Cashflow Group",
+          "slug": "settings-cashflow-groups",
+          "permission": "settings.cashflowgroup.manage"
         },
         {
           "url": "settings/satuans",
