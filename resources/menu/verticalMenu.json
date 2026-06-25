@@ -19,7 +19,7 @@
         {
           "url": "analytics/report",
           "icon": "menu-icon icon-base bx bx-file",
-          "name": "Laporan",
+          "name": "Laporan Laba Rugi",
           "slug": "analytics-report",
           "permission": "dashboard.show"
         }

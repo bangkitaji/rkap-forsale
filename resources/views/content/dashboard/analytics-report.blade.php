@@ -9,6 +9,47 @@
       background-color: #696cff !important;
       border-color: #696cff !important;
     }
+
+    /* Freeze pane style for P&L Table */
+    .table-pn-report th:first-child,
+    .table-pn-report td:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #fff;
+      z-index: 2;
+      border-right: 2px solid #e6e8eb;
+    }
+
+    .table-pn-report th:first-child {
+      z-index: 3;
+      background-color: #f5f5f9 !important;
+    }
+
+    /* Alternate row background styles */
+    .table-pn-report tbody tr:nth-child(even) td:first-child {
+      background-color: #fafafa;
+    }
+
+    .table-pn-report tbody tr:nth-child(odd) td:first-child {
+      background-color: #ffffff;
+    }
+
+    .table-pn-report tbody tr.table-light td:first-child,
+    .table-pn-report tbody tr.bg-lighter td:first-child {
+      background-color: #f5f5f9 !important;
+    }
+
+    .table-pn-report tbody tr.table-primary td:first-child {
+      background-color: #e7e7ff !important;
+    }
+
+    .table-pn-report tbody tr.table-info td:first-child {
+      background-color: #d7f5fc !important;
+    }
+
+    .table-pn-report tbody tr.table-success td:first-child {
+      background-color: #e8fadf !important;
+    }
   </style>
   <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
@@ -233,7 +274,7 @@
               </div>
             </div>
             <div class="table-responsive text-nowrap">
-              <table class="table table-hover table-striped-columns mb-0 align-middle">
+              <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
                 <thead>
                   <tr class="table-light">
                     <th>Kategori / Golongan</th>

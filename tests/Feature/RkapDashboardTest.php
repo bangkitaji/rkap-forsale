@@ -313,7 +313,7 @@ class RkapDashboardTest extends TestCase
         $response->assertSee('PENDAPATAN PENUMPANG');
         $response->assertSee('PEGAWAI LANGSUNG');
         $response->assertSee('Laba Kotor (Gross Profit)');
-        $response->assertSee('Laba Usaha (EBITDA)');
+        $response->assertSee('Laba (Rugi) Usaha');
         $response->assertSee('Laba Bersih (Net Profit)');
     }
 
