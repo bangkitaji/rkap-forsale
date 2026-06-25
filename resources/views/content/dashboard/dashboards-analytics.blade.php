@@ -299,7 +299,7 @@
                       <i class="bx bx-line-chart fs-4"></i>
                     </div>
                     <div>
-                      <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Laba Usaha (EBITDA)</h6>
+                      <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Laba (Rugi) Usaha</h6>
                       <small class="text-muted">Operating Profit</small>
                     </div>
                   </div>

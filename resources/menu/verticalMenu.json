@@ -15,10 +15,7 @@
       "url": "rkap/dashboard-rkap",
       "icon": "menu-icon icon-base bx bx-bar-chart-alt-2",
       "name": "Dashboard RKAP",
-      "slug": [
-        "rkap-dashboard",
-        "dashboard-rkap"
-      ],
+      "slug": "dashboard-rkap",
       "permission": "rkap.show"
     },
     {
@@ -80,13 +77,6 @@
       "url": "master-data/coa-groups",
       "slug": "master-data.coa-groups",
       "permission": "masterdata.coagroup.manage"
-    },
-    {
-      "name": "Profit and Loss Mapping",
-      "icon": "menu-icon icon-base bx bx-pie-chart-alt",
-      "url": "master-data/coa-profit-loss-mapping",
-      "slug": "master-data.coa-profit-loss-mapping",
-      "permission": "masterdata.coaprofitloss.manage"
     },
     {
       "name": "Activity ↔ COA",

@@ -238,14 +238,14 @@ class Analytics extends Controller
       foreach ($yearlyItems as $item) {
         $itemId = $item->id;
         $projectionAmount = (float) $item->projection;
-        
+
         $itemPlans = isset($monthlyPlans[$itemId]) ? $monthlyPlans[$itemId] : collect();
         $totalPlanAmount = $itemPlans->sum('amount');
 
         if ($totalPlanAmount > 0) {
           foreach ($itemPlans as $plan) {
             $m = (int) $plan->month;
-            $monthlyProjectionData[$m] += $projectionAmount * ((float)$plan->amount / $totalPlanAmount);
+            $monthlyProjectionData[$m] += $projectionAmount * ((float) $plan->amount / $totalPlanAmount);
           }
         } else {
           for ($m = 1; $m <= 12; $m++) {
@@ -730,7 +730,7 @@ class Analytics extends Controller
           'projection' => $indirectCostProj,
         ],
         'operating_profit' => [
-          'label' => 'Laba Usaha (EBITDA)',
+          'label' => 'Laba (Rugi) Usaha',
           'budget' => $ebitdaBudget,
           'realization' => $ebitdaReal,
           'projection' => $ebitdaProj,
@@ -873,7 +873,7 @@ class Analytics extends Controller
     }
 
     $coaGroupId = (int) $request->query('coa_group_id');
-    $periodId   = (int) $request->query('period_id');
+    $periodId = (int) $request->query('period_id');
 
     if (!$coaGroupId || !$periodId) {
       return response()->json(['data' => []]);
