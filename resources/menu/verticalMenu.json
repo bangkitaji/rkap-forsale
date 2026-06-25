@@ -171,6 +171,7 @@
         "rkap-periods",
         "settings-report-groups",
         "settings-cashflow-groups",
+        "settings-difference-groups",
         "settings-satuans",
         "settings-data-migration-upload"
       ],
@@ -196,6 +197,13 @@
           "name": "Cashflow Group",
           "slug": "settings-cashflow-groups",
           "permission": "settings.cashflowgroup.manage"
+        },
+        {
+          "url": "settings/difference-groups",
+          "icon": "menu-icon icon-base bx bx-coin-stack",
+          "name": "Difference Group",
+          "slug": "settings-difference-groups",
+          "permission": "settings.differencegroup.manage"
         },
         {
           "url": "settings/satuans",

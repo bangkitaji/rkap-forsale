@@ -52,6 +52,10 @@ Route::middleware(['auth'])->group(function () {
     ->name('settings-cashflow-groups')
     ->middleware('permission:settings.cashflowgroup.manage');
 
+  Route::get('/settings/difference-groups', \App\Livewire\Settings\DifferenceGroups::class)
+    ->name('settings-difference-groups')
+    ->middleware('permission:settings.differencegroup.manage');
+
   // RKAP routes
   Route::prefix('rkap')->group(function () {
     Route::get('/dashboard-rkap', \App\Livewire\Rkap\RkapDashboard::class)->name('dashboard-rkap');

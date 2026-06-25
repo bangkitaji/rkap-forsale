@@ -47,6 +47,7 @@ class RoleAndUserSeeder extends Seeder
         $permUserManagementShow = Permission::firstOrCreate(['name' => 'settings.usermanagement.show', 'guard_name' => 'web']);
         $permOrganizationShow = Permission::firstOrCreate(['name' => 'settings.organization.show', 'guard_name' => 'web']);
         $permSettingsCashflowGroupManage = Permission::firstOrCreate(['name' => 'settings.cashflowgroup.manage', 'guard_name' => 'web']);
+        $permSettingsDifferenceGroupManage = Permission::firstOrCreate(['name' => 'settings.differencegroup.manage', 'guard_name' => 'web']);
 
         // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -79,6 +80,7 @@ class RoleAndUserSeeder extends Seeder
             $permUserManagementShow,
             $permOrganizationShow,
             $permSettingsCashflowGroupManage,
+            $permSettingsDifferenceGroupManage,
         ]);
 
         $roleVerifikator->givePermissionTo([
@@ -92,6 +94,7 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsShow,
             $permReportGroupManage,
             $permSettingsCashflowGroupManage,
+            $permSettingsDifferenceGroupManage,
         ]);
 
         $roleDireksi->givePermissionTo([
