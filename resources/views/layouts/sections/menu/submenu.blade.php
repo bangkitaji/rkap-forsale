@@ -19,22 +19,24 @@ use Illuminate\Support\Facades\Route;
       $active = 'active open';
       $currentRouteName = Route::currentRouteName();
 
-      if ($currentRouteName === $submenu->slug) {
-          $activeClass = 'active';
-      }
-      elseif (isset($submenu->submenu)) {
-        if (gettype($submenu->slug) === 'array') {
-          foreach($submenu->slug as $slug){
-            if (str_contains($currentRouteName,$slug) and strpos($currentRouteName,$slug) === 0) {
-                $activeClass = $active;
-            }
+      if (gettype($submenu->slug) === 'array') {
+          if (in_array($currentRouteName, $submenu->slug)) {
+              $activeClass = isset($submenu->submenu) ? 'active open' : 'active';
+          } elseif (isset($submenu->submenu)) {
+              foreach($submenu->slug as $slug){
+                  if (str_contains($currentRouteName,$slug) and strpos($currentRouteName,$slug) === 0) {
+                      $activeClass = 'active open';
+                  }
+              }
           }
-        }
-        else{
-          if (str_contains($currentRouteName,$submenu->slug) and strpos($currentRouteName,$submenu->slug) === 0) {
-            $activeClass = $active;
+      } else {
+          if ($currentRouteName === $submenu->slug) {
+              $activeClass = isset($submenu->submenu) ? 'active open' : 'active';
+          } elseif (isset($submenu->submenu)) {
+              if (str_contains($currentRouteName,$submenu->slug) and strpos($currentRouteName,$submenu->slug) === 0) {
+                  $activeClass = 'active open';
+              }
           }
-        }
       }
     @endphp
 

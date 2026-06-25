@@ -21,7 +21,14 @@
     {
       "name": "Proses RKAP",
       "icon": "menu-icon icon-base bx bx-git-merge",
-      "slug": "rkap.process",
+      "slug": [
+        "rkap-requests",
+        "rkap-submissions",
+        "rkap-submissions-compilation",
+        "rkap-projections",
+        "rkap-projection-upload",
+        "rkap-realization-upload"
+      ],
       "permission": "rkap.show",
       "submenu": [
         {
@@ -35,7 +42,14 @@
           "url": "rkap/submissions",
           "icon": "menu-icon icon-base bx bx-file",
           "name": "Pengajuan",
-          "slug": "rkap-submissions",
+          "slug": [
+            "rkap-submissions",
+            "rkap-submissions-create",
+            "rkap-submissions-edit",
+            "rkap-submissions-review",
+            "rkap-submissions-approval-review",
+            "rkap-submissions-versions"
+          ],
           "permission": "rkap.show"
         },
         {
@@ -49,7 +63,10 @@
           "url": "rkap/projections",
           "icon": "menu-icon icon-base bx bx-calculator",
           "name": "Proyeksi",
-          "slug": "rkap-projections",
+          "slug": [
+            "rkap-projections",
+            "rkap-projection-upload"
+          ],
           "permission": "rkap.projection.view"
         },
         {
@@ -68,7 +85,10 @@
     {
       "name": "Rencana Kerja & Aktivitas",
       "icon": "menu-icon icon-base bx bx-briefcase",
-      "slug": "master-data.workplan-activities",
+      "slug": [
+        "master-data.work-plans",
+        "master-data.activities"
+      ],
       "permission": "masterdata.show",
       "submenu": [
         {
@@ -147,7 +167,12 @@
     {
       "name": "Sistem & Parameter",
       "icon": "menu-icon icon-base bx bx-cog",
-      "slug": "settings-system",
+      "slug": [
+        "rkap-periods",
+        "settings-report-groups",
+        "settings-satuans",
+        "settings-data-migration-upload"
+      ],
       "permission": "settings.show",
       "submenu": [
         {
