@@ -1072,9 +1072,10 @@ class RkapDashboardTest extends TestCase
             ['name' => 'Asset Tetap - Bersih']
         );
 
+        $coaGroup = \App\Models\CoaGroup::first();
         $coaAsset = \App\Models\Coa::firstOrCreate(
             ['code' => '121111'],
-            ['coa_group_id' => $this->bureau1->id, 'difference_group_id' => $dgAsset->id, 'title' => 'Asset COA']
+            ['coa_group_id' => $coaGroup->id, 'difference_group_id' => $dgAsset->id, 'title' => 'Asset COA']
         );
 
         $bi = RkapBudgetItem::create([

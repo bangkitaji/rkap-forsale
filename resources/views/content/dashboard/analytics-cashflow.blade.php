@@ -192,16 +192,14 @@
                     <th>Kategori / Golongan Cash Flow</th>
                     <th class="text-end">Anggaran (Budget)</th>
                     <th class="text-end">Realisasi YTD</th>
-                    <th class="text-center">% Realisasi</th>
                     <th class="text-end">Proyeksi (Outlook)</th>
-                    <th class="text-center">% Proyeksi</th>
                     <th class="text-end">Selisih (Variance)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <!-- Group Header 1: Penerimaan Kas -->
                   <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
-                    <td colspan="7">
+                    <td colspan="5">
                       <i class="bx bx-plus-circle me-2 text-success"></i>Arus Kas Masuk (Penerimaan Kas)
                     </td>
                   </tr>
@@ -212,8 +210,6 @@
                       $itemBudget = $item['budget'];
                       $itemReal = $item['realization'];
                       $itemProj = $item['projection'];
-                      $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
-                      $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
                       $itemVariance = $itemProj - $itemBudget; // For inflow, projection higher than budget is positive variance
                     @endphp
                     <tr>
@@ -228,21 +224,7 @@
                       </td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
-                      <td class="text-center font-monospace text-muted">
-                        @if ($itemBudget > 0)
-                          {{ number_format($itemRealPct, 1, ',', '.') }}%
-                        @else
-                          -
-                        @endif
-                      </td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
-                      <td class="text-center font-monospace text-muted">
-                        @if ($itemBudget > 0)
-                          {{ number_format($itemProjPct, 1, ',', '.') }}%
-                        @else
-                          -
-                        @endif
-                      </td>
                       <td class="text-end font-monospace">
                         @if ($itemVariance > 0)
                           <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($itemVariance, 0, ',', '.') }}</span>
@@ -260,8 +242,6 @@
                     $inflowBudget = $cfSummary['inflow']['budget'];
                     $inflowReal = $cfSummary['inflow']['realization'];
                     $inflowProj = $cfSummary['inflow']['projection'];
-                    $inflowRealPct = $inflowBudget > 0 ? ($inflowReal / $inflowBudget) * 100 : 0;
-                    $inflowProjPct = $inflowBudget > 0 ? ($inflowProj / $inflowBudget) * 100 : 0;
                     $inflowVariance = $inflowProj - $inflowBudget;
                   @endphp
                   <tr class="fw-semibold bg-lighter">
@@ -270,21 +250,7 @@
                     </td>
                     <td class="text-end font-monospace">Rp {{ number_format($inflowBudget, 0, ',', '.') }}</td>
                     <td class="text-end font-monospace text-success">Rp {{ number_format($inflowReal, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted">
-                      @if ($inflowBudget > 0)
-                        {{ number_format($inflowRealPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace text-warning">Rp {{ number_format($inflowProj, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted">
-                      @if ($inflowBudget > 0)
-                        {{ number_format($inflowProjPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace">
                       @if ($inflowVariance > 0)
                         <span class="text-success fw-semibold"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($inflowVariance, 0, ',', '.') }}</span>
@@ -298,7 +264,7 @@
 
                   <!-- Group Header 2: Pengeluaran Kas -->
                   <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
-                    <td colspan="7">
+                    <td colspan="5">
                       <i class="bx bx-minus-circle me-2 text-danger"></i>Arus Kas Keluar (Pengeluaran Kas)
                     </td>
                   </tr>
@@ -309,8 +275,6 @@
                       $itemBudget = $item['budget'];
                       $itemReal = $item['realization'];
                       $itemProj = $item['projection'];
-                      $itemRealPct = $itemBudget > 0 ? ($itemReal / $itemBudget) * 100 : 0;
-                      $itemProjPct = $itemBudget > 0 ? ($itemProj / $itemBudget) * 100 : 0;
                       $itemVariance = $itemBudget - $itemProj; // For outflow, projection lower than budget is positive variance
                     @endphp
                     <tr>
@@ -325,21 +289,7 @@
                       </td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
-                      <td class="text-center font-monospace text-muted">
-                        @if ($itemBudget > 0)
-                          {{ number_format($itemRealPct, 1, ',', '.') }}%
-                        @else
-                          -
-                        @endif
-                      </td>
                       <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
-                      <td class="text-center font-monospace text-muted">
-                        @if ($itemBudget > 0)
-                          {{ number_format($itemProjPct, 1, ',', '.') }}%
-                        @else
-                          -
-                        @endif
-                      </td>
                       <td class="text-end font-monospace">
                         @if ($itemVariance > 0)
                           <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($itemVariance, 0, ',', '.') }}</span>
@@ -357,8 +307,6 @@
                     $outflowBudget = $cfSummary['outflow']['budget'];
                     $outflowReal = $cfSummary['outflow']['realization'];
                     $outflowProj = $cfSummary['outflow']['projection'];
-                    $outflowRealPct = $outflowBudget > 0 ? ($outflowReal / $outflowBudget) * 100 : 0;
-                    $outflowProjPct = $outflowBudget > 0 ? ($outflowProj / $outflowBudget) * 100 : 0;
                     $outflowVariance = $outflowBudget - $outflowProj;
                   @endphp
                   <tr class="fw-semibold bg-lighter">
@@ -367,21 +315,7 @@
                     </td>
                     <td class="text-end font-monospace">Rp {{ number_format($outflowBudget, 0, ',', '.') }}</td>
                     <td class="text-end font-monospace text-success">Rp {{ number_format($outflowReal, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted">
-                      @if ($outflowBudget > 0)
-                        {{ number_format($outflowRealPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace text-warning">Rp {{ number_format($outflowProj, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted">
-                      @if ($outflowBudget > 0)
-                        {{ number_format($outflowProjPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace">
                       @if ($outflowVariance > 0)
                         <span class="text-success fw-semibold"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($outflowVariance, 0, ',', '.') }}</span>
@@ -398,8 +332,6 @@
                     $netBudget = $cfSummary['net']['budget'];
                     $netReal = $cfSummary['net']['realization'];
                     $netProj = $cfSummary['net']['projection'];
-                    $netRealPct = $inflowBudget > 0 ? ($netReal / $inflowBudget) * 100 : 0; // Relative to inflows
-                    $netProjPct = $inflowBudget > 0 ? ($netProj / $inflowBudget) * 100 : 0;
                     $netVariance = $netProj - $netBudget;
                   @endphp
                   <tr class="table-primary fw-bold border-top border-2">
@@ -408,21 +340,7 @@
                     </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($netBudget, 0, ',', '.') }}</td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($netReal, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
-                      @if ($inflowBudget > 0)
-                        {{ number_format($netRealPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp {{ number_format($netProj, 0, ',', '.') }}</td>
-                    <td class="text-center font-monospace text-muted" style="font-size: 1.1rem;">
-                      @if ($inflowBudget > 0)
-                        {{ number_format($netProjPct, 1, ',', '.') }}%
-                      @else
-                        -
-                      @endif
-                    </td>
                     <td class="text-end font-monospace" style="font-size: 1.1rem;">
                       @if ($netVariance > 0)
                         <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp {{ number_format($netVariance, 0, ',', '.') }}</span>

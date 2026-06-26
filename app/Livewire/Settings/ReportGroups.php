@@ -73,7 +73,7 @@ class ReportGroups extends Component
                 'max:50',
                 Rule::unique('report_groups', 'code')->ignore($this->reportGroupId)->whereNull('deleted_at'),
             ],
-            'type' => 'required|in:PL,BS',
+            'type' => 'required|in:PL,BS,CF',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ];
@@ -203,7 +203,7 @@ class ReportGroups extends Component
             if ($this->searchMapping) {
                 $coaGroupsQuery->where(function ($q) {
                     $q->where('code', 'like', '%' . $this->searchMapping . '%')
-                      ->orWhere('name', 'like', '%' . $this->searchMapping . '%');
+                        ->orWhere('name', 'like', '%' . $this->searchMapping . '%');
                 });
             }
             if ($this->filterReportGroup === 'unmapped') {
@@ -233,7 +233,7 @@ class ReportGroups extends Component
         if ($this->searchMapping) {
             $coaGroupsQuery->where(function ($q) {
                 $q->where('code', 'like', '%' . $this->searchMapping . '%')
-                  ->orWhere('name', 'like', '%' . $this->searchMapping . '%');
+                    ->orWhere('name', 'like', '%' . $this->searchMapping . '%');
             });
         }
 

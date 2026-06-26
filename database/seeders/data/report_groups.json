@@ -88,5 +88,45 @@
     "created_at": "2026-06-23 17:00:00",
     "updated_at": "2026-06-23 17:00:00",
     "deleted_at": null
+  },
+  {
+    "id": 10,
+    "code": "CF0001",
+    "type": "CF",
+    "name": "Arus Kas Aktivitas Operasi",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 11,
+    "code": "CF0002",
+    "type": "CF",
+    "name": "Arus Kas Aktivitas Investasi",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 12,
+    "code": "CF0003",
+    "type": "CF",
+    "name": "Arus Kas Aktivitas Pendanaan",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
+  },
+  {
+    "id": 13,
+    "code": "CF0004",
+    "type": "CF",
+    "name": "Perubahan Kas Bersih",
+    "description": null,
+    "created_at": "2026-06-23 17:00:00",
+    "updated_at": "2026-06-23 17:00:00",
+    "deleted_at": null
   }
 ]

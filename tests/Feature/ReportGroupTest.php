@@ -85,6 +85,7 @@ class ReportGroupTest extends TestCase
         $this->actingAs($this->adminUser);
 
         Livewire::test(ReportGroups::class)
+            ->set('perPage', 100)
             ->assertStatus(200)
             ->assertSee('Daftar Report Group')
             ->assertSee('Revenue')

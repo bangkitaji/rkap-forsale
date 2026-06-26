@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('report_groups', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('type'); // PL or BS
+            $table->string('type'); // PL or BS or CF
             $table->string('name');
             $table->text('description')->nullable();
             $table->timestamps();
