@@ -1200,4 +1200,139 @@ class Analytics extends Controller
 
     return response()->json(['data' => $rows]);
   }
+
+  public function reconciliation(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $data = $this->getAnalyticsData($request);
+    $activePeriod = $data['activePeriod'];
+    $finalizedPeriods = $data['finalizedPeriods'];
+    $plSummary = $data['plSummary'];
+
+    $reconciliationItems = [];
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
+    }
+
+    if ($activePeriod) {
+      $diffGroupsRaw = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('difference_groups', 'coas.difference_group_id', '=', 'difference_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->selectRaw('difference_groups.id, difference_groups.code, difference_groups.name, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
+        ->groupBy('difference_groups.id', 'difference_groups.code', 'difference_groups.name')
+        ->get();
+
+      $diffRealizationsRaw = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.difference_group_id')
+        ->selectRaw('coas.difference_group_id, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coas.difference_group_id')
+        ->pluck('total', 'difference_group_id')
+        ->toArray();
+
+      foreach ($diffGroupsRaw as $dg) {
+        $realization = (float) ($diffRealizationsRaw[$dg->id] ?? 0.0);
+        $reconciliationItems[] = [
+          'id' => $dg->id,
+          'code' => $dg->code,
+          'name' => $dg->name,
+          'budget' => (float) $dg->budget,
+          'realization' => $realization,
+          'projection' => (float) $dg->projection,
+        ];
+      }
+    }
+
+    return view('content.dashboard.analytics-reconciliation', compact(
+      'activePeriod',
+      'finalizedPeriods',
+      'plSummary',
+      'reconciliationItems'
+    ));
+  }
+
+  public function differenceGroupDetail(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $differenceGroupId = (int) $request->query('difference_group_id');
+    $periodId = (int) $request->query('period_id');
+
+    if (!$differenceGroupId || !$periodId) {
+      return response()->json(['data' => []]);
+    }
+
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')
+        ->where('department_id', $user->department_id)
+        ->pluck('id')
+        ->toArray();
+    }
+
+    $rows = DB::table('rkap_budget_items')
+      ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+      ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+      ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+      ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+      ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+      ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+      ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      ->where('coas.difference_group_id', $differenceGroupId)
+      ->where('rkap_submissions.rkap_period_id', $periodId)
+      ->where('rkap_submissions.status', 'approved')
+      ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+      ->whereNull('coas.deleted_at')
+      ->selectRaw('
+        coas.code as coa_code,
+        coas.title as coa_title,
+        rkap_work_plans.program_code,
+        rkap_work_plans.program_name,
+        directorates.code as directorate_code,
+        departments.code as department_code,
+        bureaus.code as bureau_code,
+        SUM(rkap_budget_items.total_price) as budget,
+        SUM(COALESCE(rl.realization_total, 0)) as realization,
+        SUM(rkap_budget_items.projection) as projection
+      ')
+      ->groupBy(
+        'coas.code',
+        'coas.title',
+        'rkap_work_plans.program_code',
+        'rkap_work_plans.program_name',
+        'directorates.code',
+        'departments.code',
+        'bureaus.code'
+      )
+      ->orderBy('coas.code')
+      ->orderBy('rkap_work_plans.program_code')
+      ->get();
+
+    return response()->json(['data' => $rows]);
+  }
 }

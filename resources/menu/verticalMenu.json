@@ -6,7 +6,8 @@
       "slug": [
         "dashboard-analytics",
         "analytics-report",
-        "analytics-cashflow"
+        "analytics-cashflow",
+        "analytics-reconciliation"
       ],
       "permission": "dashboard.show",
       "submenu": [
@@ -29,6 +30,13 @@
           "icon": "menu-icon icon-base bx bx-wallet",
           "name": "Laporan Cash Flow",
           "slug": "analytics-cashflow",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/reconciliation",
+          "icon": "menu-icon icon-base bx bx-git-commit",
+          "name": "Rekonsiliasi Kas",
+          "slug": "analytics-reconciliation",
           "permission": "dashboard.show"
         }
       ]

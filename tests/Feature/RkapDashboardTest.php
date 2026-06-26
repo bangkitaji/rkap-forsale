@@ -735,32 +735,32 @@ class RkapDashboardTest extends TestCase
         // Last Year details (index 0)
         $this->assertEquals($currentYear - 1, $compDataAdmin[0]['year']);
         $this->assertEquals(($currentYear - 1) . ' (Tahun Lalu)', $compDataAdmin[0]['label']);
-        $this->assertEquals(0.0, $compDataAdmin[0]['income_budget']);
-        $this->assertEquals(0.0, $compDataAdmin[0]['income_realization']);
-        $this->assertEquals(0.0, $compDataAdmin[0]['income_projection']);
-        $this->assertEquals(50000.0, $compDataAdmin[0]['expense_budget']);
-        $this->assertEquals(30000.0, $compDataAdmin[0]['expense_realization']);
-        $this->assertEquals(45000.0, $compDataAdmin[0]['expense_projection']);
+        $this->assertEquals(50000.0, $compDataAdmin[0]['income_budget']);
+        $this->assertEquals(30000.0, $compDataAdmin[0]['income_realization']);
+        $this->assertEquals(45000.0, $compDataAdmin[0]['income_projection']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['expense_budget']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['expense_realization']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['expense_projection']);
 
         // Current Year details (index 1)
         $this->assertEquals($currentYear, $compDataAdmin[1]['year']);
         $this->assertEquals($currentYear . ' (Tahun Berjalan)', $compDataAdmin[1]['label']);
-        $this->assertEquals(0.0, $compDataAdmin[1]['income_budget']);
-        $this->assertEquals(0.0, $compDataAdmin[1]['income_realization']);
-        $this->assertEquals(0.0, $compDataAdmin[1]['income_projection']);
-        $this->assertEquals(100000.0, $compDataAdmin[1]['expense_budget']);
-        $this->assertEquals(25000.0, $compDataAdmin[1]['expense_realization']);
-        $this->assertEquals(88000.0, $compDataAdmin[1]['expense_projection']);
+        $this->assertEquals(60000.0, $compDataAdmin[1]['income_budget']);
+        $this->assertEquals(15000.0, $compDataAdmin[1]['income_realization']);
+        $this->assertEquals(50000.0, $compDataAdmin[1]['income_projection']);
+        $this->assertEquals(40000.0, $compDataAdmin[1]['expense_budget']);
+        $this->assertEquals(10000.0, $compDataAdmin[1]['expense_realization']);
+        $this->assertEquals(38000.0, $compDataAdmin[1]['expense_projection']);
 
         // Next Year details (index 2)
         $this->assertEquals($currentYear + 1, $compDataAdmin[2]['year']);
         $this->assertEquals(($currentYear + 1) . ' (Tahun Depan)', $compDataAdmin[2]['label']);
-        $this->assertEquals(0.0, $compDataAdmin[2]['income_budget']);
-        $this->assertEquals(0.0, $compDataAdmin[2]['income_realization']);
-        $this->assertEquals(0.0, $compDataAdmin[2]['income_projection']);
-        $this->assertEquals(90000.0, $compDataAdmin[2]['expense_budget']);
-        $this->assertEquals(10000.0, $compDataAdmin[2]['expense_realization']);
-        $this->assertEquals(85000.0, $compDataAdmin[2]['expense_projection']);
+        $this->assertEquals(90000.0, $compDataAdmin[2]['income_budget']);
+        $this->assertEquals(10000.0, $compDataAdmin[2]['income_realization']);
+        $this->assertEquals(85000.0, $compDataAdmin[2]['income_projection']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['expense_budget']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['expense_realization']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['expense_projection']);
 
         // 2. Assert kabiro1 scoping limits data to Bureau 1 for all three years
         $responseKabiro = $this->actingAs($this->kabiro1)->get('/analytics');
@@ -770,28 +770,28 @@ class RkapDashboardTest extends TestCase
         $this->assertCount(3, $compDataKabiro);
         
         // Last Year Bureau 1
-        $this->assertEquals(0.0, $compDataKabiro[0]['income_budget']);
-        $this->assertEquals(0.0, $compDataKabiro[0]['income_realization']);
-        $this->assertEquals(0.0, $compDataKabiro[0]['income_projection']);
-        $this->assertEquals(50000.0, $compDataKabiro[0]['expense_budget']);
-        $this->assertEquals(30000.0, $compDataKabiro[0]['expense_realization']);
-        $this->assertEquals(45000.0, $compDataKabiro[0]['expense_projection']);
+        $this->assertEquals(50000.0, $compDataKabiro[0]['income_budget']);
+        $this->assertEquals(30000.0, $compDataKabiro[0]['income_realization']);
+        $this->assertEquals(45000.0, $compDataKabiro[0]['income_projection']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['expense_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['expense_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['expense_projection']);
 
         // Current Year Bureau 1
-        $this->assertEquals(0.0, $compDataKabiro[1]['income_budget']);
-        $this->assertEquals(0.0, $compDataKabiro[1]['income_realization']);
-        $this->assertEquals(0.0, $compDataKabiro[1]['income_projection']);
-        $this->assertEquals(60000.0, $compDataKabiro[1]['expense_budget']);
-        $this->assertEquals(15000.0, $compDataKabiro[1]['expense_realization']);
-        $this->assertEquals(50000.0, $compDataKabiro[1]['expense_projection']);
+        $this->assertEquals(60000.0, $compDataKabiro[1]['income_budget']);
+        $this->assertEquals(15000.0, $compDataKabiro[1]['income_realization']);
+        $this->assertEquals(50000.0, $compDataKabiro[1]['income_projection']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['expense_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['expense_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['expense_projection']);
 
         // Next Year Bureau 1
-        $this->assertEquals(0.0, $compDataKabiro[2]['income_budget']);
-        $this->assertEquals(0.0, $compDataKabiro[2]['income_realization']);
-        $this->assertEquals(0.0, $compDataKabiro[2]['income_projection']);
-        $this->assertEquals(90000.0, $compDataKabiro[2]['expense_budget']);
-        $this->assertEquals(10000.0, $compDataKabiro[2]['expense_realization']);
-        $this->assertEquals(85000.0, $compDataKabiro[2]['expense_projection']);
+        $this->assertEquals(90000.0, $compDataKabiro[2]['income_budget']);
+        $this->assertEquals(10000.0, $compDataKabiro[2]['income_realization']);
+        $this->assertEquals(85000.0, $compDataKabiro[2]['income_projection']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['expense_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['expense_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['expense_projection']);
     }
 
     public function test_analytics_profit_and_loss_formulas_calculation(): void
@@ -1040,5 +1040,80 @@ class RkapDashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Akses Dibatasi');
         $response->assertSee('Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Cash Flow.');
+    }
+
+    public function test_admin_sees_reconciliation_summary(): void
+    {
+        // Setup period
+        $period = RkapPeriod::create([
+            'year' => 2028,
+            'title' => 'RKAP 2028',
+            'status' => 'finalized',
+            'submission_start' => now()->subDay(),
+            'submission_end' => now()->addDay(),
+        ]);
+
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $period->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 100000.0,
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'program_name' => 'Work Plan Reconciliation',
+            'program_code' => 'WPREC',
+        ]);
+
+        $dgAsset = \App\Models\DifferenceGroup::firstOrCreate(
+            ['code' => '1007'],
+            ['name' => 'Asset Tetap - Bersih']
+        );
+
+        $coaAsset = \App\Models\Coa::firstOrCreate(
+            ['code' => '121111'],
+            ['coa_group_id' => $this->bureau1->id, 'difference_group_id' => $dgAsset->id, 'title' => 'Asset COA']
+        );
+
+        $bi = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => $coaAsset->code,
+            'description' => 'Recon Item',
+            'quantity' => 1,
+            'unit_price' => 75000.0,
+            'projection' => 60000.0,
+        ]);
+
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $bi->id,
+            'rkap_period_id' => $period->id,
+            'month' => 5,
+            'amount' => 45000.0,
+            'uploaded_by' => $this->admin->id,
+            'uploaded_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get('/analytics/reconciliation?period_id=' . $period->id);
+        $response->assertStatus(200);
+        $response->assertViewHas('reconciliationItems');
+
+        $reconciliationItems = $response->viewData('reconciliationItems');
+        $this->assertCount(1, $reconciliationItems);
+        $this->assertEquals(75000.0, $reconciliationItems[0]['budget']);
+        $this->assertEquals(45000.0, $reconciliationItems[0]['realization']);
+        $this->assertEquals(60000.0, $reconciliationItems[0]['projection']);
+
+        $response->assertSee('Laporan Rekonsiliasi Kas');
+        $response->assertSee('Asset Tetap - Bersih');
+
+        // Test AJAX difference group detail endpoint
+        $detailResponse = $this->actingAs($this->admin)->get("/analytics/difference-group-detail?difference_group_id={$dgAsset->id}&period_id={$period->id}");
+        $detailResponse->assertStatus(200);
+        $detailResponse->assertJsonStructure(['data']);
+        $data = $detailResponse->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('121111', $data[0]['coa_code']);
     }
 }
