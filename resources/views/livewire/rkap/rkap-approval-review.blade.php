@@ -88,6 +88,14 @@
       border-color: #cbd5e1;
     }
 
+    .bg-group-alt {
+      background-color: #f8fafc !important;
+    }
+
+    .bg-group-alt td {
+      background-color: inherit !important;
+    }
+
     /* Scoped Horizontal Timeline Styles */
     .timeline-steps-container {
       overflow-x: auto;
@@ -284,134 +292,7 @@
 
   </style>
 
-  @if ($showAddActivityModal)
-    <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0, 0, 0, 0.5);" role="dialog" wire:key="add-activity-modal-wrapper">
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header border-bottom py-3">
-            <h5 class="modal-title fw-bold text-primary"><i class="bx bx-plus-circle me-2"></i>Tambah Program Kegiatan</h5>
-            <button type="button" class="btn-close" wire:click="$set('showAddActivityModal', false)" aria-label="Close"></button>
-          </div>
-          <div class="modal-body pb-3" style="max-height: 70vh; overflow-y: auto;">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Program Kerja (Work Plan) <span class="text-danger">*</span></label>
-              <select class="form-select @error('selectedWorkPlanId') is-invalid @enderror" wire:model.live="selectedWorkPlanId">
-                <option value="">-- Pilih Program Kerja --</option>
-                @foreach ($this->workPlansList as $wp)
-                  <option value="{{ $wp->id }}">{{ $wp->code }} — {{ $wp->title }}</option>
-                @endforeach
-              </select>
-              @error('selectedWorkPlanId')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Kegiatan (Activity) <span class="text-danger">*</span></label>
-              <select class="form-select @error('selectedActivityId') is-invalid @enderror" wire:model.live="selectedActivityId" @disabled(empty($selectedWorkPlanId))>
-                <option value="">-- Pilih Kegiatan --</option>
-                @foreach ($this->activitiesList as $act)
-                  <option value="{{ $act->id }}">{{ $act->code }} — {{ $act->title }}</option>
-                @endforeach
-              </select>
-              @error('selectedActivityId')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            @if ($selectedActivityId)
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Deskripsi / Tujuan Kegiatan</label>
-                <textarea class="form-control @error('activityDescription') is-invalid @enderror" wire:model="activityDescription" rows="2" placeholder="Deskripsi/tujuan kegiatan"></textarea>
-                @error('activityDescription')
-                  <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-              </div>
-
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-semibold">Volume Kegiatan <span class="text-danger">*</span></label>
-                  <input type="number" class="form-control @error('activityQuantity') is-invalid @enderror" wire:model="activityQuantity" min="1">
-                  @error('activityQuantity')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-semibold">Satuan Volume Kegiatan <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control @error('activityUnit') is-invalid @enderror" wire:model="activityUnit" placeholder="Contoh: Paket, Kali, Bulan">
-                  @error('activityUnit')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Target Output</label>
-                <input type="text" class="form-control @error('activityOutputTarget') is-invalid @enderror" wire:model="activityOutputTarget" placeholder="Contoh: Laporan Keuangan, Dokumen">
-                @error('activityOutputTarget')
-                  <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-              </div>
-
-              <hr class="my-4">
-              <h6 class="fw-bold mb-3 text-secondary"><i class="bx bx-link me-1"></i>Rincian Anggaran (COA Terkait)</h6>
-              @if (empty($budgetItemsInput))
-                <div class="alert alert-warning small d-flex align-items-center mb-0">
-                  <i class="bx bx-info-circle me-2 fs-5"></i>
-                  <span>Kegiatan ini belum memiliki COA yang dipetakan. Silakan petakan COA terlebih dahulu di menu Master Data.</span>
-                </div>
-              @else
-                <div class="table-responsive border rounded">
-                  <table class="table table-bordered table-sm mb-0">
-                    <thead class="table-light">
-                      <tr>
-                        <th>COA</th>
-                        <th style="width: 100px;">Volume</th>
-                        <th style="width: 120px;">Satuan</th>
-                        <th style="width: 180px;">Harga Satuan</th>
-                        <th>Keterangan (Remarks)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @foreach ($budgetItemsInput as $coaId => $bi)
-                        <tr wire:key="coa-input-{{ $coaId }}">
-                          <td class="align-middle">
-                            <strong class="text-primary">{{ $bi['code'] }}</strong><br>
-                            <small class="text-muted text-wrap">{{ $bi['title'] }}</small>
-                          </td>
-                          <td class="align-middle">
-                            <input type="number" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.quantity') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.quantity" min="1">
-                          </td>
-                          <td class="align-middle">
-                            <input type="text" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.unit') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.unit" placeholder="Pcs">
-                          </td>
-                          <td class="align-middle">
-                            <div class="input-group input-group-merge input-group-sm">
-                              <span class="input-group-text">Rp</span>
-                              <input type="number" class="form-control @error('budgetItemsInput.' . $coaId . '.unit_price') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.unit_price" placeholder="Harga">
-                            </div>
-                          </td>
-                          <td class="align-middle">
-                            <input type="text" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.remarks') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.remarks" placeholder="Catatan">
-                          </td>
-                        </tr>
-                      @endforeach
-                    </tbody>
-                  </table>
-                </div>
-              @endif
-            @endif
-          </div>
-          <div class="modal-footer border-top py-3">
-            <button type="button" class="btn btn-outline-secondary" wire:click="$set('showAddActivityModal', false)">Batal</button>
-            <button type="button" class="btn btn-primary" wire:click="saveActivity" @disabled(!$selectedActivityId || empty($budgetItemsInput))>
-              <i class="bx bx-save me-1"></i> Simpan Kegiatan
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  @endif
 
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
@@ -697,19 +578,30 @@
             <h5 class="mb-0 text-primary fw-bold"><i class="bx bx-check-shield me-2"></i>Aksi Review</h5>
           </div>
           <div class="card-body mt-3">
-            @if (auth()->user()->isVerifikator())
-              <button class="btn btn-primary w-100 mb-3" wire:click="openAddActivityModal" wire:key="btn-open-add-activity">
-                <i class="bx bx-plus me-1"></i> Tambah Program Kegiatan
-              </button>
-            @endif
-
-            @if ($showRevisionForm)
+            @if ($isEditMode)
+              <div class="mb-3 alert alert-primary d-flex align-items-center">
+                <span class="badge bg-primary text-white me-2 p-1"><i class="bx bx-info-circle fs-5"></i></span>
+                <span class="small"><strong>Mode Edit Aktif</strong>: Anda dapat mengubah COA pada setiap rincian anggaran dan menambahkan program kegiatan baru melalui form di bawah.</span>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <button class="btn btn-label-secondary w-100 py-2" type="button" wire:key="btn-cancel-edit" wire:click="cancelEditMode">
+                    Batal
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-primary w-100 py-2" type="button" wire:key="btn-submit-edit" wire:click="saveEditMode" wire:loading.attr="disabled">
+                    Simpan Perubahan
+                  </button>
+                </div>
+              </div>
+            @elseif ($showRevisionForm)
               <div class="mb-3" wire:key="revision-reason-wrapper">
                 <label class="form-label text-danger fw-semibold">Alasan Permintaan Revisi <span
                     class="text-danger">*</span></label>
                 <textarea class="form-control @error('revisionReason') is-invalid @enderror" wire:model="revisionReason"
-                  rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..." wire:key="revision-reason-textarea"
-                  readonly></textarea>
+                   rows="3" placeholder="Sebutkan bagian mana yang perlu diperbaiki..." wire:key="revision-reason-textarea"
+                   readonly></textarea>
                 @error('revisionReason')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -781,16 +673,26 @@
                   @endif
                 </div>
 
-                <div class="d-flex gap-3 mt-2">
-                  <button class="btn btn-success flex-grow-1 py-2" wire:key="btn-approve-rkap" wire:click="approve"
-                    wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
-                    <i class="bx bx-check-circle me-1"></i> Setujui RKAP
-                  </button>
-
-                  <button class="btn btn-outline-danger flex-grow-1 py-2" wire:key="btn-open-revision-form"
-                    wire:click="openRevisionForm" @disabled(!$hasRejected)>
-                    <i class="bx bx-x-circle me-1"></i> Minta Revisi
-                  </button>
+                <div class="row g-2 mt-2">
+                  <div class="col">
+                    <button class="btn btn-success w-100 py-2 text-nowrap" wire:key="btn-approve-rkap" wire:click="approve"
+                      wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
+                      <i class="bx bx-check-circle me-1"></i> Setujui RKAP
+                    </button>
+                  </div>
+                  <div class="col">
+                    <button class="btn btn-outline-danger w-100 py-2 text-nowrap" wire:key="btn-open-revision-form"
+                      wire:click="openRevisionForm" @disabled(!$hasRejected)>
+                      <i class="bx bx-x-circle me-1"></i> Minta Revisi
+                    </button>
+                  </div>
+                  @if (auth()->user()->isVerifikator())
+                    <div class="col">
+                      <button class="btn btn-primary w-100 py-2 text-nowrap" wire:click="enterEditMode" wire:key="btn-open-add-activity">
+                        <i class="bx bx-edit me-1"></i> Program Kegiatan
+                      </button>
+                    </div>
+                  @endif
                 </div>
                 @if (!$hasRejected)
                   <small class="text-center text-muted mt-1"><i class="bx bx-info-circle me-1"></i>Tolak minimal satu
@@ -1036,6 +938,444 @@
         <!-- Work Plans -->
         <hr class="my-4">
         <h5 class="mb-4"><i class="bx bx-list-check me-2 text-primary"></i>Rincian Program Kerja</h5>
+
+        @if ($isEditMode)
+          <div class="card mb-4 border border-primary shadow-sm animate__animated animate__fadeIn" wire:key="add-activity-inline-card">
+            <div class="card-header bg-label-primary py-3 d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0 fw-bold text-primary"><i class="bx bx-plus-circle me-2"></i>Tambah Program Kegiatan</h5>
+              <span class="badge bg-primary">Inline Edit Mode</span>
+            </div>
+            <div class="card-body mt-3">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Program Kerja (Work Plan) <span class="text-danger">*</span></label>
+                <div x-data="{
+                    open: false,
+                    search: '{{ $selectedWorkPlanId ? addslashes($this->workPlansList->firstWhere('id', $selectedWorkPlanId)?->code . ' — ' . $this->workPlansList->firstWhere('id', $selectedWorkPlanId)?->title) : '' }}',
+                }" class="position-relative"
+                  wire:key="wp-select-container-{{ $selectedWorkPlanId ?? 'null' }}">
+
+                  <div class="input-group">
+                    <input type="text"
+                      class="form-control @error('selectedWorkPlanId') is-invalid @enderror"
+                      placeholder="Cari program kerja..." x-model="search" @focus="open = true" @click.outside="open = false"
+                      @input="open = true" autocomplete="off" id="wp-search-verifier">
+                    @if ($selectedWorkPlanId)
+                      <button type="button" class="btn btn-outline-secondary"
+                        wire:click="$set('selectedWorkPlanId', null)" @click="search = ''"
+                        title="Hapus pilihan">
+                        <i class="bx bx-x"></i>
+                      </button>
+                    @endif
+                  </div>
+                  @error('selectedWorkPlanId')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                  @enderror
+
+                  {{-- Hidden select --}}
+                  <select wire:model.live="selectedWorkPlanId" class="d-none" id="wp-select-verifier">
+                    <option value=""></option>
+                    @foreach ($this->workPlansList as $wp)
+                      <option value="{{ $wp->id }}">{{ $wp->code }} — {{ $wp->title }}</option>
+                    @endforeach
+                  </select>
+
+                  {{-- Dropdown options --}}
+                  <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                    style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                    @forelse($this->workPlansList as $wp)
+                      <div
+                        class="px-3 py-2 cursor-pointer dropdown-item small {{ $selectedWorkPlanId == $wp->id ? 'bg-primary text-white' : '' }}"
+                        x-show="'{{ strtolower(addslashes($wp->code . ' ' . $wp->title)) }}'.includes(search.toLowerCase())"
+                        @click="
+                            $wire.set('selectedWorkPlanId', {{ $wp->id }});
+                            search = '{{ addslashes($wp->code . ' — ' . $wp->title) }}';
+                            open = false;
+                        ">
+                        <span class="fw-semibold text-primary">{{ $wp->code }}</span>
+                        <span class="ms-1">{{ $wp->title }}</span>
+                      </div>
+                    @empty
+                      <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                    @endforelse
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Kegiatan (Activity) <span class="text-danger">*</span></label>
+                <div x-data="{
+                    open: false,
+                    search: '{{ $selectedActivityId ? addslashes($this->activitiesList->firstWhere('id', $selectedActivityId)?->code . ' — ' . $this->activitiesList->firstWhere('id', $selectedActivityId)?->title) : '' }}',
+                }" class="position-relative"
+                  wire:key="act-select-container-{{ $selectedWorkPlanId ?? 'null' }}-{{ $selectedActivityId ?? 'null' }}">
+
+                  <div class="input-group">
+                    <input type="text"
+                      class="form-control @error('selectedActivityId') is-invalid @enderror"
+                      placeholder="Cari kegiatan..." x-model="search" @focus="open = true" @click.outside="open = false"
+                      @input="open = true" autocomplete="off" id="act-search-verifier"
+                      @disabled(empty($selectedWorkPlanId))>
+                    @if ($selectedActivityId)
+                      <button type="button" class="btn btn-outline-secondary"
+                        wire:click="$set('selectedActivityId', null)" @click="search = ''"
+                        title="Hapus pilihan">
+                        <i class="bx bx-x"></i>
+                      </button>
+                    @endif
+                  </div>
+                  @error('selectedActivityId')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                  @enderror
+
+                  {{-- Hidden select --}}
+                  <select wire:model.live="selectedActivityId" class="d-none" id="act-select-verifier" @disabled(empty($selectedWorkPlanId))>
+                    <option value=""></option>
+                    @foreach ($this->activitiesList as $act)
+                      <option value="{{ $act->id }}">{{ $act->code }} — {{ $act->title }}</option>
+                    @endforeach
+                  </select>
+
+                  {{-- Dropdown options --}}
+                  <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                    style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                    @forelse($this->activitiesList as $act)
+                      <div
+                        class="px-3 py-2 cursor-pointer dropdown-item small {{ $selectedActivityId == $act->id ? 'bg-primary text-white' : '' }}"
+                        x-show="'{{ strtolower(addslashes($act->code . ' ' . $act->title)) }}'.includes(search.toLowerCase())"
+                        @click="
+                            $wire.set('selectedActivityId', {{ $act->id }});
+                            search = '{{ addslashes($act->code . ' — ' . $act->title) }}';
+                            open = false;
+                        ">
+                        <div class="d-flex flex-column gap-1">
+                          <span class="fw-semibold text-primary">{{ $act->code }}</span>
+                          <span class="text-secondary" style="font-size: 0.85rem;">{{ $act->title }}</span>
+                        </div>
+                      </div>
+                    @empty
+                      <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
+                    @endforelse
+                  </div>
+                </div>
+              </div>
+
+              @if ($selectedActivityId)
+                {{-- Activity Details Grid (same layout as submission form) --}}
+                <div class="row g-3 mb-3">
+                  <div class="col-md-12">
+                    <label class="form-label small fw-semibold">Deskripsi / Tujuan</label>
+                    <textarea class="form-control form-control-sm @error('activityDescription') is-invalid @enderror"
+                      wire:model="activityDescription" rows="2"
+                      placeholder="Deskripsi kegiatan..."></textarea>
+                    @error('activityDescription')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Target Output</label>
+                    <input type="text" class="form-control form-control-sm @error('activityOutputTarget') is-invalid @enderror"
+                      wire:model="activityOutputTarget"
+                      placeholder="Misal: 1 sistem, 100 user">
+                    @error('activityOutputTarget')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Volume</label>
+                    <input type="number" class="form-control form-control-sm @error('activityQuantity') is-invalid @enderror"
+                      wire:model="activityQuantity" min="1">
+                    @error('activityQuantity')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Satuan</label>
+                    <input type="text" class="form-control form-control-sm @error('activityUnit') is-invalid @enderror"
+                      wire:model="activityUnit" list="satuan-options-verifier"
+                      placeholder="Paket, Unit, ..." autocomplete="off">
+                    @error('activityUnit')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                  </div>
+                </div>
+
+                {{-- Budget Items section --}}
+                <div x-data="{
+                    dropdownOpen: false,
+                }" @coa-dropdown-open-new.window="dropdownOpen = true"
+                  @coa-dropdown-close-new.window="dropdownOpen = false">
+
+                  <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
+                    <table class="table table-sm table-bordered align-middle mb-2">
+                      <thead class="table-primary text-white fw-semibold">
+                        <tr>
+                          <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span class="text-warning">*</span></th>
+                          <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span></th>
+                          <th style="width:8%" class="text-center align-middle">Satuan</th>
+                          <th style="width:180px" class="text-center align-middle">Harga Satuan (Rp) <span class="text-warning">*</span></th>
+                          <th style="width:160px" class="text-center align-middle">Total (Rp)</th>
+                          <th style="width:80px" class="text-center align-middle">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @php
+                          $newGroups = [];
+                          $currentGroup = null;
+                          foreach ($newActivityBudgetItems as $biIdx => $bi) {
+                              $coaId = $bi['coa_id'] ?? null;
+                              if ($coaId !== null && $currentGroup !== null && $currentGroup['coa_id'] === $coaId) {
+                                  $currentGroup['items'][] = ['index' => $biIdx, 'item' => $bi];
+                              } else {
+                                  if ($currentGroup !== null) {
+                                      $newGroups[] = $currentGroup;
+                                  }
+                                  $currentGroup = [
+                                      'coa_id' => $coaId,
+                                      'items' => [['index' => $biIdx, 'item' => $bi]],
+                                  ];
+                              }
+                          }
+                          if ($currentGroup !== null) {
+                              $newGroups[] = $currentGroup;
+                          }
+                        @endphp
+
+                        @foreach ($newGroups as $gIdx => $group)
+                          @php
+                            $itemCount = count($group['items']);
+                            $firstIdx = $group['items'][0]['index'];
+                            $firstBi = $group['items'][0]['item'];
+                            $selectedCoa = $this->coaOptionsList->firstWhere('id', $firstBi['coa_id']);
+                            $filteredCoas = $this->coaOptionsList;
+                            $filteredCoasOrdered = $filteredCoas;
+                            if ($firstBi['coa_id'] ?? null) {
+                                $filteredCoasOrdered = $filteredCoas
+                                    ->sortBy(fn($c) => $c->id === $firstBi['coa_id'] ? 0 : 1)
+                                    ->values();
+                            }
+                            $searchLabel = '';
+                            if ($selectedCoa) {
+                                $searchLabel = $selectedCoa->code . ' — ' . $selectedCoa->title;
+                            } elseif (!empty($firstBi['account_code']) || !empty($firstBi['description'])) {
+                                $searchLabel = trim(
+                                    ($firstBi['account_code'] ?? '') .
+                                        (!empty($firstBi['description']) ? ' — ' . ($firstBi['description'] ?? '') : ''),
+                                );
+                            }
+                            $groupSubtotal = collect($group['items'])->sum(function ($info) {
+                                $bi = $info['item'];
+                                $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+                                return ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                            });
+                            $totalItemsCount = count($newActivityBudgetItems);
+                            $indices = array_column($group['items'], 'index');
+                            $indicesJson = json_encode($indices);
+                          @endphp
+
+                          <tr wire:key="new-bi-group-{{ $gIdx }}-coa"
+                            class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
+                            <td colspan="6"
+                              wire:key="new-coa-cell-g{{ $gIdx }}-{{ $firstBi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
+                              x-data="{
+                                  open: false,
+                                  search: @js($searchLabel),
+                                  currentLabel: @js($searchLabel),
+                              }"
+                              x-effect="if (!open && search !== currentLabel) search = currentLabel"
+                              :style="open ? 'position: relative; z-index: 1060;' : ''"
+                              @click.outside="open = false; $dispatch('coa-dropdown-close-new')" class="border-bottom-0">
+                              <div class="position-relative">
+                                <div class="input-group input-group-sm">
+                                  <input type="text"
+                                    class="form-control form-control-sm @error('newActivityBudgetItems.' . $firstIdx . '.coa_id') is-invalid @enderror"
+                                    placeholder="Cari akun/belanja..." x-model="search"
+                                    @focus="open = true; $dispatch('coa-dropdown-open-new')"
+                                    @input="open = true; $dispatch('coa-dropdown-open-new')" autocomplete="off">
+                                  @if ($firstBi['coa_id'])
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                      wire:click="updateNewGroupCoa({{ $firstIdx }}, null)"
+                                      @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close-new');"
+                                      title="Hapus pilihan">
+                                      <i class="bx bx-x"></i>
+                                    </button>
+                                  @endif
+                                  @if ($totalItemsCount > $itemCount)
+                                    <button type="button"
+                                      wire:click="removeNewGroup({{ $indicesJson }})"
+                                      class="btn btn-sm btn-outline-danger"
+                                      title="Hapus grup akun belanja">
+                                      <i class="bx bx-trash"></i>
+                                    </button>
+                                  @endif
+                                  <span class="input-group-text px-2 fw-semibold text-nowrap"
+                                    style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;">
+                                    <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
+                                    Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
+                                  </span>
+                                </div>
+                                @error('newActivityBudgetItems.' . $firstIdx . '.coa_id')
+                                  <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                <select wire:model.live="newActivityBudgetItems.{{ $firstIdx }}.coa_id" class="d-none">
+                                  <option value=""></option>
+                                  @foreach ($filteredCoasOrdered as $coa)
+                                    <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}</option>
+                                  @endforeach
+                                </select>
+                                <div x-show="open" x-cloak
+                                  class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                  style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                                  @foreach ($filteredCoasOrdered as $coa)
+                                    <div
+                                      class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
+                                      x-show="'{{ strtolower(addslashes($coa->code . ' ' . $coa->title)) }}'.includes(search.toLowerCase())"
+                                      @click="
+                                          $wire.call('updateNewGroupCoa', {{ $firstIdx }}, {{ $coa->id }});
+                                          currentLabel = '{{ addslashes($coa->code . ' — ' . $coa->title) }}';
+                                          search = currentLabel;
+                                          open = false;
+                                          $dispatch('coa-dropdown-close-new');
+                                      ">
+                                      <span class="fw-semibold text-primary">{{ $coa->code }}</span>
+                                      <span class="ms-1">{{ $coa->title }}</span>
+                                    </div>
+                                  @endforeach
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+
+                          @foreach ($group['items'] as $itemIdx => $itemInfo)
+                            @php
+                              $biIdx = $itemInfo['index'];
+                              $bi = $itemInfo['item'];
+                              $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+                              $biTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                            @endphp
+                            <tr wire:key="new-bi-{{ $biIdx }}-detail"
+                              class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
+                              <td class="border-top-0">
+                                <input type="text" class="form-control form-control-sm"
+                                  wire:model="newActivityBudgetItems.{{ $biIdx }}.remarks"
+                                  placeholder="Detail Belanja / Ket...">
+                              </td>
+                              <td class="border-top-0" style="min-width: 120px;">
+                                {{-- Vol 1 --}}
+                                <input type="number"
+                                  class="form-control form-control-sm mb-2 @error('newActivityBudgetItems.' . $biIdx . '.quantity') is-invalid @enderror"
+                                  wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.quantity"
+                                  min="1" placeholder="Vol 1">
+
+                                {{-- Vol 2 --}}
+                                <input type="number"
+                                  class="form-control form-control-sm @error('newActivityBudgetItems.' . $biIdx . '.quantity_2') is-invalid @enderror"
+                                  wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.quantity_2"
+                                  min="1" placeholder="Vol 2">
+                              </td>
+                              <td class="border-top-0" style="position: relative; min-width: 120px;">
+                                {{-- Satuan 1 --}}
+                                <input type="text"
+                                  class="form-control form-control-sm mb-2 @error('newActivityBudgetItems.' . $biIdx . '.unit') is-invalid @enderror"
+                                  wire:model="newActivityBudgetItems.{{ $biIdx }}.unit"
+                                  list="satuan-options-verifier" placeholder="Satuan 1" autocomplete="off">
+
+                                {{-- Satuan 2 --}}
+                                <input type="text"
+                                  class="form-control form-control-sm @error('newActivityBudgetItems.' . $biIdx . '.unit_2') is-invalid @enderror"
+                                  wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.unit_2"
+                                  list="satuan-options-verifier" placeholder="Satuan 2 (opsional)" autocomplete="off">
+                              </td>
+                              <td class="border-top-0" style="min-width: 180px;">
+                                <div x-data="{
+                                    raw: {{ (int) ($bi['unit_price'] ?? 0) }},
+                                    display: '',
+                                    timer: null,
+                                    fmt(n) { return n > 0 ? new Intl.NumberFormat('id-ID').format(n) : '' },
+                                    sync() {
+                                        clearTimeout(this.timer);
+                                        this.timer = setTimeout(() => {
+                                            $wire.set('newActivityBudgetItems.{{ $biIdx }}.unit_price', this.raw);
+                                        }, 500);
+                                    },
+                                    onInput(e) {
+                                        let d = e.target.value.replace(/\D/g, '');
+                                        this.raw = parseInt(d) || 0;
+                                        this.display = this.fmt(this.raw);
+                                        e.target.value = this.display;
+                                        this.sync();
+                                    },
+                                    onBlur(e) {
+                                        if (!this.raw) this.raw = 0;
+                                        e.target.value = this.fmt(this.raw);
+                                        clearTimeout(this.timer);
+                                        $wire.set('newActivityBudgetItems.{{ $biIdx }}.unit_price', this.raw);
+                                    }
+                                }" x-init="display = fmt(raw)">
+                                  <div class="input-group input-group-sm">
+                                    <span class="input-group-text" style="font-size: 0.75rem;">Rp</span>
+                                    <input type="text"
+                                      class="form-control form-control-sm text-end @error('newActivityBudgetItems.' . $biIdx . '.unit_price') is-invalid @enderror"
+                                      :value="display" @input="onInput($event)" @blur="onBlur($event)"
+                                      @focus="$event.target.select()" placeholder="0" inputmode="numeric">
+                                  </div>
+                                </div>
+                              </td>
+                              <td class="text-end text-nowrap border-top-0">
+                                <div class="fw-semibold text-primary">Rp {{ number_format($biTotal, 0, ',', '.') }}</div>
+                              </td>
+                              <td class="text-center text-nowrap border-top-0">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                  @if ($itemCount > 1)
+                                    <button type="button"
+                                      wire:click="removeNewBudgetItem({{ $biIdx }})"
+                                      class="btn btn-sm btn-icon btn-outline-danger"
+                                      title="Hapus detail rincian ini">
+                                      <i class="bx bx-trash"></i>
+                                    </button>
+                                  @endif
+
+                                  @if ($itemIdx === $itemCount - 1)
+                                    <button type="button"
+                                      wire:click="duplicateNewBudgetItem({{ $biIdx }})"
+                                      class="btn btn-sm btn-icon btn-outline-success"
+                                      title="Tambah detail rincian untuk akun ini">
+                                      <i class="bx bx-plus"></i>
+                                    </button>
+                                  @endif
+                                </div>
+                              </td>
+                            </tr>
+                          @endforeach
+                        @endforeach
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <button type="button" wire:click="addNewBudgetItem"
+                    class="btn btn-sm btn-label-secondary mt-2">
+                    <i class="bx bx-plus me-1"></i> Tambah Item Belanja
+                  </button>
+
+                </div>
+              @else
+                <div class="alert alert-info d-flex align-items-center mb-0 mt-3">
+                  <i class="bx bx-info-circle me-2 fs-4"></i>
+                  <div>
+                    Silakan pilih <strong>Program Kerja</strong> dan <strong>Nama Kegiatan</strong> terlebih dahulu untuk
+                    mengisi detail anggaran belanja.
+                  </div>
+                </div>
+              @endif
+            </div>
+          </div>
+
+          {{-- Satuan datalist --}}
+          <datalist id="satuan-options-verifier">
+            @foreach ($this->satuanOptions as $satuanOpt)
+              <option value="{{ $satuanOpt->name }}"></option>
+            @endforeach
+          </datalist>
+        @endif
         @php
           $groupedCombinedWorkPlans = collect($combinedWorkPlans)->groupBy('work_plan_id');
         @endphp
@@ -1146,17 +1486,26 @@
                           $currStatus = $this->activityStatuses[$wpModelId] ?? 'pending';
                         @endphp
                         @if ($this->canApprove())
-                          <div class="btn-group btn-group-sm" role="group">
-                            <button type="button"
-                              class="btn {{ $currStatus === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
-                              wire:click="setActivityStatus({{ $wpModelId }}, 'approved')">
-                              <i class="bx bx-check me-1"></i>Setujui
-                            </button>
-                            <button type="button"
-                              class="btn {{ $currStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
-                              wire:click="setActivityStatus({{ $wpModelId }}, 'rejected')">
-                              <i class="bx bx-x me-1"></i>Tolak
-                            </button>
+                          <div class="d-flex gap-2">
+                            <div class="btn-group btn-group-sm" role="group">
+                              <button type="button"
+                                class="btn {{ $currStatus === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
+                                wire:click="setActivityStatus({{ $wpModelId }}, 'approved')">
+                                <i class="bx bx-check me-1"></i>Setujui
+                              </button>
+                              <button type="button"
+                                class="btn {{ $currStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
+                                wire:click="setActivityStatus({{ $wpModelId }}, 'rejected')">
+                                <i class="bx bx-x me-1"></i>Tolak
+                              </button>
+                            </div>
+                            @if (auth()->user()->isVerifikator() && $wp['model']?->added_by_verifier)
+                              <button type="button" class="btn btn-sm btn-danger"
+                                wire:click="deleteWorkPlan({{ $wpModelId }})"
+                                wire:confirm="Apakah Anda yakin ingin menghapus kegiatan yang ditambahkan ini beserta semua item anggarannya?">
+                                <i class="bx bx-trash me-1"></i>Hapus
+                              </button>
+                            @endif
                           </div>
                         @else
                           @if ($currStatus === 'approved')
@@ -1491,6 +1840,64 @@
                                   <span class="badge bg-warning text-dark ms-1"
                                     style="font-size: 0.6rem;">Diubah</span>
                                 @endif
+
+                                @if ($isEditMode && !$isBiVirtual)
+                                  @php
+                                    $currentCoaCode = $editCoas[$biModelId] ?? '';
+                                    $selectedCoaOption = $this->coaOptionsList->firstWhere('code', $currentCoaCode);
+                                    $coaSearchLabel = $selectedCoaOption ? $selectedCoaOption->code . ' — ' . $selectedCoaOption->title : '';
+                                  @endphp
+                                  <div class="mt-2 position-relative" wire:key="edit-coa-container-{{ $biModelId }}"
+                                    x-data="{
+                                        open: false,
+                                        search: @js($coaSearchLabel),
+                                        currentLabel: @js($coaSearchLabel),
+                                    }"
+                                    x-effect="if (!open && search !== currentLabel) search = currentLabel"
+                                    @click.outside="open = false; $dispatch('coa-dropdown-close')">
+                                    <label class="form-label small fw-semibold text-primary mb-1">Ubah COA:</label>
+                                    <div class="input-group input-group-sm">
+                                      <input type="text"
+                                        class="form-control form-control-sm"
+                                        placeholder="Cari COA..." x-model="search"
+                                        @focus="open = true; $dispatch('coa-dropdown-open')"
+                                        @input="open = true; $dispatch('coa-dropdown-open')" autocomplete="off"
+                                        id="coa-search-{{ $biModelId }}">
+                                      @if ($currentCoaCode)
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                          wire:click="$set('editCoas.{{ $biModelId }}', null)"
+                                          @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close')">
+                                          <i class="bx bx-x"></i>
+                                        </button>
+                                      @endif
+                                    </div>
+                                    <select wire:model.live="editCoas.{{ $biModelId }}" class="d-none" id="coa-select-{{ $biModelId }}">
+                                      <option value=""></option>
+                                      @foreach ($this->coaOptionsList as $coaOption)
+                                        <option value="{{ $coaOption->code }}">{{ $coaOption->code }} — {{ $coaOption->title }}</option>
+                                      @endforeach
+                                    </select>
+                                    <div x-show="open" x-cloak
+                                      class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                                      style="z-index: 1060; max-height: 200px; overflow-y: auto;">
+                                      @foreach ($this->coaOptionsList as $coaOption)
+                                        <div
+                                          class="px-3 py-2 cursor-pointer dropdown-item small {{ $currentCoaCode == $coaOption->code ? 'bg-primary text-white' : '' }}"
+                                          x-show="'{{ strtolower(addslashes($coaOption->code . ' ' . $coaOption->title)) }}'.includes(search.toLowerCase())"
+                                          @click="
+                                              $wire.set('editCoas.{{ $biModelId }}', '{{ $coaOption->code }}');
+                                              currentLabel = '{{ addslashes($coaOption->code . ' — ' . $coaOption->title) }}';
+                                              search = currentLabel;
+                                              open = false;
+                                              $dispatch('coa-dropdown-close');
+                                          ">
+                                          <span class="fw-semibold text-primary">{{ $coaOption->code }}</span>
+                                          <span class="ms-1">{{ $coaOption->title }}</span>
+                                        </div>
+                                      @endforeach
+                                    </div>
+                                  </div>
+                                @endif
                               </td>
                               <td class="text-center @if ($isBiVirtual) text-danger @endif">
                                 @if (!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
@@ -1560,12 +1967,20 @@
                               </td>
                               <td class="text-center">
                                 @if (!$isBiVirtual && ($bi['monthlies']->isNotEmpty() || $bi['cashOuts']->isNotEmpty()))
-                                  <div class="d-flex justify-content-center">
+                                  <div class="d-flex justify-content-center gap-1">
                                     <button type="button" class="btn btn-xs btn-outline-primary"
                                       data-bs-toggle="modal" data-bs-target="#{{ $allocationModalId }}"
                                       title="Detail Alokasi">
                                       <i class="bx bx-detail"></i>
                                     </button>
+                                    @if ($this->canApprove() && auth()->user()->isVerifikator() && $wp['model']?->added_by_verifier)
+                                      <button type="button" class="btn btn-xs btn-outline-danger"
+                                        wire:click="deleteBudgetItem({{ $bi['model']->id }})"
+                                        wire:confirm="Apakah Anda yakin ingin menghapus item anggaran ini?"
+                                        title="Hapus Item">
+                                        <i class="bx bx-trash"></i>
+                                      </button>
+                                    @endif
                                     <!-- Modal Detail Alokasi (Merged) -->
                                     <div class="modal fade" id="{{ $allocationModalId }}" tabindex="-1"
                                       aria-hidden="true" wire:key="allocation-modal-{{ $bi['model']->id }}">

@@ -19,14 +19,15 @@ class RkapApprovalReview extends Component
     public array $activityStatuses = [];
     public array $activityRevisionNotes = [];
 
-    public bool $showAddActivityModal = false;
+    public bool $isEditMode = false;
+    public array $editCoas = [];
     public $selectedWorkPlanId = null;
     public $selectedActivityId = null;
     public string $activityDescription = '';
     public string $activityOutputTarget = '';
     public string $activityUnit = 'Paket';
     public int $activityQuantity = 1;
-    public array $budgetItemsInput = [];
+    public array $newActivityBudgetItems = [];
 
     public function mount(int $id): void
     {
@@ -835,7 +836,107 @@ class RkapApprovalReview extends Component
 
     public function getWorkPlansListProperty()
     {
-        return \App\Models\WorkPlan::orderBy('code')->get();
+        return \App\Models\WorkPlan::where('approval_status', 'approved')->orderBy('code')->get();
+    }
+
+    public function getCoaOptionsListProperty()
+    {
+        return \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->orderBy('code')->get();
+    }
+
+    public function getSatuanOptionsProperty()
+    {
+        return \App\Models\Satuan::orderBy('name')->get();
+    }
+
+    private function emptyNewBudgetItem(): array
+    {
+        return [
+            'coa_id'                => null,
+            'account_code'          => '',
+            'description'           => '',
+            'coa_group_name'        => '',
+            'cashflow_group_name'   => '',
+            'difference_group_name' => '',
+            'unit'                  => '',
+            'quantity'              => 1,
+            'unit_2'                => '',
+            'quantity_2'            => null,
+            'unit_price'            => 0,
+            'remarks'               => '',
+        ];
+    }
+
+    public function addNewBudgetItem(): void
+    {
+        $this->newActivityBudgetItems[] = $this->emptyNewBudgetItem();
+    }
+
+    public function removeNewBudgetItem(int $idx): void
+    {
+        unset($this->newActivityBudgetItems[$idx]);
+        $this->newActivityBudgetItems = array_values($this->newActivityBudgetItems);
+    }
+
+    public function duplicateNewBudgetItem(int $idx): void
+    {
+        $source = $this->newActivityBudgetItems[$idx];
+        $newItem = array_merge($this->emptyNewBudgetItem(), [
+            'coa_id'                => $source['coa_id'] ?? null,
+            'account_code'          => $source['account_code'] ?? '',
+            'description'           => $source['description'] ?? '',
+            'coa_group_name'        => $source['coa_group_name'] ?? '',
+            'cashflow_group_name'   => $source['cashflow_group_name'] ?? '',
+            'difference_group_name' => $source['difference_group_name'] ?? '',
+        ]);
+        array_splice($this->newActivityBudgetItems, $idx + 1, 0, [$newItem]);
+    }
+
+    public function updateNewGroupCoa(int $biIndex, ?int $coaId): void
+    {
+        $oldCoaId = $this->newActivityBudgetItems[$biIndex]['coa_id'] ?? null;
+
+        $coa = null;
+        if ($coaId) {
+            $coa = \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->find($coaId);
+        }
+
+        $code = $coa ? $coa->code : '';
+        $title = $coa ? $coa->title : '';
+        $groupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : '';
+        $cashflowGroupName = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->name : '';
+        $differenceGroupName = ($coa && $coa->differenceGroup) ? $coa->differenceGroup->name : '';
+
+        if ($oldCoaId === null) {
+            $this->newActivityBudgetItems[$biIndex]['coa_id'] = $coaId;
+            $this->newActivityBudgetItems[$biIndex]['account_code'] = $code;
+            $this->newActivityBudgetItems[$biIndex]['description'] = $title;
+            $this->newActivityBudgetItems[$biIndex]['coa_group_name'] = $groupName;
+            $this->newActivityBudgetItems[$biIndex]['cashflow_group_name'] = $cashflowGroupName;
+            $this->newActivityBudgetItems[$biIndex]['difference_group_name'] = $differenceGroupName;
+            return;
+        }
+
+        // Update all items in the group with the same old COA
+        foreach ($this->newActivityBudgetItems as $idx => &$item) {
+            if (($item['coa_id'] ?? null) === $oldCoaId) {
+                $item['coa_id'] = $coaId;
+                $item['account_code'] = $code;
+                $item['description'] = $title;
+                $item['coa_group_name'] = $groupName;
+                $item['cashflow_group_name'] = $cashflowGroupName;
+                $item['difference_group_name'] = $differenceGroupName;
+            }
+        }
+        unset($item);
+    }
+
+    public function removeNewGroup(array $indices): void
+    {
+        foreach ($indices as $idx) {
+            unset($this->newActivityBudgetItems[$idx]);
+        }
+        $this->newActivityBudgetItems = array_values($this->newActivityBudgetItems);
     }
 
     public function getActivitiesListProperty()
@@ -843,13 +944,21 @@ class RkapApprovalReview extends Component
         if (empty($this->selectedWorkPlanId)) {
             return collect();
         }
-        return \App\Models\Activity::where('work_plan_id', $this->selectedWorkPlanId)->orderBy('code')->get();
+        $existingActivityIds = $this->submission->workPlans->pluck('activity_id')->filter()->toArray();
+        return \App\Models\Activity::where('work_plan_id', $this->selectedWorkPlanId)
+            ->where('approval_status', 'approved')
+            ->where(function ($query) use ($existingActivityIds) {
+                $query->whereNotIn('id', $existingActivityIds)
+                    ->orWhere('id', $this->selectedActivityId);
+            })
+            ->orderBy('code')
+            ->get();
     }
 
-    public function updatedSelectedWorkPlanId(): void
+    public function updatedSelectedWorkPlanId($value): void
     {
         $this->selectedActivityId = null;
-        $this->budgetItemsInput = [];
+        $this->newActivityBudgetItems = [];
         $this->activityDescription = '';
         $this->activityOutputTarget = '';
         $this->activityUnit = 'Paket';
@@ -858,7 +967,7 @@ class RkapApprovalReview extends Component
 
     public function updatedSelectedActivityId($value): void
     {
-        $this->budgetItemsInput = [];
+        $this->newActivityBudgetItems = [];
         $this->activityDescription = '';
         $this->activityOutputTarget = '';
         $this->activityUnit = 'Paket';
@@ -868,34 +977,52 @@ class RkapApprovalReview extends Component
             return;
         }
 
-        $activity = \App\Models\Activity::with('coas')->find($value);
+        $activity = \App\Models\Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroup'])->find($value);
         if ($activity) {
             $this->activityDescription = $activity->description ?: '';
-            foreach ($activity->coas as $coa) {
-                $this->budgetItemsInput[$coa->id] = [
-                    'coa_id' => $coa->id,
-                    'code' => $coa->code,
-                    'title' => $coa->title,
-                    'quantity' => 1,
-                    'unit' => 'Paket',
-                    'unit_price' => 0,
-                    'remarks' => '',
-                ];
+            if ($activity->coas->isNotEmpty()) {
+                $this->newActivityBudgetItems = $activity->coas->map(function ($coa) {
+                    return array_merge($this->emptyNewBudgetItem(), [
+                        'coa_id'                => $coa->id,
+                        'account_code'          => $coa->code,
+                        'description'           => $coa->title,
+                        'coa_group_name'        => $coa->coaGroup ? $coa->coaGroup->name : '',
+                        'cashflow_group_name'   => $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
+                        'difference_group_name' => $coa->differenceGroup ? $coa->differenceGroup->name : '',
+                    ]);
+                })->toArray();
+            } else {
+                $this->newActivityBudgetItems = [$this->emptyNewBudgetItem()];
             }
         }
     }
 
-    public function openAddActivityModal(): void
+    public function enterEditMode(): void
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk menambahkan kegiatan.');
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk masuk ke mode edit.');
             return;
         }
 
+        $this->isEditMode = true;
         $this->resetAddActivityForm();
-        $this->showAddActivityModal = true;
+        $this->editCoas = [];
+        foreach ($this->submission->workPlans as $wp) {
+            foreach ($wp->budgetItems as $bi) {
+                $this->editCoas[$bi->id] = $bi->account_code;
+            }
+        }
     }
+
+    public function cancelEditMode(): void
+    {
+        $this->isEditMode = false;
+        $this->editCoas = [];
+        $this->resetAddActivityForm();
+    }
+
+
 
     private function resetAddActivityForm(): void
     {
@@ -905,101 +1032,121 @@ class RkapApprovalReview extends Component
         $this->activityOutputTarget = '';
         $this->activityUnit = 'Paket';
         $this->activityQuantity = 1;
-        $this->budgetItemsInput = [];
+        $this->newActivityBudgetItems = [];
     }
 
-    public function saveActivity(): void
+    public function saveEditMode(): void
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk menambahkan kegiatan.');
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk menyimpan perubahan.');
             return;
         }
 
-        $this->validate([
-            'selectedWorkPlanId' => 'required|exists:work_plans,id',
-            'selectedActivityId' => 'required|exists:activities,id',
-            'activityQuantity' => 'required|integer|min:1',
-            'activityUnit' => 'required|string',
-            'activityDescription' => 'nullable|string',
-            'activityOutputTarget' => 'nullable|string',
-            'budgetItemsInput.*.quantity' => 'required|integer|min:1',
-            'budgetItemsInput.*.unit' => 'required|string',
-            'budgetItemsInput.*.unit_price' => 'required|numeric|min:0',
-            'budgetItemsInput.*.remarks' => 'nullable|string',
-        ]);
+        $shouldAddActivity = !empty($this->selectedWorkPlanId) || !empty($this->selectedActivityId);
 
-        // Check if activity already exists in submission
-        $exists = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
-            ->where('activity_id', $this->selectedActivityId)
-            ->exists();
-        if ($exists) {
-            $this->addError('selectedActivityId', 'Kegiatan ini sudah ada dalam pengajuan RKAP.');
-            return;
-        }
-
-        $rkapWorkPlan = DB::transaction(function () {
-            $activity = \App\Models\Activity::findOrFail($this->selectedActivityId);
-            $workPlan = \App\Models\WorkPlan::findOrFail($this->selectedWorkPlanId);
-
-            $wp = \App\Models\RkapWorkPlan::create([
-                'rkap_submission_id' => $this->submission->id,
-                'work_plan_id' => $workPlan->id,
-                'activity_id' => $activity->id,
-                'program_code' => $activity->code,
-                'program_name' => $activity->title,
-                'description' => $this->activityDescription ?: null,
-                'output_target' => $this->activityOutputTarget ?: null,
-                'unit' => $this->activityUnit,
-                'quantity' => $this->activityQuantity,
-                'sort_order' => (\App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)->max('sort_order') ?? 0) + 1,
-                'approval_status' => 'approved', // Verifier added it, defaults to approved
+        if ($shouldAddActivity) {
+            $this->validate([
+                'selectedWorkPlanId' => 'required|exists:work_plans,id',
+                'selectedActivityId' => 'required|exists:activities,id',
+                'activityQuantity' => 'required|integer|min:1',
+                'activityUnit' => 'required|string',
+                'activityDescription' => 'nullable|string',
+                'activityOutputTarget' => 'nullable|string',
+                'newActivityBudgetItems' => 'required|array|min:1',
+                'newActivityBudgetItems.*.coa_id' => 'required|exists:coas,id',
+                'newActivityBudgetItems.*.quantity' => 'required|integer|min:1',
+                'newActivityBudgetItems.*.unit' => 'required|string',
+                'newActivityBudgetItems.*.unit_price' => 'required|numeric|min:0',
+                'newActivityBudgetItems.*.remarks' => 'nullable|string',
             ]);
 
-            foreach ($this->budgetItemsInput as $coaId => $biData) {
-                $coa = \App\Models\Coa::findOrFail($coaId);
-                $unitPrice = (float) $biData['unit_price'];
-                $quantity = (int) $biData['quantity'];
-                $totalPrice = $quantity * $unitPrice;
+            // Check if activity already exists in submission
+            $exists = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+                ->where('activity_id', $this->selectedActivityId)
+                ->exists();
+            if ($exists) {
+                $this->addError('selectedActivityId', 'Kegiatan ini sudah ada dalam pengajuan RKAP.');
+                return;
+            }
+        }
 
-                $bi = \App\Models\RkapBudgetItem::create([
-                    'rkap_work_plan_id' => $wp->id,
-                    'account_code' => $coa->code,
-                    'description' => $coa->title,
-                    'unit' => $biData['unit'],
-                    'quantity' => $quantity,
-                    'unit_price' => $unitPrice,
-                    'total_price' => $totalPrice,
-                    'remarks' => $biData['remarks'] ?: null,
-                ]);
-
-                // Distribute evenly across 12 months
-                $monthlyAmount = (float) ($totalPrice / 12);
-                for ($m = 1; $m <= 12; $m++) {
-                    $bi->monthlies()->create([
-                        'month' => $m,
-                        'amount' => $monthlyAmount,
-                    ]);
-                    $bi->cashOuts()->create([
-                        'month' => $m,
-                        'amount' => $monthlyAmount,
-                    ]);
+        DB::transaction(function () use ($shouldAddActivity) {
+            // 1. Update COAs on existing budget items
+            foreach ($this->editCoas as $biId => $newCoaCode) {
+                $bi = \App\Models\RkapBudgetItem::find($biId);
+                if ($bi && $bi->account_code !== $newCoaCode) {
+                    $bi->update(['account_code' => $newCoaCode]);
                 }
             }
 
-            // Recalculate submission total budget
-            $this->submission->calculateTotalBudget();
+            // 2. Add new program activity
+            if ($shouldAddActivity) {
+                $activity = \App\Models\Activity::findOrFail($this->selectedActivityId);
+                $workPlan = \App\Models\WorkPlan::findOrFail($this->selectedWorkPlanId);
 
-            return $wp;
+                $wp = \App\Models\RkapWorkPlan::create([
+                    'rkap_submission_id' => $this->submission->id,
+                    'work_plan_id' => $workPlan->id,
+                    'activity_id' => $activity->id,
+                    'program_code' => $activity->code,
+                    'program_name' => $activity->title,
+                    'description' => $this->activityDescription ?: null,
+                    'output_target' => $this->activityOutputTarget ?: null,
+                    'unit' => $this->activityUnit,
+                    'quantity' => $this->activityQuantity,
+                    'sort_order' => (\App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)->max('sort_order') ?? 0) + 1,
+                    'approval_status' => 'approved',
+                    'added_by_verifier' => true,
+                ]);
+
+                foreach ($this->newActivityBudgetItems as $biData) {
+                    $coaId = $biData['coa_id'];
+                    $coa = \App\Models\Coa::findOrFail($coaId);
+                    $unitPrice = (float) $biData['unit_price'];
+                    $quantity = (int) $biData['quantity'];
+                    $qty2 = !empty($biData['unit_2']) ? (float) ($biData['quantity_2'] ?? 1) : 1;
+                    $totalPrice = $quantity * $qty2 * $unitPrice;
+
+                    $bi = \App\Models\RkapBudgetItem::create([
+                        'rkap_work_plan_id' => $wp->id,
+                        'account_code' => $coa->code,
+                        'description' => $coa->title,
+                        'unit' => $biData['unit'],
+                        'quantity' => $quantity,
+                        'unit_2' => $biData['unit_2'] ?: null,
+                        'quantity_2' => !empty($biData['unit_2']) ? ($biData['quantity_2'] ?? null) : null,
+                        'unit_price' => $unitPrice,
+                        'total_price' => $totalPrice,
+                        'remarks' => $biData['remarks'] ?: null,
+                    ]);
+
+                    // Distribute evenly across 12 months
+                    $monthlyAmount = (float) ($totalPrice / 12);
+                    for ($m = 1; $m <= 12; $m++) {
+                        $bi->monthlies()->create([
+                            'month' => $m,
+                            'amount' => $monthlyAmount,
+                        ]);
+                        $bi->cashOuts()->create([
+                            'month' => $m,
+                            'amount' => $monthlyAmount,
+                        ]);
+                    }
+                }
+
+                $this->activityStatuses[$wp->id] = 'approved';
+                $this->activityRevisionNotes[$wp->id] = '';
+            }
+
+            // Recalculate submission total budget
+            $this->submission->refresh();
+            $this->submission->calculateTotalBudget();
         });
 
-        // Initialize status and revision note for the new work plan so they match the expected array structure in the review form
-        $this->activityStatuses[$rkapWorkPlan->id] = 'approved';
-        $this->activityRevisionNotes[$rkapWorkPlan->id] = '';
-
         // Reset and close
+        $this->isEditMode = false;
         $this->resetAddActivityForm();
-        $this->showAddActivityModal = false;
 
         $this->submission->refresh()->load([
             'workPlans.budgetItems.monthlies',
@@ -1009,7 +1156,76 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.coa.differenceGroup'
         ]);
 
-        session()->flash('message', 'Program Kegiatan berhasil ditambahkan.');
+        session()->flash('message', 'Perubahan berhasil disimpan.');
+    }
+
+
+
+    public function deleteWorkPlan(int $id): void
+    {
+        $user = Auth::user();
+        if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk menghapus kegiatan.');
+            return;
+        }
+
+        $wp = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+            ->where('added_by_verifier', true)
+            ->findOrFail($id);
+
+        DB::transaction(function () use ($wp) {
+            $wp->delete();
+
+            // Refresh loaded data and recalculate submission total budget
+            $this->submission->refresh();
+            $this->submission->calculateTotalBudget();
+        });
+
+        // Clean up arrays
+        unset($this->activityStatuses[$id]);
+        unset($this->activityRevisionNotes[$id]);
+
+        $this->submission->refresh()->load([
+            'workPlans.budgetItems.monthlies',
+            'workPlans.budgetItems.cashOuts',
+            'workPlans.budgetItems.coa.coaGroup',
+            'workPlans.budgetItems.coa.cashflowGroup',
+            'workPlans.budgetItems.coa.differenceGroup'
+        ]);
+
+        session()->flash('message', 'Program/Kegiatan berhasil dihapus.');
+    }
+
+    public function deleteBudgetItem(int $id): void
+    {
+        $user = Auth::user();
+        if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk menghapus item anggaran.');
+            return;
+        }
+
+        $bi = \App\Models\RkapBudgetItem::whereHas('workPlan', function ($query) {
+            $query->where('rkap_submission_id', $this->submission->id)
+                ->where('added_by_verifier', true);
+        })->findOrFail($id);
+
+        DB::transaction(function () use ($bi) {
+            $bi->delete();
+
+            // Refresh loaded data and recalculate submission total budget
+            $this->submission->refresh();
+            $this->submission->calculateTotalBudget();
+        });
+
+        $this->submission->refresh()->load([
+            'workPlans.budgetItems.monthlies',
+            'workPlans.budgetItems.cashOuts',
+            'workPlans.budgetItems.coa.coaGroup',
+            'workPlans.budgetItems.coa.cashflowGroup',
+            'workPlans.budgetItems.coa.differenceGroup'
+        ]);
+
+        session()->flash('message', 'Detail item anggaran berhasil dihapus.');
     }
 
     public function render()

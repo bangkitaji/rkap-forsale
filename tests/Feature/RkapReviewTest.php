@@ -476,22 +476,22 @@ class RkapReviewTest extends TestCase
         $this->actingAs($this->verifikator);
 
         Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
-            ->assertSee('Tambah Program Kegiatan')
-            ->call('openAddActivityModal')
-            ->assertSet('showAddActivityModal', true)
+            ->assertSee('Program Kegiatan')
+            ->call('enterEditMode')
+            ->assertSet('isEditMode', true)
             ->set('selectedWorkPlanId', $workPlan->id)
             ->set('selectedActivityId', $activity->id)
             ->assertSet('activityDescription', 'Activity Test Description')
             ->set('activityQuantity', 2)
             ->set('activityUnit', 'Kali')
             ->set('activityOutputTarget', 'Target Test')
-            ->set('budgetItemsInput.' . $coa->id . '.quantity', 3)
-            ->set('budgetItemsInput.' . $coa->id . '.unit', 'Pcs')
-            ->set('budgetItemsInput.' . $coa->id . '.unit_price', 10000)
-            ->set('budgetItemsInput.' . $coa->id . '.remarks', 'Budget Remark')
-            ->call('saveActivity')
+            ->set('newActivityBudgetItems.0.quantity', 3)
+            ->set('newActivityBudgetItems.0.unit', 'Pcs')
+            ->set('newActivityBudgetItems.0.unit_price', 10000)
+            ->set('newActivityBudgetItems.0.remarks', 'Budget Remark')
+            ->call('saveEditMode')
             ->assertHasNoErrors()
-            ->assertSet('showAddActivityModal', false);
+            ->assertSet('isEditMode', false);
 
         // Verify it was added to database
         $this->assertDatabaseHas('rkap_work_plans', [
@@ -534,4 +534,184 @@ class RkapReviewTest extends TestCase
         Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
             ->assertDontSee('Tambah Program Kegiatan');
     }
+
+    public function test_verifikator_can_delete_own_added_activity(): void
+    {
+        $this->submission->update(['status' => 'final_review', 'total_budget' => 0]);
+
+        $workPlan = \App\Models\WorkPlan::create(['code' => 'WP-DEL', 'title' => 'WP Del']);
+        $activity = \App\Models\Activity::create(['work_plan_id' => $workPlan->id, 'code' => 'ACT-DEL', 'title' => 'Act Del']);
+        $coa = \App\Models\Coa::create(['code' => 'COA-DEL', 'title' => 'Coa Del']);
+        $activity->coas()->sync([$coa->id]);
+
+        // 1. Add activity
+        $this->actingAs($this->verifikator);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('enterEditMode')
+            ->set('selectedWorkPlanId', $workPlan->id)
+            ->set('selectedActivityId', $activity->id)
+            ->set('newActivityBudgetItems.0.quantity', 1)
+            ->set('newActivityBudgetItems.0.unit', 'Pcs')
+            ->set('newActivityBudgetItems.0.unit_price', 1000)
+            ->call('saveEditMode')
+            ->assertHasNoErrors();
+
+        $wp = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+            ->where('activity_id', $activity->id)
+            ->firstOrFail();
+
+        $this->assertTrue($wp->added_by_verifier);
+        $this->assertEquals(1000.00, $this->submission->fresh()->total_budget);
+
+        // 2. Delete activity in a fresh test instance to preserve authentication state
+        $this->actingAs($this->verifikator);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('deleteWorkPlan', $wp->id)
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('rkap_work_plans', ['id' => $wp->id]);
+        $this->assertDatabaseMissing('rkap_budget_items', ['rkap_work_plan_id' => $wp->id]);
+        $this->assertEquals(0.00, $this->submission->fresh()->total_budget);
+    }
+
+    public function test_verifikator_can_delete_own_added_budget_item(): void
+    {
+        $this->submission->update(['status' => 'final_review', 'total_budget' => 0]);
+
+        $workPlan = \App\Models\WorkPlan::create(['code' => 'WP-DEL-BI', 'title' => 'WP Del BI']);
+        $activity = \App\Models\Activity::create(['work_plan_id' => $workPlan->id, 'code' => 'ACT-DEL-BI', 'title' => 'Act Del BI']);
+        $coa1 = \App\Models\Coa::create(['code' => 'COA-DEL-BI1', 'title' => 'Coa Del BI1']);
+        $coa2 = \App\Models\Coa::create(['code' => 'COA-DEL-BI2', 'title' => 'Coa Del BI2']);
+        $activity->coas()->sync([$coa1->id, $coa2->id]);
+
+        // 1. Add activity
+        $this->actingAs($this->verifikator);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('enterEditMode')
+            ->set('selectedWorkPlanId', $workPlan->id)
+            ->set('selectedActivityId', $activity->id)
+            ->set('newActivityBudgetItems.0.quantity', 1)
+            ->set('newActivityBudgetItems.0.unit', 'Pcs')
+            ->set('newActivityBudgetItems.0.unit_price', 1000)
+            ->set('newActivityBudgetItems.1.quantity', 1)
+            ->set('newActivityBudgetItems.1.unit', 'Pcs')
+            ->set('newActivityBudgetItems.1.unit_price', 2000)
+            ->call('saveEditMode')
+            ->assertHasNoErrors();
+
+        $wp = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+            ->where('activity_id', $activity->id)
+            ->firstOrFail();
+
+        $this->assertEquals(3000.00, $this->submission->fresh()->total_budget);
+
+        $bi1 = \App\Models\RkapBudgetItem::where('rkap_work_plan_id', $wp->id)->where('account_code', 'COA-DEL-BI1')->firstOrFail();
+        $bi2 = \App\Models\RkapBudgetItem::where('rkap_work_plan_id', $wp->id)->where('account_code', 'COA-DEL-BI2')->firstOrFail();
+
+        // 2. Delete budget item in a fresh test instance
+        $this->actingAs($this->verifikator);
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('deleteBudgetItem', $bi1->id)
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseMissing('rkap_budget_items', ['id' => $bi1->id]);
+        $this->assertDatabaseHas('rkap_budget_items', ['id' => $bi2->id]);
+        $this->assertEquals(2000.00, $this->submission->fresh()->total_budget);
+    }
+
+    public function test_verifikator_cannot_delete_original_activity_or_budget_item(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG-ORIG',
+            'program_name' => 'Original Program',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'added_by_verifier' => false, // Added by department originally
+        ]);
+
+        $bi = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => 'COA-ORIG',
+            'description' => 'Original Item',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'unit_price' => 5000,
+            'total_price' => 5000,
+        ]);
+
+        $this->actingAs($this->verifikator);
+
+        // Expect ModelNotFoundException since query filters by added_by_verifier = true
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('deleteWorkPlan', $wp->id);
+    }
+
+    public function test_non_verifikator_cannot_delete_added_activity(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG-ADD',
+            'program_name' => 'Added Program',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'added_by_verifier' => true,
+        ]);
+
+        $this->actingAs($this->kadept);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('deleteWorkPlan', $wp->id);
+
+        $this->assertDatabaseHas('rkap_work_plans', ['id' => $wp->id]);
+    }
+
+    public function test_verifikator_can_change_coa_of_existing_budget_item_in_edit_mode(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'PROG-ORIG',
+            'program_name' => 'Original Program',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'added_by_verifier' => false,
+        ]);
+
+        $bi = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => 'COA-OLD',
+            'description' => 'Original Item',
+            'quantity' => 1,
+            'unit' => 'Paket',
+            'unit_price' => 5000,
+            'total_price' => 5000,
+        ]);
+
+        $newCoa = \App\Models\Coa::create([
+            'code' => 'COA-NEW',
+            'title' => 'New Coa',
+            'description' => 'New Coa Description',
+        ]);
+
+        $this->actingAs($this->verifikator);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('enterEditMode')
+            ->assertSet('isEditMode', true)
+            ->set('editCoas.' . $bi->id, 'COA-NEW')
+            ->call('saveEditMode')
+            ->assertHasNoErrors()
+            ->assertSet('isEditMode', false);
+
+        $this->assertEquals('COA-NEW', $bi->fresh()->account_code);
+    }
 }
+

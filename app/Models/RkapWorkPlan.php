@@ -21,6 +21,7 @@ class RkapWorkPlan extends Model
         'sort_order',
         'approval_status',
         'revision_notes',
+        'added_by_verifier',
     ];
 
     protected function casts(): array
@@ -30,6 +31,7 @@ class RkapWorkPlan extends Model
             'sort_order'   => 'integer',
             'work_plan_id' => 'integer',
             'activity_id'  => 'integer',
+            'added_by_verifier' => 'boolean',
         ];
     }
 

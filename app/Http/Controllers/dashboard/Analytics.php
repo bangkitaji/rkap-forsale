@@ -1089,7 +1089,7 @@ class Analytics extends Controller
           'projection' => $projection,
         ];
 
-        $isInflow = str_starts_with($cg->code, 'CF0A') || $cg->code === 'CF0B1';
+        $isInflow = str_starts_with($cg->code, 'CF0A') || $cg->code === 'CF0B10';
 
         if ($isInflow) {
           $inflowGroups[] = $item;
