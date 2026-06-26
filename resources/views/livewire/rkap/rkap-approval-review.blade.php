@@ -517,8 +517,11 @@
                           <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
                         </div>
                         <div class="timeline-card-body text-center py-1 px-2">
-                          <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
-                            <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                          <div class="fw-semibold text-dark text-truncate mb-0.5" style="font-size: 0.62rem;" title="{{ $step['name'] }}">
+                            {{ $step['name'] }}
+                          </div>
+                          <div class="text-muted" style="font-size: 0.52rem !important; white-space: nowrap;">
+                            <i class="bx bx-calendar me-0.5" style="font-size: 0.6rem;"></i>{{ $step['time'] }}
                           </div>
                         </div>
                       </div>
@@ -556,8 +559,11 @@
                           <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
                         </div>
                         <div class="timeline-card-body text-center py-1 px-2">
-                          <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
-                            <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                          <div class="fw-semibold text-dark text-truncate mb-0.5" style="font-size: 0.62rem;" title="{{ $step['name'] }}">
+                            {{ $step['name'] }}
+                          </div>
+                          <div class="text-muted" style="font-size: 0.52rem !important; white-space: nowrap;">
+                            <i class="bx bx-calendar me-0.5" style="font-size: 0.6rem;"></i>{{ $step['time'] }}
                           </div>
                         </div>
                       </div>
@@ -585,7 +591,7 @@
               </div>
               <div class="row g-2">
                 <div class="col-6">
-                  <button class="btn btn-label-secondary w-100 py-2" type="button" wire:key="btn-cancel-edit" wire:click="cancelEditMode">
+                  <button class="btn btn-secondary w-100 py-2" type="button" wire:key="btn-cancel-edit" wire:click="cancelEditMode">
                     Batal
                   </button>
                 </div>
