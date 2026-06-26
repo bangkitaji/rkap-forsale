@@ -19,6 +19,15 @@ class RkapApprovalReview extends Component
     public array $activityStatuses = [];
     public array $activityRevisionNotes = [];
 
+    public bool $showAddActivityModal = false;
+    public $selectedWorkPlanId = null;
+    public $selectedActivityId = null;
+    public string $activityDescription = '';
+    public string $activityOutputTarget = '';
+    public string $activityUnit = 'Paket';
+    public int $activityQuantity = 1;
+    public array $budgetItemsInput = [];
+
     public function mount(int $id): void
     {
         $this->submission = RkapSubmission::with([
@@ -822,6 +831,185 @@ class RkapApprovalReview extends Component
         }
 
         return $changes;
+    }
+
+    public function getWorkPlansListProperty()
+    {
+        return \App\Models\WorkPlan::orderBy('code')->get();
+    }
+
+    public function getActivitiesListProperty()
+    {
+        if (empty($this->selectedWorkPlanId)) {
+            return collect();
+        }
+        return \App\Models\Activity::where('work_plan_id', $this->selectedWorkPlanId)->orderBy('code')->get();
+    }
+
+    public function updatedSelectedWorkPlanId(): void
+    {
+        $this->selectedActivityId = null;
+        $this->budgetItemsInput = [];
+        $this->activityDescription = '';
+        $this->activityOutputTarget = '';
+        $this->activityUnit = 'Paket';
+        $this->activityQuantity = 1;
+    }
+
+    public function updatedSelectedActivityId($value): void
+    {
+        $this->budgetItemsInput = [];
+        $this->activityDescription = '';
+        $this->activityOutputTarget = '';
+        $this->activityUnit = 'Paket';
+        $this->activityQuantity = 1;
+
+        if (empty($value)) {
+            return;
+        }
+
+        $activity = \App\Models\Activity::with('coas')->find($value);
+        if ($activity) {
+            $this->activityDescription = $activity->description ?: '';
+            foreach ($activity->coas as $coa) {
+                $this->budgetItemsInput[$coa->id] = [
+                    'coa_id' => $coa->id,
+                    'code' => $coa->code,
+                    'title' => $coa->title,
+                    'quantity' => 1,
+                    'unit' => 'Paket',
+                    'unit_price' => 0,
+                    'remarks' => '',
+                ];
+            }
+        }
+    }
+
+    public function openAddActivityModal(): void
+    {
+        $user = Auth::user();
+        if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk menambahkan kegiatan.');
+            return;
+        }
+
+        $this->resetAddActivityForm();
+        $this->showAddActivityModal = true;
+    }
+
+    private function resetAddActivityForm(): void
+    {
+        $this->selectedWorkPlanId = null;
+        $this->selectedActivityId = null;
+        $this->activityDescription = '';
+        $this->activityOutputTarget = '';
+        $this->activityUnit = 'Paket';
+        $this->activityQuantity = 1;
+        $this->budgetItemsInput = [];
+    }
+
+    public function saveActivity(): void
+    {
+        $user = Auth::user();
+        if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
+            session()->flash('error', 'Anda tidak memiliki wewenang untuk menambahkan kegiatan.');
+            return;
+        }
+
+        $this->validate([
+            'selectedWorkPlanId' => 'required|exists:work_plans,id',
+            'selectedActivityId' => 'required|exists:activities,id',
+            'activityQuantity' => 'required|integer|min:1',
+            'activityUnit' => 'required|string',
+            'activityDescription' => 'nullable|string',
+            'activityOutputTarget' => 'nullable|string',
+            'budgetItemsInput.*.quantity' => 'required|integer|min:1',
+            'budgetItemsInput.*.unit' => 'required|string',
+            'budgetItemsInput.*.unit_price' => 'required|numeric|min:0',
+            'budgetItemsInput.*.remarks' => 'nullable|string',
+        ]);
+
+        // Check if activity already exists in submission
+        $exists = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+            ->where('activity_id', $this->selectedActivityId)
+            ->exists();
+        if ($exists) {
+            $this->addError('selectedActivityId', 'Kegiatan ini sudah ada dalam pengajuan RKAP.');
+            return;
+        }
+
+        $rkapWorkPlan = DB::transaction(function () {
+            $activity = \App\Models\Activity::findOrFail($this->selectedActivityId);
+            $workPlan = \App\Models\WorkPlan::findOrFail($this->selectedWorkPlanId);
+
+            $wp = \App\Models\RkapWorkPlan::create([
+                'rkap_submission_id' => $this->submission->id,
+                'work_plan_id' => $workPlan->id,
+                'activity_id' => $activity->id,
+                'program_code' => $activity->code,
+                'program_name' => $activity->title,
+                'description' => $this->activityDescription ?: null,
+                'output_target' => $this->activityOutputTarget ?: null,
+                'unit' => $this->activityUnit,
+                'quantity' => $this->activityQuantity,
+                'sort_order' => (\App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)->max('sort_order') ?? 0) + 1,
+                'approval_status' => 'approved', // Verifier added it, defaults to approved
+            ]);
+
+            foreach ($this->budgetItemsInput as $coaId => $biData) {
+                $coa = \App\Models\Coa::findOrFail($coaId);
+                $unitPrice = (float) $biData['unit_price'];
+                $quantity = (int) $biData['quantity'];
+                $totalPrice = $quantity * $unitPrice;
+
+                $bi = \App\Models\RkapBudgetItem::create([
+                    'rkap_work_plan_id' => $wp->id,
+                    'account_code' => $coa->code,
+                    'description' => $coa->title,
+                    'unit' => $biData['unit'],
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $totalPrice,
+                    'remarks' => $biData['remarks'] ?: null,
+                ]);
+
+                // Distribute evenly across 12 months
+                $monthlyAmount = (float) ($totalPrice / 12);
+                for ($m = 1; $m <= 12; $m++) {
+                    $bi->monthlies()->create([
+                        'month' => $m,
+                        'amount' => $monthlyAmount,
+                    ]);
+                    $bi->cashOuts()->create([
+                        'month' => $m,
+                        'amount' => $monthlyAmount,
+                    ]);
+                }
+            }
+
+            // Recalculate submission total budget
+            $this->submission->calculateTotalBudget();
+
+            return $wp;
+        });
+
+        // Initialize status and revision note for the new work plan so they match the expected array structure in the review form
+        $this->activityStatuses[$rkapWorkPlan->id] = 'approved';
+        $this->activityRevisionNotes[$rkapWorkPlan->id] = '';
+
+        // Reset and close
+        $this->resetAddActivityForm();
+        $this->showAddActivityModal = false;
+
+        $this->submission->refresh()->load([
+            'workPlans.budgetItems.monthlies',
+            'workPlans.budgetItems.cashOuts',
+            'workPlans.budgetItems.coa.coaGroup',
+            'workPlans.budgetItems.coa.cashflowGroup',
+            'workPlans.budgetItems.coa.differenceGroup'
+        ]);
+
+        session()->flash('message', 'Program Kegiatan berhasil ditambahkan.');
     }
 
     public function render()

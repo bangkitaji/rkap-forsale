@@ -145,7 +145,7 @@
       "name": "COA",
       "icon": "menu-icon icon-base bx bx-spreadsheet",
       "slug": "master-data.coa",
-      "permission": "masterdata.coa.manage",
+      "permission": "masterdata.show",
       "submenu": [
         {
           "url": "master-data/coas",

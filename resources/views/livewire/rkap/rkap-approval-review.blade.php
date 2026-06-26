@@ -567,6 +567,12 @@
             <h5 class="mb-0 text-primary fw-bold"><i class="bx bx-check-shield me-2"></i>Aksi Review</h5>
           </div>
           <div class="card-body mt-3">
+            @if (auth()->user()->isVerifikator())
+              <button class="btn btn-primary w-100 mb-3" wire:click="openAddActivityModal" wire:key="btn-open-add-activity">
+                <i class="bx bx-plus me-1"></i> Tambah Program Kegiatan
+              </button>
+            @endif
+
             @if ($showRevisionForm)
               <div class="mb-3" wire:key="revision-reason-wrapper">
                 <label class="form-label text-danger fw-semibold">Alasan Permintaan Revisi <span
@@ -1614,4 +1620,133 @@
 
     </div>
   </div>
+
+  @if ($showAddActivityModal)
+    <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0, 0, 0, 0.5);" role="dialog" wire:key="add-activity-modal-wrapper">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header border-bottom py-3">
+            <h5 class="modal-title fw-bold text-primary"><i class="bx bx-plus-circle me-2"></i>Tambah Program Kegiatan</h5>
+            <button type="button" class="btn-close" wire:click="$set('showAddActivityModal', false)" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pb-3" style="max-height: 70vh; overflow-y: auto;">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Program Kerja (Work Plan) <span class="text-danger">*</span></label>
+              <select class="form-select @error('selectedWorkPlanId') is-invalid @enderror" wire:model.live="selectedWorkPlanId">
+                <option value="">-- Pilih Program Kerja --</option>
+                @foreach ($this->workPlansList as $wp)
+                  <option value="{{ $wp->id }}">{{ $wp->code }} — {{ $wp->title }}</option>
+                @endforeach
+              </select>
+              @error('selectedWorkPlanId')
+                <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Kegiatan (Activity) <span class="text-danger">*</span></label>
+              <select class="form-select @error('selectedActivityId') is-invalid @enderror" wire:model.live="selectedActivityId" @disabled(empty($selectedWorkPlanId))>
+                <option value="">-- Pilih Kegiatan --</option>
+                @foreach ($this->activitiesList as $act)
+                  <option value="{{ $act->id }}">{{ $act->code }} — {{ $act->title }}</option>
+                @endforeach
+              </select>
+              @error('selectedActivityId')
+                <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+            </div>
+
+            @if ($selectedActivityId)
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Deskripsi / Tujuan Kegiatan</label>
+                <textarea class="form-control @error('activityDescription') is-invalid @enderror" wire:model="activityDescription" rows="2" placeholder="Deskripsi/tujuan kegiatan"></textarea>
+                @error('activityDescription')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-semibold">Volume Kegiatan <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control @error('activityQuantity') is-invalid @enderror" wire:model="activityQuantity" min="1">
+                  @error('activityQuantity')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-semibold">Satuan Volume Kegiatan <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control @error('activityUnit') is-invalid @enderror" wire:model="activityUnit" placeholder="Contoh: Paket, Kali, Bulan">
+                  @error('activityUnit')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Target Output</label>
+                <input type="text" class="form-control @error('activityOutputTarget') is-invalid @enderror" wire:model="activityOutputTarget" placeholder="Contoh: Laporan Keuangan, Dokumen">
+                @error('activityOutputTarget')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+
+              <hr class="my-4">
+              <h6 class="fw-bold mb-3 text-secondary"><i class="bx bx-link me-1"></i>Rincian Anggaran (COA Terkait)</h6>
+              @if (empty($budgetItemsInput))
+                <div class="alert alert-warning small d-flex align-items-center mb-0">
+                  <i class="bx bx-info-circle me-2 fs-5"></i>
+                  <span>Kegiatan ini belum memiliki COA yang dipetakan. Silakan petakan COA terlebih dahulu di menu Master Data.</span>
+                </div>
+              @else
+                <div class="table-responsive border rounded">
+                  <table class="table table-bordered table-sm mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>COA</th>
+                        <th style="width: 100px;">Volume</th>
+                        <th style="width: 120px;">Satuan</th>
+                        <th style="width: 180px;">Harga Satuan</th>
+                        <th>Keterangan (Remarks)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @foreach ($budgetItemsInput as $coaId => $bi)
+                        <tr wire:key="coa-input-{{ $coaId }}">
+                          <td class="align-middle">
+                            <strong class="text-primary">{{ $bi['code'] }}</strong><br>
+                            <small class="text-muted text-wrap">{{ $bi['title'] }}</small>
+                          </td>
+                          <td class="align-middle">
+                            <input type="number" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.quantity') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.quantity" min="1">
+                          </td>
+                          <td class="align-middle">
+                            <input type="text" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.unit') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.unit" placeholder="Pcs">
+                          </td>
+                          <td class="align-middle">
+                            <div class="input-group input-group-merge input-group-sm">
+                              <span class="input-group-text">Rp</span>
+                              <input type="number" class="form-control @error('budgetItemsInput.' . $coaId . '.unit_price') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.unit_price" placeholder="Harga">
+                            </div>
+                          </td>
+                          <td class="align-middle">
+                            <input type="text" class="form-control form-control-sm @error('budgetItemsInput.' . $coaId . '.remarks') is-invalid @enderror" wire:model="budgetItemsInput.{{ $coaId }}.remarks" placeholder="Catatan">
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+                </div>
+              @endif
+            @endif
+          </div>
+          <div class="modal-footer border-top py-3">
+            <button type="button" class="btn btn-outline-secondary" wire:click="$set('showAddActivityModal', false)">Batal</button>
+            <button type="button" class="btn btn-primary" wire:click="saveActivity" @disabled(!$selectedActivityId || empty($budgetItemsInput))>
+              <i class="bx bx-save me-1"></i> Simpan Kegiatan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endif
 </div>

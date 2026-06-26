@@ -448,4 +448,90 @@ class RkapReviewTest extends TestCase
             ->call('requestRevision')
             ->assertDispatched('focus-activity-revision-note', id: $wp->id);
     }
+
+    public function test_verifikator_can_add_activity_with_mapped_coas_during_review(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        $workPlan = \App\Models\WorkPlan::create([
+            'code' => 'WP-TEST',
+            'title' => 'Work Plan Test',
+        ]);
+
+        $activity = \App\Models\Activity::create([
+            'work_plan_id' => $workPlan->id,
+            'code' => 'ACT-TEST',
+            'title' => 'Activity Test',
+            'description' => 'Activity Test Description',
+        ]);
+
+        $coa = \App\Models\Coa::create([
+            'code' => 'COA-TEST',
+            'title' => 'Coa Test',
+            'description' => 'Coa Test Description',
+        ]);
+
+        $activity->coas()->sync([$coa->id]);
+
+        $this->actingAs($this->verifikator);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->assertSee('Tambah Program Kegiatan')
+            ->call('openAddActivityModal')
+            ->assertSet('showAddActivityModal', true)
+            ->set('selectedWorkPlanId', $workPlan->id)
+            ->set('selectedActivityId', $activity->id)
+            ->assertSet('activityDescription', 'Activity Test Description')
+            ->set('activityQuantity', 2)
+            ->set('activityUnit', 'Kali')
+            ->set('activityOutputTarget', 'Target Test')
+            ->set('budgetItemsInput.' . $coa->id . '.quantity', 3)
+            ->set('budgetItemsInput.' . $coa->id . '.unit', 'Pcs')
+            ->set('budgetItemsInput.' . $coa->id . '.unit_price', 10000)
+            ->set('budgetItemsInput.' . $coa->id . '.remarks', 'Budget Remark')
+            ->call('saveActivity')
+            ->assertHasNoErrors()
+            ->assertSet('showAddActivityModal', false);
+
+        // Verify it was added to database
+        $this->assertDatabaseHas('rkap_work_plans', [
+            'rkap_submission_id' => $this->submission->id,
+            'activity_id' => $activity->id,
+            'program_code' => 'ACT-TEST',
+            'program_name' => 'Activity Test',
+            'quantity' => 2,
+            'unit' => 'Kali',
+        ]);
+
+        $rkapWorkPlan = \App\Models\RkapWorkPlan::where('rkap_submission_id', $this->submission->id)
+            ->where('activity_id', $activity->id)
+            ->first();
+
+        $this->assertDatabaseHas('rkap_budget_items', [
+            'rkap_work_plan_id' => $rkapWorkPlan->id,
+            'account_code' => 'COA-TEST',
+            'description' => 'Coa Test',
+            'quantity' => 3,
+            'unit' => 'Pcs',
+            'unit_price' => 10000.00,
+            'total_price' => 30000.00,
+            'remarks' => 'Budget Remark',
+        ]);
+
+        // Monthly subtotal checks (should be distributed evenly)
+        $budgetItem = \App\Models\RkapBudgetItem::where('rkap_work_plan_id', $rkapWorkPlan->id)->first();
+        $this->assertEquals(12, $budgetItem->monthlies()->count());
+        $this->assertEquals(2500.00, $budgetItem->monthlies()->first()->amount);
+    }
+
+    public function test_non_verifikator_cannot_see_add_activity_button(): void
+    {
+        $this->submission->update(['status' => 'final_review']);
+
+        // Login as non-verifikator, e.g. kadept
+        $this->actingAs($this->kadept);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->assertDontSee('Tambah Program Kegiatan');
+    }
 }

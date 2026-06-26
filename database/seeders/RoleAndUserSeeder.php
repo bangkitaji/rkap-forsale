@@ -95,6 +95,8 @@ class RoleAndUserSeeder extends Seeder
             $permReportGroupManage,
             $permSettingsCashflowGroupManage,
             $permSettingsDifferenceGroupManage,
+            $permMasterDataShow,
+            $permMasterDataActivityManage,
         ]);
 
         $roleDireksi->givePermissionTo([
