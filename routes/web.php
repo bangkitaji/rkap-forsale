@@ -10,7 +10,9 @@ use App\Http\Controllers\authentications\ForgotPasswordBasic;
 Route::middleware(['auth'])->group(function () {
   Route::get('/analytics', [Analytics::class, 'index'])->name('dashboard-analytics');
   Route::get('/analytics/report', [Analytics::class, 'report'])->name('analytics-report');
+  Route::get('/analytics/cashflow', [Analytics::class, 'cashflow'])->name('analytics-cashflow');
   Route::get('/analytics/coa-group-detail', [Analytics::class, 'coaGroupDetail'])->name('analytics.coa-group-detail');
+  Route::get('/analytics/cashflow-group-detail', [Analytics::class, 'cashflowGroupDetail'])->name('analytics.cashflow-group-detail');
   Route::get('/', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
   Route::get('/my-profile/{tab?}', \App\Livewire\Auth\MyProfile::class)->name('my-profile');
   Route::get('/change-password', function () {

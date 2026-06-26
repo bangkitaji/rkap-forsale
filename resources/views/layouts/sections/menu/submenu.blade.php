@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Route;
       @endcannot
     @endif
 
+    {{-- Kepala Departemen restriction for specific reports --}}
+    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/report', 'analytics/cashflow']) && auth()->check() && auth()->user()->isKepalaDepartemen())
+      @continue
+    @endif
+
     {{-- active menu method --}}
     @php
       $activeClass = null;

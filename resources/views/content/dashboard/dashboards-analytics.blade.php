@@ -129,7 +129,7 @@
         <div class="card h-100">
           <div class="card-header border-bottom py-3">
             <h5 class="card-title mb-0">Komparasi RKAP Antar Tahun</h5>
-            <small class="text-muted">Perbandingan Anggaran, Realisasi YTD, dan Proyeksi Akhir Tahun (Tahun Lalu, Tahun
+            <small class="text-muted">Perbandingan Anggaran, Realisasi YTD, dan Proyeksi Akhir Tahun untuk Pemasukan dan Pengeluaran (Tahun Lalu, Tahun
               Berjalan, dan Tahun Depan)</small>
           </div>
           <div class="card-body pt-3">
@@ -511,16 +511,28 @@
         // 4. Annual Comparison Chart Setup
         const annualComparisonChartOptions = {
           series: [{
-              name: 'Anggaran',
-              data: @json(array_column($comparisonData, 'budget'))
+              name: 'Anggaran Pemasukan',
+              data: @json(array_column($comparisonData, 'income_budget'))
             },
             {
-              name: 'Realisasi YTD',
-              data: @json(array_column($comparisonData, 'realization'))
+              name: 'Realisasi Pemasukan YTD',
+              data: @json(array_column($comparisonData, 'income_realization'))
             },
             {
-              name: 'Proyeksi Akhir Tahun',
-              data: @json(array_column($comparisonData, 'projection'))
+              name: 'Proyeksi Pemasukan',
+              data: @json(array_column($comparisonData, 'income_projection'))
+            },
+            {
+              name: 'Anggaran Pengeluaran',
+              data: @json(array_column($comparisonData, 'expense_budget'))
+            },
+            {
+              name: 'Realisasi Pengeluaran YTD',
+              data: @json(array_column($comparisonData, 'expense_realization'))
+            },
+            {
+              name: 'Proyeksi Pengeluaran',
+              data: @json(array_column($comparisonData, 'expense_projection'))
             }
           ],
           chart: {
@@ -533,7 +545,7 @@
           plotOptions: {
             bar: {
               horizontal: false,
-              columnWidth: '55%',
+              columnWidth: '65%',
               endingShape: 'rounded',
               borderRadius: 4
             },
@@ -546,7 +558,7 @@
             width: 2,
             colors: ['transparent']
           },
-          colors: ['#1a1f5e', '#960b10ff', '#ffab00'],
+          colors: ['#2e7d32', '#4caf50', '#81c784', '#c62828', '#f44336', '#e57373'],
           xaxis: {
             categories: @json(array_column($comparisonData, 'label')),
           },

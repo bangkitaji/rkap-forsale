@@ -735,23 +735,32 @@ class RkapDashboardTest extends TestCase
         // Last Year details (index 0)
         $this->assertEquals($currentYear - 1, $compDataAdmin[0]['year']);
         $this->assertEquals(($currentYear - 1) . ' (Tahun Lalu)', $compDataAdmin[0]['label']);
-        $this->assertEquals(50000.0, $compDataAdmin[0]['budget']);
-        $this->assertEquals(30000.0, $compDataAdmin[0]['realization']);
-        $this->assertEquals(45000.0, $compDataAdmin[0]['projection']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['income_budget']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['income_realization']);
+        $this->assertEquals(0.0, $compDataAdmin[0]['income_projection']);
+        $this->assertEquals(50000.0, $compDataAdmin[0]['expense_budget']);
+        $this->assertEquals(30000.0, $compDataAdmin[0]['expense_realization']);
+        $this->assertEquals(45000.0, $compDataAdmin[0]['expense_projection']);
 
         // Current Year details (index 1)
         $this->assertEquals($currentYear, $compDataAdmin[1]['year']);
         $this->assertEquals($currentYear . ' (Tahun Berjalan)', $compDataAdmin[1]['label']);
-        $this->assertEquals(100000.0, $compDataAdmin[1]['budget']);
-        $this->assertEquals(25000.0, $compDataAdmin[1]['realization']);
-        $this->assertEquals(88000.0, $compDataAdmin[1]['projection']);
+        $this->assertEquals(0.0, $compDataAdmin[1]['income_budget']);
+        $this->assertEquals(0.0, $compDataAdmin[1]['income_realization']);
+        $this->assertEquals(0.0, $compDataAdmin[1]['income_projection']);
+        $this->assertEquals(100000.0, $compDataAdmin[1]['expense_budget']);
+        $this->assertEquals(25000.0, $compDataAdmin[1]['expense_realization']);
+        $this->assertEquals(88000.0, $compDataAdmin[1]['expense_projection']);
 
         // Next Year details (index 2)
         $this->assertEquals($currentYear + 1, $compDataAdmin[2]['year']);
         $this->assertEquals(($currentYear + 1) . ' (Tahun Depan)', $compDataAdmin[2]['label']);
-        $this->assertEquals(90000.0, $compDataAdmin[2]['budget']);
-        $this->assertEquals(10000.0, $compDataAdmin[2]['realization']);
-        $this->assertEquals(85000.0, $compDataAdmin[2]['projection']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['income_budget']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['income_realization']);
+        $this->assertEquals(0.0, $compDataAdmin[2]['income_projection']);
+        $this->assertEquals(90000.0, $compDataAdmin[2]['expense_budget']);
+        $this->assertEquals(10000.0, $compDataAdmin[2]['expense_realization']);
+        $this->assertEquals(85000.0, $compDataAdmin[2]['expense_projection']);
 
         // 2. Assert kabiro1 scoping limits data to Bureau 1 for all three years
         $responseKabiro = $this->actingAs($this->kabiro1)->get('/analytics');
@@ -761,19 +770,28 @@ class RkapDashboardTest extends TestCase
         $this->assertCount(3, $compDataKabiro);
         
         // Last Year Bureau 1
-        $this->assertEquals(50000.0, $compDataKabiro[0]['budget']);
-        $this->assertEquals(30000.0, $compDataKabiro[0]['realization']);
-        $this->assertEquals(45000.0, $compDataKabiro[0]['projection']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['income_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['income_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[0]['income_projection']);
+        $this->assertEquals(50000.0, $compDataKabiro[0]['expense_budget']);
+        $this->assertEquals(30000.0, $compDataKabiro[0]['expense_realization']);
+        $this->assertEquals(45000.0, $compDataKabiro[0]['expense_projection']);
 
         // Current Year Bureau 1
-        $this->assertEquals(60000.0, $compDataKabiro[1]['budget']);
-        $this->assertEquals(15000.0, $compDataKabiro[1]['realization']);
-        $this->assertEquals(50000.0, $compDataKabiro[1]['projection']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['income_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['income_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[1]['income_projection']);
+        $this->assertEquals(60000.0, $compDataKabiro[1]['expense_budget']);
+        $this->assertEquals(15000.0, $compDataKabiro[1]['expense_realization']);
+        $this->assertEquals(50000.0, $compDataKabiro[1]['expense_projection']);
 
         // Next Year Bureau 1
-        $this->assertEquals(90000.0, $compDataKabiro[2]['budget']);
-        $this->assertEquals(10000.0, $compDataKabiro[2]['realization']);
-        $this->assertEquals(85000.0, $compDataKabiro[2]['projection']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['income_budget']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['income_realization']);
+        $this->assertEquals(0.0, $compDataKabiro[2]['income_projection']);
+        $this->assertEquals(90000.0, $compDataKabiro[2]['expense_budget']);
+        $this->assertEquals(10000.0, $compDataKabiro[2]['expense_realization']);
+        $this->assertEquals(85000.0, $compDataKabiro[2]['expense_projection']);
     }
 
     public function test_analytics_profit_and_loss_formulas_calculation(): void
@@ -876,5 +894,151 @@ class RkapDashboardTest extends TestCase
 
         // Net Profit = EBITDA (60000) + Other Income (5000) - Other Expense (-3000) = 68000
         $this->assertEquals(68000.0, $plSummary['net_profit']['budget']);
+    }
+
+    public function test_admin_sees_cashflow_summary(): void
+    {
+        // 1. Retrieve existing COA groups
+        $cgRevenue = \App\Models\CoaGroup::where('code', '4000')->first();
+        $cgDirectCost = \App\Models\CoaGroup::where('code', '5000')->first();
+
+        // 2. Create Cashflow Groups
+        $cgFarebox = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0A1B'],
+            ['name' => 'Penerimaan Pelanggan Farebox']
+        );
+        $cgOpex = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0B2'],
+            ['name' => 'Pembayaran Pemasok']
+        );
+
+        // 3. Create COAs mapped to Cashflow Groups
+        $coaFarebox = \App\Models\Coa::firstOrCreate(
+            ['code' => '411111'],
+            ['coa_group_id' => $cgRevenue->id, 'title' => 'Tiket KA', 'cashflow_group_id' => $cgFarebox->id]
+        );
+        $coaOpex = \App\Models\Coa::firstOrCreate(
+            ['code' => '521112'],
+            ['coa_group_id' => $cgDirectCost->id, 'title' => 'Belanja Pegawai', 'cashflow_group_id' => $cgOpex->id]
+        );
+
+        // 4. Create Budget Period & Submission
+        $period = \App\Models\RkapPeriod::create([
+            'year' => 2027,
+            'title' => 'RKAP 2027',
+            'status' => 'finalized',
+            'submission_start' => now()->subDay(),
+            'submission_end' => now()->addDay(),
+        ]);
+
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $period->id,
+            'bureau_id' => $this->bureau1->id,
+            'created_by' => $this->kabiro1->id,
+            'status' => 'approved',
+            'total_budget' => 150000.0,
+        ]);
+
+        $workPlan = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'program_name' => 'Work Plan',
+            'program_code' => 'WP1',
+        ]);
+
+        $bi1 = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '411111',
+            'description' => 'Farebox Budget Item',
+            'quantity' => 1,
+            'unit_price' => 100000.0,
+            'projection' => 90000.0,
+        ]);
+
+        $bi2 = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521112',
+            'description' => 'Opex Budget Item',
+            'quantity' => 1,
+            'unit_price' => 50000.0,
+            'projection' => 45000.0,
+        ]);
+
+        // Realizations
+        \App\Models\RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $bi1->id,
+            'rkap_period_id' => $period->id,
+            'month' => 3,
+            'amount' => 80000.0,
+            'uploaded_by' => $this->admin->id,
+            'uploaded_at' => now(),
+        ]);
+
+        \App\Models\RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $bi2->id,
+            'rkap_period_id' => $period->id,
+            'month' => 4,
+            'amount' => 30000.0,
+            'uploaded_by' => $this->admin->id,
+            'uploaded_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)->get('/analytics/cashflow?period_id=' . $period->id);
+        $response->assertStatus(200);
+
+        $response->assertViewHas('inflowGroups');
+        $response->assertViewHas('outflowGroups');
+        $response->assertViewHas('cfSummary');
+
+        $inflow = $response->viewData('inflowGroups');
+        $outflow = $response->viewData('outflowGroups');
+        $cfSummary = $response->viewData('cfSummary');
+
+        // Check values
+        $this->assertEquals(100000.0, $cfSummary['inflow']['budget']);
+        $this->assertEquals(80000.0, $cfSummary['inflow']['realization']);
+        $this->assertEquals(90000.0, $cfSummary['inflow']['projection']);
+
+        $this->assertEquals(50000.0, $cfSummary['outflow']['budget']);
+        $this->assertEquals(30000.0, $cfSummary['outflow']['realization']);
+        $this->assertEquals(45000.0, $cfSummary['outflow']['projection']);
+
+        $this->assertEquals(50000.0, $cfSummary['net']['budget']);
+        $this->assertEquals(50000.0, $cfSummary['net']['realization']);
+        $this->assertEquals(45000.0, $cfSummary['net']['projection']);
+
+        $response->assertSee('Laporan Cash Flow');
+        $response->assertSee('Penerimaan Pelanggan Farebox');
+        $response->assertSee('Pembayaran Pemasok');
+
+        // Test AJAX group detail endpoint
+        $detailResponse = $this->actingAs($this->admin)->get("/analytics/cashflow-group-detail?cashflow_group_id={$cgFarebox->id}&period_id={$period->id}");
+        $detailResponse->assertStatus(200);
+        $detailResponse->assertJsonStructure(['data']);
+        $data = $detailResponse->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('411111', $data[0]['coa_code']);
+    }
+
+    public function test_kepala_departemen_cannot_access_cashflow_report(): void
+    {
+        $roleKadept = Role::firstOrCreate(['name' => 'kepala_departemen']);
+        $roleKadept->givePermissionTo(Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']));
+
+        $department = Department::where('code', 'DP1')->first();
+        $directorate = Directorate::where('code', 'D1')->first();
+
+        $kadeptUser = User::create([
+            'name' => 'Kadept Test User',
+            'email' => 'kadepttest@example.com',
+            'password' => bcrypt('password'),
+            'department_id' => $department->id,
+            'directorate_id' => $directorate->id,
+        ]);
+        $kadeptUser->assignRole($roleKadept);
+
+        $response = $this->actingAs($kadeptUser)->get('/analytics/cashflow');
+        $response->assertStatus(200);
+        $response->assertSee('Akses Dibatasi');
+        $response->assertSee('Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Cash Flow.');
     }
 }

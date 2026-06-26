@@ -782,49 +782,82 @@ class Analytics extends Controller
 
     foreach ($yearsToCompare as $yr) {
       $period = RkapPeriod::where('year', $yr)->first();
+      $incomeBudget = 0.0;
+      $incomeReal = 0.0;
+      $incomeProj = 0.0;
+      $expenseBudget = 0.0;
+      $expenseReal = 0.0;
+      $expenseProj = 0.0;
+
       if ($period) {
         $isNextYear = ($yr === $currentYear + 1);
 
-        $budget = (float) DB::table('rkap_budget_items')
+        $budgetItems = DB::table('rkap_budget_items')
           ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
           ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
           ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
           ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
           ->where('rkap_submissions.rkap_period_id', $period->id)
           ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
           ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
           ->whereNull('coas.deleted_at')
           ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-          ->sum('rkap_budget_items.total_price');
+          ->select(
+            'rkap_budget_items.id',
+            'rkap_budget_items.total_price',
+            'rkap_budget_items.projection',
+            'coas.code as coa_code',
+            'coa_groups.code as coa_group_code',
+            'report_groups.code as report_group_code'
+          )
+          ->get();
 
-        $realization = (float) DB::table('rkap_budget_item_realizations')
-          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
-          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-          ->where('rkap_budget_item_realizations.rkap_period_id', $period->id)
-          ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
-          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
-          ->whereNull('coas.deleted_at')
-          ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-          ->sum('rkap_budget_item_realizations.amount');
+        $realizationSums = DB::table('rkap_budget_item_realizations')
+          ->where('rkap_period_id', $period->id)
+          ->groupBy('rkap_budget_item_id')
+          ->select('rkap_budget_item_id', DB::raw('SUM(amount) as total_amount'))
+          ->pluck('total_amount', 'rkap_budget_item_id')
+          ->toArray();
 
-        $projection = (float) DB::table('rkap_budget_items')
-          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
-          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-          ->where('rkap_submissions.rkap_period_id', $period->id)
-          ->unless($isNextYear, fn($q) => $q->where('rkap_submissions.status', 'approved'))
-          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
-          ->whereNull('coas.deleted_at')
-          ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-          ->sum('rkap_budget_items.projection');
-      } else {
-        $budget = 0.0;
-        $realization = 0.0;
-        $projection = 0.0;
+        foreach ($budgetItems as $item) {
+          $isExpense = false;
+          $rgCode = $item->report_group_code;
+          $cgCode = $item->coa_group_code;
+          $coaCode = $item->coa_code;
+
+          $amountBudget = (float) $item->total_price;
+          $amountReal = (float) ($realizationSums[$item->id] ?? 0.0);
+          $amountProj = (float) $item->projection;
+
+          if ($rgCode === 'PL0001') {
+            $isExpense = false;
+          } elseif ($rgCode === 'PL0002' || $rgCode === 'PL0003' || $rgCode === 'PL0005') {
+            $isExpense = true;
+          } elseif ($rgCode === 'PL0004') {
+            if (in_array($cgCode, ['7000', '7001', '7001A', '7002', '7002A', '7004'])) {
+              $isExpense = true;
+            } elseif ($cgCode === '7005') {
+              if (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+                $isExpense = true;
+              } else {
+                $isExpense = false;
+              }
+            } else {
+              $isExpense = false;
+            }
+          }
+
+          if ($isExpense) {
+            $expenseBudget += $amountBudget;
+            $expenseReal += $amountReal;
+            $expenseProj += $amountProj;
+          } else {
+            $incomeBudget += $amountBudget;
+            $incomeReal += $amountReal;
+            $incomeProj += $amountProj;
+          }
+        }
       }
 
       if ($yr === $currentYear - 1) {
@@ -838,9 +871,12 @@ class Analytics extends Controller
       $comparisonData[] = [
         'year' => $yr,
         'label' => $label,
-        'budget' => $budget,
-        'realization' => $realization,
-        'projection' => $projection,
+        'income_budget' => $incomeBudget,
+        'income_realization' => $incomeReal,
+        'income_projection' => $incomeProj,
+        'expense_budget' => $expenseBudget,
+        'expense_realization' => $expenseReal,
+        'expense_projection' => $expenseProj,
       ];
     }
 
@@ -913,6 +949,226 @@ class Analytics extends Controller
       ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
       ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
       ->where('coa_groups.id', $coaGroupId)
+      ->where('rkap_submissions.rkap_period_id', $periodId)
+      ->where('rkap_submissions.status', 'approved')
+      ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+      ->whereNull('coas.deleted_at')
+      ->selectRaw('
+        coas.code as coa_code,
+        coas.title as coa_title,
+        rkap_work_plans.program_code,
+        rkap_work_plans.program_name,
+        directorates.code as directorate_code,
+        departments.code as department_code,
+        bureaus.code as bureau_code,
+        SUM(rkap_budget_items.total_price) as budget,
+        SUM(COALESCE(rl.realization_total, 0)) as realization,
+        SUM(rkap_budget_items.projection) as projection
+      ')
+      ->groupBy(
+        'coas.code',
+        'coas.title',
+        'rkap_work_plans.program_code',
+        'rkap_work_plans.program_name',
+        'directorates.code',
+        'departments.code',
+        'bureaus.code'
+      )
+      ->orderBy('coas.code')
+      ->orderBy('rkap_work_plans.program_code')
+      ->get();
+
+    return response()->json(['data' => $rows]);
+  }
+
+  public function cashflow(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $finalizedPeriods = RkapPeriod::where('status', 'finalized')
+      ->orderBy('year', 'desc')
+      ->orderBy('created_at', 'desc')
+      ->get();
+
+    $selectedPeriodId = $request->query('period_id');
+    $activePeriod = null;
+
+    if ($selectedPeriodId) {
+      $activePeriod = RkapPeriod::where('status', 'finalized')->find($selectedPeriodId);
+    }
+
+    if (!$activePeriod) {
+      $currentYear = (int) date('Y');
+      $activePeriod = RkapPeriod::where('year', $currentYear)->first()
+        ?? RkapPeriod::where('status', 'finalized')->latest()->first()
+        ?? RkapPeriod::latest()->first();
+    }
+
+    $inflowGroups = [];
+    $outflowGroups = [];
+    $cfSummary = [];
+
+    if ($activePeriod) {
+      $bureauIds = null;
+      if ($user->isKepalaBiro()) {
+        $bureauIds = [$user->bureau_id];
+      } elseif ($user->isKepalaDepartemen()) {
+        $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
+      }
+
+      $cashflowGroups = \App\Models\CashflowGroup::orderBy('code')->get();
+
+      $cfBudgetsRaw = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total')
+        ->groupBy('coas.cashflow_group_id')
+        ->pluck('total', 'cashflow_group_id')
+        ->toArray();
+
+      $cfRealizationsRaw = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coas.cashflow_group_id')
+        ->pluck('total', 'cashflow_group_id')
+        ->toArray();
+
+      $cfProjectionsRaw = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->where('rkap_submissions.status', 'approved')
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, SUM(rkap_budget_items.projection) as total')
+        ->groupBy('coas.cashflow_group_id')
+        ->pluck('total', 'cashflow_group_id')
+        ->toArray();
+
+      $inflowBudgetTotal = 0.0;
+      $inflowRealTotal = 0.0;
+      $inflowProjTotal = 0.0;
+
+      $outflowBudgetTotal = 0.0;
+      $outflowRealTotal = 0.0;
+      $outflowProjTotal = 0.0;
+
+      $colorPalette = ['primary', 'info', 'success', 'warning', 'danger', 'secondary', 'dark'];
+
+      foreach ($cashflowGroups as $idx => $cg) {
+        $budget = (float) ($cfBudgetsRaw[$cg->id] ?? 0.0);
+        $realization = (float) ($cfRealizationsRaw[$cg->id] ?? 0.0);
+        $projection = (float) ($cfProjectionsRaw[$cg->id] ?? 0.0);
+
+        $item = [
+          'id' => $cg->id,
+          'code' => $cg->code,
+          'name' => $cg->name,
+          'color' => $colorPalette[$idx % count($colorPalette)],
+          'budget' => $budget,
+          'realization' => $realization,
+          'projection' => $projection,
+        ];
+
+        $isInflow = str_starts_with($cg->code, 'CF0A') || $cg->code === 'CF0B1';
+
+        if ($isInflow) {
+          $inflowGroups[] = $item;
+          $inflowBudgetTotal += $budget;
+          $inflowRealTotal += $realization;
+          $inflowProjTotal += $projection;
+        } else {
+          $outflowGroups[] = $item;
+          $outflowBudgetTotal += $budget;
+          $outflowRealTotal += $realization;
+          $outflowProjTotal += $projection;
+        }
+      }
+
+      $netBudget = $inflowBudgetTotal - $outflowBudgetTotal;
+      $netReal = $inflowRealTotal - $outflowRealTotal;
+      $netProj = $inflowProjTotal - $outflowProjTotal;
+
+      $cfSummary = [
+        'inflow' => [
+          'budget' => $inflowBudgetTotal,
+          'realization' => $inflowRealTotal,
+          'projection' => $inflowProjTotal,
+        ],
+        'outflow' => [
+          'budget' => $outflowBudgetTotal,
+          'realization' => $outflowRealTotal,
+          'projection' => $outflowProjTotal,
+        ],
+        'net' => [
+          'budget' => $netBudget,
+          'realization' => $netReal,
+          'projection' => $netProj,
+        ],
+      ];
+    }
+
+    return view('content.dashboard.analytics-cashflow', compact(
+      'activePeriod',
+      'finalizedPeriods',
+      'inflowGroups',
+      'outflowGroups',
+      'cfSummary'
+    ));
+  }
+
+  public function cashflowGroupDetail(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $cashflowGroupId = (int) $request->query('cashflow_group_id');
+    $periodId = (int) $request->query('period_id');
+
+    if (!$cashflowGroupId || !$periodId) {
+      return response()->json(['data' => []]);
+    }
+
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')
+        ->where('department_id', $user->department_id)
+        ->pluck('id')
+        ->toArray();
+    }
+
+    $rows = DB::table('rkap_budget_items')
+      ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+      ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+      ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+      ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+      ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+      ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+      ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      ->where('coas.cashflow_group_id', $cashflowGroupId)
       ->where('rkap_submissions.rkap_period_id', $periodId)
       ->where('rkap_submissions.status', 'approved')
       ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
