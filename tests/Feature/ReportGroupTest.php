@@ -8,11 +8,13 @@ use App\Livewire\Settings\ReportGroups;
 use App\Models\User;
 use App\Models\ReportGroup;
 use App\Models\CoaGroup;
+use App\Models\CashflowGroup;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Database\Seeders\RoleAndUserSeeder;
 use Database\Seeders\MasterDataSeeder;
+use Database\Seeders\CashflowReportGroupMappingSeeder;
 
 class ReportGroupTest extends TestCase
 {
@@ -227,5 +229,64 @@ class ReportGroupTest extends TestCase
 
         $this->assertEquals($newReportGroup->id, $coaGroup1->fresh()->report_group_id);
         $this->assertEquals($newReportGroup->id, $coaGroup2->fresh()->report_group_id);
+    }
+
+    public function test_cashflow_mappings_render_successfully(): void
+    {
+        $this->actingAs($this->adminUser);
+        $this->seed(CashflowReportGroupMappingSeeder::class);
+
+        Livewire::test(ReportGroups::class)
+            ->set('activeTab', 'cashflow-mapping')
+            ->assertStatus(200)
+            ->assertSee('Pemetaan Cashflow Group ke Report Group')
+            ->assertSee('CF0A1B')
+            ->assertSee('Arus Kas Aktivitas Operasi');
+    }
+
+    public function test_single_cashflow_mapping_successfully(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $cashflowGroup = CashflowGroup::create([
+            'code' => 'CF_TEST_SINGLE',
+            'name' => 'Test Single Cashflow',
+        ]);
+        $newReportGroup = ReportGroup::where('code', 'CF0002')->first(); // Arus Kas Aktivitas Investasi
+
+        $this->assertNotNull($newReportGroup);
+
+        Livewire::test(ReportGroups::class)
+            ->call('mapSingleCashflowGroup', $cashflowGroup->id, $newReportGroup->id)
+            ->assertHasNoErrors();
+
+        $this->assertEquals($newReportGroup->id, $cashflowGroup->fresh()->report_group_id);
+    }
+
+    public function test_bulk_cashflow_mapping_successfully(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $cg1 = CashflowGroup::create([
+            'code' => 'CF_BULK_1',
+            'name' => 'Bulk Cashflow 1',
+        ]);
+        $cg2 = CashflowGroup::create([
+            'code' => 'CF_BULK_2',
+            'name' => 'Bulk Cashflow 2',
+        ]);
+        $newReportGroup = ReportGroup::where('code', 'CF0003')->first(); // Arus Kas Aktivitas Pendanaan
+
+        $this->assertNotNull($newReportGroup);
+
+        Livewire::test(ReportGroups::class)
+            ->set('selectedCashflowGroups', [(string) $cg1->id, (string) $cg2->id])
+            ->set('bulkCashflowReportGroupId', $newReportGroup->id)
+            ->call('applyBulkCashflowMapping')
+            ->assertHasNoErrors()
+            ->assertSet('selectedCashflowGroups', []);
+
+        $this->assertEquals($newReportGroup->id, $cg1->fresh()->report_group_id);
+        $this->assertEquals($newReportGroup->id, $cg2->fresh()->report_group_id);
     }
 }

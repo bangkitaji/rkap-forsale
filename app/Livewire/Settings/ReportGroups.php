@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\ReportGroup;
 use App\Models\CoaGroup;
+use App\Models\CashflowGroup;
 use Illuminate\Validation\Rule;
 
 class ReportGroups extends Component
@@ -19,6 +20,12 @@ class ReportGroups extends Component
     public $search = '';
     public $searchMapping = '';
     public $filterReportGroup = '';
+
+    // Cashflow mapping search and filter
+    public $searchCashflow = '';
+    public $filterCashflowReportGroup = '';
+    public $selectedCashflowGroups = [];
+    public $bulkCashflowReportGroupId = '';
 
     // Model properties for Report Group CRUD
     public $reportGroupId = null;
@@ -40,6 +47,8 @@ class ReportGroups extends Component
         'search' => ['except' => ''],
         'searchMapping' => ['except' => ''],
         'filterReportGroup' => ['except' => ''],
+        'searchCashflow' => ['except' => ''],
+        'filterCashflowReportGroup' => ['except' => ''],
     ];
 
     public function updatingSearch()
@@ -57,11 +66,22 @@ class ReportGroups extends Component
         $this->resetPage('mappingPage');
     }
 
+    public function updatingSearchCashflow()
+    {
+        $this->resetPage('cashflowPage');
+    }
+
+    public function updatingFilterCashflowReportGroup()
+    {
+        $this->resetPage('cashflowPage');
+    }
+
     public function switchTab($tab)
     {
         $this->activeTab = $tab;
         $this->resetPage('groupsPage');
         $this->resetPage('mappingPage');
+        $this->resetPage('cashflowPage');
     }
 
     protected function rules()
@@ -219,6 +239,64 @@ class ReportGroups extends Component
         }
     }
 
+    public function mapSingleCashflowGroup($cashflowGroupId, $reportGroupId)
+    {
+        try {
+            $cashflowGroup = CashflowGroup::findOrFail($cashflowGroupId);
+            $cashflowGroup->update([
+                'report_group_id' => $reportGroupId ?: null
+            ]);
+            session()->flash('mapping_message', "Pemetaan untuk Cashflow Group {$cashflowGroup->name} berhasil diperbarui.");
+        } catch (\Exception $e) {
+            session()->flash('mapping_error', 'Gagal memperbarui pemetaan Cashflow.');
+        }
+    }
+
+    public function applyBulkCashflowMapping()
+    {
+        if (empty($this->selectedCashflowGroups)) {
+            session()->flash('mapping_error', 'Silakan pilih minimal satu Cashflow Group.');
+            return;
+        }
+
+        try {
+            $reportGroupId = $this->bulkCashflowReportGroupId ?: null;
+            CashflowGroup::whereIn('id', $this->selectedCashflowGroups)->update([
+                'report_group_id' => $reportGroupId
+            ]);
+
+            $count = count($this->selectedCashflowGroups);
+            session()->flash('mapping_message', "Berhasil memperbarui pemetaan untuk {$count} Cashflow Group.");
+            $this->selectedCashflowGroups = [];
+            $this->bulkCashflowReportGroupId = '';
+        } catch (\Exception $e) {
+            session()->flash('mapping_error', 'Gagal melakukan pemetaan massal Cashflow.');
+        }
+    }
+
+    public function toggleSelectAllCashflow($checked)
+    {
+        if ($checked) {
+            $cashflowQuery = CashflowGroup::query();
+            if ($this->searchCashflow) {
+                $cashflowQuery->where(function ($q) {
+                    $q->where('code', 'like', '%' . $this->searchCashflow . '%')
+                        ->orWhere('name', 'like', '%' . $this->searchCashflow . '%');
+                });
+            }
+            if ($this->filterCashflowReportGroup === 'unmapped') {
+                $cashflowQuery->whereNull('report_group_id');
+            } elseif ($this->filterCashflowReportGroup) {
+                $cashflowQuery->where('report_group_id', $this->filterCashflowReportGroup);
+            }
+            $this->selectedCashflowGroups = $cashflowQuery->pluck('id')
+                ->map(fn($id) => (string)$id)
+                ->toArray();
+        } else {
+            $this->selectedCashflowGroups = [];
+        }
+    }
+
     public function render()
     {
         // 1. Report Groups CRUD Data
@@ -246,6 +324,25 @@ class ReportGroups extends Component
         $coaGroups = $coaGroupsQuery->orderBy('code')
             ->paginate($this->perPage, ['*'], 'mappingPage');
 
+        // 3. Cashflow Groups Mapping Data
+        $cashflowGroupsQuery = CashflowGroup::query()->with('reportGroup');
+
+        if ($this->searchCashflow) {
+            $cashflowGroupsQuery->where(function ($q) {
+                $q->where('code', 'like', '%' . $this->searchCashflow . '%')
+                    ->orWhere('name', 'like', '%' . $this->searchCashflow . '%');
+            });
+        }
+
+        if ($this->filterCashflowReportGroup === 'unmapped') {
+            $cashflowGroupsQuery->whereNull('report_group_id');
+        } elseif ($this->filterCashflowReportGroup) {
+            $cashflowGroupsQuery->where('report_group_id', $this->filterCashflowReportGroup);
+        }
+
+        $cashflowGroups = $cashflowGroupsQuery->orderBy('code')
+            ->paginate($this->perPage, ['*'], 'cashflowPage');
+
         // All report groups for dropdowns
         $allReportGroups = ReportGroup::orderBy('type')->orderBy('name')->get();
 
@@ -253,6 +350,7 @@ class ReportGroups extends Component
             'reportGroups' => $reportGroups,
             'coaGroups' => $coaGroups,
             'allReportGroups' => $allReportGroups,
+            'cashflowGroups' => $cashflowGroups,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

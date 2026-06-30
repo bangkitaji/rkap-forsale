@@ -10,12 +10,17 @@ class CashflowGroup extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['code', 'name', 'description'];
+    protected $fillable = ['code', 'name', 'description', 'report_group_id'];
 
     protected $searchable = ['code', 'name'];
 
     public function coas(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Coa::class, 'cashflow_group_id');
+    }
+
+    public function reportGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ReportGroup::class, 'report_group_id');
     }
 }

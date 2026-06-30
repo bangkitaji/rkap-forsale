@@ -19,4 +19,9 @@ class ReportGroup extends Model
     {
         return $this->hasMany(CoaGroup::class, 'report_group_id');
     }
+
+    public function cashflowGroups(): HasMany
+    {
+        return $this->hasMany(CashflowGroup::class, 'report_group_id');
+    }
 }

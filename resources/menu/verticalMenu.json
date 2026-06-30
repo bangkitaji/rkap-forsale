@@ -7,6 +7,7 @@
         "dashboard-analytics",
         "analytics-report",
         "analytics-cashflow",
+        "analytics-cashflow-matrix",
         "analytics-reconciliation"
       ],
       "permission": "dashboard.show",
@@ -30,6 +31,13 @@
           "icon": "menu-icon icon-base bx bx-wallet",
           "name": "Laporan Cash Flow",
           "slug": "analytics-cashflow",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/cashflow-matrix",
+          "icon": "menu-icon icon-base bx bx-grid",
+          "name": "Laporan Matrix Cash Flow",
+          "slug": "analytics-cashflow-matrix",
           "permission": "dashboard.show"
         },
         {

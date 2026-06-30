@@ -16,6 +16,11 @@
                         <i class="bx bx-link-alt me-1"></i> COA Group Mappings
                     </button>
                 </li>
+                <li class="nav-item">
+                    <button class="nav-link @if($activeTab === 'cashflow-mapping') active @endif" wire:click="switchTab('cashflow-mapping')">
+                        <i class="bx bx-wallet me-1"></i> Cashflow Mappings
+                    </button>
+                </li>
             </ul>
         </div>
     </div>
@@ -153,7 +158,7 @@
     </div>
     @endif
 
-    @else
+    @elseif ($activeTab === 'mapping')
     <!-- COA Group Mappings Tab -->
     <div class="card">
         <div class="card-body">
@@ -254,6 +259,111 @@
 
             <div class="mt-4">
                 {{ $coaGroups->links() }}
+            </div>
+        </div>
+    </div>
+
+    @elseif ($activeTab === 'cashflow-mapping')
+    <!-- Cashflow Mappings Tab -->
+    <div class="card">
+        <div class="card-body">
+            @if (session()->has('mapping_message'))
+            <div class="alert alert-success alert-dismissible mb-4" role="alert">
+                {{ session('mapping_message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            @endif
+
+            @if (session()->has('mapping_error'))
+            <div class="alert alert-danger alert-dismissible mb-4" role="alert">
+                {{ session('mapping_error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            @endif
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <h5 class="mb-0">Pemetaan Cashflow Group ke Report Group</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
+                        <option value="15">15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <select class="form-select form-select-sm w-auto" wire:model.live="filterCashflowReportGroup">
+                        <option value="">All Report Groups</option>
+                        <option value="unmapped">Unmapped</option>
+                        @foreach($allReportGroups as $rg)
+                        <option value="{{ $rg->id }}">[{{ $rg->type }}] {{ $rg->name }}</option>
+                        @endforeach
+                    </select>
+                    <div class="input-group input-group-sm w-auto">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchCashflow" placeholder="Search Cashflow Group...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Action Bar -->
+            @if (count($selectedCashflowGroups) > 0)
+            <div class="d-flex align-items-center gap-2 p-3 mb-4 bg-label-primary rounded border border-primary">
+                <span class="fw-medium"><i class="bx bx-check-square me-1"></i> {{ count($selectedCashflowGroups) }} Cashflow Group terpilih</span>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <select class="form-select form-select-sm w-auto" wire:model="bulkCashflowReportGroupId">
+                        <option value="">-- Remove Mapping (Unmap) --</option>
+                        @foreach($allReportGroups as $rg)
+                        <option value="{{ $rg->id }}">Map to: [{{ $rg->type }}] {{ $rg->name }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn btn-sm btn-primary" wire:click="applyBulkCashflowMapping">
+                        Apply Bulk Mapping
+                    </button>
+                </div>
+            </div>
+            @endif
+
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" wire:click="toggleSelectAllCashflow($event.target.checked)"
+                                    @if(count($selectedCashflowGroups) > 0 && count($selectedCashflowGroups) === $cashflowGroups->total()) checked @endif>
+                            </th>
+                            <th>Cashflow Group Code</th>
+                            <th>Cashflow Group Name</th>
+                            <th>Current Report Group Mapping</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-border-bottom-0">
+                        @forelse($cashflowGroups as $cg)
+                        <tr>
+                            <td>
+                                <input class="form-check-input" type="checkbox" value="{{ $cg->id }}" wire:model.live="selectedCashflowGroups">
+                            </td>
+                            <td><strong>{{ $cg->code }}</strong></td>
+                            <td>{{ $cg->name }}</td>
+                            <td style="width: 300px;">
+                                <select class="form-select form-select-sm" wire:change="mapSingleCashflowGroup({{ $cg->id }}, $event.target.value)">
+                                    <option value="">-- Unmapped --</option>
+                                    @foreach($allReportGroups as $rg)
+                                    <option value="{{ $rg->id }}" @selected($cg->report_group_id == $rg->id)>
+                                        [{{ $rg->type }}] {{ $rg->name }} ({{ $rg->code }})
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center">No Cashflow Group records found.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $cashflowGroups->links() }}
             </div>
         </div>
     </div>

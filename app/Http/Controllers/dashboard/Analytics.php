@@ -1136,6 +1136,81 @@ class Analytics extends Controller
     ));
   }
 
+  public function cashflowMatrix(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    // Get all versions
+    $versions = \App\Models\FinancialVersion::orderBy('version_id')->get();
+
+    // Get all categories, line items and facts
+    $categories = \App\Models\CfCategory::with(['lineItems.facts'])->orderBy('category_id')->get();
+
+    // Prepare a matrix mapping of [item_code][version_id] = amount
+    $matrix = [];
+    foreach ($categories as $category) {
+      foreach ($category->lineItems as $item) {
+        $matrix[$item->item_code] = [];
+        // Pre-fill with 0 for all versions
+        foreach ($versions as $version) {
+          $matrix[$item->item_code][$version->version_id] = 0.0;
+        }
+        // Fill actual amounts from facts
+        foreach ($item->facts as $fact) {
+          $matrix[$item->item_code][$fact->version_id] = (float) $fact->amount;
+        }
+      }
+    }
+
+    // Calculate subtotals for each category per version
+    $categorySubtotals = [];
+    foreach ($categories as $category) {
+      $categorySubtotals[$category->category_id] = [];
+      foreach ($versions as $version) {
+        $subtotal = 0.0;
+        // Don't include category 4 (Rekonsiliasi Kas - Selisih Kurs and Saldo Awal) in standard subtotals
+        if ($category->category_id <= 3) {
+          foreach ($category->lineItems as $item) {
+            $subtotal += $matrix[$item->item_code][$version->version_id] ?? 0.0;
+          }
+        }
+        $categorySubtotals[$category->category_id][$version->version_id] = $subtotal;
+      }
+    }
+
+    // Calculate Perubahan Kas Kas Bersih (Net Cash Flow Change) per version
+    // Sum of subtotals of Category 1 + Category 2 + Category 3
+    $netCashFlows = [];
+    foreach ($versions as $version) {
+      $netCashFlows[$version->version_id] = 
+        ($categorySubtotals[1][$version->version_id] ?? 0.0) +
+        ($categorySubtotals[2][$version->version_id] ?? 0.0) +
+        ($categorySubtotals[3][$version->version_id] ?? 0.0);
+    }
+
+    // Calculate Ending Balance (Saldo Akhir) per version
+    // Saldo Akhir = Net Cash Flow + Selisih Kurs (CF0D1) + Saldo Awal (CF_BEGINNING)
+    $endingBalances = [];
+    foreach ($versions as $version) {
+      $netCf = $netCashFlows[$version->version_id];
+      $selisihKurs = $matrix['CF0D1'][$version->version_id] ?? 0.0;
+      $saldoAwal = $matrix['CF_BEGINNING'][$version->version_id] ?? 0.0;
+      $endingBalances[$version->version_id] = $netCf + $selisihKurs + $saldoAwal;
+    }
+
+    return view('content.dashboard.analytics-cashflow-matrix', compact(
+      'versions',
+      'categories',
+      'matrix',
+      'categorySubtotals',
+      'netCashFlows',
+      'endingBalances'
+    ));
+  }
+
   public function cashflowGroupDetail(Request $request)
   {
     $user = Auth::user();
