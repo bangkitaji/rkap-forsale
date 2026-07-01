@@ -22,33 +22,76 @@ class CashflowGroupSeeder extends Seeder
         'name' => 'Penerimaan Pelanggan Non Farebox',
       ],
       [
-        'code' => 'CF0B10',
-        'name' => 'Interest Income',
-      ],
-      [
         'code' => 'CF0B2',
         'name' => 'Pembayaran Pemasok',
-      ],
-      [
-        'code' => 'CF0B2A',
-        'name' => 'Pembayaran ke Pemasok (non opex)',
       ],
       [
         'code' => 'CF0B3',
         'name' => 'Pembayaran ke Karyawan',
       ],
       [
+        'code' => 'CF0B10',
+        'name' => 'Interest Income',
+      ],
+      [
         'code' => 'CF0B5',
         'name' => 'Pembayaran bunga',
       ],
       [
+        'code' => 'CF0B2A',
+        'name' => 'Pembayaran ke Pemasok (non opex)',
+      ],
+      [
         'code' => 'CF0F1',
-        'name' => 'Hak Pengusahaan Kereta Cepat CF',
+        'name' => 'HAK PENGUSAHAAN KERETA CEPAT CF',
+      ],
+      [
+        'code' => 'CF0E2',
+        'name' => 'Penerimaan Dana CO PSBI',
+      ],
+      [
+        'code' => 'CF0E3',
+        'name' => 'Penerimaan Dana CO BY',
+      ],
+      [
+        'code' => 'CF0E11',
+        'name' => 'Penarikan Dana Dibatasi Pengunannya Pendanaan',
+      ],
+      [
+        'code' => 'CF0E1',
+        'name' => 'Penerimaan Dana CDS PSBI 2024',
+      ],
+      [
+        'code' => 'CF0E1A',
+        'name' => 'Penerimaan Dana CDS BY 2024',
+      ],
+      [
+        'code' => 'CF0E4',
+        'name' => 'Penerimaan Dana CDS PSBI 2025',
+      ],
+      [
+        'code' => 'CF0E4A',
+        'name' => 'Penerimaan Dana CDS BY 2025',
+      ],
+      [
+        'code' => 'CF0E4B',
+        'name' => 'Penerimaan Dana CDS PSBI 2026',
+      ],
+      [
+        'code' => 'CF0E4C',
+        'name' => 'Penerimaan Dana CDS BY 2026',
+      ],
+      [
+        'code' => 'CF0F8',
+        'name' => 'Penarikan Dana Dibatasi Pengunannya Investasi',
       ],
     ];
 
+    $codes = collect($cashflowGroups)->pluck('code')->toArray();
+    CashflowGroup::whereNotIn('code', $codes)->forceDelete();
+
     foreach ($cashflowGroups as $group) {
-      CashflowGroup::firstOrCreate(
+      CashflowGroup::updateOrCreate(
         ['code' => $group['code']],
         ['name' => $group['name']]
       );

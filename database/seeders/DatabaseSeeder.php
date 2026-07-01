@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             DifferenceGroupSeeder::class,
             DifferenceCoaMappingSeeder::class,
             MasterDataSeeder::class,
+            CoaCfTypeMappingSeeder::class,
             CoaProfitLossMappingSeeder::class,
             CashflowReportGroupMappingSeeder::class,
             CashFlowSeeder::class,

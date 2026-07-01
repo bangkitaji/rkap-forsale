@@ -119,8 +119,10 @@
                   @endphp
                   <tr>
                     <td class="ps-4">
-                      <span class="font-monospace fw-semibold text-secondary me-2">{{ $item->item_code }}</span>
-                      <span class="fw-medium text-dark">{{ $item->description }}</span>
+                      <div class="d-flex flex-column">
+                        <small class="font-monospace fw-semibold text-secondary" style="font-size: 0.75rem;">{{ $item->item_code }}</small>
+                        <span class="fw-medium text-dark">{{ $item->description }}</span>
+                      </div>
                     </td>
                     @foreach ($versions as $version)
                       @php
@@ -178,8 +180,10 @@
               <!-- Selisih Kurs -->
               <tr>
                 <td class="ps-4 text-dark">
-                  <span class="font-monospace fw-semibold text-secondary me-2">CF0D1</span>
-                  <span>Selisih Kurs</span>
+                  <div class="d-flex flex-column">
+                    <small class="font-monospace fw-semibold text-secondary" style="font-size: 0.75rem;">CF0D1</small>
+                    <span>Selisih Kurs</span>
+                  </div>
                 </td>
                 @foreach ($versions as $version)
                   @php
@@ -194,8 +198,10 @@
               <!-- Saldo Awal -->
               <tr>
                 <td class="ps-4 text-dark">
-                  <span class="font-monospace fw-semibold text-secondary me-2">CF_BEGINNING</span>
-                  <span>Saldo Awal</span>
+                  <div class="d-flex flex-column">
+                    <small class="font-monospace fw-semibold text-secondary" style="font-size: 0.75rem;">CF_BEGINNING</small>
+                    <span>Saldo Awal</span>
+                  </div>
                 </td>
                 @foreach ($versions as $version)
                   @php

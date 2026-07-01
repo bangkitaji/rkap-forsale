@@ -12,7 +12,7 @@ class Coa extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['code', 'title', 'description', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'difference_group_id'];
+    protected $fillable = ['code', 'title', 'description', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'difference_group_id', 'cf_type'];
 
     public function coaGroup(): BelongsTo
     {
