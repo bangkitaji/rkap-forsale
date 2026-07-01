@@ -70,7 +70,7 @@ if ($val < 0) {
   </style>
 
   <div class="py-3 mb-4">
-    <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Laporan Matrix Cash Flow</h4>
+    <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Laporan Cash Flow</h4>
     <p class="text-muted mb-0">Menampilkan Perbandingan Laporan Cash Flow Multi-Versi (Lintas Tahun dan Versi Anggaran)</p>
   </div>
 
