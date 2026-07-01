@@ -61,34 +61,41 @@
 
   @if ($activePeriod)
     {{-- KPI Cards --}}
+    <!-- Section: Anggaran Pendapatan -->
+    <div class="d-flex align-items-center gap-2 mb-3 mt-2">
+      <div class="avatar avatar-sm bg-label-success rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+        <i class="bx bx-trending-up fs-5 text-success"></i>
+      </div>
+      <h5 class="mb-0 fw-semibold text-dark">Anggaran Pendapatan</h5>
+    </div>
     <div class="row g-4 mb-4">
-      <!-- Card 1: Total Anggaran -->
+      <!-- Card 1: Total Anggaran Pendapatan -->
       <div class="col-sm-6 col-xl-3">
         <div class="card h-100 shadow-none border">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fw-semibold text-muted">Total Anggaran</span>
+              <span class="fw-semibold text-muted">Total Pendapatan</span>
               <span class="badge bg-label-primary rounded p-2"><i class="bx bx-wallet fs-4"></i></span>
             </div>
-            <h4 class="mb-1 fw-bold">Rp {{ number_format($stats['total_budget'], 0, ',', '.') }}</h4>
+            <h4 class="mb-1 fw-bold">Rp {{ number_format($income_stats['total_budget'], 0, ',', '.') }}</h4>
             <p class="mb-0 text-muted small">Pagu Rencana Kerja (RKAP)</p>
           </div>
         </div>
       </div>
-      <!-- Card 2: Total Realisasi YTD -->
+      <!-- Card 2: Total Realisasi Pendapatan YTD -->
       <div class="col-sm-6 col-xl-3">
         <div class="card h-100 shadow-none border">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <span class="fw-semibold text-muted">Realisasi (YTD)</span>
-              <span class="badge bg-label-success rounded p-2"><i class="bx bx-trending-up fs-4"></i></span>
+              <span class="badge bg-label-success rounded p-2"><i class="bx bx-check-circle fs-4"></i></span>
             </div>
-            <h4 class="mb-1 fw-bold text-success">Rp {{ number_format($stats['total_realization'], 0, ',', '.') }}</h4>
-            <p class="mb-0 text-muted small">Penyerapan: <strong>{{ $stats['absorption_rate'] }}%</strong></p>
+            <h4 class="mb-1 fw-bold text-success">Rp {{ number_format($income_stats['total_realization'], 0, ',', '.') }}</h4>
+            <p class="mb-0 text-muted small">Penyerapan: <strong>{{ $income_stats['absorption_rate'] }}%</strong></p>
           </div>
         </div>
       </div>
-      <!-- Card 3: Outlook Proyeksi -->
+      <!-- Card 3: Outlook Proyeksi Pendapatan -->
       <div class="col-sm-6 col-xl-3">
         <div class="card h-100 shadow-none border">
           <div class="card-body">
@@ -96,28 +103,97 @@
               <span class="fw-semibold text-muted">Proyeksi Akhir Tahun</span>
               <span class="badge bg-label-warning rounded p-2"><i class="bx bx-calculator fs-4"></i></span>
             </div>
-            <h4 class="mb-1 fw-bold text-warning">Rp {{ number_format($stats['total_projection'], 0, ',', '.') }}</h4>
-            <p class="mb-0 text-muted small">Outlook Rate: <strong>{{ $stats['outlook_rate'] }}%</strong></p>
+            <h4 class="mb-1 fw-bold text-warning">Rp {{ number_format($income_stats['total_projection'], 0, ',', '.') }}</h4>
+            <p class="mb-0 text-muted small">Outlook Rate: <strong>{{ $income_stats['outlook_rate'] }}%</strong></p>
           </div>
         </div>
       </div>
-      <!-- Card 4: Selisih -->
+      <!-- Card 4: Selisih Pendapatan -->
       @php
-        $variance = $stats['total_budget'] - $stats['total_projection'];
-        $isOver = $variance < 0;
+        $income_variance = $income_stats['total_projection'] - $income_stats['total_budget'];
+        $isIncomeShort = $income_variance < 0;
+      @endphp
+      <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 shadow-none border">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-semibold text-muted">Selisih Target</span>
+              <span class="badge bg-label-{{ $isIncomeShort ? 'danger' : 'success' }} rounded p-2"><i
+                  class="bx bx-line-chart fs-4"></i></span>
+            </div>
+            <h4 class="mb-1 fw-bold text-{{ $isIncomeShort ? 'danger' : 'success' }}">Rp
+              {{ number_format(abs($income_variance), 0, ',', '.') }}
+            </h4>
+            <p class="mb-0 text-muted small">{{ $isIncomeShort ? 'Kurang dari Target' : 'Melampaui Target' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Anggaran Beban -->
+    <div class="d-flex align-items-center gap-2 mb-3 mt-4">
+      <div class="avatar avatar-sm bg-label-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+        <i class="bx bx-trending-down fs-5 text-danger"></i>
+      </div>
+      <h5 class="mb-0 fw-semibold text-dark">Anggaran Beban</h5>
+    </div>
+    <div class="row g-4 mb-4">
+      <!-- Card 1: Total Anggaran Beban -->
+      <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 shadow-none border">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-semibold text-muted">Total Beban</span>
+              <span class="badge bg-label-primary rounded p-2"><i class="bx bx-wallet fs-4"></i></span>
+            </div>
+            <h4 class="mb-1 fw-bold">Rp {{ number_format($expense_stats['total_budget'], 0, ',', '.') }}</h4>
+            <p class="mb-0 text-muted small">Pagu Rencana Kerja (RKAP)</p>
+          </div>
+        </div>
+      </div>
+      <!-- Card 2: Total Realisasi Beban YTD -->
+      <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 shadow-none border">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-semibold text-muted">Realisasi (YTD)</span>
+              <span class="badge bg-label-danger rounded p-2"><i class="bx bx-receipt fs-4"></i></span>
+            </div>
+            <h4 class="mb-1 fw-bold text-danger">Rp {{ number_format($expense_stats['total_realization'], 0, ',', '.') }}</h4>
+            <p class="mb-0 text-muted small">Penyerapan: <strong>{{ $expense_stats['absorption_rate'] }}%</strong></p>
+          </div>
+        </div>
+      </div>
+      <!-- Card 3: Outlook Proyeksi Beban -->
+      <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 shadow-none border">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-semibold text-muted">Proyeksi Akhir Tahun</span>
+              <span class="badge bg-label-warning rounded p-2"><i class="bx bx-calculator fs-4"></i></span>
+            </div>
+            <h4 class="mb-1 fw-bold text-warning">Rp {{ number_format($expense_stats['total_projection'], 0, ',', '.') }}</h4>
+            <p class="mb-0 text-muted small">Outlook Rate: <strong>{{ $expense_stats['outlook_rate'] }}%</strong></p>
+          </div>
+        </div>
+      </div>
+      <!-- Card 4: Selisih Beban -->
+      @php
+        $expense_variance = $expense_stats['total_budget'] - $expense_stats['total_projection'];
+        $isExpenseOver = $expense_variance < 0;
       @endphp
       <div class="col-sm-6 col-xl-3">
         <div class="card h-100 shadow-none border">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <span class="fw-semibold text-muted">Sisa Pagu / Efisiensi</span>
-              <span class="badge bg-label-{{ $isOver ? 'danger' : 'info' }} rounded p-2"><i
+              <span class="badge bg-label-{{ $isExpenseOver ? 'danger' : 'success' }} rounded p-2"><i
                   class="bx bx-pie-chart-alt fs-4"></i></span>
             </div>
-            <h4 class="mb-1 fw-bold text-{{ $isOver ? 'danger' : 'info' }}">Rp
-              {{ number_format(abs($variance), 0, ',', '.') }}
+            <h4 class="mb-1 fw-bold text-{{ $isExpenseOver ? 'danger' : 'success' }}">Rp
+              {{ number_format(abs($expense_variance), 0, ',', '.') }}
             </h4>
-            <p class="mb-0 text-muted small">{{ $isOver ? 'Melebihi Anggaran' : 'Sisa Alokasi Pagu' }}</p>
+            <p class="mb-0 text-muted small">{{ $isExpenseOver ? 'Melebihi Anggaran' : 'Sisa Alokasi Pagu' }}</p>
           </div>
         </div>
       </div>

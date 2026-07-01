@@ -84,6 +84,22 @@ class Analytics extends Controller
       'outlook_rate' => 0.0,
     ];
 
+    $income_stats = [
+      'total_budget' => 0.0,
+      'total_realization' => 0.0,
+      'total_projection' => 0.0,
+      'absorption_rate' => 0.0,
+      'outlook_rate' => 0.0,
+    ];
+
+    $expense_stats = [
+      'total_budget' => 0.0,
+      'total_realization' => 0.0,
+      'total_projection' => 0.0,
+      'absorption_rate' => 0.0,
+      'outlook_rate' => 0.0,
+    ];
+
     $plGroups = [];
     $plSummary = [];
     $unmappedGroup = null;
@@ -161,6 +177,90 @@ class Analytics extends Controller
 
       $stats['outlook_rate'] = $stats['total_budget'] > 0
         ? round(($stats['total_projection'] / $stats['total_budget']) * 100, 1)
+        : 0.0;
+
+      // --- Calculate separated stats for Pendapatan and Beban ---
+      $activePeriodItems = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->select(
+          'rkap_budget_items.id',
+          'rkap_budget_items.total_price',
+          'rkap_budget_items.projection',
+          'coas.code as coa_code',
+          'coa_groups.code as coa_group_code',
+          'report_groups.code as report_group_code'
+        )
+        ->get();
+
+      $activePeriodRealizationSums = DB::table('rkap_budget_item_realizations')
+        ->where('rkap_period_id', $periodId)
+        ->groupBy('rkap_budget_item_id')
+        ->select('rkap_budget_item_id', DB::raw('SUM(amount) as total_amount'))
+        ->pluck('total_amount', 'rkap_budget_item_id')
+        ->toArray();
+
+      foreach ($activePeriodItems as $item) {
+        $isExpense = false;
+        $rgCode = $item->report_group_code;
+        $cgCode = $item->coa_group_code;
+        $coaCode = $item->coa_code;
+
+        $amountBudget = (float) $item->total_price;
+        $amountReal = (float) ($activePeriodRealizationSums[$item->id] ?? 0.0);
+        $amountProj = (float) $item->projection;
+
+        if ($rgCode === 'PL0001') {
+          $isExpense = false;
+        } elseif ($rgCode === 'PL0002' || $rgCode === 'PL0003' || $rgCode === 'PL0005') {
+          $isExpense = true;
+        } elseif ($rgCode === 'PL0004') {
+          if (in_array($cgCode, ['7000', '7001', '7001A', '7002', '7002A', '7004'])) {
+            $isExpense = true;
+          } elseif ($cgCode === '7005') {
+            if (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+              $isExpense = true;
+            } else {
+              $isExpense = false;
+            }
+          } else {
+            $isExpense = false;
+          }
+        }
+
+        if ($isExpense) {
+          $expense_stats['total_budget'] += $amountBudget;
+          $expense_stats['total_realization'] += $amountReal;
+          $expense_stats['total_projection'] += $amountProj;
+        } else {
+          $income_stats['total_budget'] += $amountBudget;
+          $income_stats['total_realization'] += $amountReal;
+          $income_stats['total_projection'] += $amountProj;
+        }
+      }
+
+      $income_stats['absorption_rate'] = $income_stats['total_budget'] > 0
+        ? round(($income_stats['total_realization'] / $income_stats['total_budget']) * 100, 1)
+        : 0.0;
+
+      $income_stats['outlook_rate'] = $income_stats['total_budget'] > 0
+        ? round(($income_stats['total_projection'] / $income_stats['total_budget']) * 100, 1)
+        : 0.0;
+
+      $expense_stats['absorption_rate'] = $expense_stats['total_budget'] > 0
+        ? round(($expense_stats['total_realization'] / $expense_stats['total_budget']) * 100, 1)
+        : 0.0;
+
+      $expense_stats['outlook_rate'] = $expense_stats['total_budget'] > 0
+        ? round(($expense_stats['total_projection'] / $expense_stats['total_budget']) * 100, 1)
         : 0.0;
 
       // --- 1. Monthly Budget Allocations ---
@@ -943,6 +1043,8 @@ class Analytics extends Controller
       'activePeriod',
       'finalizedPeriods',
       'stats',
+      'income_stats',
+      'expense_stats',
       'monthlyBudgetData',
       'monthlyRealizationData',
       'monthlyProjectionData',
