@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\dashboard\Analytics;
+use App\Http\Controllers\dashboard\CashflowSyncController;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\authentications\ForgotPasswordBasic;
@@ -12,6 +13,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/analytics/report', [Analytics::class, 'report'])->name('analytics-report');
   Route::get('/analytics/cashflow', [Analytics::class, 'cashflow'])->name('analytics-cashflow');
   Route::get('/analytics/cashflow-matrix', [Analytics::class, 'cashflowMatrix'])->name('analytics-cashflow-matrix');
+  Route::post('/analytics/cashflow-matrix/sync', [CashflowSyncController::class, 'sync'])->name('analytics-cashflow-matrix-sync');
   Route::get('/analytics/reconciliation', [Analytics::class, 'reconciliation'])->name('analytics-reconciliation');
   Route::get('/analytics/coa-group-detail', [Analytics::class, 'coaGroupDetail'])->name('analytics.coa-group-detail');
   Route::get('/analytics/cashflow-group-detail', [Analytics::class, 'cashflowGroupDetail'])->name('analytics.cashflow-group-detail');

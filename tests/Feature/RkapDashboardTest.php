@@ -1132,4 +1132,195 @@ class RkapDashboardTest extends TestCase
         $this->assertCount(1, $data);
         $this->assertEquals('121111', $data[0]['coa_code']);
     }
+
+    public function test_cashflow_matrix_page_includes_rkap_periods(): void
+    {
+        $response = $this->actingAs($this->admin)->get('/analytics/cashflow-matrix');
+        $response->assertStatus(200);
+        $response->assertViewHas('rkapPeriods');
+
+        $periods = $response->viewData('rkapPeriods');
+        $this->assertGreaterThanOrEqual(1, $periods->count());
+    }
+
+    public function test_cashflow_sync_inserts_operasi_facts(): void
+    {
+        // Arrange: cf_categories uses custom PK not in $fillable, use DB::table
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // Create a cashflow group with the same code as the line item
+        $cfGroup = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0A1B'],
+            ['name' => 'Penerimaan Pelanggan Farebox']
+        );
+
+        // Create a cf_line_item with matching item_code
+        \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0A1B'],
+            ['category_id' => 1, 'description' => 'Penerimaan Pelanggan Farebox']
+        );
+
+        // Map COA to the cashflow group
+        $coaInflow = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_INFLOW'],
+            ['title' => 'Test COA Inflow', 'cashflow_group_id' => $cfGroup->id]
+        );
+        // Update to set cashflow_group_id correctly
+        $coaInflow->update(['cashflow_group_id' => $cfGroup->id]);
+
+        // Create a budget item using this COA (inflow: total_price stays positive)
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code' => 'WP_CF_TEST',
+            'program_name' => 'CF Test Work Plan',
+        ]);
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coaInflow->code,
+            'description'       => 'CF Test Budget Item',
+            'quantity'          => 1,
+            'unit_price'        => 500000.0,
+        ]);
+
+        // Act: call sync
+        $response = $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ]);
+
+        // Assert: success response
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $this->assertStringContainsString('RKAP', $response->json('version'));
+
+        // Assert: cash_flow_facts was upserted with correct amount (inflow → positive)
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0A1B',
+            'amount'    => 500000.0,
+        ]);
+    }
+
+    public function test_cashflow_sync_negates_outflow_items(): void
+    {
+        // Arrange: cf_categories uses custom PK not in $fillable, use DB::table
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        $cfGroupOutflow = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0B2'],
+            ['name' => 'Pembayaran Pemasok']
+        );
+
+        \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0B2'],
+            ['category_id' => 1, 'description' => 'Pembayaran Pemasok']
+        );
+
+        $coaOutflow = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_OUTFLOW'],
+            ['title' => 'Test COA Outflow', 'cashflow_group_id' => $cfGroupOutflow->id]
+        );
+        $coaOutflow->update(['cashflow_group_id' => $cfGroupOutflow->id]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code' => 'WP_CF_OUT',
+            'program_name' => 'CF Outflow Test',
+        ]);
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coaOutflow->code,
+            'description'       => 'Outflow Budget Item',
+            'quantity'          => 1,
+            'unit_price'        => 200000.0,
+        ]);
+
+        // Act
+        $response = $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ]);
+
+        // Assert: success and amount is negated (outflow)
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0B2',
+            'amount'    => -200000.0,
+        ]);
+    }
+
+    public function test_cashflow_sync_updates_existing_fact_on_re_sync(): void
+    {
+        // Arrange: cf_categories uses custom PK not in $fillable, use DB::table
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        $cfGroup = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0A3'],
+            ['name' => 'Penerimaan Pelanggan Non Farebox']
+        );
+
+        \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0A3'],
+            ['category_id' => 1, 'description' => 'Penerimaan Pelanggan Non Farebox']
+        );
+
+        $coa = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_RESYNC'],
+            ['title' => 'Re-sync COA', 'cashflow_group_id' => $cfGroup->id]
+        );
+        $coa->update(['cashflow_group_id' => $cfGroup->id]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code' => 'WP_RESYNC',
+            'program_name' => 'Re-sync Work Plan',
+        ]);
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coa->code,
+            'description'       => 'Initial budget',
+            'quantity'          => 1,
+            'unit_price'        => 100000.0,
+        ]);
+
+        // First sync
+        $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ])->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('cash_flow_facts', ['item_code' => 'CF0A3', 'amount' => 100000.0]);
+
+        // Update budget item to new value
+        \App\Models\RkapBudgetItem::where('account_code', $coa->code)->update(['unit_price' => 999000.0, 'total_price' => 999000.0]);
+
+        // Second sync — should update, not duplicate
+        $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ])->assertJson(['success' => true]);
+
+        // Only one fact row, with updated value
+        $this->assertDatabaseMissing('cash_flow_facts', ['item_code' => 'CF0A3', 'amount' => 100000.0]);
+        $this->assertDatabaseHas('cash_flow_facts', ['item_code' => 'CF0A3', 'amount' => 999000.0]);
+        $this->assertEquals(
+            1,
+            \Illuminate\Support\Facades\DB::table('cash_flow_facts')
+                ->where('item_code', 'CF0A3')
+                ->count(),
+            'Re-sync should update existing fact, not create duplicate'
+        );
+    }
 }

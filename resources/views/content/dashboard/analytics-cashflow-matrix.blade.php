@@ -82,6 +82,17 @@
             <h5 class="card-title mb-0">Matriks Laporan Arus Kas (Multi-Version Cash Flow)</h5>
             <small class="text-muted">Ikhtisar data historis, realisasi, dan prognosa arus kas secara komparatif</small>
           </div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button"
+                    id="btn-sync-rkap"
+                    class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalSyncRkap"
+                    title="Isi otomatis data Arus Kas Aktivitas Operasi dari data usulan RKAP">
+              <i class="bx bx-refresh fs-5"></i>
+              <span>Sinkronisasi dari RKAP</span>
+            </button>
+          </div>
         </div>
         <div class="table-responsive text-nowrap">
           <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
@@ -233,4 +244,149 @@
       </div>
     </div>
   </div>
+
+  {{-- ── Sync Confirmation Modal ─────────────────────────────────────────── --}}
+  <div class="modal fade" id="modalSyncRkap" tabindex="-1" aria-labelledby="modalSyncRkapLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalSyncRkapLabel">
+            <i class="bx bx-refresh me-2 text-primary"></i>Sinkronisasi Arus Kas Aktivitas Operasi
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">
+            Pilih periode RKAP sebagai sumber data. Sistem akan mengakumulasi nilai
+            <strong>total_price</strong> dari semua usulan pada periode tersebut,
+            dikelompokkan per cashflow group, dan mengisi kolom
+            <strong class="text-primary">RKAP {{ now()->year }}</strong>
+            pada matriks (jika data sudah ada akan diperbarui).
+          </p>
+
+          <div class="mb-3">
+            <label for="sync-period-select" class="form-label fw-semibold">Periode RKAP Sumber Data</label>
+            <select id="sync-period-select" class="form-select">
+              @forelse ($rkapPeriods as $period)
+                <option value="{{ $period->id }}">
+                  {{ $period->title ?? 'Periode ' . $period->year }}
+                  ({{ $period->year }})
+                  @if ($period->status === 'open') 🟢 @elseif($period->status === 'finalized') ✅ @else 🔒 @endif
+                </option>
+              @empty
+                <option value="" disabled>Tidak ada periode RKAP tersedia</option>
+              @endforelse
+            </select>
+            <div class="form-text">Semua status pengajuan (draft hingga approved) akan diikutsertakan.</div>
+          </div>
+
+          {{-- Status / hasil sinkronisasi --}}
+          <div id="sync-result" class="d-none">
+            <div id="sync-alert" class="alert mb-0" role="alert">
+              <i id="sync-alert-icon" class="bx me-2"></i>
+              <span id="sync-alert-msg"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="btn-modal-close">Batal</button>
+          <button type="button" class="btn btn-primary d-flex align-items-center gap-1" id="btn-confirm-sync">
+            <i class="bx bx-refresh" id="sync-spinner-icon"></i>
+            <span id="sync-btn-label">Sinkronisasi Sekarang</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+@endsection
+
+@section('page-script')
+<script>
+(function () {
+  'use strict';
+
+  const btnConfirm   = document.getElementById('btn-confirm-sync');
+  const btnClose     = document.getElementById('btn-modal-close');
+  const periodSelect = document.getElementById('sync-period-select');
+  const resultBox    = document.getElementById('sync-result');
+  const alertEl      = document.getElementById('sync-alert');
+  const alertIcon    = document.getElementById('sync-alert-icon');
+  const alertMsg     = document.getElementById('sync-alert-msg');
+  const spinnerIcon  = document.getElementById('sync-spinner-icon');
+  const btnLabel     = document.getElementById('sync-btn-label');
+
+  if (!btnConfirm) return;
+
+  // Reset state whenever modal opens
+  document.getElementById('modalSyncRkap').addEventListener('show.bs.modal', function () {
+    resultBox.classList.add('d-none');
+    alertEl.className = 'alert mb-0';
+    alertIcon.className = 'bx me-2';
+    alertMsg.textContent = '';
+    setLoading(false);
+    btnClose.textContent = 'Batal';
+  });
+
+  btnConfirm.addEventListener('click', function () {
+    const periodId = periodSelect ? periodSelect.value : '';
+    if (!periodId) {
+      showResult('danger', 'bx-error-circle', 'Pilih periode RKAP terlebih dahulu.');
+      return;
+    }
+
+    setLoading(true);
+    resultBox.classList.add('d-none');
+
+    fetch('{{ route("analytics-cashflow-matrix-sync") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      },
+      body: JSON.stringify({ period_id: periodId }),
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      setLoading(false);
+      if (data.success) {
+        showResult(
+          'success',
+          'bx-check-circle',
+          data.message + ' Halaman akan dimuat ulang dalam 2 detik…'
+        );
+        btnClose.textContent = 'Tutup';
+        btnConfirm.disabled = true;
+        setTimeout(function () { window.location.reload(); }, 2000);
+      } else {
+        showResult('danger', 'bx-error-circle', data.message || 'Sinkronisasi gagal.');
+      }
+    })
+    .catch(function (err) {
+      setLoading(false);
+      showResult('danger', 'bx-error-circle', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
+      console.error('Sync error:', err);
+    });
+  });
+
+  function setLoading(isLoading) {
+    btnConfirm.disabled = isLoading;
+    if (isLoading) {
+      spinnerIcon.className = 'bx bx-loader-alt bx-spin';
+      btnLabel.textContent = 'Memproses…';
+    } else {
+      spinnerIcon.className = 'bx bx-refresh';
+      btnLabel.textContent = 'Sinkronisasi Sekarang';
+    }
+  }
+
+  function showResult(type, iconClass, message) {
+    resultBox.classList.remove('d-none');
+    alertEl.className = 'alert alert-' + type + ' mb-0';
+    alertIcon.className = 'bx ' + iconClass + ' me-2';
+    alertMsg.textContent = message;
+  }
+})();
+</script>
 @endsection

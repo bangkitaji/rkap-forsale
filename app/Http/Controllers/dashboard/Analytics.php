@@ -1205,6 +1205,9 @@ class Analytics extends Controller
     // Get all versions
     $versions = \App\Models\FinancialVersion::orderBy('version_id')->get();
 
+    // Get all RKAP periods for the sync dialog (ordered by year desc so latest first)
+    $rkapPeriods = RkapPeriod::orderByDesc('year')->orderByDesc('id')->get();
+
     // Get all categories, line items and facts
     $categories = \App\Models\CfCategory::with(['lineItems.facts'])->orderBy('category_id')->get();
 
@@ -1266,7 +1269,8 @@ class Analytics extends Controller
       'matrix',
       'categorySubtotals',
       'netCashFlows',
-      'endingBalances'
+      'endingBalances',
+      'rkapPeriods'
     ));
   }
 
