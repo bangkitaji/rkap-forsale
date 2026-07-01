@@ -27,13 +27,6 @@
           "permission": "dashboard.show"
         },
         {
-          "url": "analytics/cashflow",
-          "icon": "menu-icon icon-base bx bx-wallet",
-          "name": "Laporan Cash Flow",
-          "slug": "analytics-cashflow",
-          "permission": "dashboard.show"
-        },
-        {
           "url": "analytics/cashflow-matrix",
           "icon": "menu-icon icon-base bx bx-grid",
           "name": "Laporan Matrix Cash Flow",

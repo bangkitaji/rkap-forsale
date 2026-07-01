@@ -485,6 +485,13 @@
       "icon": "menu-icon icon-base bx bx-user-circle",
       "name": "User Management",
       "slug": "settings-user-management"
+    },
+    {
+      "url": "analytics/cashflow",
+      "icon": "menu-icon icon-base bx bx-wallet",
+      "name": "Laporan Cash Flow",
+      "slug": "analytics-cashflow",
+      "permission": "dashboard.show"
     }
   ]
 }
