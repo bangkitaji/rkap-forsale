@@ -63,6 +63,14 @@
                                 @endif
                             </th>
                             <th>Group</th>
+                            <th wire:click="sort('cf_type')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                                CF Type
+                                @if($sortBy === 'cf_type')
+                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                @else
+                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                @endif
+                            </th>
                             <th wire:click="sort('description')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                                 Description
                                 @if($sortBy === 'description')
@@ -86,6 +94,17 @@
                                     <span class="badge bg-label-secondary text-muted">Unmapped</span>
                                 @endif
                             </td>
+                            <td>
+                                @if($coa->cf_type === 'CASH IN')
+                                    <span class="badge bg-label-success fw-semibold">CASH IN</span>
+                                @elseif($coa->cf_type === 'CASH OUT')
+                                    <span class="badge bg-label-danger fw-semibold">CASH OUT</span>
+                                @elseif($coa->cf_type === 'NO CASHFLOW')
+                                    <span class="badge bg-label-warning fw-semibold">NO CASHFLOW</span>
+                                @else
+                                    <span class="badge bg-label-secondary text-muted">-</span>
+                                @endif
+                            </td>
                             <td class="text-wrap" style="max-width: 300px;">
                                 {{ $coa->description ?? '-' }}
                             </td>
@@ -100,7 +119,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center">No COA records found.</td>
+                            <td colspan="6" class="text-center">No COA records found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -146,6 +165,17 @@
                                 @endforeach
                             </select>
                             @error('coaGroupId') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="coa-cf-type" class="form-label">CF Type</label>
+                            <select id="coa-cf-type" class="form-select @error('cfType') is-invalid @enderror" wire:model="cfType">
+                                <option value="">Select CF Type...</option>
+                                <option value="CASH IN">CASH IN</option>
+                                <option value="CASH OUT">CASH OUT</option>
+                                <option value="NO CASHFLOW">NO CASHFLOW</option>
+                            </select>
+                            @error('cfType') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="mb-3">

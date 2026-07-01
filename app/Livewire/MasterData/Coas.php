@@ -20,6 +20,7 @@ class Coas extends Component
     public $title = '';
     public $description = '';
     public $coaGroupId = '';
+    public $cfType = '';
     public $uploadedFile = null;
 
     public $sortBy  = 'code';
@@ -59,6 +60,7 @@ class Coas extends Component
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'coaGroupId' => 'nullable|exists:coa_groups,id',
+            'cfType' => 'nullable|string|in:CASH IN,CASH OUT,NO CASHFLOW',
         ];
     }
 
@@ -81,6 +83,7 @@ class Coas extends Component
             $this->title = $coa->title;
             $this->description = $coa->description;
             $this->coaGroupId = $coa->coa_group_id ?? '';
+            $this->cfType = $coa->cf_type ?? '';
             $this->isModalOpen = true;
         } catch (\Exception $e) {
             session()->flash('error', 'COA not found.');
@@ -99,6 +102,7 @@ class Coas extends Component
                     'title' => $this->title,
                     'description' => $this->description,
                     'coa_group_id' => $this->coaGroupId ?: null,
+                    'cf_type' => $this->cfType ?: null,
                 ]
             );
 
@@ -186,6 +190,7 @@ class Coas extends Component
         $this->title = '';
         $this->description = '';
         $this->coaGroupId = '';
+        $this->cfType = '';
         $this->resetValidation();
     }
 
