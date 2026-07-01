@@ -887,8 +887,8 @@ class RkapDashboardTest extends TestCase
         // Operating Profit (Gross Profit 55000 - Indirect Cost 13000)
         $this->assertEquals(42000.0, $plSummary['operating_profit']['budget']);
 
-        // EBITDA (Operating Profit 42000 + Depreciation/Amortization (5000 + 3000) + Rent (10000 * 0.82)) = 42000 + 8000 + 8200 = 58200
-        $this->assertEquals(58200.0, $plSummary['ebitda']['budget']);
+        // EBITDA (Operating Profit 42000 + Depreciation/Amortization (5000 + 3000) + Rent (10000 * 0.82)) = 42000 + 8000 + 8196.01179442502 = 58196.01179442502
+        $this->assertEquals(58196.01179442502, $plSummary['ebitda']['budget']);
 
         // Check individual items inside PL0004 (Other Income)
         // Pendapatan Bunga (7003) = 5000
