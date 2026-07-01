@@ -253,6 +253,25 @@
                           {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                       </div>
                     </div>
+
+                    <!-- Row 8: EBITDA -->
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background-color: rgba(105, 108, 255, 0.08); border: 1px dashed rgba(105, 108, 255, 0.3);">
+                      <div class="d-flex align-items-center">
+                        <div class="badge p-2 rounded me-3" style="background-color: rgba(105, 108, 255, 0.16) !important; color: #696cff !important;">
+                          <i class="bx bx-bar-chart-alt-2 fs-4"></i>
+                        </div>
+                        <div>
+                          <h6 class="mb-0 fw-bold" style="color: #696cff;">EBITDA</h6>
+                          <small class="text-muted">Earnings Before Interest, Tax, Depr & Amort</small>
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <h5 class="mb-0 fw-bold" style="color: #696cff;">Rp
+                          {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                        <small class="fw-medium" style="color: #696cff;">Real: Rp
+                          {{ number_format($plSummary['ebitda']['realization'] ?? 0, 0, ',', '.') }}</small>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -530,6 +549,53 @@
                       @elseif($npVariance < 0)
                         <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
                           {{ number_format(abs($npVariance), 0, ',', '.') }})</span>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
+                  </tr>
+
+                  <!-- EBITDA Summary Row -->
+                  @php
+                    $eb = $plSummary['ebitda'];
+                    $ebBudget = $eb['budget'];
+                    $ebReal = $eb['realization'];
+                    $ebProj = $eb['projection'];
+                    $ebRealPct = $ebBudget > 0 ? ($ebReal / $ebBudget) * 100 : 0;
+                    $ebProjPct = $ebBudget > 0 ? ($ebProj / $ebBudget) * 100 : 0;
+                    $ebVariance = $ebProj - $ebBudget;
+                  @endphp
+                  <tr class="fw-bold border-top" style="background-color: rgba(105, 108, 255, 0.06);">
+                    <td style="color: #696cff; font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+                      <i class="bx bx-bar-chart-alt-2 me-2"></i>{{ $eb['label'] }}
+                    </td>
+                    <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+                      {{ number_format($ebBudget, 0, ',', '.') }}</td>
+                    <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+                      {{ number_format($ebReal, 0, ',', '.') }}</td>
+                    <td class="text-center font-monospace text-muted" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+                      @if ($ebBudget > 0)
+                        {{ number_format($ebRealPct, 1, ',', '.') }}%
+                      @else
+                        -
+                      @endif
+                    </td>
+                    <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+                      {{ number_format($ebProj, 0, ',', '.') }}</td>
+                    <td class="text-center font-monospace text-muted" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+                      @if ($ebBudget > 0)
+                        {{ number_format($ebProjPct, 1, ',', '.') }}%
+                      @else
+                        -
+                      @endif
+                    </td>
+                    <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+                      @if ($ebVariance > 0)
+                        <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                          {{ number_format($ebVariance, 0, ',', '.') }}</span>
+                      @elseif($ebVariance < 0)
+                        <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                          {{ number_format(abs($ebVariance), 0, ',', '.') }})</span>
                       @else
                         <span class="text-muted">-</span>
                       @endif

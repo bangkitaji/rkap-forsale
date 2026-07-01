@@ -809,6 +809,9 @@ class RkapDashboardTest extends TestCase
         $cgIntInc = \App\Models\CoaGroup::firstOrCreate(['code' => '7003'], ['name' => 'Pendapatan Bunga', 'report_group_id' => $rgOtherIncome->id]);
         $cgIntExp = \App\Models\CoaGroup::firstOrCreate(['code' => '7000'], ['name' => 'FINANCING COST', 'report_group_id' => $rgOtherExpense->id]);
         $cgLainnya = \App\Models\CoaGroup::firstOrCreate(['code' => '7005'], ['name' => 'LAINNYA', 'report_group_id' => $rgOtherExpense->id]);
+        $cgDeprDirect = \App\Models\CoaGroup::firstOrCreate(['code' => '5006'], ['name' => 'Depr Direct', 'report_group_id' => $rgDc->id]);
+        $cgDeprIndirect = \App\Models\CoaGroup::firstOrCreate(['code' => '6005'], ['name' => 'Depr Indirect', 'report_group_id' => $rgIdc->id]);
+        $cgRent = \App\Models\CoaGroup::firstOrCreate(['code' => '6001'], ['name' => 'Rent Group', 'report_group_id' => $rgIdc->id]);
 
         // 3. Create COAs
         $coaRev = \App\Models\Coa::firstOrCreate(['code' => '410001'], ['coa_group_id' => $cgRev->id, 'title' => 'Revenue COA']);
@@ -818,6 +821,9 @@ class RkapDashboardTest extends TestCase
         $coaLainnyaInc = \App\Models\Coa::firstOrCreate(['code' => '710002'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Other Income COA']);
         $coaLainnyaExp = \App\Models\Coa::firstOrCreate(['code' => '760002'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Other Expense COA']);
         $coaLainnyaCapex = \App\Models\Coa::firstOrCreate(['code' => '810001'], ['coa_group_id' => $cgLainnya->id, 'title' => 'Capex COA (exclude)']);
+        $coaDeprDirect = \App\Models\Coa::firstOrCreate(['code' => '540001'], ['coa_group_id' => $cgDeprDirect->id, 'title' => 'Depr Direct COA']);
+        $coaDeprIndirect = \App\Models\Coa::firstOrCreate(['code' => '630001'], ['coa_group_id' => $cgDeprIndirect->id, 'title' => 'Depr Indirect COA']);
+        $coaRent = \App\Models\Coa::firstOrCreate(['code' => '650001'], ['coa_group_id' => $cgRent->id, 'title' => 'Rent COA']);
 
         // 4. Create active finalized period and submission
         $period = \App\Models\RkapPeriod::create([
@@ -856,6 +862,9 @@ class RkapDashboardTest extends TestCase
         $createBudgetItem('710002', 10000.0);
         $createBudgetItem('760002', 4000.0);
         $createBudgetItem('810001', 25000.0); // Should be excluded from P&L group PL0004!
+        $createBudgetItem('540001', 5000.0); // Depreciation Direct
+        $createBudgetItem('630001', 3000.0); // Depreciation Indirect
+        $createBudgetItem('650001', 10000.0); // Rent Expense
 
         $response = $this->actingAs($this->admin)->get('/analytics?period_id=' . $period->id);
         $response->assertStatus(200);
@@ -866,14 +875,20 @@ class RkapDashboardTest extends TestCase
         // Revenue subtotal
         $this->assertEquals(100000.0, $plGroups['Revenue']['budget_subtotal']);
 
-        // Direct Cost subtotal
-        $this->assertEquals(40000.0, $plGroups['Direct Cost']['budget_subtotal']);
+        // Direct Cost subtotal (Direct Cost Group 40000 + Depr Direct 5000)
+        $this->assertEquals(45000.0, $plGroups['Direct Cost']['budget_subtotal']);
 
-        // Gross Profit
-        $this->assertEquals(60000.0, $plSummary['gross_profit']['budget']);
+        // Gross Profit (Revenue 100000 - Direct Cost 45000)
+        $this->assertEquals(55000.0, $plSummary['gross_profit']['budget']);
 
-        // EBITDA
-        $this->assertEquals(60000.0, $plSummary['operating_profit']['budget']);
+        // Indirect Cost subtotal (Depr Indirect 3000 + Rent 10000)
+        $this->assertEquals(13000.0, $plGroups['Indirect Cost']['budget_subtotal']);
+
+        // Operating Profit (Gross Profit 55000 - Indirect Cost 13000)
+        $this->assertEquals(42000.0, $plSummary['operating_profit']['budget']);
+
+        // EBITDA (Operating Profit 42000 + Depreciation/Amortization (5000 + 3000) + Rent (10000 * 0.82)) = 42000 + 8000 + 8200 = 58200
+        $this->assertEquals(58200.0, $plSummary['ebitda']['budget']);
 
         // Check individual items inside PL0004 (Other Income)
         // Pendapatan Bunga (7003) = 5000
@@ -892,8 +907,8 @@ class RkapDashboardTest extends TestCase
         // Other Expense subtotal = 3000 (cgIntExp) + (-6000) (cgLainnya net) = -3000
         $this->assertEquals(-3000.0, $plGroups['Other Expense']['budget_subtotal']);
 
-        // Net Profit = EBITDA (60000) + Other Income (5000) - Other Expense (-3000) = 68000
-        $this->assertEquals(68000.0, $plSummary['net_profit']['budget']);
+        // Net Profit = Operating Profit (42000) + Other Income (5000) - Other Expense (-3000) = 50000
+        $this->assertEquals(50000.0, $plSummary['net_profit']['budget']);
     }
 
     public function test_admin_sees_cashflow_summary(): void

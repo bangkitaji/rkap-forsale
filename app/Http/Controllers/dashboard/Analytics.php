@@ -696,13 +696,46 @@ class Analytics extends Controller
       $grossProfitReal = $revenueReal - $directCostReal;
       $grossProfitProj = $revenueProj - $directCostProj;
 
-      $ebitdaBudget = $grossProfitBudget - $indirectCostBudget;
-      $ebitdaReal = $grossProfitReal - $indirectCostReal;
-      $ebitdaProj = $grossProfitProj - $indirectCostProj;
+      $operatingProfitBudget = $grossProfitBudget - $indirectCostBudget;
+      $operatingProfitReal = $grossProfitReal - $indirectCostReal;
+      $operatingProfitProj = $grossProfitProj - $indirectCostProj;
 
-      $netProfitBudget = $ebitdaBudget + $otherBudget - $otherBudgetExpenses;
-      $netProfitReal = $ebitdaReal + $otherReal - $otherRealExpenses;
-      $netProfitProj = $ebitdaProj + $otherProj - $otherProjExpenses;
+      // Extract Depreciation & Amortization (COA group codes: 5006 direct, 6005 indirect) and Rent (6001)
+      $deprAmortCodes = ['5006', '6005'];
+      $rentCode = '6001';
+      $deprAmortBudget = 0.0;
+      $deprAmortReal = 0.0;
+      $deprAmortProj = 0.0;
+      $rentBudget = 0.0;
+      $rentReal = 0.0;
+      $rentProj = 0.0;
+
+      foreach (['Direct Cost', 'Indirect Cost'] as $groupName) {
+        if (isset($plGroups[$groupName]['items'])) {
+          foreach ($plGroups[$groupName]['items'] as $item) {
+            if (in_array($item['key'], $deprAmortCodes)) {
+              $deprAmortBudget += $item['budget'];
+              $deprAmortReal += $item['realization'];
+              $deprAmortProj += $item['projection'];
+            }
+            if ($item['key'] === $rentCode) {
+              $rentBudget += $item['budget'];
+              $rentReal += $item['realization'];
+              $rentProj += $item['projection'];
+            }
+          }
+        }
+      }
+
+      // EBITDA = Operating Profit + Depreciation & Amortization + Rent (net without 18% interest)
+      $rentNetFactor = 0.180398820557498; // 1 - 0.18 18.0398820557498%
+      $ebitdaBudget = $operatingProfitBudget + $deprAmortBudget + ($rentBudget - ($rentBudget * $rentNetFactor));
+      $ebitdaReal = $operatingProfitReal + $deprAmortReal + ($rentReal * $rentNetFactor);
+      $ebitdaProj = $operatingProfitProj + $deprAmortProj + ($rentProj * $rentNetFactor);
+
+      $netProfitBudget = $operatingProfitBudget + $otherBudget - $otherBudgetExpenses;
+      $netProfitReal = $operatingProfitReal + $otherReal - $otherRealExpenses;
+      $netProfitProj = $operatingProfitProj + $otherProj - $otherProjExpenses;
 
       $plSummary = [
         'revenue' => [
@@ -731,9 +764,9 @@ class Analytics extends Controller
         ],
         'operating_profit' => [
           'label' => 'Laba (Rugi) Usaha',
-          'budget' => $ebitdaBudget,
-          'realization' => $ebitdaReal,
-          'projection' => $ebitdaProj,
+          'budget' => $operatingProfitBudget,
+          'realization' => $operatingProfitReal,
+          'projection' => $operatingProfitProj,
         ],
         'other_income_exp' => [
           'label' => 'Pendapatan / (Beban) Lainnya',
@@ -746,6 +779,12 @@ class Analytics extends Controller
           'budget' => $netProfitBudget,
           'realization' => $netProfitReal,
           'projection' => $netProfitProj,
+        ],
+        'ebitda' => [
+          'label' => 'EBITDA',
+          'budget' => $ebitdaBudget,
+          'realization' => $ebitdaReal,
+          'projection' => $ebitdaProj,
         ],
       ];
     }
@@ -1185,7 +1224,7 @@ class Analytics extends Controller
     // Sum of subtotals of Category 1 + Category 2 + Category 3
     $netCashFlows = [];
     foreach ($versions as $version) {
-      $netCashFlows[$version->version_id] = 
+      $netCashFlows[$version->version_id] =
         ($categorySubtotals[1][$version->version_id] ?? 0.0) +
         ($categorySubtotals[2][$version->version_id] ?? 0.0) +
         ($categorySubtotals[3][$version->version_id] ?? 0.0);
