@@ -1,16 +1,14 @@
 <?php
 
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
 use App\Models\DifferenceGroup;
 
-class DifferenceGroupSeeder extends Seeder
+return new class extends Migration
 {
     /**
-     * Run the database seeds.
+     * Run the migrations.
      */
-    public function run(): void
+    public function up(): void
     {
         $groups = [
             ['code' => '2001', 'name' => 'Pendapatan diterima dimuka'],
@@ -40,9 +38,11 @@ class DifferenceGroupSeeder extends Seeder
             ['code' => '2008', 'name' => 'Hutang CDS PSBI'],
         ];
 
+        // 1. Force delete obsolete difference groups
         $codes = collect($groups)->pluck('code')->toArray();
         DifferenceGroup::whereNotIn('code', $codes)->forceDelete();
 
+        // 2. Insert or update the new list of groups
         foreach ($groups as $group) {
             DifferenceGroup::updateOrCreate(
                 ['code' => $group['code']],
@@ -50,4 +50,11 @@ class DifferenceGroupSeeder extends Seeder
             );
         }
     }
-}
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+    }
+};
