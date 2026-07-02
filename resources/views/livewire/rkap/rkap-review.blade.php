@@ -707,6 +707,50 @@
               </div>
             </div>
 
+            @if ($wp->activityFiles && $wp->activityFiles->isNotEmpty())
+            <div class="mb-3" wire:key="act-view-files-{{ $wp->id }}">
+              <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>File Referensi:</label>
+              <div class="d-flex flex-wrap gap-2">
+                @foreach ($wp->activityFiles as $file)
+                  @php
+                    $isViewable = in_array(strtolower($file->file_type), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
+                  @endphp
+                  @if ($isViewable)
+                    <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewFileModal-{{ $file->id }}">
+                      <i class="bx bx-show me-1"></i> {{ $file->original_name }}
+                    </button>
+                    <!-- Modal for displaying inline -->
+                    <div class="modal fade" id="viewFileModal-{{ $file->id }}" tabindex="-1" aria-hidden="true" wire:key="view-file-modal-{{ $file->id }}">
+                      <div class="modal-dialog modal-dialog-centered modal-xl">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title"><i class="bx bx-file me-2 text-primary"></i>{{ $file->original_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body p-0 text-center bg-light">
+                            @if (strtolower($file->file_type) === 'pdf')
+                              <iframe src="{{ route('rkap-files.view', $file->id) }}" width="100%" height="700px" style="border:none;"></iframe>
+                            @else
+                              <img src="{{ route('rkap-files.view', $file->id) }}" class="img-fluid p-3" style="max-height:75vh; object-fit:contain;" />
+                            @endif
+                          </div>
+                          <div class="modal-footer">
+                            <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  @else
+                    <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-xs btn-outline-secondary">
+                      <i class="bx bx-download me-1"></i> {{ $file->original_name }}
+                    </a>
+                  @endif
+                @endforeach
+              </div>
+            </div>
+            @endif
+
             <div class="table-responsive">
               <table class="table table-sm table-striped table-hover mb-0">
                 <thead>

@@ -77,6 +77,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');
     Route::get('/submissions/{id}/approval-review', \App\Livewire\Rkap\RkapApprovalReview::class)->name('rkap-submissions-approval-review');
     Route::get('/submissions/{id}/versions', \App\Livewire\Rkap\RkapVersionHistory::class)->name('rkap-submissions-versions');
+    Route::get('/files/{fileId}/download', [App\Http\Controllers\RkapFileController::class, 'download'])->name('rkap-files.download');
+    Route::get('/files/{fileId}/view', [App\Http\Controllers\RkapFileController::class, 'view'])->name('rkap-files.view');
     Route::get('/compilation', \App\Livewire\Rkap\RkapSubmissionCompilation::class)
       ->middleware('permission:rkap.compilation.dept')
       ->name('rkap-submissions-compilation');

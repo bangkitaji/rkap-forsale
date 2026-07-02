@@ -3,6 +3,7 @@
 namespace App\Livewire\Rkap;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
 use App\Models\RkapWorkPlan;
@@ -17,7 +18,7 @@ use App\Livewire\Traits\HandlesDistribution;
 
 class RkapSubmissionForm extends Component
 {
-    use HandlesDistribution;
+    use HandlesDistribution, WithFileUploads;
 
     public ?int $submissionId = null;
     public ?int $periodId = null;
@@ -27,6 +28,11 @@ class RkapSubmissionForm extends Component
 
     // Work plans (array of nested work plan & activity data)
     public array $workPlans = [];
+
+    // File upload context
+    public ?int $uploadWpIdx = null;
+    public ?int $uploadActIdx = null;
+    public $referenceFile = null;
 
     public ?RkapSubmission $submission = null;
     public ?RkapPeriod $period = null;
@@ -66,6 +72,7 @@ class RkapSubmissionForm extends Component
 
             // Eager-load relations; scope realizations to this period explicitly
             $this->submission->load([
+                'workPlans.activityFiles',
                 'workPlans.budgetItems.monthlies',
                 'workPlans.budgetItems.cashOuts',
                 'workPlans.budgetItems.realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
@@ -232,6 +239,8 @@ class RkapSubmissionForm extends Component
             'sort_order'      => $sortOrder,
             'approval_status' => 'pending',
             'revision_notes'  => '',
+            'uploaded_files'  => [],
+            'files_to_delete' => [],
             'budget_items'    => [$this->emptyBudgetItem()],
         ];
     }
@@ -466,6 +475,15 @@ class RkapSubmissionForm extends Component
                     'sort_order'      => $wp->sort_order,
                     'approval_status' => $wp->approval_status ?? 'pending',
                     'revision_notes'  => $wp->revision_notes ?? '',
+                    'uploaded_files'  => $wp->activityFiles->map(fn($f) => [
+                        'id'            => $f->id,
+                        'file_name'     => $f->file_name,
+                        'original_name' => $f->original_name,
+                        'file_path'     => $f->file_path,
+                        'file_type'     => $f->file_type,
+                        'file_size'     => $f->file_size,
+                    ])->toArray(),
+                    'files_to_delete' => [],
                     'budget_items'    => $wp->budgetItems->map(function ($bi) use ($coaMap) {
                         $coa = $coaMap->get($bi->account_code);
                         return [
@@ -546,6 +564,58 @@ class RkapSubmissionForm extends Component
 
         if (empty($this->workPlans[$wpIndex]['activities'])) {
             $this->removeWorkPlan($wpIndex);
+        }
+    }
+
+    public function openUploadModal(int $wpIdx, int $actIdx): void
+    {
+        $this->uploadWpIdx = $wpIdx;
+        $this->uploadActIdx = $actIdx;
+        $this->referenceFile = null;
+        $this->resetErrorBag('referenceFile');
+        $this->dispatch('open-upload-modal');
+    }
+
+    public function handleFileUpload(): void
+    {
+        $this->validate([
+            'referenceFile' => 'required|file|mimes:doc,docx,xls,xlsx,pdf,zip,jpg,jpeg,png,gif,svg|max:2048',
+        ]);
+
+        $wpIdx = $this->uploadWpIdx;
+        $actIdx = $this->uploadActIdx;
+
+        $originalName = $this->referenceFile->getClientOriginalName();
+        $extension = strtolower($this->referenceFile->getClientOriginalExtension());
+        $randomName = \Illuminate\Support\Str::random(40) . '.' . $extension;
+        
+        $fileSize = $this->referenceFile->getSize();
+        $filePath = $this->referenceFile->storeAs('rkap_files', $randomName);
+
+        $this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'][] = [
+            'file_name' => $randomName,
+            'original_name' => $originalName,
+            'file_path' => $filePath,
+            'file_type' => $extension,
+            'file_size' => $fileSize,
+        ];
+
+        $this->referenceFile = null;
+        $this->dispatch('close-upload-modal');
+        $this->dispatch('form-saved', message: 'File referensi berhasil diupload.');
+    }
+
+    public function deleteUploadedFile(int $wpIdx, int $actIdx, int $fileIdx): void
+    {
+        $file = $this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'][$fileIdx] ?? null;
+        if ($file) {
+            if (!isset($file['id'])) {
+                \Illuminate\Support\Facades\Storage::delete($file['file_path']);
+            } else {
+                $this->workPlans[$wpIdx]['activities'][$actIdx]['files_to_delete'][] = $file['id'];
+            }
+            unset($this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'][$fileIdx]);
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'] = array_values($this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files']);
         }
     }
 
@@ -963,6 +1033,30 @@ class RkapSubmissionForm extends Component
                             'sort_order' => $sortIdx++,
                         ]
                     );
+
+                    // Delete reference files marked for deletion
+                    if (!empty($actData['files_to_delete'])) {
+                        foreach ($actData['files_to_delete'] as $fileId) {
+                            $fileModel = \App\Models\RkapActivityFile::find($fileId);
+                            if ($fileModel) {
+                                \Illuminate\Support\Facades\Storage::delete($fileModel->file_path);
+                                $fileModel->delete();
+                            }
+                        }
+                    }
+
+                    // Save newly uploaded reference files
+                    foreach ($actData['uploaded_files'] ?? [] as $fData) {
+                        if (empty($fData['id'])) {
+                            $workPlan->activityFiles()->create([
+                                'file_name' => $fData['file_name'],
+                                'original_name' => $fData['original_name'],
+                                'file_path' => $fData['file_path'],
+                                'file_type' => $fData['file_type'],
+                                'file_size' => $fData['file_size'],
+                            ]);
+                        }
+                    }
 
                     $existingBiIds = collect($actData['budget_items'])->pluck('id')->filter()->toArray();
                     $workPlan->budgetItems()->whereNotIn('id', $existingBiIds)->delete();

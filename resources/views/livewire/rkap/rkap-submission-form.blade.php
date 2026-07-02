@@ -463,10 +463,85 @@
                 @endforelse
               </div>
             </div>
+
+            {{-- Tombol upload & list file referensi --}}
+            <div class="mt-2" wire:key="wp-{{ $wpIdx }}-act-files-{{ $actIdx }}">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" class="btn btn-xs btn-outline-primary"
+                  wire:click="openUploadModal({{ $wpIdx }}, {{ $actIdx }})"
+                  @disabled($isApproved)>
+                  <i class="bx bx-upload me-1"></i> Upload File Referensi
+                </button>
+              </div>
+              
+              @if (!empty($act['uploaded_files']))
+              <div class="d-flex flex-column gap-1 mt-2">
+                @foreach ($act['uploaded_files'] as $fileIdx => $file)
+                @php
+                  $isViewable = in_array(strtolower($file['file_type'] ?? ''), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
+                @endphp
+                <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1" style="font-size: 0.8rem;" wire:key="file-item-{{ $wpIdx }}-{{ $actIdx }}-{{ $fileIdx }}">
+                  <div class="d-flex align-items-center gap-1 text-truncate" style="max-width: 85%;">
+                    <i class="bx bx-file text-secondary flex-shrink-0"></i>
+                    @if (isset($file['id']))
+                      @if ($isViewable)
+                        <a href="javascript:void(0)" class="text-truncate text-primary" data-bs-toggle="modal" data-bs-target="#viewFileModalForm-{{ $file['id'] }}">
+                          {{ $file['original_name'] }}
+                        </a>
+                      @else
+                        <a href="{{ route('rkap-files.download', $file['id']) }}" class="text-truncate text-primary" target="_blank">
+                          {{ $file['original_name'] }}
+                        </a>
+                      @endif
+                    @else
+                      <span class="text-truncate text-muted" title="Belum disimpan">{{ $file['original_name'] }} (baru)</span>
+                    @endif
+                    <span class="text-muted flex-shrink-0 small">({{ number_format(($file['file_size'] ?? 0) / 1024, 1) }} KB)</span>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                    @if (!$isApproved)
+                    <button type="button" class="btn btn-link text-danger p-0 m-0 border-0" style="text-decoration:none;"
+                      wire:click="deleteUploadedFile({{ $wpIdx }}, {{ $actIdx }}, {{ $fileIdx }})"
+                      wire:confirm="Hapus file ini?">
+                      <i class="bx bx-trash" style="font-size:1.1rem;"></i>
+                    </button>
+                    @endif
+                  </div>
+                </div>
+                
+                {{-- Modal inline view inside Form --}}
+                @if (isset($file['id']) && $isViewable)
+                <div class="modal fade" id="viewFileModalForm-{{ $file['id'] }}" tabindex="-1" aria-hidden="true" wire:key="view-file-modal-form-{{ $file['id'] }}">
+                  <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content text-start">
+                      <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-file me-2 text-primary"></i>{{ $file['original_name'] }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body p-0 text-center bg-light">
+                        @if (strtolower($file['file_type']) === 'pdf')
+                          <iframe src="{{ route('rkap-files.view', $file['id']) }}" width="100%" height="650px" style="border:none;"></iframe>
+                        @else
+                          <img src="{{ route('rkap-files.view', $file['id']) }}" class="img-fluid p-3" style="max-height:75vh; object-fit:contain;" />
+                        @endif
+                      </div>
+                      <div class="modal-footer">
+                        <a href="{{ route('rkap-files.download', $file['id']) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                @endif
+                @endforeach
+              </div>
+              @endif
+            </div>
           </div>
 
           {{-- Subtotal Kegiatan --}}
-          <div class="col-md-6 d-flex flex-column justify-content-end align-items-end">
+          <div class="col-md-6 d-flex flex-column align-items-end">
             @php
             $actSubtotal = 0;
             foreach ($act['budget_items'] ?? [] as $bi) {
@@ -1306,4 +1381,53 @@
     <option value="{{ $satuanOpt->name }}"></option>
     @endforeach
   </datalist>
+
+  {{-- Modal Upload File Referensi --}}
+  <div class="modal fade" id="uploadFileModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bx bx-upload me-2 text-primary"></i>Upload File Referensi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-start">
+          <form wire:submit.prevent="handleFileUpload">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Pilih File</label>
+              <input type="file" class="form-control @error('referenceFile') is-invalid @enderror" wire:model="referenceFile">
+              @error('referenceFile')
+              <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
+              <div class="form-text text-muted small mt-1">
+                Tipe file yang diperbolehkan: Word (doc, docx), Excel (xls, xlsx), PDF, Zip, dan Gambar. Maksimal ukuran 2 MB.
+              </div>
+              <div wire:loading wire:target="referenceFile" class="text-info mt-2 small">
+                <i class="bx bx-loader-alt bx-spin me-1"></i> Mengunggah ke penyimpanan sementara...
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" wire:click="handleFileUpload" wire:loading.attr="disabled" wire:target="referenceFile" @disabled(!$referenceFile)>
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('open-upload-modal', event => {
+      var myModal = new bootstrap.Modal(document.getElementById('uploadFileModal'));
+      myModal.show();
+    });
+    window.addEventListener('close-upload-modal', event => {
+      var myModalEl = document.getElementById('uploadFileModal');
+      var modal = bootstrap.Modal.getInstance(myModalEl);
+      if (modal) {
+        modal.hide();
+      }
+    });
+  </script>
 </div>

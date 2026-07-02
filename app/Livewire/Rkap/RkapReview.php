@@ -22,6 +22,7 @@ class RkapReview extends Component
             'bureau.department.directorate',
             'period',
             'creator',
+            'workPlans.activityFiles',
             'workPlans.budgetItems.monthlies',
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',

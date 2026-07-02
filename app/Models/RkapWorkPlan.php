@@ -55,6 +55,11 @@ class RkapWorkPlan extends Model
         return $this->hasMany(RkapBudgetItem::class);
     }
 
+    public function activityFiles(): HasMany
+    {
+        return $this->hasMany(RkapActivityFile::class);
+    }
+
     public function getTotalBudgetAttribute(): float
     {
         return (float) $this->budgetItems->sum('total_price');
