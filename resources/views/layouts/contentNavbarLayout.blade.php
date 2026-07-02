@@ -86,6 +86,6 @@ $container = ($container ?? 'container-xxl');
         <div class="drag-target"></div>
     </div>
     <!-- / Layout wrapper -->
-    <livewire:ai-chat-widget />
+    <!-- <livewire:ai-chat-widget /> -->
 </div>
 @endsection
