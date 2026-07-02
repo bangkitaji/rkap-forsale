@@ -135,7 +135,7 @@
                 <div class="col-auto ms-auto">
                     <span class="text-muted small">
                         <i class="bx bx-info-circle me-1"></i>
-                        Hanya menampilkan pengajuan berstatus <strong>Disetujui Final</strong>
+                        Menampilkan pengajuan RKAP semua status
                     </span>
                 </div>
             </div>
@@ -206,9 +206,9 @@
             <div class="fw-semibold mb-1">Belum ada data kompilasi</div>
             <small>
                 @if(!$filterPeriod)
-                    Pilih periode untuk melihat kompilasi pengajuan yang telah disetujui.
+                    Pilih periode untuk melihat kompilasi pengajuan RKAP.
                 @else
-                    Tidak ada pengajuan berstatus <strong>Disetujui Final</strong> pada periode ini dalam cakupan Anda.
+                    Tidak ada pengajuan pada periode ini dalam cakupan Anda.
                 @endif
             </small>
         </div>
@@ -378,8 +378,8 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-success">
-                                        <i class="bx bx-check-circle me-1"></i>Disetujui
+                                    <span class="badge bg-{{ $submission->status_color }}">
+                                        {{ $submission->status_label }}
                                     </span>
                                 </td>
                                 <td class="text-center">

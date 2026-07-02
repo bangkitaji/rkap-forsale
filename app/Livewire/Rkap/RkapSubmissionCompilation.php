@@ -29,13 +29,11 @@ class RkapSubmissionCompilation extends Component
 
     /**
      * Build an Eloquent query scoped by the current user's role / permissions.
-     * All queries are pre-filtered to status = approved.
      */
     private function buildQuery()
     {
         $user  = Auth::user();
         $query = RkapSubmission::with(['bureau.department.directorate', 'period'])
-            ->where('status', 'approved')
             ->when($this->filterPeriod, fn($q) => $q->where('rkap_period_id', $this->filterPeriod));
 
         if ($user->can('rkap.compilation.all')) {

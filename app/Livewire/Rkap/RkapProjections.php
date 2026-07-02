@@ -205,14 +205,24 @@ class RkapProjections extends Component
         }
 
         $this->selectedBudgetItemId = $id;
-        $budgetItem = RkapBudgetItem::with(['projections'])->find($id);
+        $budgetItem = RkapBudgetItem::with(['projections', 'monthlies', 'realizations'])->find($id);
         
         $this->editingProjections = [];
 
-        // Initialize projection values from database or default to 0 for all 12 months
+        $currentMonth = (int) date('n');
+
+        // Initialize projection values based on realization (if past or filled) or monthly budget plan
         for ($m = 1; $m <= 12; $m++) {
-            $existing = $budgetItem->projections->where('month', $m)->first();
-            $this->editingProjections[$m] = $existing ? (float) $existing->amount : 0.00;
+            $realizationAmount = (float) ($budgetItem->realizations->where('month', $m)->sum('amount'));
+            $hasRealization = $budgetItem->realizations->where('month', $m)->count() > 0;
+            $monthlyBudget = (float) ($budgetItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
+
+            if ($m < $currentMonth || $hasRealization) {
+                $this->editingProjections[$m] = $realizationAmount;
+            } else {
+                $existing = $budgetItem->projections->where('month', $m)->first();
+                $this->editingProjections[$m] = $existing ? (float) $existing->amount : $monthlyBudget;
+            }
         }
 
         // Determine inputMode and locked status based on current projections
@@ -266,7 +276,7 @@ class RkapProjections extends Component
     public function updatedEditingProjections($value, $key): void
     {
         $monthVal = (int) $key;
-        $selectedItem = RkapBudgetItem::with(['monthlies'])->find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::with(['monthlies', 'realizations'])->find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
         }
@@ -279,16 +289,36 @@ class RkapProjections extends Component
             $this->resetErrorBag("editingProjections.{$monthVal}");
         }
 
-        // Check monthly budget plan limit
-        $monthlyLimit = $selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00;
-        $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
-        if ($sanitizedValue > (float)$monthlyLimit) {
-            $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
-            return;
+        // Skip limit validation if the month is locked (past or has realization)
+        $currentMonth = (int) date('n');
+        $hasRealization = $selectedItem->realizations->where('month', $monthVal)->count() > 0;
+        if ($monthVal < $currentMonth || $hasRealization) {
+            $this->resetErrorBag("editingProjections.{$monthVal}");
+        } else {
+            // Check monthly budget plan limit
+            $monthlyLimit = $selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00;
+            $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
+            if ($sanitizedValue > (float)$monthlyLimit) {
+                $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
+                return;
+            }
         }
 
-        // Check total projections vs total RKAP budget
-        $totalProjections = array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0.00, $this->editingProjections));
+        // Check total projections vs total RKAP budget, enforcing realization amounts for locked months
+        $totalProjections = 0.00;
+        for ($m = 1; $m <= 12; $m++) {
+            $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
+            $isLocked = $m < $currentMonth || $hasRealization;
+
+            if ($isLocked) {
+                $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
+            } else {
+                $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
+                    ? (float) $this->editingProjections[$m]
+                    : (float) ($selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
+            }
+        }
+
         if ($totalProjections > (float) $selectedItem->total_price) {
             $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
         } else {
@@ -323,7 +353,7 @@ class RkapProjections extends Component
             return;
         }
 
-        $selectedItem = RkapBudgetItem::with(['projections', 'monthlies'])->find($this->selectedBudgetItemId);
+        $selectedItem = RkapBudgetItem::with(['projections', 'monthlies', 'realizations'])->find($this->selectedBudgetItemId);
         if (!$selectedItem) {
             return;
         }
@@ -345,8 +375,17 @@ class RkapProjections extends Component
         } else {
             $this->validate();
 
-            // Validate that individual month projections do not exceed monthly plans
+            $currentMonth = (int) date('n');
+
+            // Validate that individual month projections do not exceed monthly plans (excluding locked months)
             foreach ($this->editingProjections as $month => $amount) {
+                $hasRealization = $selectedItem->realizations->where('month', $month)->count() > 0;
+                $isLocked = $month < $currentMonth || $hasRealization;
+
+                if ($isLocked) {
+                    continue;
+                }
+
                 $monthlyLimit = $selectedItem->monthlies->where('month', $month)->first()?->amount ?? 0.00;
                 $sanitizedAmount = $amount !== '' && $amount !== null ? (float)$amount : 0.00;
                 if ($sanitizedAmount > (float)$monthlyLimit) {
@@ -355,37 +394,47 @@ class RkapProjections extends Component
                 }
             }
 
-            // Validate that the total projections do not exceed the total RKAP budget
-            $totalProjections = array_sum(array_map(fn($v) => $v !== '' && $v !== null ? (float)$v : 0.00, $this->editingProjections));
+            // Validate that the total projections do not exceed the total RKAP budget, enforcing realization amounts for locked months
+            $totalProjections = 0.00;
+            for ($m = 1; $m <= 12; $m++) {
+                $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
+                $isLocked = $m < $currentMonth || $hasRealization;
+
+                if ($isLocked) {
+                    $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
+                } else {
+                    $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
+                        ? (float) $this->editingProjections[$m]
+                        : (float) ($selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
+                }
+            }
+
             if ($totalProjections > (float) $selectedItem->total_price) {
                 $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
                 return;
             }
 
-            DB::transaction(function () use ($totalProjections): void {
-                $projections = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->selectedBudgetItemId)->get();
+            DB::transaction(function () use ($selectedItem, $currentMonth): void {
+                for ($m = 1; $m <= 12; $m++) {
+                    $realizationAmount = (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
+                    $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
 
-                foreach ($this->editingProjections as $month => $amount) {
-                    if ($month < (int) date('n') || $month > 12) {
-                        continue;
+                    if ($m < $currentMonth || $hasRealization) {
+                        $amount = $realizationAmount;
+                    } else {
+                        $amount = isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
+                            ? (float) $this->editingProjections[$m]
+                            : (float) ($selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
                     }
-
-                    // Skip if projection already exists with amount > 0
-                    $existingProj = $projections->where('month', $month)->first();
-                    if ($existingProj && (float)$existingProj->amount > 0) {
-                        continue;
-                    }
-
-                    $sanitizedAmount = $amount !== '' && $amount !== null ? (float) $amount : 0.00;
 
                     \App\Models\RkapBudgetItemProjection::updateOrCreate(
                         [
                             'rkap_budget_item_id' => $this->selectedBudgetItemId,
-                            'month' => $month,
+                            'month' => $m,
                         ],
                         [
                             'rkap_period_id' => $this->activePeriodId,
-                            'amount' => $sanitizedAmount,
+                            'amount' => $amount,
                             'inputted_by' => auth()->id(),
                         ]
                     );
@@ -393,7 +442,6 @@ class RkapProjections extends Component
 
                 // Update the yearly projection column in budget item table to match sum of all monthly projections
                 $totalProj = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->selectedBudgetItemId)->sum('amount');
-                $selectedItem = RkapBudgetItem::find($this->selectedBudgetItemId);
                 $selectedItem->update(['projection' => $totalProj]);
             });
         }

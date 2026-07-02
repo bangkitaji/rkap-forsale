@@ -121,10 +121,16 @@ class RkapProjectionTest extends TestCase
             'total_price' => 100000,
         ]);
 
+        $currentMonth = (int) date('n');
+        $nextMonth = $currentMonth < 12 ? $currentMonth + 1 : null;
+        $prevMonth = $currentMonth > 1 ? $currentMonth - 1 : null;
+        $otherMonth = $nextMonth ?? $prevMonth ?? 1;
+
         for ($m = 1; $m <= 12; $m++) {
+            $amount = ($m === $currentMonth || $m === $otherMonth) ? 50000 : 0;
             $this->budgetItem->monthlies()->create([
                 'month' => $m,
-                'amount' => 100000,
+                'amount' => $amount,
             ]);
         }
     }
@@ -155,7 +161,7 @@ class RkapProjectionTest extends TestCase
 
         Livewire::test(RkapProjections::class)
             ->call('selectBudgetItem', $this->budgetItem->id)
-            ->set('editingProjections.' . $currentMonth, 85000)
+            ->set('editingProjections.' . $currentMonth, 45000)
             ->call('saveMonthlyProjections')
             ->assertHasNoErrors()
             ->assertDispatched('projections-saved');
@@ -165,10 +171,10 @@ class RkapProjectionTest extends TestCase
             ->first();
 
         $this->assertNotNull($dbProjection);
-        $this->assertEquals(85000, $dbProjection->amount);
+        $this->assertEquals(45000, $dbProjection->amount);
     }
 
-    public function test_projection_cannot_be_overwritten_if_already_exists(): void
+    public function test_projection_can_be_overwritten_for_current_and_future_months(): void
     {
         $this->actingAs($this->kepalaBiro);
 
@@ -179,24 +185,24 @@ class RkapProjectionTest extends TestCase
             'rkap_budget_item_id' => $this->budgetItem->id,
             'rkap_period_id' => $this->activePeriod->id,
             'month' => $currentMonth,
-            'amount' => 50000,
+            'amount' => 30000,
             'inputted_by' => $this->kepalaBiro->id,
         ]);
 
         // Try to update it through the Livewire component
         Livewire::test(RkapProjections::class)
             ->call('selectBudgetItem', $this->budgetItem->id)
-            ->set('editingProjections.' . $currentMonth, 75000)
+            ->set('editingProjections.' . $currentMonth, 45000)
             ->call('saveMonthlyProjections')
             ->assertHasNoErrors();
 
-        // The amount in DB should still be 50000 (not overwritten)
+        // The amount in DB should be overwritten to 45000
         $dbProjection = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
             ->where('month', $currentMonth)
             ->first();
 
         $this->assertNotNull($dbProjection);
-        $this->assertEquals(50000, $dbProjection->amount);
+        $this->assertEquals(45000, $dbProjection->amount);
     }
 
     public function test_verifikator_with_permission_can_access_projection_page(): void
@@ -371,11 +377,6 @@ class RkapProjectionTest extends TestCase
     {
         $this->actingAs($this->kepalaBiro);
 
-        // budgetItem total_price is 100000. Let's make individual months fit under monthly budgets,
-        // but let their sum exceed 100000.
-        // Let's set Month 1 = 60000, Month 2 = 60000 (Sum = 120000 > 100000).
-        // (Monthly limits are 100000 each, so individually they are valid, but combined they exceed 100000).
-        
         $currentMonth = (int) date('n');
         $nextMonth = $currentMonth < 12 ? $currentMonth + 1 : null;
 
@@ -384,6 +385,10 @@ class RkapProjectionTest extends TestCase
             $this->assertTrue(true);
             return;
         }
+
+        // Dynamically update limits to 60000 for these two months so they pass individual limits
+        $this->budgetItem->monthlies()->where('month', $currentMonth)->update(['amount' => 60000]);
+        $this->budgetItem->monthlies()->where('month', $nextMonth)->update(['amount' => 60000]);
 
         Livewire::test(RkapProjections::class)
             ->call('selectBudgetItem', $this->budgetItem->id)
@@ -467,5 +472,100 @@ class RkapProjectionTest extends TestCase
             ->assertSet('inputMode', 'monthly')
             ->assertSet('yearlyProjection', 30000)
             ->assertSet('modeLocked', true);
+    }
+
+    public function test_projection_initialization_rules(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $currentMonth = (int) date('n');
+        $pastMonth = $currentMonth > 1 ? $currentMonth - 1 : null;
+        $futureMonth = $currentMonth < 12 ? $currentMonth + 1 : null;
+
+        // Seed realization for futureMonth so it behaves as "realisasi sudah diisi"
+        if ($futureMonth !== null) {
+            $this->budgetItem->realizations()->create([
+                'rkap_period_id' => $this->activePeriod->id,
+                'month' => $futureMonth,
+                'amount' => 45000,
+            ]);
+        }
+
+        // Seed realization for pastMonth (if it exists)
+        if ($pastMonth !== null) {
+            $this->budgetItem->realizations()->create([
+                'rkap_period_id' => $this->activePeriod->id,
+                'month' => $pastMonth,
+                'amount' => 20000,
+            ]);
+        }
+
+        $component = Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id);
+
+        // Assert pastMonth equals realization value (or 0 if no realization exists, e.g. for Jan)
+        if ($pastMonth !== null) {
+            $component->assertSet('editingProjections.' . $pastMonth, 20000);
+        }
+
+        // Assert futureMonth with realization equals realization value
+        if ($futureMonth !== null) {
+            $component->assertSet('editingProjections.' . $futureMonth, 45000);
+        }
+
+        // Assert current month (no realization seeded) equals monthly budget plan (seeded as 50000)
+        $component->assertSet('editingProjections.' . $currentMonth, 50000);
+    }
+
+    public function test_save_projection_enforces_realization_for_past_and_filled_months(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $currentMonth = (int) date('n');
+        $pastMonth = $currentMonth > 1 ? $currentMonth - 1 : null;
+        $futureMonth = $currentMonth < 12 ? $currentMonth + 1 : null;
+
+        // Seed realizations
+        if ($pastMonth !== null) {
+            $this->budgetItem->realizations()->create([
+                'rkap_period_id' => $this->activePeriod->id,
+                'month' => $pastMonth,
+                'amount' => 20000,
+            ]);
+        }
+
+        if ($futureMonth !== null) {
+            $this->budgetItem->realizations()->create([
+                'rkap_period_id' => $this->activePeriod->id,
+                'month' => $futureMonth,
+                'amount' => 45000,
+            ]);
+        }
+
+        $component = Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id);
+
+        // Try to set different values
+        if ($pastMonth !== null) {
+            $component->set('editingProjections.' . $pastMonth, 99999);
+        }
+        if ($futureMonth !== null) {
+            $component->set('editingProjections.' . $futureMonth, 99999);
+        }
+        
+        $component->set('editingProjections.' . $currentMonth, 30000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        // Check DB: past month and future month with realization must still equal realization values
+        if ($pastMonth !== null) {
+            $this->assertEquals(20000, \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->where('month', $pastMonth)->value('amount'));
+        }
+        if ($futureMonth !== null) {
+            $this->assertEquals(45000, \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->where('month', $futureMonth)->value('amount'));
+        }
+
+        // Current month (no realization) should be updated to user input (30000)
+        $this->assertEquals(30000, \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->where('month', $currentMonth)->value('amount'));
     }
 }
