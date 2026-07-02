@@ -111,12 +111,79 @@
         <small class="text-muted">Ikhtisar Pendapatan & Beban Periode ini</small>
       </div>
       <div class="card-body pt-3">
+        <!-- KPI Cards Row -->
+        <div class="row g-3 mb-4">
+          <!-- Revenue Card -->
+          <div class="col-sm-6 col-lg-3">
+            <div class="card bg-label-success border-0 shadow-none h-100">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-2">
+                  <div class="avatar avatar-sm me-2">
+                    <span class="avatar-initial rounded bg-success"><i class="bx bx-trending-up fs-4"></i></span>
+                  </div>
+                  <span class="fw-semibold text-success small">Revenue</span>
+                </div>
+                <h5 class="card-title mb-1 fw-bold text-success">Rp {{ number_format($plSummary['revenue']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
+              </div>
+            </div>
+          </div>
+          <!-- Gross Profit Card -->
+          <div class="col-sm-6 col-lg-3">
+            <div class="card bg-label-primary border-0 shadow-none h-100">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-2">
+                  <div class="avatar avatar-sm me-2">
+                    <span class="avatar-initial rounded bg-primary"><i class="bx bx-calculator fs-4"></i></span>
+                  </div>
+                  <span class="fw-semibold text-primary small">Gross Profit</span>
+                </div>
+                <h5 class="card-title mb-1 fw-bold text-primary">Rp {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+              </div>
+            </div>
+          </div>
+          <!-- EBITDA Card -->
+          <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-none h-100" style="background-color: rgba(105, 108, 255, 0.08);">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-2">
+                  <div class="avatar avatar-sm me-2">
+                    <span class="avatar-initial rounded" style="background-color: #696cff; color: #fff;"><i class="bx bx-bar-chart-alt-2 fs-4"></i></span>
+                  </div>
+                  <span class="fw-semibold small" style="color: #696cff;">EBITDA</span>
+                </div>
+                <h5 class="card-title mb-1 fw-bold" style="color: #696cff;">Rp {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['ebitda']['realization'] ?? 0, 0, ',', '.') }}</small>
+              </div>
+            </div>
+          </div>
+          <!-- Net Profit Card -->
+          <div class="col-sm-6 col-lg-3">
+            <div class="card text-white border-0 shadow-none h-100" style="background: linear-gradient(135deg, #28c76f, #1f9d55) !important;">
+              <div class="card-body p-3">
+                <div class="d-flex align-items-center mb-2">
+                  <div class="avatar avatar-sm me-2">
+                    <span class="avatar-initial rounded bg-white text-success"><i class="bx bx-money fs-4"></i></span>
+                  </div>
+                  <span class="fw-semibold text-white small">Net Profit</span>
+                </div>
+                <h5 class="card-title mb-1 fw-bold text-white">Rp {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                <small class="text-white opacity-75 d-block">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Statement Flow Grid -->
         <div class="row g-4">
-          <!-- Col 1: Pendapatan & Beban Langsung -->
+          <!-- Col 1: Revenue to Operating Expenses -->
           <div class="col-md-6 border-end">
             <div class="d-flex flex-column gap-3">
-              <!-- Row 1: Pendapatan -->
-              <div class="d-flex align-items-center justify-content-between">
+              <!-- Row 1: Revenue -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded">
                 <div class="d-flex align-items-center">
                   <div class="badge bg-label-success p-2 rounded me-3">
                     <i class="bx bx-trending-up fs-4"></i>
@@ -127,15 +194,13 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['revenue']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-success fw-medium">Real: Rp
-                    {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['revenue']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
 
-              <!-- Row 2: Beban Langsung -->
-              <div class="d-flex align-items-center justify-content-between">
+              <!-- Row 2: Direct Cost -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded">
                 <div class="d-flex align-items-center">
                   <div class="badge bg-label-info p-2 rounded me-3">
                     <i class="bx bx-receipt fs-4"></i>
@@ -146,16 +211,13 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold">Rp
-                    {{ number_format($plSummary['direct_cost']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-info fw-medium">Real: Rp
-                    {{ number_format($plSummary['direct_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['direct_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-info fw-medium">Real: Rp {{ number_format($plSummary['direct_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
 
-              <!-- Row 3: Laba Kotor -->
-              <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
+              <!-- Row 3: Gross Profit -->
+              <div class="d-flex align-items-center justify-content-between bg-lighter p-3 rounded">
                 <div class="d-flex align-items-center">
                   <div class="badge bg-label-primary p-2 rounded me-3">
                     <i class="bx bx-calculator fs-4"></i>
@@ -166,44 +228,37 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold text-primary">Rp
-                    {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-primary fw-medium">Real: Rp
-                    {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold text-primary">Rp {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-primary fw-medium">Real: Rp {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Col 2: Beban Tidak Langsung, Laba Usaha, Lain-lain & Laba Bersih -->
-          <div class="col-md-6">
-            <div class="d-flex flex-column gap-3">
-              <!-- Row 4: Beban Tidak Langsung -->
-              <div class="d-flex align-items-center justify-content-between">
+              <!-- Row 4: Indirect Cost -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded">
                 <div class="d-flex align-items-center">
                   <div class="badge bg-label-warning p-2 rounded me-3">
                     <i class="bx bx-credit-card fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Beban Td. Langsung</h6>
+                    <h6 class="mb-0 fw-semibold">Beban Tidak Langsung</h6>
                     <small class="text-muted">Indirect Cost</small>
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold">Rp
-                    {{ number_format($plSummary['indirect_cost']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-warning fw-medium">Real: Rp
-                    {{ number_format($plSummary['indirect_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['indirect_cost']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-warning fw-medium">Real: Rp {{ number_format($plSummary['indirect_cost']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
+            </div>
+          </div>
 
+          <!-- Col 2: Operating Profit, Other Income, Other Expense, Net Profit -->
+          <div class="col-md-6">
+            <div class="d-flex flex-column gap-3">
               <!-- Row 5: Laba Usaha -->
-              <div class="d-flex align-items-center justify-content-between bg-lighter p-2 rounded">
+              <div class="d-flex align-items-center justify-content-between bg-lighter p-3 rounded">
                 <div class="d-flex align-items-center">
-                  <div class="badge bg-label-info p-2 rounded me-3"
-                    style="background-color: rgba(3, 195, 236, 0.16) !important; color: #03c3ec !important;">
+                  <div class="badge bg-label-info p-2 rounded me-3" style="background-color: rgba(3, 195, 236, 0.16) !important; color: #03c3ec !important;">
                     <i class="bx bx-line-chart fs-4"></i>
                   </div>
                   <div>
@@ -212,35 +267,46 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Rp
-                    {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp
-                    {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Rp {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
 
-              <!-- Row 6: Other Income (exp) -->
-              <div class="d-flex align-items-center justify-content-between">
+              <!-- Row 6: Other Income -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded">
                 <div class="d-flex align-items-center">
-                  <div class="badge bg-label-secondary p-2 rounded me-3">
-                    <i class="bx bx-transfer fs-4"></i>
+                  <div class="badge bg-label-success p-2 rounded me-3">
+                    <i class="bx bx-plus-circle fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Lain-lain</h6>
-                    <small class="text-muted">Other Income (exp)</small>
+                    <h6 class="mb-0 fw-semibold">Pendapatan Lainnya</h6>
+                    <small class="text-muted">Other Income</small>
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold">Rp
-                    {{ number_format($plSummary['other_income_exp']['budget'] ?? 0, 0, ',', '.') }}
-                  </h6>
-                  <small class="text-secondary fw-medium">Real: Rp
-                    {{ number_format($plSummary['other_income_exp']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['other_income']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['other_income']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
 
-              <!-- Row 7: Laba Bersih -->
+              <!-- Row 7: Other Expense -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded">
+                <div class="d-flex align-items-center">
+                  <div class="badge bg-label-danger p-2 rounded me-3">
+                    <i class="bx bx-minus-circle fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-semibold">Beban Lainnya</h6>
+                    <small class="text-muted">Other Expense</small>
+                  </div>
+                </div>
+                <div class="text-end">
+                  <h6 class="mb-0 fw-bold">Rp {{ number_format($plSummary['other_expense']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-danger fw-medium">Real: Rp {{ number_format($plSummary['other_expense']['realization'] ?? 0, 0, ',', '.') }}</small>
+                </div>
+              </div>
+
+              <!-- Row 8: Net Profit -->
               <div class="d-flex align-items-center justify-content-between bg-label-success p-3 rounded">
                 <div class="d-flex align-items-center">
                   <div class="badge bg-success text-white p-2 rounded me-3">
@@ -252,31 +318,8 @@
                   </div>
                 </div>
                 <div class="text-end">
-                  <h5 class="mb-0 fw-bold text-success">Rp
-                    {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}
-                  </h5>
-                  <small class="text-success fw-medium">Real: Rp
-                    {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
-                </div>
-              </div>
-
-              <!-- Row 8: EBITDA -->
-              <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background-color: rgba(105, 108, 255, 0.08); border: 1px dashed rgba(105, 108, 255, 0.3);">
-                <div class="d-flex align-items-center">
-                  <div class="badge p-2 rounded me-3" style="background-color: rgba(105, 108, 255, 0.16) !important; color: #696cff !important;">
-                    <i class="bx bx-bar-chart-alt-2 fs-4"></i>
-                  </div>
-                  <div>
-                    <h6 class="mb-0 fw-bold" style="color: #696cff;">EBITDA</h6>
-                    <small class="text-muted">Earnings Before Interest, Tax, Depr & Amort</small>
-                  </div>
-                </div>
-                <div class="text-end">
-                  <h5 class="mb-0 fw-bold" style="color: #696cff;">Rp
-                    {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}
-                  </h5>
-                  <small class="fw-medium" style="color: #696cff;">Real: Rp
-                    {{ number_format($plSummary['ebitda']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold text-success">Rp {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-success fw-medium">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
             </div>

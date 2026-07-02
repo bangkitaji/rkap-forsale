@@ -888,11 +888,17 @@ class Analytics extends Controller
           'realization' => $operatingProfitReal,
           'projection' => $operatingProfitProj,
         ],
-        'other_income_exp' => [
-          'label' => 'Pendapatan / (Beban) Lainnya',
-          'budget' => $otherBudget - $otherBudgetExpenses,
-          'realization' => $otherReal - $otherRealExpenses,
-          'projection' => $otherProj - $otherProjExpenses,
+        'other_income' => [
+          'label' => 'Pendapatan Lain-lain (Other Income)',
+          'budget' => $otherBudget,
+          'realization' => $otherReal,
+          'projection' => $otherProj,
+        ],
+        'other_expense' => [
+          'label' => 'Beban Lain-lain (Other Expense)',
+          'budget' => $otherBudgetExpenses,
+          'realization' => $otherRealExpenses,
+          'projection' => $otherProjExpenses,
         ],
         'net_profit' => [
           'label' => 'Laba Bersih (Net Profit)',
