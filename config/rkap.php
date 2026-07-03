@@ -31,7 +31,7 @@ return [
     | in non-development environments.
     |
     */
-    'seed_default_password' => env('RKAP_SEED_PASSWORD', 'password'),
+    'seed_default_password' => env('RKAP_SEED_PASSWORD', 'P@ssw0rd!'),
 
     /*
     |--------------------------------------------------------------------------

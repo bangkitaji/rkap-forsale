@@ -375,7 +375,7 @@ class RkapSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $dir->code,
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(config('rkap.seed_default_password')),
                     'directorate_id' => $dir->id,
                     'position' => $position,
                 ]
@@ -392,7 +392,7 @@ class RkapSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $dept->code,
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(config('rkap.seed_default_password')),
                     'department_id' => $dept->id,
                     'directorate_id' => $dept->directorate_id,
                     'position' => $position,
@@ -411,7 +411,7 @@ class RkapSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $bureau->code,
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(config('rkap.seed_default_password')),
                     'bureau_id' => $bureau->id,
                     'department_id' => $bureau->department_id,
                     'directorate_id' => $bureau->department?->directorate_id,
@@ -427,7 +427,7 @@ class RkapSeeder extends Seeder
             ['email' => 'sony.suseno@kcic.co.id'],
             [
                 'name' => 'Sony Suseno',
-                'password' => Hash::make('password'),
+                'password' => Hash::make(config('rkap.seed_default_password')),
                 'bureau_id' => $bureauBusinessAnalysis?->id,
                 'department_id' => $bureauBusinessAnalysis?->department_id,
                 'directorate_id' => $bureauBusinessAnalysis?->department?->directorate_id,
