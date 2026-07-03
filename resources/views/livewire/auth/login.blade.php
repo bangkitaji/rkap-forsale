@@ -188,7 +188,7 @@
 
         .form-brand__name {
             font-size: 3.0rem;
-            font-weight: 800;
+            font-weight: 600;
             color: #0f172a;
             letter-spacing: -0.5px;
         }
@@ -484,21 +484,30 @@
                 {{-- Brand header --}}
                 <div class="form-brand">
                     <div class="form-brand__header">
-                        <img
+                        <!-- <img
                             class="form-brand__logo"
-                            src="{{ asset('assets/img/kcic/logo_kcic.png') }}"
-                            alt="WHOOSH" />
-                        <div class="form-brand__name">
-                            RKAP<span>.</span>
-                        </div>
+                            src="{{ asset('assets/img/kcic/logo_kbudgeting.png') }}"
+                            alt="WHOOSH" /> -->
+                        <!-- <div class="form-brand__name">
+                            Budgeting
+                        </div> -->
                     </div>
                     <!-- <div class="form-brand__tagline">Rencana Kerja &amp; Anggaran Perusahaan</div> -->
                 </div>
 
                 {{-- Card --}}
                 <div class="login-card">
-                    <h2 class="login-card__heading">Selamat datang!</h2>
-                    <p class="login-card__sub">Silakan masuk ke akun Anda untuk melanjutkan.</p>
+                    <div class="form-brand__header">
+                        <img
+                            class="form-brand__logo"
+                            src="{{ asset('assets/img/kcic/logo_kbudgeting.png') }}"
+                            alt="WHOOSH" />
+                        <!-- <div class="form-brand__name">
+                            Budgeting
+                        </div> -->
+                    </div>
+                    <h2 class="login-card__heading text-center">Selamat datang!</h2>
+                    <p class="login-card__sub text-center">Silakan masuk ke akun Anda untuk melanjutkan.</p>
 
                     <div class="login-divider"></div>
 
