@@ -115,7 +115,7 @@
     },
     {
       "menuHeader": "Master Data",
-      "permission": "masterdata.show"
+      "permission": "masterdata.workplan.view"
     },
     {
       "name": "Rencana Kerja & Aktivitas",
@@ -124,21 +124,21 @@
         "master-data.work-plans",
         "master-data.activities"
       ],
-      "permission": "masterdata.show",
+      "permission": "masterdata.workplan.view",
       "submenu": [
         {
           "name": "Work Plan",
           "icon": "menu-icon icon-base bx bx-task",
           "url": "master-data/work-plans",
           "slug": "master-data.work-plans",
-          "permission": "masterdata.workplan.manage"
+          "permission": "masterdata.workplan.view"
         },
         {
           "name": "Activity",
           "icon": "menu-icon icon-base bx bx-list-check",
           "url": "master-data/activities",
           "slug": "master-data.activities",
-          "permission": "masterdata.activity.manage"
+          "permission": "masterdata.activity.view"
         }
       ]
     },

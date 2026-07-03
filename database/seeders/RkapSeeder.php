@@ -61,6 +61,8 @@ class RkapSeeder extends Seeder
             'settings.satuan.manage',
             // Master Data
             'masterdata.show',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
             'masterdata.workplan.manage',
             'masterdata.activity.manage',
             'masterdata.coa.manage',
@@ -93,6 +95,8 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dept', // can see their own department compilation
             'rkap.projection.input',
             'rkap.projection.view',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
         ]);
 
         $roleKepalaDept->syncPermissions([
@@ -104,6 +108,8 @@ class RkapSeeder extends Seeder
             'rkap.show',
             'rkap.compilation.dept', // can see their own department compilation
             'rkap.projection.view',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
         ]);
 
         $roleDireksi->syncPermissions([
@@ -116,6 +122,8 @@ class RkapSeeder extends Seeder
             'rkap.compilation.dir',  // can see their own directorate compilation
             'rkap.projection.view',
             'rkap.show',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
         ]);
 
         $roleVerifikator->syncPermissions([
@@ -131,6 +139,8 @@ class RkapSeeder extends Seeder
             'rkap.projection.input',
             'rkap.projection.view',
             'rkap.show',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
         ]);
 
         $rolePresident->syncPermissions([
@@ -144,6 +154,8 @@ class RkapSeeder extends Seeder
             'rkap.compilation.all',
             'rkap.projection.view',
             'rkap.show',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
         ]);
 
         // Assign rkap.show to all roles
@@ -349,7 +361,7 @@ class RkapSeeder extends Seeder
         // 1. Seed Directorate Users (Direksi & President Director)
         foreach (Directorate::all() as $dir) {
             $email = strtolower($dir->code) . '@kcic.co.id';
-            
+
             if ($dir->code === 'HU') {
                 $position = $dir->name; // President Director
                 $role = $rolePresident;

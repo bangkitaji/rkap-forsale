@@ -10,6 +10,7 @@ use App\Models\WorkPlan;
 use App\Imports\ActivityImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 
 class Activities extends Component
 {
@@ -31,6 +32,11 @@ class Activities extends Component
     public $isUploadModalOpen = false;
     public $importMessage = '';
     public $importStatus = '';
+
+    private function ensureCanManage(): void
+    {
+        abort_unless(Gate::allows('masterdata.activity.manage'), 403);
+    }
 
     public function updatingSearch()
     {
@@ -65,6 +71,7 @@ class Activities extends Component
 
     public function create()
     {
+        $this->ensureCanManage();
         $this->resetInputFields();
         $this->isEditMode = false;
         $this->isModalOpen = true;
@@ -72,6 +79,7 @@ class Activities extends Component
 
     public function edit($id)
     {
+        $this->ensureCanManage();
         $this->resetInputFields();
         $this->isEditMode = true;
 
@@ -90,6 +98,7 @@ class Activities extends Component
 
     public function store()
     {
+        $this->ensureCanManage();
         $this->validate();
 
         try {
@@ -112,6 +121,7 @@ class Activities extends Component
 
     public function delete($id)
     {
+        $this->ensureCanManage();
         try {
             Activity::findOrFail($id)->delete();
             session()->flash('message', 'Activity deleted successfully.');
@@ -128,6 +138,7 @@ class Activities extends Component
 
     public function openUploadModal()
     {
+        $this->ensureCanManage();
         $this->isUploadModalOpen = true;
         $this->uploadedFile = null;
         $this->importMessage = '';
@@ -144,6 +155,7 @@ class Activities extends Component
 
     public function importExcel()
     {
+        $this->ensureCanManage();
         $this->validate([
             'uploadedFile' => 'required|mimes:xlsx,xls,csv|max:5120',
         ]);
@@ -174,6 +186,7 @@ class Activities extends Component
 
     public function downloadTemplate()
     {
+        $this->ensureCanManage();
         return response()->download(
             public_path('templates/activity_template.xlsx'),
             'activity_template.xlsx'

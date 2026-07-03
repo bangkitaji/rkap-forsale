@@ -9,6 +9,7 @@ use App\Models\WorkPlan;
 use App\Imports\WorkPlanImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 
 class WorkPlans extends Component
 {
@@ -28,6 +29,11 @@ class WorkPlans extends Component
     public $isUploadModalOpen = false;
     public $importMessage = '';
     public $importStatus = '';
+
+    private function ensureCanManage(): void
+    {
+        abort_unless(Gate::allows('masterdata.workplan.manage'), 403);
+    }
 
     public function updatingSearch()
     {
@@ -60,6 +66,7 @@ class WorkPlans extends Component
 
     public function create()
     {
+        $this->ensureCanManage();
         $this->resetInputFields();
         $this->isEditMode = false;
         $this->isModalOpen = true;
@@ -67,6 +74,7 @@ class WorkPlans extends Component
 
     public function edit($id)
     {
+        $this->ensureCanManage();
         $this->resetInputFields();
         $this->isEditMode = true;
 
@@ -83,6 +91,7 @@ class WorkPlans extends Component
 
     public function store()
     {
+        $this->ensureCanManage();
         $this->validate();
 
         try {
@@ -103,6 +112,7 @@ class WorkPlans extends Component
 
     public function delete($id)
     {
+        $this->ensureCanManage();
         try {
             WorkPlan::findOrFail($id)->delete();
             session()->flash('message', 'Work Plan deleted successfully.');
@@ -119,6 +129,7 @@ class WorkPlans extends Component
 
     public function openUploadModal()
     {
+        $this->ensureCanManage();
         $this->isUploadModalOpen = true;
         $this->uploadedFile = null;
         $this->importMessage = '';
@@ -135,6 +146,7 @@ class WorkPlans extends Component
 
     public function importExcel()
     {
+        $this->ensureCanManage();
         $this->validate([
             'uploadedFile' => 'required|mimes:xlsx,xls,csv|max:5120',
         ]);
@@ -165,6 +177,7 @@ class WorkPlans extends Component
 
     public function downloadTemplate()
     {
+        $this->ensureCanManage();
         return response()->download(
             public_path('templates/workplan_template.xlsx'),
             'workplan_template.xlsx'

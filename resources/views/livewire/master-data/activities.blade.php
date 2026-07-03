@@ -32,12 +32,14 @@
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search activities...">
                     </div>
+                    @can('masterdata.activity.manage')
                     <button wire:click="create()" class="btn btn-primary btn-sm">
                         <i class="bx bx-plus me-1"></i> Add Activity
                     </button>
                     <button wire:click="openUploadModal()" class="btn btn-info btn-sm">
                         <i class="bx bx-upload me-1"></i> Import Excel
                     </button>
+                    @endcan
                 </div>
             </div>
 
@@ -48,29 +50,31 @@
                             <th wire:click="sort('work_plan')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                                 Work Plan
                                 @if($sortBy === 'work_plan')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th wire:click="sort('code')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                                 Code
                                 @if($sortBy === 'code')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th wire:click="sort('title')" style="cursor:pointer; user-select:none; white-space:nowrap;">
                                 Title
                                 @if($sortBy === 'title')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th>Description</th>
+                            @can('masterdata.activity.manage')
                             <th>Actions</th>
+                            @endcan
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -80,6 +84,7 @@
                             <td><strong>{{ $activity->code }}</strong></td>
                             <td>{{ $activity->title }}</td>
                             <td>{{ Str::limit($activity->description, 50) }}</td>
+                            @can('masterdata.activity.manage')
                             <td>
                                 <button wire:click="edit({{ $activity->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect">
                                     <i class="bx bx-edit-alt"></i>
@@ -88,10 +93,11 @@
                                     <i class="bx bx-trash"></i>
                                 </button>
                             </td>
+                            @endcan
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center">No activities found.</td>
+                            <td colspan="{{ auth()->user()?->can('masterdata.activity.manage') ? 5 : 4 }}" class="text-center">No activities found.</td>
                         </tr>
                         @endforelse
                     </tbody>

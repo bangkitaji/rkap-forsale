@@ -133,8 +133,8 @@ Route::middleware(['auth'])->group(function () {
 
   // Master Data Group
   Route::prefix('master-data')->name('master-data.')->group(function () {
-    Route::get('work-plans', \App\Livewire\MasterData\WorkPlans::class)->name('work-plans')->middleware('can:masterdata.workplan.manage');
-    Route::get('activities', \App\Livewire\MasterData\Activities::class)->name('activities')->middleware('can:masterdata.activity.manage');
+    Route::get('work-plans', \App\Livewire\MasterData\WorkPlans::class)->name('work-plans')->middleware('can:masterdata.workplan.view');
+    Route::get('activities', \App\Livewire\MasterData\Activities::class)->name('activities')->middleware('can:masterdata.activity.view');
     Route::get('coas', \App\Livewire\MasterData\Coas::class)->name('coa.coas')->middleware('can:masterdata.coa.manage');
     Route::get('coa-groups', \App\Livewire\MasterData\CoaGroups::class)->name('coa.coa-groups')->middleware('can:masterdata.coagroup.manage');
     Route::get('coa-profit-loss-mapping', \App\Livewire\MasterData\CoaProfitLossMapping::class)->name('coa-profit-loss-mapping')->middleware('can:masterdata.coaprofitloss.manage');

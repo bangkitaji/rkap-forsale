@@ -28,6 +28,8 @@ class RoleAndUserSeeder extends Seeder
         $permSettingsShow = Permission::firstOrCreate(['name' => 'settings.show', 'guard_name' => 'web']);
         $permSettingsSatuanManage = Permission::firstOrCreate(['name' => 'settings.satuan.manage', 'guard_name' => 'web']);
         $permMasterDataShow = Permission::firstOrCreate(['name' => 'masterdata.show', 'guard_name' => 'web']);
+        $permMasterDataWorkplanView = Permission::firstOrCreate(['name' => 'masterdata.workplan.view', 'guard_name' => 'web']);
+        $permMasterDataActivityView = Permission::firstOrCreate(['name' => 'masterdata.activity.view', 'guard_name' => 'web']);
         $permMasterDataWorkplanManage = Permission::firstOrCreate(['name' => 'masterdata.workplan.manage', 'guard_name' => 'web']);
         $permMasterDataActivityManage = Permission::firstOrCreate(['name' => 'masterdata.activity.manage', 'guard_name' => 'web']);
         $permMasterDataCoaManage = Permission::firstOrCreate(['name' => 'masterdata.coa.manage', 'guard_name' => 'web']);
@@ -62,6 +64,8 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsShow,
             $permSettingsSatuanManage,
             $permMasterDataShow,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
             $permMasterDataWorkplanManage,
             $permMasterDataActivityManage,
             $permMasterDataCoaManage,
@@ -96,12 +100,16 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsCashflowGroupManage,
             $permSettingsDifferenceGroupManage,
             $permMasterDataShow,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
             $permMasterDataActivityManage,
         ]);
 
         $roleDireksi->givePermissionTo([
             $permDashboardShow,
             $permRkapShow,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
         ]);
 
 
@@ -111,11 +119,15 @@ class RoleAndUserSeeder extends Seeder
             $permRkapReviewPresident,
             $permRkapApprovePresident,
             $permRkapProjectionView,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
         ]);
 
         // Assign rkap.show to all roles
         foreach (Role::all() as $role) {
             $role->givePermissionTo($permRkapShow);
+            $role->givePermissionTo($permMasterDataWorkplanView);
+            $role->givePermissionTo($permMasterDataActivityView);
         }
 
         // create admin user
