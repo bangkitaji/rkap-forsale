@@ -87,6 +87,15 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsDifferenceGroupManage,
         ]);
 
+        $roleUser->givePermissionTo([
+            $permDashboardShow,
+            $permRkapShow,
+            $permRkapProjectionInput,
+            $permRkapProjectionView,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
+        ]);
+
         $roleVerifikator->givePermissionTo([
             $permDashboardShow,
             $permRkapShow,

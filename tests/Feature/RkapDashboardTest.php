@@ -243,6 +243,35 @@ class RkapDashboardTest extends TestCase
         $this->assertEquals(83.3, $stats['outlook_rate']);
     }
 
+    public function test_user_scoping_limits_data(): void
+    {
+        // Create user with 'user' role mapped to Bureau 1
+        $roleUser = Role::firstOrCreate(['name' => 'user']);
+        $roleUser->givePermissionTo(Permission::firstOrCreate(['name' => 'dashboard.show', 'guard_name' => 'web']));
+
+        $regularUser = User::create([
+            'name' => 'Regular User',
+            'email' => 'regular@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $this->bureau1->id,
+        ]);
+        $regularUser->assignRole($roleUser);
+
+        $response = $this->actingAs($regularUser)->get('/analytics');
+
+        $response->assertStatus(200);
+        $stats = $response->viewData('stats');
+
+        // Only Bureau 1 budget (60000)
+        $this->assertEquals(60000.0, $stats['total_budget']);
+        
+        // Only Bureau 1 realization (15000)
+        $this->assertEquals(15000.0, $stats['total_realization']);
+        
+        // Only Bureau 1 projection (50000)
+        $this->assertEquals(50000.0, $stats['total_projection']);
+    }
+
     public function test_admin_sees_profit_and_loss_summary(): void
     {
         // 1. Create Report Groups (PL type)
@@ -1055,6 +1084,38 @@ class RkapDashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Akses Dibatasi');
         $response->assertSee('Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Cash Flow.');
+    }
+
+    public function test_bureau_level_users_cannot_access_cashflow_and_reconciliation_reports(): void
+    {
+        // Try as kepala_biro
+        $response1 = $this->actingAs($this->kabiro1)->get('/analytics/cashflow');
+        $response1->assertStatus(403);
+
+        $response2 = $this->actingAs($this->kabiro1)->get('/analytics/cashflow-matrix');
+        $response2->assertStatus(403);
+
+        $response3 = $this->actingAs($this->kabiro1)->get('/analytics/reconciliation');
+        $response3->assertStatus(403);
+
+        // Try as regular biro user
+        $roleUser = Role::firstOrCreate(['name' => 'user']);
+        $regularUser = User::create([
+            'name' => 'Regular User Bureau',
+            'email' => 'regularbureau@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $this->bureau1->id,
+        ]);
+        $regularUser->assignRole($roleUser);
+
+        $response4 = $this->actingAs($regularUser)->get('/analytics/cashflow');
+        $response4->assertStatus(403);
+
+        $response5 = $this->actingAs($regularUser)->get('/analytics/cashflow-matrix');
+        $response5->assertStatus(403);
+
+        $response6 = $this->actingAs($regularUser)->get('/analytics/reconciliation');
+        $response6->assertStatus(403);
     }
 
     public function test_admin_sees_reconciliation_summary(): void

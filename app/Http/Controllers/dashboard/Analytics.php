@@ -1155,6 +1155,10 @@ class Analytics extends Controller
       abort(403);
     }
 
+    if ($user->isKepalaBiro()) {
+      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+    }
+
     $finalizedPeriods = RkapPeriod::where('status', 'finalized')
       ->orderBy('year', 'desc')
       ->orderBy('created_at', 'desc')
@@ -1310,6 +1314,10 @@ class Analytics extends Controller
       abort(403);
     }
 
+    if ($user->isKepalaBiro()) {
+      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+    }
+
     // Get all versions
     $versions = \App\Models\FinancialVersion::orderBy('version_id')->get();
 
@@ -1389,6 +1397,10 @@ class Analytics extends Controller
       abort(403);
     }
 
+    if ($user->isKepalaBiro()) {
+      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+    }
+
     $cashflowGroupId = (int) $request->query('cashflow_group_id');
     $periodId = (int) $request->query('period_id');
 
@@ -1452,6 +1464,10 @@ class Analytics extends Controller
     $user = Auth::user();
     if (!$user) {
       abort(403);
+    }
+
+    if ($user->isKepalaBiro()) {
+      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
     }
 
     $data = $this->getAnalyticsData($request);
@@ -1522,6 +1538,10 @@ class Analytics extends Controller
     $user = Auth::user();
     if (!$user) {
       abort(403);
+    }
+
+    if ($user->isKepalaBiro()) {
+      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
     }
 
     $differenceGroupId = (int) $request->query('difference_group_id');

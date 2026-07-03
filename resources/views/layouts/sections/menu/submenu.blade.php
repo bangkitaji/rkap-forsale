@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Route;
       @continue
     @endif
 
+    {{-- Bureau User restriction for cashflow and reconciliation reports --}}
+    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/cashflow', 'analytics/cashflow-matrix', 'analytics/reconciliation']) && auth()->check() && auth()->user()->isKepalaBiro())
+      @continue
+    @endif
+
     {{-- active menu method --}}
     @php
       $activeClass = null;

@@ -85,6 +85,7 @@ class RkapSeeder extends Seeder
         $roleAdmin->syncPermissions(Permission::all());
 
         $roleKepalaBiro->syncPermissions([
+            'dashboard.show',
             'rkap.create',
             'rkap.edit',
             'rkap.delete',
@@ -93,6 +94,23 @@ class RkapSeeder extends Seeder
             'rkap.comment',
             'rkap.show',
             'rkap.compilation.dept', // can see their own department compilation
+            'rkap.projection.input',
+            'rkap.projection.view',
+            'masterdata.workplan.view',
+            'masterdata.activity.view',
+        ]);
+
+        $roleUser = Role::firstOrCreate(['name' => 'user']);
+        $roleUser->syncPermissions([
+            'dashboard.show',
+            'rkap.create',
+            'rkap.edit',
+            'rkap.delete',
+            'rkap.submit',
+            'rkap.view.own',
+            'rkap.comment',
+            'rkap.show',
+            'rkap.compilation.dept',
             'rkap.projection.input',
             'rkap.projection.view',
             'masterdata.workplan.view',

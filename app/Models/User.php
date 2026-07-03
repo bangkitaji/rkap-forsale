@@ -92,7 +92,7 @@ class User extends Authenticatable
 
     public function isKepalaBiro(): bool
     {
-        return $this->hasRole('kepala_biro');
+        return $this->hasRole('kepala_biro') || $this->hasRole('user');
     }
 
     public function isKepalaDepartemen(): bool
