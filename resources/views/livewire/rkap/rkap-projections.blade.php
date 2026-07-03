@@ -458,14 +458,48 @@
                         @if($inputMode === 'yearly')
                         <div class="mb-3 p-3 bg-light rounded border">
                             <label class="form-label fw-bold text-dark fs-6">Proyeksi Tahunan</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-primary text-white">Rp</span>
-                                <input type="number"
-                                    class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror"
-                                    wire:model.blur="yearlyProjection"
-                                    placeholder="Masukkan total proyeksi pertahun..."
-                                    min="0"
-                                    step="0.01">
+                            <div x-data="{
+                                raw: @entangle('yearlyProjection'),
+                                display: '',
+                                init() {
+                                    this.display = this.format(this.raw);
+                                    this.$watch('raw', v => {
+                                        this.display = this.format(v);
+                                    });
+                                },
+                                format(val) {
+                                    if (val === null || val === undefined || val === '') return '';
+                                    let clean = val.toString().replace(/[^0-9]/g, '');
+                                    if (clean === '') return '';
+                                    return new Intl.NumberFormat('id-ID').format(clean);
+                                },
+                                onInput(e) {
+                                    let cursor = e.target.selectionStart;
+                                    let originalLength = e.target.value.length;
+                                    
+                                    let clean = e.target.value.replace(/[^0-9]/g, '');
+                                    this.raw = clean === '' ? null : parseFloat(clean);
+                                    this.display = this.format(clean);
+                                    
+                                    this.$nextTick(() => {
+                                        let newLength = this.display.length;
+                                        let diff = newLength - originalLength;
+                                        e.target.setSelectionRange(cursor + diff, cursor + diff);
+                                    });
+                                },
+                                onBlur() {
+                                    this.$wire.set('yearlyProjection', this.raw);
+                                }
+                            }" wire:key="yearly-proj-wrapper-{{ $selectedBudgetItemId }}">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">Rp</span>
+                                    <input type="text"
+                                        class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror"
+                                        x-model="display"
+                                        @input="onInput"
+                                        @blur="onBlur"
+                                        placeholder="Masukkan total proyeksi pertahun...">
+                                </div>
                             </div>
                             @error('yearlyProjection')
                             <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
@@ -525,14 +559,48 @@
                                                 Rp {{ number_format($realizationAmount, 0, ',', '.') }}
                                             </td>
                                             <td>
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text">Rp</span>
-                                                    <input type="number"
-                                                        class="form-control form-control-sm text-end @error('editingProjections.'.$m) is-invalid @enderror"
-                                                        wire:model.blur="editingProjections.{{ $m }}"
-                                                        min="0"
-                                                        step="0.01"
-                                                        @disabled($isLocked)>
+                                                <div x-data="{
+                                                    raw: @entangle('editingProjections.' . $m),
+                                                    display: '',
+                                                    init() {
+                                                        this.display = this.format(this.raw);
+                                                        this.$watch('raw', v => {
+                                                            this.display = this.format(v);
+                                                        });
+                                                    },
+                                                    format(val) {
+                                                        if (val === null || val === undefined || val === '') return '';
+                                                        let clean = val.toString().replace(/[^0-9]/g, '');
+                                                        if (clean === '') return '';
+                                                        return new Intl.NumberFormat('id-ID').format(clean);
+                                                    },
+                                                    onInput(e) {
+                                                        let cursor = e.target.selectionStart;
+                                                        let originalLength = e.target.value.length;
+                                                        
+                                                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                                                        this.raw = clean === '' ? null : parseFloat(clean);
+                                                        this.display = this.format(clean);
+                                                        
+                                                        this.$nextTick(() => {
+                                                            let newLength = this.display.length;
+                                                            let diff = newLength - originalLength;
+                                                            e.target.setSelectionRange(cursor + diff, cursor + diff);
+                                                        });
+                                                    },
+                                                    onBlur() {
+                                                        this.$wire.set('editingProjections.{{ $m }}', this.raw);
+                                                    }
+                                                }" wire:key="proj-wrapper-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">Rp</span>
+                                                        <input type="text"
+                                                            class="form-control form-control-sm text-end @error('editingProjections.'.$m) is-invalid @enderror"
+                                                            x-model="display"
+                                                            @input="onInput"
+                                                            @blur="onBlur"
+                                                            @disabled($isLocked)>
+                                                    </div>
                                                 </div>
                                                 @if($isLocked && $existingProj)
                                                 <div class="small text-muted text-end mt-1" style="font-size:0.7rem;">
