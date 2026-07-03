@@ -169,30 +169,50 @@ class RkapSubmissionForm extends Component
                 }
             }
             if ($activityId) {
-                $activity = Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroup'])->find($activityId);
+                $isPastPeriod = $this->workPlans[$wpIdx]['activities'][$actIdx]['is_past_period_payment'] ?? false;
 
-                // Auto-populate work_plan_id on the parent card if not set
-                if ($activity && $activity->work_plan_id && empty($this->workPlans[$wpIdx]['work_plan_id'])) {
-                    $this->workPlans[$wpIdx]['work_plan_id'] = $activity->work_plan_id;
-                }
+                if (!$isPastPeriod) {
+                    $activity = Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroup'])->find($activityId);
 
-                if ($activity && $activity->coas->isNotEmpty()) {
-                    $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = $activity->coas->map(function ($coa) {
-                        return array_merge($this->emptyBudgetItem(), [
-                            'coa_id' => $coa->id,
-                            'account_code' => $coa->code,
-                            'description' => $coa->title,
-                            'coa_group_name' => $coa->coaGroup ? $coa->coaGroup->name : '',
-                            'cashflow_group_name' => $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
-                            'difference_group_name' => $coa->differenceGroup ? $coa->differenceGroup->name : '',
-                        ]);
-                    })->toArray();
+                    // Auto-populate work_plan_id on the parent card if not set
+                    if ($activity && $activity->work_plan_id && empty($this->workPlans[$wpIdx]['work_plan_id'])) {
+                        $this->workPlans[$wpIdx]['work_plan_id'] = $activity->work_plan_id;
+                    }
+
+                    if ($activity && $activity->coas->isNotEmpty()) {
+                        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = $activity->coas->map(function ($coa) {
+                            return array_merge($this->emptyBudgetItem(), [
+                                'coa_id'                => $coa->id,
+                                'account_code'          => $coa->code,
+                                'description'           => $coa->title,
+                                'coa_group_name'        => $coa->coaGroup ? $coa->coaGroup->name : '',
+                                'cashflow_group_name'   => $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
+                                'difference_group_name' => $coa->differenceGroup ? $coa->differenceGroup->name : '',
+                            ]);
+                        })->toArray();
+                    } else {
+                        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = [$this->emptyBudgetItem()];
+                    }
                 } else {
+                    // Past period payment: only auto-set work_plan_id; leave budget items blank (liabilities COA only)
+                    $activity = Activity::find($activityId);
+                    if ($activity && $activity->work_plan_id && empty($this->workPlans[$wpIdx]['work_plan_id'])) {
+                        $this->workPlans[$wpIdx]['work_plan_id'] = $activity->work_plan_id;
+                    }
                     $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = [$this->emptyBudgetItem()];
                 }
             } else {
                 $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = [$this->emptyBudgetItem()];
             }
+        }
+
+        // Toggle past period payment checkbox
+        if (preg_match('/^workPlans\.(\d+)\.activities\.(\d+)\.is_past_period_payment$/', $name, $m)) {
+            $wpIdx  = (int) $m[1];
+            $actIdx = (int) $m[2];
+            // Reset budget items and past_period_id whenever the flag is toggled
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = [$this->emptyBudgetItem()];
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['past_period_id'] = null;
         }
     }
 
@@ -230,19 +250,35 @@ class RkapSubmissionForm extends Component
     private function emptyActivityBlock(int $sortOrder): array
     {
         return [
-            'id'              => null,
-            'activity_id'     => null,
-            'description'     => '',
-            'output_target'   => '',
-            'unit'            => '',
-            'quantity'        => 1,
-            'sort_order'      => $sortOrder,
-            'approval_status' => 'pending',
-            'revision_notes'  => '',
-            'uploaded_files'  => [],
-            'files_to_delete' => [],
-            'budget_items'    => [$this->emptyBudgetItem()],
+            'id'                     => null,
+            'activity_id'            => null,
+            'description'            => '',
+            'output_target'          => '',
+            'unit'                   => '',
+            'quantity'               => 1,
+            'sort_order'             => $sortOrder,
+            'approval_status'        => 'pending',
+            'revision_notes'         => '',
+            'uploaded_files'         => [],
+            'files_to_delete'        => [],
+            'budget_items'           => [$this->emptyBudgetItem()],
+            'is_past_period_payment' => false,
+            'past_period_id'         => null,
         ];
+    }
+
+    /**
+     * Get all past RKAP periods relative to the active submission year (max 5).
+     */
+    public function getPastPeriodsProperty()
+    {
+        if (!$this->period) {
+            return collect();
+        }
+        return \App\Models\RkapPeriod::where('year', '<', $this->period->year)
+            ->orderByDesc('year')
+            ->limit(5)
+            ->get();
     }
 
     /**
@@ -359,8 +395,14 @@ class RkapSubmissionForm extends Component
             ->get();
     }
 
-    public function getCoaOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
+    public function getCoaOptionsForIndex(int $wpIndex, int $actIndex = 0): \Illuminate\Database\Eloquent\Collection
     {
+        $isPastPeriod = (bool) ($this->workPlans[$wpIndex]['activities'][$actIndex]['is_past_period_payment'] ?? false);
+
+        if ($isPastPeriod) {
+            return Coa::where('code', 'like', '2%')->orderBy('code')->get();
+        }
+
         return $this->coaOptions;
     }
 
@@ -483,8 +525,8 @@ class RkapSubmissionForm extends Component
                         'file_type'     => $f->file_type,
                         'file_size'     => $f->file_size,
                     ])->toArray(),
-                    'files_to_delete' => [],
-                    'budget_items'    => $wp->budgetItems->map(function ($bi) use ($coaMap) {
+                    'files_to_delete'        => [],
+                    'budget_items'           => $wp->budgetItems->map(function ($bi) use ($coaMap) {
                         $coa = $coaMap->get($bi->account_code);
                         return [
                             'id'                       => $bi->id,
@@ -508,6 +550,8 @@ class RkapSubmissionForm extends Component
                             'realization_months'       => $bi->realizations->pluck('month')->toArray(),
                         ];
                     })->toArray(),
+                    'is_past_period_payment' => (bool) ($wp->is_past_period_payment ?? false),
+                    'past_period_id'         => $wp->past_period_id ?? null,
                 ];
             }
 
@@ -775,6 +819,7 @@ class RkapSubmissionForm extends Component
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
         $this->validateBudgetItemsCoaMapping();
+        $this->validatePastPeriodPayments();
         $this->saveSubmission('draft');
         session()->flash('message', 'Draf RKAP berhasil disimpan.');
         $this->dispatch('form-saved', message: 'Draf RKAP berhasil disimpan.');
@@ -786,6 +831,7 @@ class RkapSubmissionForm extends Component
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
         $this->validateBudgetItemsCoaMapping();
+        $this->validatePastPeriodPayments();
         $this->validateMonthlyDistribution();
         $this->validateCashOutPlan();
 
@@ -846,16 +892,48 @@ class RkapSubmissionForm extends Component
     {
         foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
             foreach (($wpData['activities'] ?? []) as $actIdx => $actData) {
-                $activityId = $actData['activity_id'] ?? null;
+                $activityId   = $actData['activity_id'] ?? null;
+                $isPastPeriod = (bool) ($actData['is_past_period_payment'] ?? false);
 
                 foreach (($actData['budget_items'] ?? []) as $biIdx => $biData) {
                     $coaId = $biData['coa_id'] ?? null;
+
+                    // Past period activities bypass mapping validation — COA must be kepala 2
+                    if ($isPastPeriod) {
+                        if (!empty($coaId)) {
+                            $coa = $this->coaOptions->firstWhere('id', $coaId);
+                            if ($coa && !str_starts_with((string) $coa->code, '2')) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.coa_id" =>
+                                        'Untuk anggaran pembayaran periode lalu, COA harus berupa akun Kewajiban (Kepala 2).',
+                                ]);
+                            }
+                        }
+                        continue;
+                    }
 
                     if (!$activityId && !empty($coaId)) {
                         throw \Illuminate\Validation\ValidationException::withMessages([
                             'workPlans' => 'Activity harus dipilih jika COA telah dipilih pada salah satu baris.',
                         ]);
                     }
+                }
+            }
+        }
+    }
+
+    private function validatePastPeriodPayments(): void
+    {
+        foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
+            foreach (($wpData['activities'] ?? []) as $actIdx => $actData) {
+                if (!($actData['is_past_period_payment'] ?? false)) {
+                    continue;
+                }
+                if (empty($actData['past_period_id'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "workPlans.{$wpIdx}.activities.{$actIdx}.past_period_id" =>
+                            'Periode anggaran lalu wajib dipilih ketika opsi Periode Anggaran Lalu diaktifkan.',
+                    ]);
                 }
             }
         }
@@ -1022,15 +1100,19 @@ class RkapSubmissionForm extends Component
                     $workPlan = RkapWorkPlan::updateOrCreate(
                         ['id' => $actData['id'] ?? null],
                         [
-                            'rkap_submission_id' => $submission->id,
-                            'work_plan_id' => $workPlanId ?: null,
-                            'activity_id' => $actData['activity_id'] ?: null,
-                            'program_name' => $programName,
-                            'description' => $actData['description'] ?: null,
-                            'output_target' => $actData['output_target'] ?: null,
-                            'unit' => $actData['unit'] ?: null,
-                            'quantity' => $actData['quantity'],
-                            'sort_order' => $sortIdx++,
+                            'rkap_submission_id'     => $submission->id,
+                            'work_plan_id'           => $workPlanId ?: null,
+                            'activity_id'            => $actData['activity_id'] ?: null,
+                            'program_name'           => $programName,
+                            'description'            => $actData['description'] ?: null,
+                            'output_target'          => $actData['output_target'] ?: null,
+                            'unit'                   => $actData['unit'] ?: null,
+                            'quantity'               => $actData['quantity'],
+                            'sort_order'             => $sortIdx++,
+                            'is_past_period_payment' => (bool) ($actData['is_past_period_payment'] ?? false),
+                            'past_period_id'         => ($actData['is_past_period_payment'] ?? false)
+                                                            ? ($actData['past_period_id'] ?: null)
+                                                            : null,
                         ]
                     );
 

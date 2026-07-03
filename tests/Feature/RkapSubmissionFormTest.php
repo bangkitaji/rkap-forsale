@@ -724,6 +724,64 @@ class RkapSubmissionFormTest extends TestCase
             // Ensure no operand type error was thrown and it renders successfully
             ->assertStatus(200);
     }
+
+    public function test_past_period_payment_functionality_and_validation(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create a past period
+        $pastPeriod = RkapPeriod::create([
+            'year' => 2025,
+            'title' => 'RKAP 2025',
+            'status' => 'closed',
+            'submission_start' => now()->subYear(),
+            'submission_end' => now()->subYear()->addMonth(),
+        ]);
+
+        // Create a liability COA (starts with 2)
+        $liabilityCoa = Coa::create([
+            'code' => '210101',
+            'title' => 'Hutang Usaha',
+        ]);
+
+        // 1. Toggle checkbox should reset past_period_id and budget_items
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.past_period_id', $pastPeriod->id)
+            ->set('workPlans.0.activities.0.is_past_period_payment', true)
+            ->assertSet('workPlans.0.activities.0.past_period_id', null)
+            ->assertCount('workPlans.0.activities.0.budget_items', 1);
+
+        // 2. COA filtering: when is_past_period_payment is true, only COAs starting with 2 are returned
+        $test = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.is_past_period_payment', true);
+
+        $filteredCoas = $test->instance()->getCoaOptionsForIndex(0, 0);
+        $this->assertTrue($filteredCoas->contains('id', $liabilityCoa->id));
+        $this->assertFalse($filteredCoas->contains('id', $this->coa1->id));
+
+        // 3. Validation: is_past_period_payment = true requires past_period_id
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.is_past_period_payment', true)
+            ->set('workPlans.0.activities.0.past_period_id', null)
+            ->set('workPlans.0.activities.0.budget_items.0.coa_id', $liabilityCoa->id)
+            ->call('saveDraft')
+            ->assertHasErrors(['workPlans.0.activities.0.past_period_id']);
+
+        // 4. Validation: is_past_period_payment = true fails if selected COA doesn't start with '2'
+        Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.is_past_period_payment', true)
+            ->set('workPlans.0.activities.0.past_period_id', $pastPeriod->id)
+            ->set('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id) // Starts with 5
+            ->call('saveDraft')
+            ->assertHasErrors(['workPlans.0.activities.0.budget_items.0.coa_id']);
+    }
 }
 
 

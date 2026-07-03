@@ -464,6 +464,51 @@
               </div>
             </div>
 
+            {{-- ===== Checkbox: Periode Anggaran Lalu ===== --}}
+            <div class="mt-2 d-flex align-items-center gap-2">
+              <div class="form-check mb-0">
+                <input class="form-check-input" type="checkbox"
+                  wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.is_past_period_payment"
+                  id="ppp-{{ $wpIdx }}-{{ $actIdx }}"
+                  @disabled($isApproved)>
+                <label class="form-check-label small fw-semibold text-warning" for="ppp-{{ $wpIdx }}-{{ $actIdx }}">
+                  <i class="bx bx-calendar-exclamation me-1"></i> Periode Anggaran Lalu
+                </label>
+              </div>
+            </div>
+
+            @if ($act['is_past_period_payment'] ?? false)
+            <div class="mt-2" wire:key="ppp-section-{{ $wpIdx }}-{{ $actIdx }}">
+              <select class="form-select form-select-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.past_period_id') is-invalid @enderror"
+                wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.past_period_id"
+                @disabled($isApproved)>
+                <option value="">-- Pilih Periode Anggaran Lalu --</option>
+                @foreach($this->pastPeriods as $pp)
+                <option value="{{ $pp->id }}">RKAP {{ $pp->year }} — {{ $pp->title }}</option>
+                @endforeach
+              </select>
+              @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.past_period_id')
+              <div class="invalid-feedback d-block">{{ $message }}</div>
+              @enderror
+
+              @php
+              $pastPeriodTitle = null;
+              if (!empty($act['past_period_id'])) {
+                  $selPp = $this->pastPeriods->firstWhere('id', $act['past_period_id']);
+                  $pastPeriodTitle = $selPp ? 'RKAP ' . $selPp->year . ' — ' . $selPp->title : null;
+              }
+              @endphp
+              <div class="alert alert-warning d-flex align-items-center mt-2 py-2 px-3" style="font-size: 0.82rem; border-radius: 6px;">
+                <i class="bx bx-info-circle me-2 flex-shrink-0" style="font-size: 1rem;"></i>
+                <span>
+                  Ini adalah anggaran rencana <strong>pembayaran kewajiban</strong>
+                  @if($pastPeriodTitle) untuk <strong>{{ $pastPeriodTitle }}</strong>@endif.
+                  COA yang dapat dipilih hanya akun <strong>Kewajiban (Kepala 2)</strong>.
+                </span>
+              </div>
+            </div>
+            @endif
+
             {{-- Tombol upload & list file referensi --}}
             <div class="mt-2" wire:key="wp-{{ $wpIdx }}-act-files-{{ $actIdx }}">
               <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -688,7 +733,7 @@
                 $firstIdx = $group['items'][0]['index'];
                 $firstBi = $group['items'][0]['item'];
                 $selectedCoa = $coaOptions->firstWhere('id', $firstBi['coa_id']);
-                $filteredCoas = $this->getCoaOptionsForIndex($wpIdx);
+                $filteredCoas = $this->getCoaOptionsForIndex($wpIdx, $actIdx);
                 $filteredCoasOrdered = $filteredCoas;
                 if ($firstBi['coa_id'] ?? null) {
                 $filteredCoasOrdered = $filteredCoas

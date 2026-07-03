@@ -22,22 +22,31 @@ class RkapWorkPlan extends Model
         'approval_status',
         'revision_notes',
         'added_by_verifier',
+        'is_past_period_payment',
+        'past_period_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity'     => 'integer',
-            'sort_order'   => 'integer',
-            'work_plan_id' => 'integer',
-            'activity_id'  => 'integer',
-            'added_by_verifier' => 'boolean',
+            'quantity'               => 'integer',
+            'sort_order'             => 'integer',
+            'work_plan_id'           => 'integer',
+            'activity_id'            => 'integer',
+            'added_by_verifier'      => 'boolean',
+            'is_past_period_payment' => 'boolean',
+            'past_period_id'         => 'integer',
         ];
     }
 
     public function submission(): BelongsTo
     {
         return $this->belongsTo(RkapSubmission::class, 'rkap_submission_id');
+    }
+
+    public function pastPeriod(): BelongsTo
+    {
+        return $this->belongsTo(RkapPeriod::class, 'past_period_id');
     }
 
     public function workPlan(): BelongsTo

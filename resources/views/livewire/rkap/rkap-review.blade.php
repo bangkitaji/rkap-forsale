@@ -627,8 +627,21 @@
                       style="font-size: 0.7rem; padding: 0.2rem 0.4rem;"><i
                         class="bx bx-time-five me-1"></i>Pending</span>
                     @endif
+                    @if ($wp->is_past_period_payment)
+                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                      <i class="bx bx-calendar-exclamation me-1"></i>Pembayaran Periode Lalu
+                      @if ($wp->pastPeriod) — {{ $wp->pastPeriod->year }}@endif
+                    </span>
+                    @endif
                   </h6>
                   <span class="text-muted small">{{ $activityCode }} — {{ $activityTitle }}</span>
+                  @if ($wp->is_past_period_payment && $wp->pastPeriod)
+                  <div class="d-flex align-items-center gap-1 mt-1" style="font-size: 0.78rem;">
+                    <i class="bx bx-info-circle text-warning"></i>
+                    <span class="text-warning fw-semibold">Anggaran rencana pembayaran kewajiban untuk
+                      RKAP {{ $wp->pastPeriod->year }} — {{ $wp->pastPeriod->title }}</span>
+                  </div>
+                  @endif
                 </div>
               </div>
               <div class="text-end">

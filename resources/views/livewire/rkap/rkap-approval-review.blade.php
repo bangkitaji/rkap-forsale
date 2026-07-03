@@ -1522,10 +1522,23 @@
                     @if ($isWpVirtual)
                     <span class="badge bg-danger" style="font-size: 0.6rem;">Tidak Diajukan Kembali</span>
                     @endif
+                    @if ($wp['model'] && $wp['model']->is_past_period_payment)
+                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">
+                      <i class="bx bx-calendar-exclamation me-1"></i>Pembayaran Periode Lalu
+                      @if ($wp['model']->pastPeriod) — {{ $wp['model']->pastPeriod->year }}@endif
+                    </span>
+                    @endif
                   </div>
                   <span
                     class="@if ($isWpVirtual) text-danger @else text-muted @endif small d-block text-truncate">{{ $activityCode }}
                     — {{ $activityTitle }}</span>
+                  @if ($wp['model'] && $wp['model']->is_past_period_payment && $wp['model']->pastPeriod)
+                  <div class="d-flex align-items-center gap-1 mt-1" style="font-size: 0.78rem;">
+                    <i class="bx bx-info-circle text-warning flex-shrink-0"></i>
+                    <span class="text-warning fw-semibold">Anggaran rencana pembayaran kewajiban untuk
+                      RKAP {{ $wp['model']->pastPeriod->year }} — {{ $wp['model']->pastPeriod->title }}</span>
+                  </div>
+                  @endif
                 </div>
               </div>
               {{-- Right: approval controls stacked above subtotal --}}

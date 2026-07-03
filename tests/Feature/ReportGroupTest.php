@@ -104,7 +104,7 @@ class ReportGroupTest extends TestCase
         Livewire::test(ReportGroups::class)
             ->call('create')
             ->assertSet('isModalOpen', true)
-            ->set('code', 'PL0005')
+            ->set('code', 'PL0099')
             ->set('type', 'PL')
             ->set('name', 'Beban Operasional Tambahan')
             ->set('description', 'Test Description')
@@ -113,7 +113,7 @@ class ReportGroupTest extends TestCase
             ->assertSet('isModalOpen', false);
 
         $this->assertDatabaseHas('report_groups', [
-            'code' => 'PL0005',
+            'code' => 'PL0099',
             'type' => 'PL',
             'name' => 'Beban Operasional Tambahan',
             'description' => 'Test Description'
