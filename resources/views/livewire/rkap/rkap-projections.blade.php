@@ -419,29 +419,29 @@
                                 @php
                                 $totalEditingProj = 0.00;
                                 if ($inputMode === 'yearly') {
-                                    $totalEditingProj = (float)$yearlyProjection;
+                                $totalEditingProj = (float)$yearlyProjection;
                                 } else {
-                                    $_period = $selectedItem->workPlan->submission->period;
-                                    for ($__m = 1; $__m <= 12; $__m++) {
-                                        $__hasRealization = $selectedItem->realizations->where('month', $__m)->count() > 0;
-                                        $__realizationAmount = (float) $selectedItem->realizations->where('month', $__m)->sum('amount');
-                                        $__isClosed = $_period && $_period->isMonthClosed($__m);
-                                        if ($__hasRealization) {
-                                            $totalEditingProj += $__realizationAmount;
-                                        } elseif ($__isClosed) {
-                                            // Closed without realization: contributes 0
-                                            $totalEditingProj += 0.00;
-                                        } else {
-                                            $__val = $editingProjections[$__m] ?? 0;
-                                            $totalEditingProj += is_numeric($__val) ? (float)$__val : 0.00;
-                                        }
+                                $_period = $selectedItem->workPlan->submission->period;
+                                for ($__m = 1; $__m <= 12; $__m++) {
+                                    $__hasRealization=$selectedItem->realizations->where('month', $__m)->count() > 0;
+                                    $__realizationAmount = (float) $selectedItem->realizations->where('month', $__m)->sum('amount');
+                                    $__isClosed = $_period && $_period->isMonthClosed($__m);
+                                    if ($__hasRealization) {
+                                    $totalEditingProj += $__realizationAmount;
+                                    } elseif ($__isClosed) {
+                                    // Closed without realization: contributes 0
+                                    $totalEditingProj += 0.00;
+                                    } else {
+                                    $__val = $editingProjections[$__m] ?? 0;
+                                    $totalEditingProj += is_numeric($__val) ? (float)$__val : 0.00;
                                     }
-                                }
-                                $isOverBudget = $totalEditingProj > (float) $selectedItem->total_price;
-                                @endphp
-                                <span class="fw-bold fs-6 {{ $isOverBudget ? 'text-danger' : 'text-success' }}">
-                                    Rp {{ number_format($totalEditingProj, 0, ',', '.') }}
-                                </span>
+                                    }
+                                    }
+                                    $isOverBudget = $totalEditingProj > (float) $selectedItem->total_price;
+                                    @endphp
+                                    <span class="fw-bold fs-6 {{ $isOverBudget ? 'text-danger' : 'text-success' }}">
+                                        Rp {{ number_format($totalEditingProj, 0, ',', '.') }}
+                                    </span>
                             </div>
                         </div>
 
@@ -482,12 +482,12 @@
                             $hasClosedMonths = false;
                             for ($m = 1; $m <= 12; $m++) {
                                 if ($period && $period->isMonthClosed($m)) {
-                                    $hasClosedMonths = true;
-                                    break;
+                                $hasClosedMonths = true;
+                                break;
                                 }
-                            }
-                            @endphp
-                            <div x-data="{
+                                }
+                                @endphp
+                                <div x-data="{
                                 raw: @entangle('yearlyProjection'),
                                 display: '',
                                 init() {
@@ -520,30 +520,30 @@
                                     this.$wire.set('yearlyProjection', this.raw);
                                 }
                             }" wire:key="yearly-proj-wrapper-{{ $selectedBudgetItemId }}">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-primary text-white">Rp</span>
-                                    <input type="text"
-                                        class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror"
-                                        x-model="display"
-                                        @input="onInput"
-                                        @blur="onBlur"
-                                        @disabled($hasClosedMonths)
-                                        placeholder="Masukkan total proyeksi pertahun...">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white">Rp</span>
+                                        <input type="text"
+                                            class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror"
+                                            x-model="display"
+                                            @input="onInput"
+                                            @blur="onBlur"
+                                            @disabled($hasClosedMonths)
+                                            placeholder="Masukkan total proyeksi pertahun...">
+                                    </div>
                                 </div>
-                            </div>
-                            @error('yearlyProjection')
-                            <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
-                            @enderror
-                            @if($hasClosedMonths)
-                            <div class="form-text mt-2 text-danger">
-                                <i class="bx bx-lock-alt me-1"></i>
-                                Proyeksi tahunan terkunci karena terdapat bulan pada periode berjalan yang telah ditutup.
-                            </div>
-                            @endif
-                            <div class="form-text mt-2 text-muted">
-                                <i class="bx bx-info-circle me-1"></i>
-                                Nilai proyeksi tahunan akan disimpan secara utuh tanpa didistribusikan per bulan.
-                            </div>
+                                @error('yearlyProjection')
+                                <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
+                                @enderror
+                                @if($hasClosedMonths)
+                                <div class="form-text mt-2 text-danger">
+                                    <i class="bx bx-lock-alt me-1"></i>
+                                    Proyeksi tahunan terkunci karena terdapat bulan pada periode berjalan yang telah ditutup.
+                                </div>
+                                @endif
+                                <div class="form-text mt-2 text-muted">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    Nilai proyeksi tahunan akan disimpan secara utuh tanpa didistribusikan per bulan.
+                                </div>
                         </div>
                         @else
                         <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
@@ -551,9 +551,9 @@
                                 <thead class="table-light sticky-top" style="z-index: 10;">
                                     <tr>
                                         <th style="width: 20%;">Bulan</th>
-                                        <th style="width: 25%;" class="text-end">Rencana Anggaran (Rp)</th>
-                                        <th style="width: 25%;" class="text-end">Realisasi (Rp)</th>
-                                        <th style="width: 30%;" class="text-end">Jumlah Proyeksi (Rp)</th>
+                                        <th style="width: 25%;" class="text-end">Rencana Anggaran</th>
+                                        <th style="width: 25%;" class="text-end">Realisasi</th>
+                                        <th style="width: 30%;" class="text-end">Proyeksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -648,8 +648,8 @@
                                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
                                             </td>
-                                            </tr>
-                                            @endfor
+                                        </tr>
+                                        @endfor
                                 </tbody>
                             </table>
                         </div>
