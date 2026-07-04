@@ -209,16 +209,24 @@ class RkapProjections extends Component
         
         $this->editingProjections = [];
 
-        $currentMonth = (int) date('n');
+        $activePeriod = RkapPeriod::find($this->activePeriodId);
 
-        // Initialize projection values based on realization (if past or filled) or monthly budget plan
+        // Initialize projection values based on realization or closing period status
         for ($m = 1; $m <= 12; $m++) {
             $realizationAmount = (float) ($budgetItem->realizations->where('month', $m)->sum('amount'));
             $hasRealization = $budgetItem->realizations->where('month', $m)->count() > 0;
             $monthlyBudget = (float) ($budgetItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
+            $isClosed = $activePeriod && $activePeriod->isMonthClosed($m);
 
-            if ($m < $currentMonth || $hasRealization) {
-                $this->editingProjections[$m] = $realizationAmount;
+            if ($hasRealization || $isClosed) {
+                $existing = $budgetItem->projections->where('month', $m)->first();
+                if ($existing) {
+                    $this->editingProjections[$m] = (float) $existing->amount;
+                } elseif ($hasRealization) {
+                    $this->editingProjections[$m] = $realizationAmount;
+                } else {
+                    $this->editingProjections[$m] = $monthlyBudget;
+                }
             } else {
                 $existing = $budgetItem->projections->where('month', $m)->first();
                 $this->editingProjections[$m] = $existing ? (float) $existing->amount : $monthlyBudget;
@@ -289,11 +297,21 @@ class RkapProjections extends Component
             $this->resetErrorBag("editingProjections.{$monthVal}");
         }
 
-        // Skip limit validation if the month is locked (past or has realization)
-        $currentMonth = (int) date('n');
+        // Skip limit validation if the month is locked (has realization or is closed via closing period)
         $hasRealization = $selectedItem->realizations->where('month', $monthVal)->count() > 0;
-        if ($monthVal < $currentMonth || $hasRealization) {
+        $period = $selectedItem->workPlan->submission->period;
+        $isClosed = $period && $period->isMonthClosed($monthVal);
+
+        if ($hasRealization || $isClosed) {
             $this->resetErrorBag("editingProjections.{$monthVal}");
+            if ($isClosed) {
+                $existing = $selectedItem->projections->where('month', $monthVal)->first();
+                $existingAmount = $existing ? (float)$existing->amount : 0.00;
+                $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
+                if (abs($sanitizedValue - $existingAmount) > 0.01) {
+                    $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak dapat diubah karena periode pengisian telah ditutup.");
+                }
+            }
         } else {
             // Check monthly budget plan limit
             $monthlyLimit = $selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00;
@@ -308,10 +326,13 @@ class RkapProjections extends Component
         $totalProjections = 0.00;
         for ($m = 1; $m <= 12; $m++) {
             $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
-            $isLocked = $m < $currentMonth || $hasRealization;
+            $isClosed = $period && $period->isMonthClosed($m);
 
-            if ($isLocked) {
+            if ($hasRealization) {
                 $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
+            } elseif ($isClosed) {
+                $existing = $selectedItem->projections->where('month', $m)->first();
+                $totalProjections += $existing ? (float)$existing->amount : 0.00;
             } else {
                 $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                     ? (float) $this->editingProjections[$m]
@@ -359,6 +380,24 @@ class RkapProjections extends Component
         }
 
         if ($this->inputMode === 'yearly') {
+            // Check if any month in the active period is closed
+            $hasClosedMonths = false;
+            for ($m = 1; $m <= 12; $m++) {
+                if ($validPeriod && $validPeriod->isMonthClosed($m)) {
+                    $hasClosedMonths = true;
+                    break;
+                }
+            }
+
+            if ($hasClosedMonths) {
+                $existingYearly = (float)$selectedItem->projection;
+                $yearlyVal = $this->yearlyProjection !== '' && $this->yearlyProjection !== null ? (float)$this->yearlyProjection : 0.00;
+                if (abs($yearlyVal - $existingYearly) > 0.01) {
+                    $this->addError('yearlyProjection', 'Tidak dapat mengubah proyeksi tahunan karena terdapat bulan pada periode ini yang telah ditutup.');
+                    return;
+                }
+            }
+
             // Validate yearly projection
             $yearlyVal = $this->yearlyProjection !== '' && $this->yearlyProjection !== null ? (float)$this->yearlyProjection : 0.00;
             if ($yearlyVal > (float)$selectedItem->total_price) {
@@ -375,12 +414,23 @@ class RkapProjections extends Component
         } else {
             $this->validate();
 
-            $currentMonth = (int) date('n');
+            $period = $selectedItem->workPlan->submission->period;
 
             // Validate that individual month projections do not exceed monthly plans (excluding locked months)
             foreach ($this->editingProjections as $month => $amount) {
                 $hasRealization = $selectedItem->realizations->where('month', $month)->count() > 0;
-                $isLocked = $month < $currentMonth || $hasRealization;
+                $isClosed = $period && $period->isMonthClosed($month);
+                $isLocked = $hasRealization || $isClosed;
+
+                if ($isClosed) {
+                    $existing = $selectedItem->projections->where('month', $month)->first();
+                    $existingAmount = $existing ? (float)$existing->amount : 0.00;
+                    $sanitizedAmount = $amount !== '' && $amount !== null ? (float)$amount : 0.00;
+                    if (abs($sanitizedAmount - $existingAmount) > 0.01) {
+                        $this->addError("editingProjections.{$month}", "Proyeksi bulan {$month} tidak dapat diubah karena periode pengisian telah ditutup.");
+                        return;
+                    }
+                }
 
                 if ($isLocked) {
                     continue;
@@ -398,10 +448,13 @@ class RkapProjections extends Component
             $totalProjections = 0.00;
             for ($m = 1; $m <= 12; $m++) {
                 $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
-                $isLocked = $m < $currentMonth || $hasRealization;
+                $isClosed = $period && $period->isMonthClosed($m);
 
-                if ($isLocked) {
+                if ($hasRealization) {
                     $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
+                } elseif ($isClosed) {
+                    $existing = $selectedItem->projections->where('month', $m)->first();
+                    $totalProjections += $existing ? (float)$existing->amount : 0.00;
                 } else {
                     $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                         ? (float) $this->editingProjections[$m]
@@ -414,13 +467,17 @@ class RkapProjections extends Component
                 return;
             }
 
-            DB::transaction(function () use ($selectedItem, $currentMonth): void {
+            DB::transaction(function () use ($selectedItem, $period): void {
                 for ($m = 1; $m <= 12; $m++) {
                     $realizationAmount = (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
                     $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
+                    $isClosed = $period && $period->isMonthClosed($m);
 
-                    if ($m < $currentMonth || $hasRealization) {
+                    if ($hasRealization) {
                         $amount = $realizationAmount;
+                    } elseif ($isClosed) {
+                        $existing = $selectedItem->projections->where('month', $m)->first();
+                        $amount = $existing ? (float)$existing->amount : 0.00;
                     } else {
                         $amount = isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                             ? (float) $this->editingProjections[$m]

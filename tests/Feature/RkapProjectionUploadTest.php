@@ -236,19 +236,22 @@ class RkapProjectionUploadTest extends TestCase
         $this->assertEquals(1050000.00, (float)$projection->amount);
     }
 
-    public function test_fails_if_past_month_projection_is_modified(): void
+    public function test_fails_if_closed_month_projection_is_modified(): void
     {
         $this->actingAs($this->adminUser);
 
         $currentMonth = (int) date('n');
 
-        // Skip test if it is January (no past months)
+        // Skip test if it is January (no past months to close)
         if ($currentMonth === 1) {
             $this->assertTrue(true);
             return;
         }
 
         $pastMonth = $currentMonth - 1;
+
+        // Set closing day to 1 so that the past month is closed
+        \App\Models\Setting::set('rkap_closing_day', 1);
 
         // Seed some projection in past month
         RkapBudgetItemProjection::create([
@@ -260,7 +263,7 @@ class RkapProjectionUploadTest extends TestCase
         ]);
         $this->budgetItem->update(['projection' => 10000]);
 
-        // Upload CSV with different amount (e.g. 15000) for that past month
+        // Upload CSV with different amount (e.g. 15000) for that closed month
         $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
         $csvContent .= "{$this->budgetItem->id},0";
         for ($m = 1; $m <= 12; $m++) {
@@ -279,7 +282,7 @@ class RkapProjectionUploadTest extends TestCase
             ->set('file', $file)
             ->call('uploadAndImport')
             ->assertSet('imported', false)
-            ->assertSee('tidak dapat diubah karena merupakan bulan yang sudah lewat');
+            ->assertSee('tidak dapat diubah karena periode pengisian telah ditutup');
     }
 
     public function test_valid_yearly_projection_upload_updates_projection_column_directly(): void

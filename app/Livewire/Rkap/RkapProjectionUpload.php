@@ -211,6 +211,7 @@ class RkapProjectionUpload extends Component
     {
         $validBudgetItemIds = $this->getValidBudgetItemIds();
         $currentMonth = (int) date('n');
+        $validPeriod = RkapPeriod::find($this->periodId);
 
         $budgetItemIds = array_filter(array_map(fn($r) => isset($r['budget_item_id']) && $r['budget_item_id'] !== '' ? (int)$r['budget_item_id'] : null, $rows));
         $budgetItems = RkapBudgetItem::with(['monthlies', 'projections'])
@@ -293,10 +294,13 @@ class RkapProjectionUpload extends Component
                     $valFloat = $this->sanitizeAmount($row[$colKey] ?? '0');
 
                     $isPastMonth = $m < $currentMonth;
-                    if ($isPastMonth) {
+                    $isClosed = $validPeriod && $validPeriod->isMonthClosed($m);
+                    if ($isClosed) {
                         $existingProjAmount = (float) ($budgetItem->projections->firstWhere('month', $m)->amount ?? 0.0);
                         if (abs($valFloat - $existingProjAmount) > 0.01) {
-                            $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") tidak dapat diubah karena merupakan bulan yang sudah lewat.";
+                            $closingDate = $validPeriod->getClosingDateForMonth($m);
+                            $closingDateStr = $closingDate ? $closingDate->format('d M Y') : '';
+                            $this->errorsList[] = "Baris {$rowNo}: proyeksi bulan {$m} (" . $this->getMonthName($m) . ") tidak dapat diubah karena periode pengisian telah ditutup ({$closingDateStr}).";
                             $hasRowAmountError = true;
                         }
                     }
@@ -344,9 +348,11 @@ class RkapProjectionUpload extends Component
                     }
                 }
 
+                $validPeriod = RkapPeriod::find($this->periodId);
                 if ($hasMonthly) {
                     for ($m = 1; $m <= 12; $m++) {
-                        if ($m < $currentMonth) {
+                        $isClosed = $validPeriod && $validPeriod->isMonthClosed($m);
+                        if ($isClosed) {
                             continue;
                         }
 

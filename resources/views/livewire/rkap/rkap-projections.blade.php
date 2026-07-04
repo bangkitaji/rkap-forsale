@@ -458,6 +458,16 @@
                         @if($inputMode === 'yearly')
                         <div class="mb-3 p-3 bg-light rounded border">
                             <label class="form-label fw-bold text-dark fs-6">Proyeksi Tahunan</label>
+                            @php
+                            $period = $selectedItem->workPlan->submission->period;
+                            $hasClosedMonths = false;
+                            for ($m = 1; $m <= 12; $m++) {
+                                if ($period && $period->isMonthClosed($m)) {
+                                    $hasClosedMonths = true;
+                                    break;
+                                }
+                            }
+                            @endphp
                             <div x-data="{
                                 raw: @entangle('yearlyProjection'),
                                 display: '',
@@ -498,12 +508,19 @@
                                         x-model="display"
                                         @input="onInput"
                                         @blur="onBlur"
+                                        @disabled($hasClosedMonths)
                                         placeholder="Masukkan total proyeksi pertahun...">
                                 </div>
                             </div>
                             @error('yearlyProjection')
                             <div class="invalid-feedback d-block mt-1">{{ $message }}</div>
                             @enderror
+                            @if($hasClosedMonths)
+                            <div class="form-text mt-2 text-danger">
+                                <i class="bx bx-lock-alt me-1"></i>
+                                Proyeksi tahunan terkunci karena terdapat bulan pada periode berjalan yang telah ditutup.
+                            </div>
+                            @endif
                             <div class="form-text mt-2 text-muted">
                                 <i class="bx bx-info-circle me-1"></i>
                                 Nilai proyeksi tahunan akan disimpan secara utuh tanpa didistribusikan per bulan.
@@ -536,19 +553,20 @@
                                         $realizationAmount = $selectedItem->realizations->where('month', $m)->sum('amount');
                                         $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
                                         $existingProj = $selectedItem->projections->where('month', $m)->first();
-                                        $isPastMonth = $m < $currentMonth;
-                                            $isLocked=$isPastMonth || $hasRealization;
-                                            @endphp
-                                            <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                        $period = $selectedItem->workPlan->submission->period;
+                                        $isClosed = $period && $period->isMonthClosed($m);
+                                        $isLocked = $hasRealization || $isClosed;
+                                        @endphp
+                                        <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
                                             <td class="fw-semibold text-muted">
                                                 {{ $monthNames[$m] }}
-                                                @if($isPastMonth)
-                                                <span class="d-block text-secondary small" style="font-size: 0.7rem;">
-                                                    <i class="bx bx-history"></i> Terkunci (Lewat Bulan)
-                                                </span>
-                                                @elseif($hasRealization)
+                                                @if($hasRealization)
                                                 <span class="d-block text-warning small" style="font-size: 0.7rem;">
                                                     <i class="bx bx-lock-alt"></i> Terkunci (Realisasi Ada)
+                                                </span>
+                                                @elseif($isClosed)
+                                                <span class="d-block text-danger small" style="font-size: 0.7rem;">
+                                                    <i class="bx bx-lock-alt"></i> Terkunci (Closing Periode)
                                                 </span>
                                                 @endif
                                             </td>

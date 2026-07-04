@@ -6,9 +6,12 @@ use Tests\TestCase;
 use Livewire\Livewire;
 use App\Livewire\Rkap\RkapPeriodClosingManagement;
 use App\Livewire\Rkap\RkapRealizationUpload;
+use App\Livewire\Rkap\RkapProjections;
+use App\Livewire\Rkap\RkapProjectionUpload;
 use App\Models\RkapPeriod;
 use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemRealization;
+use App\Models\RkapBudgetItemProjection;
 use App\Models\RkapSubmission;
 use App\Models\Bureau;
 use App\Models\Department;
@@ -37,9 +40,13 @@ class RkapPeriodClosingTest extends TestCase
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
         $permRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
         $permClosingManage = Permission::firstOrCreate(['name' => 'rkap.closing.manage', 'guard_name' => 'web']);
+        $permProjectionInput = Permission::firstOrCreate(['name' => 'rkap.projection.input', 'guard_name' => 'web']);
+        $permProjectionView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
         
         $roleVerifikator->givePermissionTo($permRealizationUpload);
         $roleVerifikator->givePermissionTo($permClosingManage);
+        $roleVerifikator->givePermissionTo($permProjectionInput);
+        $roleVerifikator->givePermissionTo($permProjectionView);
 
         $this->verifikator = User::create([
             'name' => 'Verifikator User',
@@ -213,5 +220,163 @@ class RkapPeriodClosingTest extends TestCase
             'month' => 7
         ]));
         $responseOpenExcel->assertStatus(200);
+    }
+
+    public function test_projection_input_fails_if_month_is_closed(): void
+    {
+
+        $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP001',
+            'title' => 'Work Plan 1',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP001',
+            'program_name' => 'Work Plan 1',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Target Item Description',
+            'quantity' => 1,
+            'unit_price' => 10000,
+        ]);
+
+        $projection = RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 6, // Juni
+            'amount' => 5000,
+            'inputted_by' => $this->verifikator->id,
+        ]);
+
+        Setting::set('rkap_closing_day', 1); // Juni (6) is closed as of July 4th
+
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapProjections::class)
+            ->call('selectBudgetItem', $budgetItem->id)
+            ->set('editingProjections.6', 6000) // Change month 6 projection amount
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['editingProjections.6']);
+    }
+
+    public function test_mass_upload_projection_fails_if_month_is_closed(): void
+    {
+
+        $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP001',
+            'title' => 'Work Plan 1',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP001',
+            'program_name' => 'Work Plan 1',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Target Item Description',
+            'quantity' => 1,
+            'unit_price' => 10000,
+        ]);
+
+        RkapBudgetItemProjection::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 6, // Juni
+            'amount' => 5000,
+            'inputted_by' => $this->verifikator->id,
+        ]);
+
+        Setting::set('rkap_closing_day', 1); // Juni (6) is closed as of July 4th
+
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n{$budgetItem->id},0,0,0,0,0,0,6000,0,0,0,0,0,0";
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('proyeksi.csv', $csvContent);
+
+        $component = Livewire::actingAs($this->verifikator)
+            ->test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport');
+
+        $errors = $component->get('errorsList');
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('periode pengisian telah ditutup', $errors[0]);
+    }
+
+    public function test_yearly_projection_input_fails_if_month_is_closed(): void
+    {
+        $directorate = Directorate::create(['code' => 'D1', 'name' => 'Dir 1']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP1', 'name' => 'Dept 1']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B1', 'name' => 'Bur 1']);
+        
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+        
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP001',
+            'title' => 'Work Plan 1',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP001',
+            'program_name' => 'Work Plan 1',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521111',
+            'description' => 'Target Item Description',
+            'quantity' => 1,
+            'unit_price' => 10000,
+            'projection' => 5000, // Initial yearly projection
+        ]);
+
+        Setting::set('rkap_closing_day', 1); // Juni (6) is closed as of July 4th
+
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapProjections::class)
+            ->call('selectBudgetItem', $budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 6000) // Change yearly projection amount
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['yearlyProjection']);
     }
 }

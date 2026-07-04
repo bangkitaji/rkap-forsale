@@ -32,13 +32,6 @@
           "name": "Laporan Cash Flow",
           "slug": "analytics-cashflow-matrix",
           "permission": "dashboard.show"
-        },
-        {
-          "url": "analytics/reconciliation",
-          "icon": "menu-icon icon-base bx bx-git-commit",
-          "name": "Rekonsiliasi Kas",
-          "slug": "analytics-reconciliation",
-          "permission": "dashboard.show"
         }
       ]
     },
