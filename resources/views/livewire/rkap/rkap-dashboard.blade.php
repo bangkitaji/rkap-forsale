@@ -266,7 +266,7 @@
                                             <th>Nama Departemen</th>
                                             <th>Status Pengajuan</th>
                                             <th class="text-end">Total Anggaran</th>
-                                            <th class="text-center">Aksi</th>
+                                            <th class="text-start">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -288,7 +288,7 @@
                                                 <td class="text-end fw-semibold text-primary">
                                                     Rp {{ number_format($ds['total_budget'], 0, ',', '.') }}
                                                 </td>
-                                                <td class="text-center">
+                                                <td class="text-start">
                                                     @if($ds['submissions']->isNotEmpty())
                                                         <div class="btn-group">
                                                             @foreach($ds['submissions'] as $sub)

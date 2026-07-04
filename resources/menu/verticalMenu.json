@@ -73,13 +73,6 @@
           "permission": "rkap.show"
         },
         {
-          "url": "rkap/compilation",
-          "icon": "menu-icon icon-base bx bx-layer",
-          "name": "Kompilasi",
-          "slug": "rkap-submissions-compilation",
-          "permission": "rkap.compilation.dept"
-        },
-        {
           "url": "rkap/projections",
           "icon": "menu-icon icon-base bx bx-calculator",
           "name": "Proyeksi",
@@ -95,6 +88,13 @@
           "name": "Realisasi",
           "slug": "rkap-realization-upload",
           "permission": "rkap.realization.upload"
+        },
+        {
+          "url": "rkap/compilation",
+          "icon": "menu-icon icon-base bx bx-layer",
+          "name": "Kompilasi",
+          "slug": "rkap-submissions-compilation",
+          "permission": "rkap.compilation.dept"
         }
       ]
     },
