@@ -50,7 +50,6 @@
       "name": "Proses RKAP",
       "icon": "menu-icon icon-base bx bx-git-merge",
       "slug": [
-        "rkap-requests",
         "rkap-submissions",
         "rkap-submissions-compilation",
         "rkap-projections",
@@ -59,13 +58,6 @@
       ],
       "permission": "rkap.show",
       "submenu": [
-        {
-          "url": "rkap/requests",
-          "icon": "menu-icon icon-base bx bx-git-pull-request",
-          "name": "Usulan Program & Kegiatan",
-          "slug": "rkap-requests",
-          "permission": "rkap.show"
-        },
         {
           "url": "rkap/submissions",
           "icon": "menu-icon icon-base bx bx-file",
@@ -115,10 +107,18 @@
       "icon": "menu-icon icon-base bx bx-briefcase",
       "slug": [
         "master-data.work-plans",
-        "master-data.activities"
+        "master-data.activities",
+        "rkap-requests"
       ],
       "permission": "masterdata.workplan.view",
       "submenu": [
+        {
+          "url": "rkap/requests",
+          "icon": "menu-icon icon-base bx bx-git-pull-request",
+          "name": "Usulan Program & Kegiatan",
+          "slug": "rkap-requests",
+          "permission": "rkap.show"
+        },
         {
           "name": "Work Plan",
           "icon": "menu-icon icon-base bx bx-task",

@@ -159,9 +159,16 @@ class RkapProjectionTest extends TestCase
 
         $currentMonth = (int) date('n');
 
-        Livewire::test(RkapProjections::class)
-            ->call('selectBudgetItem', $this->budgetItem->id)
-            ->set('editingProjections.' . $currentMonth, 45000)
+        $component = Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id);
+
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== $currentMonth) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
+        $component->set('editingProjections.' . $currentMonth, 45000)
             ->call('saveMonthlyProjections')
             ->assertHasNoErrors()
             ->assertDispatched('projections-saved');
@@ -190,9 +197,16 @@ class RkapProjectionTest extends TestCase
         ]);
 
         // Try to update it through the Livewire component
-        Livewire::test(RkapProjections::class)
-            ->call('selectBudgetItem', $this->budgetItem->id)
-            ->set('editingProjections.' . $currentMonth, 45000)
+        $component = Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id);
+
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== $currentMonth) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
+        $component->set('editingProjections.' . $currentMonth, 45000)
             ->call('saveMonthlyProjections')
             ->assertHasNoErrors();
 
@@ -351,26 +365,34 @@ class RkapProjectionTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_forbids_projection_amount_greater_than_monthly_budget_plan(): void
+    public function test_monthly_projection_can_exceed_monthly_budget_plan(): void
     {
         $this->actingAs($this->kepalaBiro);
 
         $currentMonth = (int) date('n');
 
-        // Budget is 100000 for currentMonth (seeded in setUp)
-        // Let's try to set a projection of 120000
-        Livewire::test(RkapProjections::class)
-            ->call('selectBudgetItem', $this->budgetItem->id)
-            ->set('editingProjections.' . $currentMonth, 120000)
-            ->call('saveMonthlyProjections')
-            ->assertHasErrors(['editingProjections.' . $currentMonth]);
+        // Budget is 50000 for currentMonth (seeded in setUp, total budget is 100000)
+        // Let's try to set a projection of 60000 (which is less than total budget of 100000)
+        $component = Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id);
 
-        // Assert that the projection was NOT saved in database
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== $currentMonth) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
+        $component->set('editingProjections.' . $currentMonth, 60000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        // Assert that the projection was saved in database
         $dbProjection = \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)
             ->where('month', $currentMonth)
             ->first();
 
-        $this->assertNull($dbProjection);
+        $this->assertNotNull($dbProjection);
+        $this->assertEquals(60000, (float)$dbProjection->amount);
     }
 
     public function test_forbids_projection_accumulation_greater_than_total_approved_budget(): void
@@ -513,8 +535,8 @@ class RkapProjectionTest extends TestCase
             $component->assertSet('editingProjections.' . $futureMonth, 45000);
         }
 
-        // Assert current month (no realization seeded) equals monthly budget plan (seeded as 50000)
-        $component->assertSet('editingProjections.' . $currentMonth, 50000);
+        // Assert current month (no realization seeded) equals auto allocated remaining budget (3500)
+        $component->assertSet('editingProjections.' . $currentMonth, 3500);
     }
 
     public function test_save_projection_enforces_realization_for_past_and_filled_months(): void
@@ -546,6 +568,12 @@ class RkapProjectionTest extends TestCase
             ->call('selectBudgetItem', $this->budgetItem->id);
 
         // Try to set different values
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== $currentMonth && $m !== $pastMonth && $m !== $futureMonth) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
         if ($pastMonth !== null) {
             $component->set('editingProjections.' . $pastMonth, 99999);
         }

@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Route;
     </div>
 
     <div class="menu-divider mt-0"></div>
+    <hr>
     <div class="menu-inner-shadow"></div>
-
     <ul class="menu-inner py-1">
         @foreach ($menuData[0]->menu as $menu)
         {{-- adding active and open class if child is active --}}

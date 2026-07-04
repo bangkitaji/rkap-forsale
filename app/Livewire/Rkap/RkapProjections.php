@@ -322,14 +322,6 @@ class RkapProjections extends Component
                     $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak dapat diubah karena periode pengisian telah ditutup.");
                 }
             }
-        } else {
-            // Check monthly budget plan limit
-            $monthlyLimit = $selectedItem->monthlies->where('month', $monthVal)->first()?->amount ?? 0.00;
-            $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
-            if ($sanitizedValue > (float)$monthlyLimit) {
-                $this->addError("editingProjections.{$monthVal}", "Proyeksi bulan {$monthVal} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
-                return;
-            }
         }
 
         // Check total projections vs total RKAP budget, enforcing realization amounts for locked months
@@ -426,11 +418,10 @@ class RkapProjections extends Component
 
             $period = $selectedItem->workPlan->submission->period;
 
-            // Validate that individual month projections do not exceed monthly plans (excluding locked months)
+            // Validate that individual month projections (excluding locked months)
             foreach ($this->editingProjections as $month => $amount) {
                 $hasRealization = $selectedItem->realizations->where('month', $month)->count() > 0;
                 $isClosed = $period && $period->isMonthClosed($month);
-                $isLocked = $hasRealization || $isClosed;
 
                 if ($isClosed) {
                     $existing = $selectedItem->projections->where('month', $month)->first();
@@ -440,17 +431,6 @@ class RkapProjections extends Component
                         $this->addError("editingProjections.{$month}", "Proyeksi bulan {$month} tidak dapat diubah karena periode pengisian telah ditutup.");
                         return;
                     }
-                }
-
-                if ($isLocked) {
-                    continue;
-                }
-
-                $monthlyLimit = $selectedItem->monthlies->where('month', $month)->first()?->amount ?? 0.00;
-                $sanitizedAmount = $amount !== '' && $amount !== null ? (float)$amount : 0.00;
-                if ($sanitizedAmount > (float)$monthlyLimit) {
-                    $this->addError("editingProjections.{$month}", "Proyeksi bulan {$month} tidak boleh melebihi rencana anggaran bulanan (Rp " . number_format($monthlyLimit, 0, ',', '.') . ").");
-                    return;
                 }
             }
 
