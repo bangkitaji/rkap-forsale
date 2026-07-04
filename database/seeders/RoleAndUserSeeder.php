@@ -44,6 +44,7 @@ class RoleAndUserSeeder extends Seeder
         $permRkapReviewPresident = Permission::firstOrCreate(['name' => 'rkap.review.president', 'guard_name' => 'web']);
         $permRkapApprovePresident = Permission::firstOrCreate(['name' => 'rkap.approve.president', 'guard_name' => 'web']);
         $permMasterDataRequestApprove = Permission::firstOrCreate(['name' => 'masterdata.request.approve', 'guard_name' => 'web']);
+        $permRkapClosingManage = Permission::firstOrCreate(['name' => 'rkap.closing.manage', 'guard_name' => 'web']);
 
         $permReportGroupManage = Permission::firstOrCreate(['name' => 'settings.reportgroup.manage', 'guard_name' => 'web']);
         $permUserManagementShow = Permission::firstOrCreate(['name' => 'settings.usermanagement.show', 'guard_name' => 'web']);
@@ -80,6 +81,7 @@ class RoleAndUserSeeder extends Seeder
             $permRkapReviewPresident,
             $permRkapApprovePresident,
             $permMasterDataRequestApprove,
+            $permRkapClosingManage,
             $permReportGroupManage,
             $permUserManagementShow,
             $permOrganizationShow,
@@ -112,6 +114,7 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataWorkplanView,
             $permMasterDataActivityView,
             $permMasterDataActivityManage,
+            $permRkapClosingManage,
         ]);
 
         $roleDireksi->givePermissionTo([

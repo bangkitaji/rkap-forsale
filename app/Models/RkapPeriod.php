@@ -35,6 +35,38 @@ class RkapPeriod extends Model
         return $this->hasMany(RkapSubmission::class);
     }
 
+    /**
+     * Check if a specific month is closed for realization input.
+     */
+    public function isMonthClosed(int $month): bool
+    {
+        $closingDay = (int) \App\Models\Setting::get('rkap_closing_day', 0);
+        if ($closingDay < 1) {
+            return false;
+        }
+
+        $nextMonth = \Carbon\Carbon::create($this->year, $month, 1)->addMonth();
+        $dayToUse = min($closingDay, $nextMonth->daysInMonth);
+        $closingDate = $nextMonth->day($dayToUse)->endOfDay();
+
+        return now()->greaterThan($closingDate);
+    }
+
+    /**
+     * Get the closing date for a specific month.
+     */
+    public function getClosingDateForMonth(int $month): ?\Carbon\Carbon
+    {
+        $closingDay = (int) \App\Models\Setting::get('rkap_closing_day', 0);
+        if ($closingDay < 1) {
+            return null;
+        }
+
+        $nextMonth = \Carbon\Carbon::create($this->year, $month, 1)->addMonth();
+        $dayToUse = min($closingDay, $nextMonth->daysInMonth);
+        return $nextMonth->day($dayToUse)->endOfDay();
+    }
+
     public function isOpen(): bool
     {
         return $this->status === PeriodStatus::Open->value;

@@ -204,6 +204,7 @@
       "icon": "menu-icon icon-base bx bx-cog",
       "slug": [
         "rkap-periods",
+        "rkap-closing-periods",
         "settings-report-groups",
         "settings-cashflow-groups",
         "settings-difference-groups",
@@ -218,6 +219,13 @@
           "name": "Periode RKAP",
           "slug": "rkap-periods",
           "permission": "rkap.manage.period"
+        },
+        {
+          "url": "rkap/closing-periods",
+          "icon": "menu-icon icon-base bx bx-time-five",
+          "name": "Closing Periode",
+          "slug": "rkap-closing-periods",
+          "permission": "rkap.closing.manage"
         },
         {
           "url": "settings/report-groups",

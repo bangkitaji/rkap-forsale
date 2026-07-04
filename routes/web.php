@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/periods', \App\Livewire\Rkap\RkapPeriodManagement::class)
       ->middleware('permission:rkap.manage.period')
       ->name('rkap-periods');
+    Route::get('/closing-periods', \App\Livewire\Rkap\RkapPeriodClosingManagement::class)
+      ->middleware('permission:rkap.closing.manage')
+      ->name('rkap-closing-periods');
     Route::get('/submissions', \App\Livewire\Rkap\RkapSubmissionList::class)->name('rkap-submissions');
     Route::get('/requests', \App\Livewire\Rkap\RkapRequests::class)->name('rkap-requests');
     Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
@@ -108,6 +111,17 @@ Route::middleware(['auth'])->group(function () {
       ]);
       $periodId = request('period_id') ? (int) request('period_id') : null;
       $month = request('month') ? (int) request('month') : null;
+
+      if ($periodId) {
+        $period = \App\Models\RkapPeriod::find($periodId);
+        if (!$period || $period->year !== (int) date('Y') || $period->status !== 'finalized') {
+          abort(403, 'Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan dengan status Finalized.');
+        }
+        if ($month && $period->isMonthClosed($month)) {
+          abort(403, 'Batas waktu penginputan realisasi untuk bulan ini telah ditutup.');
+        }
+      }
+
       $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.xlsx';
       return \Maatwebsite\Excel\Facades\Excel::download(
         new \App\Exports\RkapRealizationTemplateExport($periodId, $month),
@@ -120,6 +134,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/realization-template/download-csv', function () {
       $periodId = request('period_id') ? (int) request('period_id') : null;
       $month = request('month') ? (int) request('month') : null;
+
+      if ($periodId) {
+        $period = \App\Models\RkapPeriod::find($periodId);
+        if (!$period || $period->year !== (int) date('Y') || $period->status !== 'finalized') {
+          abort(403, 'Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan dengan status Finalized.');
+        }
+        if ($month && $period->isMonthClosed($month)) {
+          abort(403, 'Batas waktu penginputan realisasi untuk bulan ini telah ditutup.');
+        }
+      }
+
       $filename = 'template_upload_realization_' . now()->format('YmdHis') . '.csv';
       return \Maatwebsite\Excel\Facades\Excel::download(
         new \App\Exports\RkapRealizationTemplateExport($periodId, $month),

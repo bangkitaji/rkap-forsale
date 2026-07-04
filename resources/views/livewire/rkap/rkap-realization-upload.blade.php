@@ -128,6 +128,20 @@
                   </ul>
                 </div>
               @endif
+
+              @if (session()->has('error'))
+                <div class="alert alert-danger shadow-none border-1">
+                  <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>Kesalahan</h6>
+                  <p class="mb-0 small">{{ session('error') }}</p>
+                </div>
+              @endif
+
+              @if (session()->has('message'))
+                <div class="alert alert-success shadow-none border-1">
+                  <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>Berhasil</h6>
+                  <p class="mb-0 small">{{ session('message') }}</p>
+                </div>
+              @endif
             </div>
 
             {{-- Right column: Format Guide --}}

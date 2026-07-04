@@ -75,7 +75,9 @@ class RkapRealizationUpload extends Component
 
     public function getPeriodOptionsProperty(): \Illuminate\Database\Eloquent\Collection
     {
+        $currentYear = (int) date('Y');
         return RkapPeriod::where('status', 'finalized')
+            ->where('year', $currentYear)
             ->whereHas('submissions', function ($query) {
                 $query->where('status', 'approved');
             })
@@ -102,10 +104,14 @@ class RkapRealizationUpload extends Component
             10 => 'Oktober',  11 => 'November',  12 => 'Desember',
         ];
 
+        $period = RkapPeriod::find($this->periodId);
+
         $options = [];
         foreach ($allMonths as $num => $name) {
             if (! in_array($num, $uploadedMonths, true)) {
-                $options[$num] = $name;
+                if ($period && !$period->isMonthClosed($num)) {
+                    $options[$num] = $name;
+                }
             }
         }
 
@@ -137,11 +143,22 @@ class RkapRealizationUpload extends Component
             'month.between'     => 'Bulan tidak valid.',
         ]);
 
-        // Validate that the period is finalized
-        $validPeriod = RkapPeriod::where('status', 'finalized')->find($this->periodId);
+        // Validate that the period is finalized and is for the current year
+        $currentYear = (int) date('Y');
+        $validPeriod = RkapPeriod::where('status', 'finalized')
+            ->where('year', $currentYear)
+            ->find($this->periodId);
 
         if (!$validPeriod) {
-            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP dengan status Finalized.';
+            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.';
+            return;
+        }
+
+        // Validate that the month is not closed
+        if ($validPeriod->isMonthClosed($this->month)) {
+            $closingDate = $validPeriod->getClosingDateForMonth($this->month);
+            $closingDateStr = $closingDate ? $closingDate->format('d M Y') : '';
+            $this->errorsList[] = 'Pemberitahuan: Pengunggahan realisasi untuk bulan ' . $this->getMonthName($this->month) . ' telah ditutup karena melewati batas closing periode (' . $closingDateStr . ').';
             return;
         }
 
@@ -414,6 +431,17 @@ class RkapRealizationUpload extends Component
 
         $realization = RkapBudgetItemRealization::find($id);
         if ($realization) {
+            $period = RkapPeriod::find($realization->rkap_period_id);
+            if ($period && $period->year !== (int) date('Y')) {
+                session()->flash('error', 'Realisasi hanya dapat dihapus untuk periode RKAP tahun berjalan.');
+                return;
+            }
+            if ($period && $period->isMonthClosed($realization->month)) {
+                $closingDate = $period->getClosingDateForMonth($realization->month);
+                $closingDateStr = $closingDate ? $closingDate->format('d M Y') : '';
+                session()->flash('error', 'Realisasi untuk bulan ' . $this->getMonthName($realization->month) . ' tidak dapat dihapus karena periode pengisian realisasi telah ditutup (' . $closingDateStr . ').');
+                return;
+            }
             $realization->delete();
             session()->flash('message', 'Data realisasi berhasil dihapus.');
         }

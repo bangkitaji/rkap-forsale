@@ -187,6 +187,42 @@ class RkapRealizationUploadTest extends TestCase
         $this->assertEquals(0, $dataRow[13]); // amount should be 0
     }
 
+    public function test_template_download_restricted_to_current_year_finalized_period(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        // 1. Past period
+        $pastYear = (int)date('Y') - 1;
+        $pastPeriod = RkapPeriod::create([
+            'year' => $pastYear,
+            'title' => 'RKAP ' . $pastYear,
+            'status' => 'finalized',
+            'submission_start' => now()->subYear(),
+            'submission_end' => now()->subYear()->addMonth(),
+        ]);
+
+        // Try downloading Excel template for past period
+        $responseExcel = $this->get(route('rkap-realization-template-download', [
+            'period_id' => $pastPeriod->id,
+            'month' => 1
+        ]));
+        $responseExcel->assertStatus(403);
+
+        // Try downloading CSV template for past period
+        $responseCsv = $this->get(route('rkap-realization-template-download-csv', [
+            'period_id' => $pastPeriod->id,
+            'month' => 1
+        ]));
+        $responseCsv->assertStatus(403);
+
+        // Try downloading Excel template for current finalized period (should succeed)
+        $responseCurrentExcel = $this->get(route('rkap-realization-template-download', [
+            'period_id' => $this->period->id,
+            'month' => 1
+        ]));
+        $responseCurrentExcel->assertStatus(200);
+    }
+
     public function test_realization_list_is_rendered_with_correct_filters_and_search(): void
     {
         $this->actingAs($this->verifikator);
@@ -331,7 +367,7 @@ class RkapRealizationUploadTest extends TestCase
         ]);
     }
 
-    public function test_can_upload_realization_for_past_finalized_period(): void
+    public function test_cannot_upload_realization_for_past_finalized_period(): void
     {
         $this->actingAs($this->verifikator);
 
@@ -378,16 +414,24 @@ class RkapRealizationUploadTest extends TestCase
             'unit_price' => 50000,
         ]);
 
-        // 3. Test that this past period is in the period options
+        // 3. Test that this past period is NOT in the period options
         $component = Livewire::test(RkapRealizationUpload::class);
         $periodOptions = $component->get('periodOptions');
         
-        $this->assertTrue($periodOptions->contains('id', $pastPeriod->id));
+        $this->assertFalse($periodOptions->contains('id', $pastPeriod->id));
 
-        // 4. Test upload and validation works for this past period
+        // 4. Test upload fails validation for this past period
+        $file = \Illuminate\Http\UploadedFile::fake()->create('realisasi.xlsx', 100);
         $component->set('periodId', $pastPeriod->id)
             ->set('month', 1)
-            ->assertHasNoErrors();
+            ->set('file', $file)
+            ->call('uploadAndImport');
+
+        $errors = $component->get('errorsList');
+        $this->assertContains(
+            'Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan (' . date('Y') . ') dengan status Finalized.',
+            $errors
+        );
     }
 
     public function test_realization_list_shows_department_accumulation_and_filters(): void
