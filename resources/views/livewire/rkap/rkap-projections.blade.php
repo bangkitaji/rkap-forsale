@@ -417,7 +417,26 @@
                                 <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
                                 <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
                                 @php
-                                $totalEditingProj = $inputMode === 'yearly' ? (float)$yearlyProjection : array_sum(array_map(fn($v) => is_numeric($v) ? (float)$v : 0, $editingProjections));
+                                $totalEditingProj = 0.00;
+                                if ($inputMode === 'yearly') {
+                                    $totalEditingProj = (float)$yearlyProjection;
+                                } else {
+                                    $_period = $selectedItem->workPlan->submission->period;
+                                    for ($__m = 1; $__m <= 12; $__m++) {
+                                        $__hasRealization = $selectedItem->realizations->where('month', $__m)->count() > 0;
+                                        $__realizationAmount = (float) $selectedItem->realizations->where('month', $__m)->sum('amount');
+                                        $__isClosed = $_period && $_period->isMonthClosed($__m);
+                                        if ($__hasRealization) {
+                                            $totalEditingProj += $__realizationAmount;
+                                        } elseif ($__isClosed) {
+                                            // Closed without realization: contributes 0
+                                            $totalEditingProj += 0.00;
+                                        } else {
+                                            $__val = $editingProjections[$__m] ?? 0;
+                                            $totalEditingProj += is_numeric($__val) ? (float)$__val : 0.00;
+                                        }
+                                    }
+                                }
                                 $isOverBudget = $totalEditingProj > (float) $selectedItem->total_price;
                                 @endphp
                                 <span class="fw-bold fs-6 {{ $isOverBudget ? 'text-danger' : 'text-success' }}">
@@ -479,9 +498,9 @@
                                 },
                                 format(val) {
                                     if (val === null || val === undefined || val === '') return '';
-                                    let clean = val.toString().replace(/[^0-9]/g, '');
-                                    if (clean === '') return '';
-                                    return new Intl.NumberFormat('id-ID').format(clean);
+                                    let num = Math.round(parseFloat(val));
+                                    if (isNaN(num)) return '';
+                                    return new Intl.NumberFormat('id-ID').format(num);
                                 },
                                 onInput(e) {
                                     let cursor = e.target.selectionStart;
@@ -588,9 +607,9 @@
                                                     },
                                                     format(val) {
                                                         if (val === null || val === undefined || val === '') return '';
-                                                        let clean = val.toString().replace(/[^0-9]/g, '');
-                                                        if (clean === '') return '';
-                                                        return new Intl.NumberFormat('id-ID').format(clean);
+                                                        let num = Math.round(parseFloat(val));
+                                                        if (isNaN(num)) return '';
+                                                        return new Intl.NumberFormat('id-ID').format(num);
                                                     },
                                                     onInput(e) {
                                                         let cursor = e.target.selectionStart;

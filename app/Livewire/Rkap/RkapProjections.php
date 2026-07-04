@@ -218,15 +218,12 @@ class RkapProjections extends Component
             $monthlyBudget = (float) ($budgetItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
             $isClosed = $activePeriod && $activePeriod->isMonthClosed($m);
 
-            if ($hasRealization || $isClosed) {
-                $existing = $budgetItem->projections->where('month', $m)->first();
-                if ($existing) {
-                    $this->editingProjections[$m] = (float) $existing->amount;
-                } elseif ($hasRealization) {
-                    $this->editingProjections[$m] = $realizationAmount;
-                } else {
-                    $this->editingProjections[$m] = $monthlyBudget;
-                }
+            if ($hasRealization) {
+                // Month has realization: always use realization amount
+                $this->editingProjections[$m] = $realizationAmount;
+            } elseif ($isClosed) {
+                // Month is closed but no realization: force projection = 0 (matches realization)
+                $this->editingProjections[$m] = 0.00;
             } else {
                 $existing = $budgetItem->projections->where('month', $m)->first();
                 $this->editingProjections[$m] = $existing ? (float) $existing->amount : $monthlyBudget;
@@ -331,8 +328,8 @@ class RkapProjections extends Component
             if ($hasRealization) {
                 $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
             } elseif ($isClosed) {
-                $existing = $selectedItem->projections->where('month', $m)->first();
-                $totalProjections += $existing ? (float)$existing->amount : 0.00;
+                // Closed without realization: projection forced to 0
+                $totalProjections += 0.00;
             } else {
                 $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                     ? (float) $this->editingProjections[$m]
@@ -453,8 +450,8 @@ class RkapProjections extends Component
                 if ($hasRealization) {
                     $totalProjections += (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
                 } elseif ($isClosed) {
-                    $existing = $selectedItem->projections->where('month', $m)->first();
-                    $totalProjections += $existing ? (float)$existing->amount : 0.00;
+                    // Closed without realization: projection forced to 0
+                    $totalProjections += 0.00;
                 } else {
                     $totalProjections += isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                         ? (float) $this->editingProjections[$m]
@@ -474,10 +471,11 @@ class RkapProjections extends Component
                     $isClosed = $period && $period->isMonthClosed($m);
 
                     if ($hasRealization) {
+                        // Has realization: use realization amount as projection
                         $amount = $realizationAmount;
                     } elseif ($isClosed) {
-                        $existing = $selectedItem->projections->where('month', $m)->first();
-                        $amount = $existing ? (float)$existing->amount : 0.00;
+                        // Closed but no realization: force projection = 0 (matches realization)
+                        $amount = 0.00;
                     } else {
                         $amount = isset($this->editingProjections[$m]) && $this->editingProjections[$m] !== '' && $this->editingProjections[$m] !== null
                             ? (float) $this->editingProjections[$m]
