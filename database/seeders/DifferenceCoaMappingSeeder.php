@@ -549,11 +549,6 @@ class DifferenceCoaMappingSeeder extends Seeder
         '2105990007',
       ],
       '2003' => [
-        '210599011', // Wait, 2105990011? Let's check 2105990011 or 210599011.
-        // Ah! In the parsed mappings.php it was 2105990011. Wait, let me check lines 517-519 in mappings:
-        // '2003' => [ '2105990011', ] -> Wait! In the user prompt:
-        // '2003;2105990011'
-        // Ah, yes, '2105990011' is correct!
         '2105990011',
       ],
       '2004' => [
