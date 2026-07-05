@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\CashflowGroup;
 use App\Models\Coa;
+use Illuminate\Support\Facades\File;
 
 class CashflowCoaMappingSeeder extends Seeder
 {
@@ -15,6 +16,23 @@ class CashflowCoaMappingSeeder extends Seeder
   {
     // Clear existing mappings
     Coa::query()->update(['cashflow_group_id' => null]);
+
+    // Use COA master JSON as the source of valid COA codes for mapping.
+    $allowedCoaCodes = null;
+    $coaFilePath = database_path('seeders/data/coas.json');
+    if (File::exists($coaFilePath)) {
+      $coaData = json_decode(File::get($coaFilePath), true);
+      if (is_array($coaData)) {
+        $allowedCoaCodes = array_flip(
+          array_values(
+            array_filter(array_map(
+              static fn($item) => isset($item['code']) ? trim((string) $item['code']) : null,
+              $coaData
+            ))
+          )
+        );
+      }
+    }
 
     $mappings = [
       'CF0A1B' => [
@@ -582,6 +600,17 @@ class CashflowCoaMappingSeeder extends Seeder
     ];
 
     foreach ($mappings as $cfCode => $coaCodes) {
+      if (is_array($allowedCoaCodes)) {
+        $coaCodes = array_values(array_filter(
+          $coaCodes,
+          static fn($code) => isset($allowedCoaCodes[$code])
+        ));
+      }
+
+      if (empty($coaCodes)) {
+        continue;
+      }
+
       $group = CashflowGroup::where('code', $cfCode)->first();
       if ($group) {
         Coa::whereIn('code', $coaCodes)->update([

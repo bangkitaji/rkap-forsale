@@ -56,7 +56,13 @@ class MasterDataSeeder extends Seeder
         $seedTable('activities');
         $seedTable('activity_coa');
 
-        // 3. Reset PostgreSQL sequences to avoid primary key out-of-sync unique constraint violations
+        // 3. Apply derived mappings after COA master is loaded.
+        $this->call([
+            CashflowCoaMappingSeeder::class,
+            DifferenceCoaMappingSeeder::class,
+        ]);
+
+        // 4. Reset PostgreSQL sequences to avoid primary key out-of-sync unique constraint violations
         if (DB::getDriverName() === 'pgsql') {
             $tables = ['report_groups', 'coa_groups', 'work_plans', 'coas', 'activities'];
             foreach ($tables as $table) {
