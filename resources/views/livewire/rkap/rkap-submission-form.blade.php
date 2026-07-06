@@ -3,98 +3,6 @@
   @work-plan-duplicate-rejected.window="toastMessage = 'Program Kerja ini sudah dipilih pada kartu lain. Silakan pilih Program Kerja yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
   @activity-duplicate-rejected.window="toastMessage = 'Kegiatan ini sudah dipilih di baris lain dalam Program Kerja yang sama. Silakan pilih kegiatan yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
   @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
-  <style>
-    .bg-group-alt {
-      background-color: #f8fafc !important;
-    }
-
-    .bg-group-alt td {
-      background-color: inherit !important;
-    }
-
-    .table-group-header {
-      font-weight: 600;
-    }
-
-    .activity-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .activity-card:hover {
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-      border-color: #cbd5e1;
-    }
-
-    /* Custom CSS Tooltip styling */
-    .has-tooltip {
-      position: relative;
-      cursor: help;
-    }
-
-    .custom-tooltip-content {
-      visibility: hidden;
-      width: 520px;
-      background-color: #2f3349;
-      color: #ffffff;
-      text-align: left;
-      border-radius: 6px;
-      padding: 10px;
-      position: absolute;
-      z-index: 1080;
-      top: 110%;
-      /* Position below the element */
-      bottom: auto;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      font-size: 0.72rem;
-      line-height: 1.4;
-      pointer-events: none;
-      /* Make sure it doesn't block mouse movements */
-      font-weight: normal;
-    }
-
-    .custom-tooltip-content::after {
-      content: "";
-      position: absolute;
-      bottom: 100%;
-      /* At the top of the tooltip */
-      top: auto;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: transparent transparent #2f3349 transparent;
-    }
-
-    .has-tooltip:hover .custom-tooltip-content {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .tooltip-align-right {
-      right: 0 !important;
-      left: auto !important;
-      transform: none !important;
-    }
-
-    .tooltip-align-right::after {
-      left: auto !important;
-      right: 15px !important;
-      margin-left: 0 !important;
-    }
-
-    .table-responsive,
-    .card,
-    .card-header {
-      overflow: visible !important;
-    }
-  </style>
   <div class="py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0">
@@ -110,7 +18,7 @@
   </div>
 
   {{-- Success/Notification Toast --}}
-  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+  <div class="toast-container position-fixed top-0 end-0 p-3 rkap-z-1090">
     <div x-show="showToast"
       x-transition:enter="transition ease-out duration-300"
       x-transition:enter-start="opacity-0 translate-y-2"
@@ -134,7 +42,7 @@
   </div>
   {{-- Error Toast --}}
   @if ($errors->any())
-  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;" wire:key="error-toast-container-{{ microtime(true) }}">
+  <div class="toast-container position-fixed top-0 end-0 p-3 rkap-z-1090" wire:key="error-toast-container-{{ microtime(true) }}">
     <div x-data="{ show: true }"
       x-show="show"
       x-init="setTimeout(() => show = false, 7000)"
@@ -193,19 +101,19 @@
       @if ($revisionReason)
       <div class="mb-3">
         <div class="fw-semibold text-danger mb-1"><i class="bx bx-comment-error me-1"></i>Alasan Pengembalian:</div>
-        <p class="mb-0 text-dark" style="white-space: pre-line;">{{ $revisionReason }}</p>
+        <p class="mb-0 text-dark rkap-preline">{{ $revisionReason }}</p>
       </div>
       @endif
       <div class="d-flex flex-wrap gap-3">
         @if ($rejectedCount > 0)
-        <div class="d-flex align-items-center gap-2 bg-danger bg-opacity-10 rounded px-3 py-2">
+        <div class="d-flex align-items-center gap-2 bg-danger bg-opacity-10 rounded px-3 py-2 border-start border-warning border-3">
           <i class="bx bx-x-circle text-danger"></i>
           <span class="small"><strong class="text-danger">{{ $rejectedCount }} kegiatan</strong> perlu diperbaiki —
             cek catatan revisi di tiap kegiatan.</span>
         </div>
         @endif
         @if ($approvedCount > 0)
-        <div class="d-flex align-items-center gap-2 bg-success bg-opacity-10 rounded px-3 py-2">
+        <div class="d-flex align-items-center gap-2 bg-success bg-opacity-10 rounded px-3 py-2 border-start border-success border-3">
           <i class="bx bx-check-circle text-success"></i>
           <span class="small"><strong class="text-success">{{ $approvedCount }} kegiatan</strong> sudah disetujui dan
             tidak dapat diubah.</span>
@@ -250,7 +158,7 @@
     <div class="card-header border-bottom">
       <div class="d-flex align-items-start gap-3">
         {{-- Program Kerja Dropdown --}}
-        <div class="d-flex flex-column gap-1" style="width: 50%; min-width: 250px;">
+        <div class="d-flex flex-column gap-1 rkap-min-width-panel">
           <div class="d-flex align-items-center gap-2">
             <i class="bx bx-list-ul text-primary flex-shrink-0"></i>
             <strong class="text-nowrap">Program Kerja {{ $wpIdx + 1 }}</strong>
@@ -291,8 +199,7 @@
             </select>
 
             {{-- Dropdown options --}}
-            <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-              style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+            <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
               @forelse($rowWorkPlanOptions as $wpo)
               <div
                 class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
@@ -340,20 +247,20 @@
                 ({{ $prevPeriod }})</div>
               <div class="row text-center">
                 <div class="col-4 border-end">
-                  <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                  <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                  <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                  <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                   </div>
                 </div>
                 <div class="col-4 border-end">
-                  <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                  <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                  <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                  <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                   </div>
                 </div>
                 <div class="col-4">
-                  <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                  <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                  <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                  <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                   </div>
                 </div>
@@ -442,8 +349,7 @@
               </select>
 
               {{-- Dropdown options --}}
-              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                 @forelse($activities as $a)
                 <div
                   class="px-3 py-2 cursor-pointer dropdown-item small {{ $act['activity_id'] == $a->id ? 'bg-primary text-white' : '' }}"
@@ -455,7 +361,7 @@
                                         ">
                   <div class="d-flex flex-column gap-1">
                     <span class="fw-semibold text-primary">{{ $a->code }}</span>
-                    <span class="text-secondary" style="font-size: 0.85rem;">{{ $a->title }}</span>
+                    <span class="text-secondary rkap-font-085">{{ $a->title }}</span>
                   </div>
                 </div>
                 @empty
@@ -494,12 +400,12 @@
               @php
               $pastPeriodTitle = null;
               if (!empty($act['past_period_id'])) {
-                  $selPp = $this->pastPeriods->firstWhere('id', $act['past_period_id']);
-                  $pastPeriodTitle = $selPp ? 'RKAP ' . $selPp->year . ' — ' . $selPp->title : null;
+              $selPp = $this->pastPeriods->firstWhere('id', $act['past_period_id']);
+              $pastPeriodTitle = $selPp ? 'RKAP ' . $selPp->year . ' — ' . $selPp->title : null;
               }
               @endphp
-              <div class="alert alert-warning d-flex align-items-center mt-2 py-2 px-3" style="font-size: 0.82rem; border-radius: 6px;">
-                <i class="bx bx-info-circle me-2 flex-shrink-0" style="font-size: 1rem;"></i>
+              <div class="alert alert-warning d-flex align-items-center mt-2 py-2 px-3 rkap-alert-warning">
+                <i class="bx bx-info-circle me-2 flex-shrink-0 rkap-font-1"></i>
                 <span>
                   Ini adalah anggaran rencana <strong>pembayaran kewajiban</strong>
                   @if($pastPeriodTitle) untuk <strong>{{ $pastPeriodTitle }}</strong>@endif.
@@ -518,43 +424,43 @@
                   <i class="bx bx-upload me-1"></i> Upload File Referensi
                 </button>
               </div>
-              
+
               @if (!empty($act['uploaded_files']))
               <div class="d-flex flex-column gap-1 mt-2">
                 @foreach ($act['uploaded_files'] as $fileIdx => $file)
                 @php
-                  $isViewable = in_array(strtolower($file['file_type'] ?? ''), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
+                $isViewable = in_array(strtolower($file['file_type'] ?? ''), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
                 @endphp
-                <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1" style="font-size: 0.8rem;" wire:key="file-item-{{ $wpIdx }}-{{ $actIdx }}-{{ $fileIdx }}">
-                  <div class="d-flex align-items-center gap-1 text-truncate" style="max-width: 85%;">
+                <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1 rkap-file-list-item" wire:key="file-item-{{ $wpIdx }}-{{ $actIdx }}-{{ $fileIdx }}">
+                  <div class="d-flex align-items-center gap-1 text-truncate rkap-file-name">
                     <i class="bx bx-file text-secondary flex-shrink-0"></i>
                     @if (isset($file['id']))
-                      @if ($isViewable)
-                        <a href="javascript:void(0)" class="text-truncate text-primary" data-bs-toggle="modal" data-bs-target="#viewFileModalForm-{{ $file['id'] }}">
-                          {{ $file['original_name'] }}
-                        </a>
-                      @else
-                        <a href="{{ route('rkap-files.download', $file['id']) }}" class="text-truncate text-primary" target="_blank">
-                          {{ $file['original_name'] }}
-                        </a>
-                      @endif
+                    @if ($isViewable)
+                    <a href="javascript:void(0)" class="text-truncate text-primary" data-bs-toggle="modal" data-bs-target="#viewFileModalForm-{{ $file['id'] }}">
+                      {{ $file['original_name'] }}
+                    </a>
                     @else
-                      <span class="text-truncate text-muted" title="Belum disimpan">{{ $file['original_name'] }} (baru)</span>
+                    <a href="{{ route('rkap-files.download', $file['id']) }}" class="text-truncate text-primary" target="_blank">
+                      {{ $file['original_name'] }}
+                    </a>
+                    @endif
+                    @else
+                    <span class="text-truncate text-muted" title="Belum disimpan">{{ $file['original_name'] }} (baru)</span>
                     @endif
                     <span class="text-muted flex-shrink-0 small">({{ number_format(($file['file_size'] ?? 0) / 1024, 1) }} KB)</span>
                   </div>
-                  
+
                   <div class="d-flex align-items-center gap-1 flex-shrink-0">
                     @if (!$isApproved)
-                    <button type="button" class="btn btn-link text-danger p-0 m-0 border-0" style="text-decoration:none;"
+                    <button type="button" class="btn btn-link text-danger p-0 m-0 border-0 rkap-no-text-decoration"
                       wire:click="deleteUploadedFile({{ $wpIdx }}, {{ $actIdx }}, {{ $fileIdx }})"
                       wire:confirm="Hapus file ini?">
-                      <i class="bx bx-trash" style="font-size:1.1rem;"></i>
+                      <i class="bx bx-trash rkap-font-1"></i>
                     </button>
                     @endif
                   </div>
                 </div>
-                
+
                 {{-- Modal inline view inside Form --}}
                 @if (isset($file['id']) && $isViewable)
                 <div class="modal fade" id="viewFileModalForm-{{ $file['id'] }}" tabindex="-1" aria-hidden="true" wire:key="view-file-modal-form-{{ $file['id'] }}">
@@ -566,9 +472,9 @@
                       </div>
                       <div class="modal-body p-0 text-center bg-light">
                         @if (strtolower($file['file_type']) === 'pdf')
-                          <iframe src="{{ route('rkap-files.view', $file['id']) }}" width="100%" height="650px" style="border:none;"></iframe>
+                        <iframe src="{{ route('rkap-files.view', $file['id']) }}" width="100%" height="650px" class="rkap-preview-frame"></iframe>
                         @else
-                          <img src="{{ route('rkap-files.view', $file['id']) }}" class="img-fluid p-3" style="max-height:75vh; object-fit:contain;" />
+                        <img src="{{ route('rkap-files.view', $file['id']) }}" class="img-fluid p-3 rkap-preview-image" />
                         @endif
                       </div>
                       <div class="modal-footer">
@@ -614,20 +520,20 @@
                 </div>
                 <div class="row text-center">
                   <div class="col-4 border-end">
-                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                    <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                    <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['budget'], 0, ',', '.') }}
                     </div>
                   </div>
                   <div class="col-4 border-end">
-                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                    <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                    <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['realization'], 0, ',', '.') }}
                     </div>
                   </div>
                   <div class="col-4">
-                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                    <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                    <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}
                     </div>
                   </div>
@@ -689,19 +595,19 @@
             }" @coa-dropdown-open.window="dropdownOpen = true"
           @coa-dropdown-close.window="dropdownOpen = false" @keydown.escape.window="closeModal()">
 
-          <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
+          <div class="table-responsive" :class="dropdownOpen ? 'rkap-overflow-visible' : ''">
             <table class="table table-sm table-bordered align-middle mb-2">
               <thead class="table-primary text-white fw-semibold">
                 <tr>
-                  <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span
+                  <th class="text-center align-middle rkap-w-30p">Uraian & Detail Belanja <span
                       class="text-warning">*</span></th>
-                  <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span>
+                  <th class="text-center align-middle rkap-w-10p">Vol <span class="text-warning">*</span>
                   </th>
-                  <th style="width:8%" class="text-center align-middle">Satuan</th>
-                  <th style="width:180px" class="text-center align-middle">Harga Satuan (Rp) <span
+                  <th class="text-center align-middle rkap-w-8p">Satuan</th>
+                  <th class="text-center align-middle rkap-w-180">Harga Satuan (Rp) <span
                       class="text-warning">*</span></th>
-                  <th style="width:160px" class="text-center align-middle">Total (Rp)</th>
-                  <th style="width:120px" class="text-center align-middle">Detail</th>
+                  <th class="text-center align-middle rkap-w-160">Total (Rp)</th>
+                  <th class="text-center align-middle rkap-w-120">Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -761,7 +667,7 @@
                               currentLabel: @js($searchLabel),
                           }"
                     x-effect="if (!open && search !== currentLabel) search = currentLabel"
-                    :style="open ? 'position: relative; z-index: 1060;' : ''"
+                    :class="open ? 'rkap-dropdown-open' : ''"
                     @click.outside="open = false; $dispatch('coa-dropdown-close')" class="border-bottom-0">
                     @php
                     $groupSubtotal = collect($group['items'])->sum(function ($info) {
@@ -816,9 +722,8 @@
                         : null;
                         $prevPeriod = $prevData['period'] ?? '-';
                         @endphp
-                        <span class="input-group-text px-2 fw-semibold text-nowrap has-tooltip"
-                          style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;">
-                          <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
+                        <span class="input-group-text px-2 fw-semibold text-nowrap has-tooltip rkap-coa-sum-chip">
+                          <i class="bx bx-sum me-1 rkap-coa-sum-icon"></i>
                           Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
                           <span class="custom-tooltip-content tooltip-align-right">
                             @if ($prevCoaData)
@@ -826,20 +731,20 @@
                               Periode Sebelumnya ({{ $prevPeriod }})</div>
                             <div class="row text-center">
                               <div class="col-4 border-end">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                                <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                                <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['budget'], 0, ',', '.') }}
                                 </div>
                               </div>
                               <div class="col-4 border-end">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                                <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                                <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['realization'] ?? 0, 0, ',', '.') }}
                                 </div>
                               </div>
                               <div class="col-4">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                                <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                                <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}
                                 </div>
                               </div>
@@ -865,8 +770,7 @@
                         @endforeach
                       </select>
                       <div x-show="open" x-cloak
-                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                        style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                         @foreach ($filteredCoasOrdered as $coa)
                         <div
                           class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
@@ -912,7 +816,7 @@
                       wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
                       placeholder="Detail Belanja / Ket..." @disabled($isApproved)>
                   </td>
-                  <td class="border-top-0" style="min-width: 120px;">
+                  <td class="border-top-0 rkap-min-w-120">
                     {{-- Vol 1 --}}
                     <input type="number"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity') is-invalid @enderror"
@@ -925,7 +829,7 @@
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity_2"
                       min="1" placeholder="Vol 2" @disabled($isApproved)>
                   </td>
-                  <td class="border-top-0" style="position: relative; min-width: 120px;">
+                  <td class="border-top-0 rkap-min-w-120 rkap-position-relative">
                     {{-- Satuan 1 --}}
                     <input type="text"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit') is-invalid @enderror"
@@ -940,7 +844,7 @@
                       list="satuan-options" placeholder="Satuan 2 (opsional)" autocomplete="off"
                       @disabled($isApproved)>
                   </td>
-                  <td class="border-top-0" style="min-width: 180px;">
+                  <td class="border-top-0 rkap-min-w-180">
                     <div x-data="{
                                 raw: {{ (int) ($bi['unit_price'] ?? 0) }},
                                 display: '',
@@ -967,7 +871,7 @@
                                 }
                             }" x-init="display = fmt(raw)">
                       <div class="input-group input-group-sm">
-                        <span class="input-group-text" style="font-size: 0.75rem;">Rp</span>
+                        <span class="input-group-text rkap-rp-chip">Rp</span>
                         <input type="text"
                           class="form-control form-control-sm text-end @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
                           :value="display" @input="onInput($event)" @blur="onBlur($event)"
@@ -1010,27 +914,26 @@
                     <div class="mt-1">
                       @if (!empty($selectedMonths))
                       @if (abs($monthlyRemainder) < 0.01)
-                        <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i
+                        <span class="badge bg-success rounded-pill rkap-font-06"><i
                           class="bx bx-check"></i> Dist</span>
                         @else
-                        <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Dist</span>
+                        <span class="badge bg-warning rounded-pill rkap-font-06">Dist</span>
                         @endif
                         @endif
                         @if (!empty($selectedCashOutMonths))
                         @if (abs($cashOutRemainder) < 0.01)
-                          <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i
+                          <span class="badge bg-success rounded-pill rkap-font-06"><i
                             class="bx bx-check"></i> Kas</span>
                           @else
-                          <span class="badge bg-warning rounded-pill" style="font-size:0.6rem;">Kas</span>
+                          <span class="badge bg-warning rounded-pill rkap-font-06">Kas</span>
                           @endif
                           @endif
                           @if (!empty($selectedRealizationMonths))
                           @if ($realizationAllocated > 0)
-                          <span class="badge bg-success rounded-pill" style="font-size:0.6rem;"><i
+                          <span class="badge bg-success rounded-pill rkap-font-06"><i
                               class="bx bx-trending-up"></i> Real</span>
                           @else
-                          <span class="badge bg-secondary rounded-pill"
-                            style="font-size:0.6rem;">Real</span>
+                          <span class="badge bg-secondary rounded-pill rkap-font-06">Real</span>
                           @endif
                           @endif
                     </div>
@@ -1065,17 +968,16 @@
           @endphp
           <div wire:key="modal-{{ $wpIdx }}-{{ $actIdx }}-{{ $biIdx }}"
             x-show="modalKey === '{{ $modalKey }}'" x-cloak
-            class="position-fixed top-0 start-0 w-100 h-100 overflow-y-auto py-3 px-2"
-            :class="modalKey === '{{ $modalKey }}' ? 'd-flex align-items-start justify-content-center' : 'd-none'"
-            style="z-index: 1080; background: rgba(0,0,0,0.5);">
+            class="position-fixed top-0 start-0 w-100 h-100 overflow-y-auto py-3 px-2 rkap-modal-overlay"
+            :class="modalKey === '{{ $modalKey }}' ? 'd-flex align-items-start justify-content-center' : 'd-none'">
             <div x-show="modalKey === '{{ $modalKey }}'"
               x-transition:enter="transition ease-out duration-200"
               x-transition:enter-start="opacity-0 translate-y-4"
               x-transition:enter-end="opacity-100 translate-y-0"
               x-transition:leave="transition ease-in duration-150"
               x-transition:leave-start="opacity-100 translate-y-0"
-              x-transition:leave-end="opacity-0 translate-y-4" class="bg-white rounded-3 shadow-lg"
-              style="width: 900px; max-width: 96vw; max-height: calc(100vh - 3rem); display: flex; flex-direction: column;"
+              x-transition:leave-end="opacity-0 translate-y-4"
+              class="bg-white rounded-3 shadow-lg rkap-modal-shell"
               @click.stop>
               {{-- Modal Header --}}
               <div
@@ -1091,7 +993,7 @@
                 </button>
               </div>
               {{-- Modal Body --}}
-              <div class="px-4 py-3" style="overflow-y: auto; max-height: calc(100vh - 12rem);">
+              <div class="px-4 py-3 rkap-modal-body-scroll">
                 <div class="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-4">
                   <span class="small fw-semibold">Total Item</span>
                   <span class="fw-bold fs-6">Rp {{ number_format($biTotal, 0, ',', '.') }}</span>
@@ -1129,8 +1031,7 @@
                     @foreach ($monthLabels as $monthNum => $monthLabel)
                     <button type="button"
                       wire:click="toggleMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                      class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
+                      class="btn btn-sm {{ in_array($monthNum, $selectedMonths) ? 'btn-primary' : 'btn-outline-secondary' }} rkap-month-btn"
                       @disabled($isApproved)>
                       {{ $monthLabel }}
                     </button>
@@ -1190,8 +1091,7 @@
                     @foreach ($monthLabels as $monthNum => $monthLabel)
                     <button type="button"
                       wire:click="toggleCashOutMonth({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }}, {{ $monthNum }})"
-                      class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }}"
-                      style="min-width: 52px; font-size: 0.75rem; padding: 0.2rem 0.4rem;"
+                      class="btn btn-sm {{ in_array($monthNum, $selectedCashOutMonths) ? 'btn-primary' : 'btn-outline-secondary' }} rkap-month-btn"
                       @disabled($isApproved)>
                       {{ $monthLabel }}
                     </button>
@@ -1221,21 +1121,21 @@
                 {{-- 4-column summary table --}}
                 @if (!empty($allMonths))
                 <div class="border rounded-2 table-responsive">
-                  <table class="table table-sm table-bordered mb-0" style="min-width: 750px;">
+                  <table class="table table-sm table-bordered mb-0 rkap-summary-table">
                     <thead class="table-primary">
                       <tr>
-                        <th class="text-center" style="width:90px;">Bulan</th>
+                        <th class="text-center w-80p">Bulan</th>
                         <th class="text-end">
                           Distribusi Penganggaran (Rp)
-                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['coa_group_name'] ?: '-' }})</div>
+                          <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['coa_group_name'] ?: '-' }})</div>
                         </th>
                         <th class="text-end">
                           Rencana Pendanaan (Rp)
-                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['cashflow_group_name'] ?: '-' }})</div>
+                          <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['cashflow_group_name'] ?: '-' }})</div>
                         </th>
                         <th class="text-end">
                           Selisih (Rp)
-                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $bi['difference_group_name'] ?: '-' }})</div>
+                          <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['difference_group_name'] ?: '-' }})</div>
                         </th>
                       </tr>
                     </thead>
@@ -1256,12 +1156,11 @@
                         <td class="text-end align-middle">
                           @if ($isDistribMonth)
                           <div class="input-group input-group-sm justify-content-end">
-                            <span class="input-group-text"
-                              style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
-                            <input type="number" class="form-control form-control-sm text-end"
+                            <span class="input-group-text rkap-rp-chip">Rp</span>
+                            <input type="number" class="form-control form-control-sm text-end rkap-rp-input"
                               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
                               min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
+                              @disabled($isApproved)>
                           </div>
                           @else
                           <span class="text-muted small">—</span>
@@ -1270,12 +1169,11 @@
                         <td class="text-end align-middle">
                           @if ($isCashOutMonth)
                           <div class="input-group input-group-sm justify-content-end">
-                            <span class="input-group-text"
-                              style="font-size:0.7rem;padding:0.15rem 0.4rem;">Rp</span>
-                            <input type="number" class="form-control form-control-sm text-end"
+                            <span class="input-group-text rkap-rp-chip">Rp</span>
+                            <input type="number" class="form-control form-control-sm text-end rkap-rp-input"
                               wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
                               min="0" step="1000" placeholder="0"
-                              style="font-size:0.8rem;max-width:180px;" @disabled($isApproved)>
+                              @disabled($isApproved)>
                           </div>
                           @else
                           <span class="text-muted small">—</span>

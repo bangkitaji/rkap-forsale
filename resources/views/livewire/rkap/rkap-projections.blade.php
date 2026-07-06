@@ -8,21 +8,6 @@
     showToast = true;
     setTimeout(() => showToast = false, 5000);
 " x-init="if (showToast) { setTimeout(() => showToast = false, 5000); }">
-    <style>
-        .activity-section {
-            background-color: #f8fafc;
-            border-left: 3px solid #666cff;
-        }
-
-        .table-responsive {
-            overflow: visible !important;
-        }
-
-        .form-control-projection {
-            min-width: 140px;
-        }
-    </style>
-
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Input Proyeksi</h4>
         <div class="d-flex align-items-center gap-2">
@@ -40,7 +25,7 @@
     </div>
 
     {{-- Toast Notification --}}
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+    <div class="toast-container position-fixed top-0 end-0 p-3 rkap-z-1090">
         <div x-show="showToast"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-2"
@@ -53,6 +38,7 @@
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
+            x-cloak
             style="display: none;">
             <div class="toast-header text-white" :class="'bg-' + toastType">
                 <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-x-circle'"></i>
@@ -99,9 +85,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -163,9 +148,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -227,9 +211,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>

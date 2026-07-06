@@ -6,6 +6,7 @@
             cursor: help;
             display: inline-block;
         }
+
         .custom-tooltip-content {
             visibility: hidden;
             width: 520px;
@@ -16,22 +17,26 @@
             padding: 10px;
             position: absolute;
             z-index: 1080;
-            top: 110%; /* Position below the element */
+            top: 110%;
+            /* Position below the element */
             bottom: auto;
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             font-size: 0.72rem;
             line-height: 1.4;
-            pointer-events: none; /* Make sure it doesn't block mouse movements */
+            pointer-events: none;
+            /* Make sure it doesn't block mouse movements */
             font-weight: normal;
         }
+
         .custom-tooltip-content::after {
             content: "";
             position: absolute;
-            bottom: 100%; /* At the top of the tooltip */
+            bottom: 100%;
+            /* At the top of the tooltip */
             top: auto;
             left: 50%;
             margin-left: -5px;
@@ -39,21 +44,27 @@
             border-style: solid;
             border-color: transparent transparent #2f3349 transparent;
         }
+
         .has-tooltip:hover .custom-tooltip-content {
             visibility: visible;
             opacity: 1;
         }
+
         .tooltip-align-right {
             right: 0 !important;
             left: auto !important;
             transform: none !important;
         }
+
         .tooltip-align-right::after {
             left: auto !important;
             right: 15px !important;
             margin-left: 0 !important;
         }
-        .table-responsive, .card, .card-header {
+
+        .table-responsive,
+        .card,
+        .card-header {
             overflow: visible !important;
         }
     </style>
@@ -206,9 +217,9 @@
             <div class="fw-semibold mb-1">Belum ada data kompilasi</div>
             <small>
                 @if(!$filterPeriod)
-                    Pilih periode untuk melihat kompilasi pengajuan RKAP.
+                Pilih periode untuk melihat kompilasi pengajuan RKAP.
                 @else
-                    Tidak ada pengajuan pada periode ini dalam cakupan Anda.
+                Tidak ada pengajuan pada periode ini dalam cakupan Anda.
                 @endif
             </small>
         </div>
@@ -219,19 +230,19 @@
     @php $dirLoop = 0; @endphp
     @foreach($grouped as $dirName => $deptGroups)
     @php
-        $dirTotal   = 0;
-        $dirBureaus = 0;
-        foreach ($deptGroups as $deptSubmissions) {
-            $dirTotal   += $deptSubmissions->sum('total_budget');
-            $dirBureaus += $deptSubmissions->count();
-        }
-        $collapseId = 'dir-collapse-' . $dirLoop++;
+    $dirTotal = 0;
+    $dirBureaus = 0;
+    foreach ($deptGroups as $deptSubmissions) {
+    $dirTotal += $deptSubmissions->sum('total_budget');
+    $dirBureaus += $deptSubmissions->count();
+    }
+    $collapseId = 'dir-collapse-' . $dirLoop++;
     @endphp
 
     <div class="card mb-3">
         {{-- Directorate accordion header --}}
-        <div class="card-header py-3 d-flex align-items-center justify-content-between"
-             style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="true">
+        <div class="card-header py-3 d-flex align-items-center justify-content-between rkap-cursor-pointer"
+            data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="true">
             <div class="d-flex align-items-center gap-2">
                 <i class="bx bx-chevron-down fs-5 text-primary transition-transform"></i>
                 <div>
@@ -245,8 +256,52 @@
                     Rp {{ number_format($dirTotal, 0, ',', '.') }}
                     <span class="custom-tooltip-content tooltip-align-right">
                         @if(isset($prevDataMap['directorates'][$dirName]))
+                        @php
+                        $prev = $prevDataMap['directorates'][$dirName];
+                        @endphp
+                        <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                        <div class="row text-center">
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small rkap-text-white-50 rkap-font-065">Anggaran</div>
+                                <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                            </div>
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small rkap-text-white-50 rkap-font-065">Realisasi</div>
+                                <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-white-50 small rkap-text-white-50 rkap-font-065">Proyeksi</div>
+                                <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
+                        @else
+                        <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        @endif
+                    </span>
+                </span>
+                <div class="text-muted small">Total Direktorat</div>
+            </div>
+        </div>
+
+        <div class="collapse show" id="{{ $collapseId }}">
+            @foreach($deptGroups as $deptName => $deptSubmissions)
+            @php
+            $deptTotal = $deptSubmissions->sum('total_budget');
+            @endphp
+            <div class="border-top">
+                {{-- Department sub-header --}}
+                <div class="px-4 py-2 bg-lighter d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bx bx-layer text-secondary me-1"></i>
+                        <span class="fw-semibold text-secondary">{{ $deptName }}</span>
+                        <span class="badge bg-label-secondary ms-2">{{ $deptSubmissions->count() }} Biro</span>
+                    </div>
+                    <span class="has-tooltip fw-semibold text-secondary small">
+                        Rp {{ number_format($deptTotal, 0, ',', '.') }}
+                        <span class="custom-tooltip-content tooltip-align-right">
+                            @if(isset($prevDataMap['departments'][$deptName]))
                             @php
-                                $prev = $prevDataMap['directorates'][$dirName];
+                            $prev = $prevDataMap['departments'][$deptName];
                             @endphp
                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
                             <div class="row text-center">
@@ -263,52 +318,8 @@
                                     <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
                                 </div>
                             </div>
-                        @else
-                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
-                        @endif
-                    </span>
-                </span>
-                <div class="text-muted small">Total Direktorat</div>
-            </div>
-        </div>
-
-        <div class="collapse show" id="{{ $collapseId }}">
-            @foreach($deptGroups as $deptName => $deptSubmissions)
-            @php
-                $deptTotal = $deptSubmissions->sum('total_budget');
-            @endphp
-            <div class="border-top">
-                {{-- Department sub-header --}}
-                <div class="px-4 py-2 bg-lighter d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="bx bx-layer text-secondary me-1"></i>
-                        <span class="fw-semibold text-secondary">{{ $deptName }}</span>
-                        <span class="badge bg-label-secondary ms-2">{{ $deptSubmissions->count() }} Biro</span>
-                    </div>
-                    <span class="has-tooltip fw-semibold text-secondary small">
-                        Rp {{ number_format($deptTotal, 0, ',', '.') }}
-                        <span class="custom-tooltip-content tooltip-align-right">
-                            @if(isset($prevDataMap['departments'][$deptName]))
-                                @php
-                                    $prev = $prevDataMap['departments'][$deptName];
-                                @endphp
-                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
-                                <div class="row text-center">
-                                    <div class="col-4 border-end">
-                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
-                                    </div>
-                                    <div class="col-4 border-end">
-                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
-                                    </div>
-                                </div>
                             @else
-                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
                             @endif
                         </span>
                     </span>
@@ -319,7 +330,7 @@
                     <table class="table table-hover table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th style="width:30px" class="text-center">#</th>
+                                <th class="text-center rkap-w-30">#</th>
                                 <th>Biro</th>
                                 <th class="text-center">Periode</th>
                                 <th class="text-center">Versi</th>
@@ -353,26 +364,26 @@
                                         Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
                                         <span class="custom-tooltip-content tooltip-align-right">
                                             @if(isset($prevDataMap['submissions'][$submission->id]))
-                                                @php
-                                                    $prev = $prevDataMap['submissions'][$submission->id];
-                                                @endphp
-                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
-                                                <div class="row text-center">
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
-                                                    </div>
+                                            @php
+                                            $prev = $prevDataMap['submissions'][$submission->id];
+                                            @endphp
+                                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                                            <div class="row text-center">
+                                                <div class="col-4 border-end">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                                 </div>
+                                                <div class="col-4 border-end">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                </div>
+                                            </div>
                                             @else
-                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
                                             @endif
                                         </span>
                                     </span>
@@ -384,8 +395,8 @@
                                 </td>
                                 <td class="text-center">
                                     <a href="{{ route('rkap-submissions-review', $submission->id) }}"
-                                       class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
-                                       title="Lihat Detail">
+                                        class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
+                                        title="Lihat Detail">
                                         <i class="bx bx-show"></i>
                                     </a>
                                 </td>
@@ -401,26 +412,26 @@
                                         Rp {{ number_format($deptTotal, 0, ',', '.') }}
                                         <span class="custom-tooltip-content tooltip-align-right">
                                             @if(isset($prevDataMap['departments'][$deptName]))
-                                                @php
-                                                    $prev = $prevDataMap['departments'][$deptName];
-                                                @endphp
-                                                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
-                                                <div class="row text-center">
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                        <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4 border-end">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                        <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                        <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
-                                                    </div>
+                                            @php
+                                            $prev = $prevDataMap['departments'][$deptName];
+                                            @endphp
+                                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                                            <div class="row text-center">
+                                                <div class="col-4 border-end">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                                 </div>
+                                                <div class="col-4 border-end">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                </div>
+                                            </div>
                                             @else
-                                                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
                                             @endif
                                         </span>
                                     </span>
@@ -442,26 +453,26 @@
                     Rp {{ number_format($dirTotal, 0, ',', '.') }}
                     <span class="custom-tooltip-content tooltip-align-right text-dark">
                         @if(isset($prevDataMap['directorates'][$dirName]))
-                            @php
-                                $prev = $prevDataMap['directorates'][$dirName];
-                            @endphp
-                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
-                            <div class="row text-center">
-                                <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
-                                </div>
-                                <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
-                                </div>
+                        @php
+                        $prev = $prevDataMap['directorates'][$dirName];
+                        @endphp
+                        <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
+                        <div class="row text-center">
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                             </div>
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
                         @else
-                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
                         @endif
                     </span>
                 </span>
@@ -487,28 +498,28 @@
                     </div>
                 </div>
             </div>
-             <div class="text-end">
+            <div class="text-end">
                 <span class="has-tooltip fw-bold fs-4 text-white">
                     Rp {{ number_format($grandTotal, 0, ',', '.') }}
                     <span class="custom-tooltip-content tooltip-align-right text-dark">
                         @if($prevDataMap['grand_total']['period_title'])
-                            <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevDataMap['grand_total']['period_title'] }})</div>
-                            <div class="row text-center">
-                                <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['budget'], 0, ',', '.') }}</div>
-                                </div>
-                                <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['realization'], 0, ',', '.') }}</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['projection'] ?? 0, 0, ',', '.') }}</div>
-                                </div>
+                        <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevDataMap['grand_total']['period_title'] }})</div>
+                        <div class="row text-center">
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
+                                <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['budget'], 0, ',', '.') }}</div>
                             </div>
+                            <div class="col-4 border-end">
+                                <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
+                                <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['realization'], 0, ',', '.') }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
+                                <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['projection'] ?? 0, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
                         @else
-                            <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                        <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
                         @endif
                     </span>
                 </span>

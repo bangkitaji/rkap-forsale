@@ -66,16 +66,14 @@
 
   @if ($finalizedPeriods->isNotEmpty())
   <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
-    <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1"
-      style="font-size: 0.9rem;">
+    <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1 rkap-font-09">
       <i class="bx bx-calendar text-primary fs-4"></i>
       <span>Pilih Periode RKAP:</span>
     </label>
     <form action="{{ route('analytics-report') }}" method="GET" id="periodForm" class="m-0">
       <select name="period_id" id="periodSelect"
-        class="form-select form-select-sm border-0 fw-semibold text-primary cursor-pointer focus-ring-none"
-        onchange="this.form.submit()"
-        style="font-size: 0.9rem; padding-right: 2.5rem; background-position: right 0.75rem center;">
+        class="form-select form-select-sm border-0 fw-semibold text-primary cursor-pointer focus-ring-none rkap-font-09"
+        onchange="this.form.submit()">
         @if ($activePeriod && !$finalizedPeriods->contains('id', $activePeriod->id))
         <option value="" disabled selected>
           -- Pilih Periode Finalized (Saat ini: {{ $activePeriod->title }}) --
@@ -145,22 +143,22 @@
           </div>
           <!-- EBITDA Card -->
           <div class="col-sm-6 col-lg-3">
-            <div class="card border-0 shadow-none h-100" style="background-color: rgba(105, 108, 255, 0.08);">
+            <div class="card border-0 shadow-none h-100 rkap-bg-primary-soft">
               <div class="card-body p-3">
                 <div class="d-flex align-items-center mb-2">
                   <div class="avatar avatar-sm me-2">
-                    <span class="avatar-initial rounded" style="background-color: #696cff; color: #fff;"><i class="bx bx-bar-chart-alt-2 fs-4"></i></span>
+                    <span class="avatar-initial rounded rkap-bg-primary-solid"><i class="bx bx-bar-chart-alt-2 fs-4"></i></span>
                   </div>
-                  <span class="fw-semibold small" style="color: #696cff;">EBITDA</span>
+                  <span class="fw-semibold small rkap-text-primary-solid">EBITDA</span>
                 </div>
-                <h5 class="card-title mb-1 fw-bold" style="color: #696cff;">Rp {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}</h5>
+                <h5 class="card-title mb-1 fw-bold rkap-text-primary-solid">Rp {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}</h5>
                 <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['ebitda']['realization'] ?? 0, 0, ',', '.') }}</small>
               </div>
             </div>
           </div>
           <!-- Net Profit Card -->
           <div class="col-sm-6 col-lg-3">
-            <div class="card text-white border-0 shadow-none h-100" style="background: linear-gradient(135deg, #28c76f, #1f9d55) !important;">
+            <div class="card text-white border-0 shadow-none h-100 rkap-bg-gradient-success">
               <div class="card-body p-3">
                 <div class="d-flex align-items-center mb-2">
                   <div class="avatar avatar-sm me-2">
@@ -169,7 +167,7 @@
                   <span class="fw-semibold text-white small">Net Profit</span>
                 </div>
                 <h5 class="card-title mb-1 fw-bold text-white">Rp {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
-                <small class="text-white opacity-75 d-block">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                <small class="text-white rkap-text-white-80 d-block">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
               </div>
             </div>
           </div>
@@ -258,17 +256,17 @@
               <!-- Row 5: Laba Usaha -->
               <div class="d-flex align-items-center justify-content-between bg-lighter p-3 rounded">
                 <div class="d-flex align-items-center">
-                  <div class="badge bg-label-info p-2 rounded me-3" style="background-color: rgba(3, 195, 236, 0.16) !important; color: #03c3ec !important;">
+                  <div class="badge bg-label-info p-2 rounded me-3 rkap-bg-info-soft rkap-text-info-solid">
                     <i class="bx bx-line-chart fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Laba (Rugi) Usaha</h6>
+                    <h6 class="mb-0 fw-bold text-info rkap-text-info-solid">Laba (Rugi) Usaha</h6>
                     <small class="text-muted">Operating Profit</small>
                   </div>
                 </div>
                 <div class="text-end">
-                  <h6 class="mb-0 fw-bold text-info" style="color: #03c3ec !important;">Rp {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
-                  <small class="text-info fw-medium" style="color: #03c3ec !important;">Real: Rp {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
+                  <h6 class="mb-0 fw-bold text-info rkap-text-info-solid">Rp {{ number_format($plSummary['operating_profit']['budget'] ?? 0, 0, ',', '.') }}</h6>
+                  <small class="text-info fw-medium rkap-text-info-solid">Real: Rp {{ number_format($plSummary['operating_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
                 </div>
               </div>
 
@@ -356,7 +354,7 @@
           <tbody>
             @foreach ($plGroups as $groupKey => $group)
             <!-- Group Header (Bold, Uppercase) -->
-            <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+            <tr class="table-light fw-bold text-uppercase rkap-ls-05">
               <td colspan="5">
                 <i class="bx bx-folder me-2 text-primary"></i>{{ $group['label'] }}
               </td>
@@ -377,13 +375,12 @@
             @endphp
             <tr>
               <td class="ps-4">
-                <i class="bx bxs-circle text-{{ $item['color'] }} me-2"
-                  style="font-size: 8px; vertical-align: middle;"></i>
+                <i class="bx bxs-circle text-{{ $item['color'] }} me-2 rkap-font-05 rkap-v-align-middle"></i>
                 <a href="#" class="coa-group-link text-decoration-none fw-medium"
                   data-coa-group-id="{{ $item['id'] }}" data-coa-group-name="{{ $item['label'] }}"
                   data-period-id="{{ $activePeriod->id }}">
                   {{ $item['label'] }}
-                  <i class="bx bx-info-circle ms-1 text-muted" style="font-size: 11px;"></i>
+                  <i class="bx bx-info-circle ms-1 text-muted rkap-font-068"></i>
                 </a>
               </td>
               <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
@@ -501,19 +498,19 @@
             $npVariance = $npProj - $npBudget;
             @endphp
             <tr class="table-success fw-bold border-top border-2">
-              <td class="text-success" style="font-size: 1.1rem;">
+              <td class="text-success rkap-font-11">
                 <i class="bx bx-money me-2"></i>{{ $np['label'] }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
+              <td class="text-end font-monospace rkap-font-11">Rp
                 {{ number_format($npBudget, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
+              <td class="text-end font-monospace rkap-font-11">Rp
                 {{ number_format($npReal, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.1rem;">Rp
+              <td class="text-end font-monospace rkap-font-11">Rp
                 {{ number_format($npProj, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.1rem;">
+              <td class="text-end font-monospace rkap-font-11">
                 @if ($npVariance > 0)
                 <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
                   {{ number_format($npVariance, 0, ',', '.') }}</span>
@@ -534,20 +531,20 @@
             $ebProj = $eb['projection'];
             $ebVariance = $ebProj - $ebBudget;
             @endphp
-            <tr class="fw-bold border-top" style="background-color: rgba(105, 108, 255, 0.06);">
-              <td style="color: #696cff; font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+            <tr class="fw-bold border-top rkap-bg-primary-lighter">
+              <td class="rkap-text-primary-solid rkap-font-105 rkap-border-dashed-primary">
                 <i class="bx bx-bar-chart-alt-2 me-2"></i>{{ $eb['label'] }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
                 {{ number_format($ebBudget, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
                 {{ number_format($ebReal, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">Rp
+              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
                 {{ number_format($ebProj, 0, ',', '.') }}
               </td>
-              <td class="text-end font-monospace" style="font-size: 1.05rem; border-top: 2px dashed rgba(105, 108, 255, 0.3);">
+              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">
                 @if ($ebVariance > 0)
                 <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
                   {{ number_format($ebVariance, 0, ',', '.') }}</span>
@@ -581,11 +578,10 @@
   aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header d-flex align-items-center text-white" style="background-color: #960b10ff !important;">
-        <h5 class="modal-title d-flex align-items-center text-white mb-4" id="coaGroupDetailModalLabel"
-          style="color: #ffffff !important;">
-          <i class="bx bx-detail me-2 fs-4 text-white" style="color: #ffffff !important;"></i>
-          <span id="coaGroupDetailTitle" class="text-white" style="color: #ffffff !important;">Detail COA</span>
+      <div class="modal-header d-flex align-items-center text-white rkap-bg-kcic-red">
+        <h5 class="modal-title d-flex align-items-center text-white mb-4 rkap-text-white" id="coaGroupDetailModalLabel">
+          <i class="bx bx-detail me-2 fs-4 text-white rkap-text-white"></i>
+          <span id="coaGroupDetailTitle" class="text-white rkap-text-white">Detail COA</span>
         </h5>
         <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal"
           aria-label="Tutup"></button>
@@ -600,14 +596,14 @@
           <i class="bx bx-error-circle me-1"></i> Gagal memuat data. Silakan coba lagi.
         </div>
         <div id="coaGroupDetailTableWrap" class="d-none">
-          <table class="table table-hover table-sm table-bordered mb-0 align-middle" style="font-size: 0.75rem;">
+          <table class="table table-hover table-sm table-bordered mb-0 align-middle rkap-font-075">
             <thead class="table-primary">
               <tr>
-                <th class="ps-3" style="min-width:200px;">COA</th>
-                <th style="min-width:220px;">Kegiatan</th>
-                <th class="text-end text-nowrap" style="min-width:140px;">Anggaran</th>
-                <th class="text-end text-nowrap" style="min-width:140px;">Realisasi YTD</th>
-                <th class="text-end text-nowrap" style="min-width:140px;">Proyeksi</th>
+                <th class="ps-3 rkap-min-w-220">COA</th>
+                <th class="rkap-min-w-220">Kegiatan</th>
+                <th class="text-end text-nowrap rkap-min-w-140">Anggaran</th>
+                <th class="text-end text-nowrap rkap-min-w-140">Realisasi YTD</th>
+                <th class="text-end text-nowrap rkap-min-w-140">Proyeksi</th>
               </tr>
             </thead>
             <tbody id="coaGroupDetailTbody"></tbody>

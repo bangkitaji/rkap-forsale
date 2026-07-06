@@ -1,96 +1,713 @@
 // =====================================================================
 // KCIC / WHOOSH Custom Global Styles
-// Matches https://ticket.kcic.co.id brand identity
-// Primary: #960b10ff (KCIC Red)
-// Sidebar/Dark: #1a1f5e (KCIC Deep Navy Blue)
 // =====================================================================
 
-// ─── CSS Variable Overrides ───────────────────────────────────────────
 :root {
-  // Primary KCIC Red
   --bs-primary: #960b10ff;
   --bs-primary-rgb: 237, 28, 36;
-
-  // Derived primary subtones
+  --bs-custom-link-color: #960b10ff;
   --bs-primary-bg-subtle: #fde8e9;
   --bs-primary-border-subtle: #f9b4b7;
-
-  // Dark (used in sidebar, .bg-dark etc.) → KCIC Navy
   --bs-dark: #1a1f5e;
   --bs-dark-rgb: 26, 31, 94;
 }
 
-// ─── Sidebar / Vertical Menu overrides removed for white theme ───────────
-
-// ─── Navbar top bar ──────────────────────────────────────────────────
-// Keep the navbar white/paper, matching ticket.kcic.co.id
-
-// ─── Buttons – primary KCIC red ──────────────────────────────────────
+// --- Buttons ---
 .btn-primary {
   background-color: #960b10ff !important;
   border-color: #960b10ff !important;
   color: #fff !important;
-}
-
-.btn-primary:hover,
-.btn-primary:focus,
-.btn-primary:active {
-  background-color: #c7161c !important;
-  border-color: #c7161c !important;
-  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(237, 28, 36, 0.35) !important;
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: #c7161c !important;
+    border-color: #c7161c !important;
+    color: #fff !important;
+  }
 }
 
 .btn-outline-primary {
   color: #960b10ff !important;
   border-color: #960b10ff !important;
+  &:hover {
+    background-color: #960b10ff !important;
+    color: #fff !important;
+  }
 }
 
-.btn-outline-primary:hover {
+.btn-label-primary {
+  color: #960b10ff !important;
+  border-color: rgba(237, 28, 36, 0.2) !important;
+  background-color: rgba(237, 28, 36, 0.12) !important;
+}
+
+// --- Global Overrides ---
+.bg-primary {
   background-color: #960b10ff !important;
-  color: #fff !important;
 }
-
-// ─── Badge label-primary (light tint) ────────────────────────────────
 .bg-label-primary {
   background-color: rgba(237, 28, 36, 0.16) !important;
   color: #960b10ff !important;
 }
-
-// ─── Nav tabs active underline ────────────────────────────────────────
-.nav-tabs .nav-link.active,
-.nav-tabs .nav-link:hover {
-  border-bottom-color: #960b10ff !important;
+.text-primary {
   color: #960b10ff !important;
 }
+.border-primary {
+  border-color: #960b10ff !important;
+}
 
-// ─── Form controls focus ring ─────────────────────────────────────────
+.nav-tabs .nav-link {
+  &.active,
+  &:hover {
+    border-bottom-color: #960b10ff !important;
+    color: #960b10ff !important;
+  }
+}
+
 .form-control:focus,
 .form-select:focus {
   border-color: #960b10ff !important;
   box-shadow: 0 0.125rem 0.25rem 0 rgba(237, 28, 36, 0.4) !important;
 }
 
-// ─── Checkbox / radio checked color ──────────────────────────────────
 .form-check-input:checked {
   background-color: #960b10ff !important;
   border-color: #960b10ff !important;
 }
 
-// ─── Pagination active ────────────────────────────────────────────────
 .page-item.active .page-link {
   background-color: #960b10ff !important;
   border-color: #960b10ff !important;
 }
 
-// ─── Links ───────────────────────────────────────────────────────────
-a {
-  color: #960b10ff;
-}
-a:hover {
-  color: #c7161c;
+.progress-bar {
+  background-color: #960b10ff !important;
 }
 
-// ─── Mobile menu overlay / hamburger ────────────────────────────────
-.layout-menu-toggle .bx {
+a {
   color: #960b10ff;
+  &:hover {
+    color: #c7161c;
+  }
+}
+
+// =====================================================================
+// RKAP Project Utilities
+// =====================================================================
+
+// --- Sizing & Spacing ---
+.w-8p {
+  width: 8% !important;
+}
+.w-10p {
+  width: 10% !important;
+}
+.w-12p {
+  width: 12% !important;
+}
+.w-14p {
+  width: 14% !important;
+}
+.w-15p {
+  width: 15% !important;
+}
+.w-20p {
+  width: 20% !important;
+}
+.w-25p {
+  width: 25% !important;
+}
+.w-30p {
+  width: 30% !important;
+}
+.w-35p {
+  width: 35% !important;
+}
+.w-40p {
+  width: 40% !important;
+}
+.w-50p {
+  width: 50% !important;
+}
+.w-60p {
+  width: 60% !important;
+}
+.w-70p {
+  width: 70% !important;
+}
+.w-80p {
+  width: 80% !important;
+}
+
+.rkap-w-8p {
+  width: 8% !important;
+}
+.rkap-w-10p {
+  width: 10% !important;
+}
+.rkap-w-30 {
+  width: 30px !important;
+}
+.rkap-w-30p {
+  width: 30% !important;
+}
+.rkap-w-90 {
+  width: 90px !important;
+}
+.rkap-w-120 {
+  width: 120px !important;
+}
+.rkap-w-160 {
+  width: 160px !important;
+}
+.rkap-w-180 {
+  width: 180px !important;
+}
+
+.rkap-min-w-80 {
+  min-width: 80px !important;
+}
+.rkap-min-w-120 {
+  min-width: 120px !important;
+}
+.rkap-min-w-140 {
+  min-width: 140px !important;
+}
+.rkap-min-w-180 {
+  min-width: 180px !important;
+}
+.rkap-min-w-220 {
+  min-width: 220px !important;
+}
+.rkap-mw-750 {
+  min-width: 750px !important;
+}
+
+.rkap-h-6 {
+  height: 6px !important;
+}
+.rkap-h-8 {
+  height: 8px !important;
+}
+.rkap-h-12 {
+  height: 12px !important;
+}
+
+.rkap-lh-12 {
+  line-height: 1.2 !important;
+}
+.rkap-opacity-85 {
+  opacity: 0.85 !important;
+}
+.rkap-preline {
+  white-space: pre-line !important;
+}
+.rkap-ws-pre-line {
+  white-space: pre-line !important;
+}
+
+// --- Font Sizes ---
+.rkap-font-1 {
+  font-size: 1rem !important;
+}
+.rkap-font-085 {
+  font-size: 0.85rem !important;
+}
+.rkap-font-082 {
+  font-size: 0.82rem !important;
+}
+.rkap-font-08 {
+  font-size: 0.8rem !important;
+}
+.rkap-font-078 {
+  font-size: 0.78rem !important;
+}
+.rkap-font-075 {
+  font-size: 0.75rem !important;
+}
+.rkap-font-072 {
+  font-size: 0.72rem !important;
+}
+.rkap-font-07 {
+  font-size: 0.7rem !important;
+}
+.rkap-font-068 {
+  font-size: 0.68rem !important;
+}
+.rkap-font-065 {
+  font-size: 0.65rem !important;
+}
+.rkap-font-06 {
+  font-size: 0.6rem !important;
+}
+.rkap-font-058 {
+  font-size: 0.58rem !important;
+}
+.rkap-font-052 {
+  font-size: 0.52rem !important;
+}
+.rkap-font-05 {
+  font-size: 0.5rem !important;
+}
+
+// --- Colors & Backgrounds ---
+.bg-lighter {
+  background-color: #f8fafc !important;
+}
+.bg-group-alt {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+// --- Display & Layout ---
+.rkap-v-align-middle {
+  vertical-align: middle !important;
+}
+.rkap-overflow-visible {
+  overflow: visible !important;
+}
+.rkap-z-2 {
+  z-index: 2 !important;
+}
+.rkap-z-1060 {
+  z-index: 1060 !important;
+}
+.rkap-z-1070 {
+  z-index: 1070 !important;
+}
+.rkap-z-1080 {
+  z-index: 1080 !important;
+}
+.rkap-z-1090 {
+  z-index: 1090 !important;
+}
+
+.rkap-dropdown-scroll {
+  position: absolute;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.rkap-timeline-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+// ─── Component Styles ───────────────────────────────────────────────
+
+// -- ToolTip System --
+.has-tooltip {
+  position: relative;
+  cursor: help;
+  &:hover .custom-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.custom-tooltip-content {
+  visibility: hidden;
+  width: 520px;
+  background-color: #2f3349;
+  color: #ffffff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 10px;
+  position: absolute;
+  z-index: 1080;
+  top: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  pointer-events: none;
+  font-weight: normal;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #2f3349 transparent;
+  }
+
+  &.tooltip-align-right {
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    &::after {
+      left: auto !important;
+      right: 15px !important;
+      margin-left: 0 !important;
+    }
+  }
+}
+
+.rkap-tooltip-stat-label {
+  font-size: 0.65rem !important;
+}
+.rkap-tooltip-stat-value {
+  font-size: 0.75rem !important;
+}
+
+// -- Cards --
+.rkap-activity-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.05),
+      0 2px 4px -2px rgb(0 0 0 / 0.05);
+    border-color: #cbd5e1;
+  }
+}
+
+.rkap-virtual-program-card {
+  border-left-color: #ff3e1d !important;
+  background-color: #fff5f5 !important;
+}
+
+// -- Sections --
+.rkap-activity-section {
+  background-color: #f8fafc;
+  border-left: 3px solid #666cff !important;
+}
+
+// -- Images & Modals --
+.rkap-img-h75-contain {
+  max-height: 75vh !important;
+  object-fit: contain !important;
+}
+
+.rkap-preview-frame {
+  border: none;
+  width: 100%;
+  height: 650px;
+}
+.rkap-preview-image {
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+.rkap-modal-shell {
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.rkap-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 1070 !important;
+}
+
+.rkap-modal-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+}
+
+// -- Tables & Forms --
+.rkap-summary-table {
+  font-size: 0.82rem;
+  min-width: 750px;
+}
+
+.rkap-summary-note {
+  font-size: 0.65rem !important;
+  opacity: 0.85 !important;
+}
+.rkap-rp-input {
+  max-width: 140px !important;
+  font-family: monospace !important;
+}
+
+.rkap-min-width-panel {
+  min-width: 300px;
+  flex: 1;
+}
+
+.rkap-coa-sum-chip {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border-left: 0 !important;
+  font-size: 0.8rem !important;
+}
+
+.rkap-rp-chip {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+.rkap-month-btn {
+  min-width: 42px !important;
+  font-size: 0.68rem !important;
+  padding: 0.25rem 0.4rem !important;
+}
+
+// --- Color & UI Utilities ---
+.rkap-bg-primary-soft {
+  background-color: rgba(105, 108, 255, 0.08) !important;
+}
+.rkap-bg-primary-solid {
+  background-color: #696cff !important;
+  color: #fff !important;
+}
+.rkap-text-primary-solid {
+  color: #696cff !important;
+}
+.rkap-bg-gradient-success {
+  background: linear-gradient(135deg, #28c76f, #1f9d55) !important;
+  color: #fff !important;
+}
+.rkap-bg-gradient-primary {
+  background: linear-gradient(135deg, #696cff, #3f42c9) !important;
+  color: #fff !important;
+}
+.rkap-text-white-80 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.rkap-text-white-90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.rkap-text-white-50 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.rkap-cursor-pointer {
+  cursor: pointer !important;
+}
+
+// --- Dashboard & Analytics Special Styles ---
+.rkap-bg-kcic-red {
+  background-color: #960b10ff !important;
+  color: #fff !important;
+}
+.rkap-text-white {
+  color: #ffffff !important;
+}
+.rkap-bg-info-soft {
+  background-color: rgba(3, 195, 236, 0.16) !important;
+}
+.rkap-text-info-solid {
+  color: #03c3ec !important;
+}
+.rkap-bg-primary-lighter {
+  background-color: rgba(105, 108, 255, 0.06) !important;
+}
+.rkap-border-dashed-primary {
+  border-top: 2px dashed rgba(105, 108, 255, 0.3) !important;
+}
+
+.rkap-ls-05 {
+  letter-spacing: 0.5px !important;
+}
+.rkap-font-11 {
+  font-size: 1.1rem !important;
+}
+.rkap-font-105 {
+  font-size: 1.05rem !important;
+}
+.rkap-font-09 {
+  font-size: 0.9rem !important;
+}
+
+// ─── Timeline Steps System ──────────────────────────────────────────
+
+.timeline-steps-container {
+  overflow-x: auto;
+  padding: 10px 10px;
+  width: 100%;
+  background: #fafbfc;
+  border-radius: 8px;
+}
+
+.timeline-steps-wrapper {
+  position: relative;
+  padding: 10px 0;
+  width: max-content;
+  min-width: 100%;
+  display: flex;
+  align-items: stretch;
+  height: 160px;
+}
+
+.timeline-steps-line {
+  position: absolute;
+  top: calc(50% - 2px);
+  height: 4px;
+  background: #2b354e;
+  z-index: 1;
+  border-radius: 2px;
+}
+
+.timeline-step-column {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.timeline-zone-top,
+.timeline-zone-bottom {
+  height: 68px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.timeline-zone-top {
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+.timeline-zone-bottom {
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+.timeline-zone-axis {
+  height: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  gap: 2px;
+  z-index: 4;
+}
+
+.timeline-step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 2.5px solid #8592a3;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #2b354e;
+  z-index: 3;
+  flex-shrink: 0;
+
+  &.border-success {
+    border-color: #28c76f !important;
+    color: #28c76f !important;
+  }
+  &.border-danger {
+    border-color: #ea5455 !important;
+    color: #ea5455 !important;
+  }
+  &.border-warning {
+    border-color: #ff9f43 !important;
+    color: #ff9f43 !important;
+  }
+  &.border-primary {
+    border-color: #7367f0 !important;
+    color: #7367f0 !important;
+  }
+}
+
+.timeline-node-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #8592a3;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px #2b354e;
+  z-index: 4;
+  &.bg-success {
+    background-color: #28c76f !important;
+  }
+  &.bg-danger {
+    background-color: #ea5455 !important;
+  }
+  &.bg-warning {
+    background-color: #ff9f43 !important;
+  }
+  &.bg-primary {
+    background-color: #7367f0 !important;
+  }
+}
+
+.timeline-card {
+  width: 135px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+  transition: all 0.25s ease;
+  &:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.timeline-card-header {
+  padding: 3px 6px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  text-align: center;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.timeline-card-body {
+  padding: 6px;
+  h6 {
+    font-size: 0.65rem !important;
+    margin-bottom: 2px !important;
+  }
+  .text-muted {
+    font-size: 0.58rem !important;
+    margin-bottom: 2px !important;
+  }
+  .small {
+    font-size: 0.52rem !important;
+  }
+}
+
+.timeline-card.arrow-down::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 7px 6px 0 6px;
+  border-style: solid;
+  border-color: var(--theme-color) transparent transparent transparent;
+}
+
+.timeline-card.arrow-up::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 7px 6px;
+  border-style: solid;
+  border-color: transparent transparent var(--theme-color) transparent;
 }
