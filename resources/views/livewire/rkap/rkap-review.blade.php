@@ -49,20 +49,20 @@
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                      <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevTotal, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                      <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevRealization, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                      <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProjection, 0, ',', '.') }}
                       </div>
                     </div>
@@ -128,7 +128,7 @@
             @endphp
 
             @if ($allTimelineSteps->count() > 1)
-            <div class="timeline-steps-line" style="width: {{ 165 * ($allTimelineSteps->count() - 1) }}px; left: 75px;"></div>
+            <div class="timeline-steps-line" :style="{ width: '{{ 165 * ($allTimelineSteps->count() - 1) }}px', left: '75px' }"></div>
             @endif
 
             {{--
@@ -140,7 +140,7 @@
               ODD  steps (1, 3, 5…): card is ABOVE the axis → top zone has card, axis has dot-above-circle
               EVEN steps (2, 4, 6…): card is BELOW the axis → bottom zone has card, axis has circle-above-dot
             --}}
-            <div class="d-flex align-items-stretch justify-content-start" style="gap: 15px; z-index: 2; position: relative;">
+            <div class="d-flex align-items-stretch justify-content-start rkap-z-2 gap-15px position-relative">
               @foreach ($allTimelineSteps as $step)
               @php
               $isOdd = $loop->iteration % 2 !== 0;
@@ -160,20 +160,20 @@
 
                 {{-- Top zone: card floats to bottom of this zone --}}
                 <div class="timeline-zone-top">
-                  <div class="timeline-card arrow-down" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
-                      <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                  <div class="timeline-card arrow-down" :style="{ '--theme-color': '{{ $themeColor }}', 'border-color': '{{ $themeColor }}' }">
+                    <div class="timeline-card-header" :style="{ 'background-color': '{{ $themeColor }}' }">
+                      <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
-                        <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                      <div class="text-muted rkap-font-058 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-068"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {{-- Axis zone: numbered circle (top), then node-dot (bottom) --}}
-                <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                <div class="timeline-zone-axis d-flex flex-column justify-content-center gap-2px">
                   <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
                     {{ $loop->iteration }}
                   </div>
@@ -190,7 +190,7 @@
                 <div class="timeline-zone-top"></div>
 
                 {{-- Axis zone: node-dot (top), then numbered circle (bottom) --}}
-                <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                <div class="timeline-zone-axis d-flex flex-column justify-content-center gap-2px">
                   <div class="timeline-node-dot bg-{{ $step['color'] }}"></div>
                   <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
                     {{ $loop->iteration }}
@@ -199,13 +199,13 @@
 
                 {{-- Bottom zone: card floats to top of this zone --}}
                 <div class="timeline-zone-bottom">
-                  <div class="timeline-card arrow-up" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
-                      <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                  <div class="timeline-card arrow-up" :style="{ '--theme-color': '{{ $themeColor }}', 'border-color': '{{ $themeColor }}' }">
+                    <div class="timeline-card-header" :style="{ 'background-color': '{{ $themeColor }}' }">
+                      <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="text-muted" style="font-size: 0.58rem !important; white-space: nowrap;">
-                        <i class="bx bx-calendar me-0.5" style="font-size: 0.68rem;"></i>{{ $step['time'] }}
+                      <div class="text-muted rkap-font-058 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-068"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>
@@ -261,20 +261,20 @@
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                      <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                      <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                      <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
@@ -288,7 +288,7 @@
           </div>
         </div>
 
-        <div class="card-body bg-light-gray p-3" style="background-color: #f8fafc;">
+        <div class="card-body bg-light-gray p-3 bg-lighter">
           @foreach ($wpGroup as $actIdx => $wp)
           @php
           $activity = $wp->activity;

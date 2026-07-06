@@ -1,73 +1,4 @@
 <div>
-    <style>
-        /* Custom CSS Tooltip styling */
-        .has-tooltip {
-            position: relative;
-            cursor: help;
-            display: inline-block;
-        }
-
-        .custom-tooltip-content {
-            visibility: hidden;
-            width: 520px;
-            background-color: #2f3349;
-            color: #ffffff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 10px;
-            position: absolute;
-            z-index: 1080;
-            top: 110%;
-            /* Position below the element */
-            bottom: auto;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-            font-size: 0.72rem;
-            line-height: 1.4;
-            pointer-events: none;
-            /* Make sure it doesn't block mouse movements */
-            font-weight: normal;
-        }
-
-        .custom-tooltip-content::after {
-            content: "";
-            position: absolute;
-            bottom: 100%;
-            /* At the top of the tooltip */
-            top: auto;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent #2f3349 transparent;
-        }
-
-        .has-tooltip:hover .custom-tooltip-content {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .tooltip-align-right {
-            right: 0 !important;
-            left: auto !important;
-            transform: none !important;
-        }
-
-        .tooltip-align-right::after {
-            left: auto !important;
-            right: 15px !important;
-            margin-left: 0 !important;
-        }
-
-        .table-responsive,
-        .card,
-        .card-header {
-            overflow: visible !important;
-        }
-    </style>
     {{-- Page header --}}
     <div class="d-flex justify-content-between align-items-center py-3 mb-4 flex-wrap gap-2">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Kompilasi Pengajuan RKAP</h4>
@@ -306,16 +237,16 @@
                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
                             <div class="row text-center">
                                 <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                    <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                    <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                 </div>
                                 <div class="col-4 border-end">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                    <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                    <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
                                 </div>
                                 <div class="col-4">
-                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                                    <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                    <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
                                 </div>
                             </div>
                             @else
@@ -370,16 +301,16 @@
                                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
                                             <div class="row text-center">
                                                 <div class="col-4 border-end">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                                    <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4 border-end">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                                    <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                                    <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
                                                 </div>
                                             </div>
                                             @else
@@ -418,16 +349,16 @@
                                             <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prev['period_title'] }})</div>
                                             <div class="row text-center">
                                                 <div class="col-4 border-end">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                                    <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                                    <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prev['budget'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4 border-end">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                                    <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                                    <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prev['realization'], 0, ',', '.') }}</div>
                                                 </div>
                                                 <div class="col-4">
-                                                    <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                                    <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
+                                                    <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                                    <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}</div>
                                                 </div>
                                             </div>
                                             @else
@@ -482,7 +413,7 @@
     @endforeach
 
     {{-- Grand Total Card --}}
-    <div class="card border-0 mt-3" style="background: linear-gradient(135deg, #1A3C6E 0%, #2563EB 100%);">
+    <div class="card border-0 mt-3 rkap-gradient-blue">
         <div class="card-body py-3 d-flex justify-content-between align-items-center text-white">
             <div class="d-flex align-items-center gap-3">
                 <i class="bx bx-wallet-alt bx-md"></i>
@@ -506,16 +437,16 @@
                         <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevDataMap['grand_total']['period_title'] }})</div>
                         <div class="row text-center">
                             <div class="col-4 border-end">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                                <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['budget'], 0, ',', '.') }}</div>
+                                <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prevDataMap['grand_total']['budget'], 0, ',', '.') }}</div>
                             </div>
                             <div class="col-4 border-end">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                                <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['realization'], 0, ',', '.') }}</div>
+                                <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                <div class="fw-bold text-white text-success rkap-font-075">Rp {{ number_format($prevDataMap['grand_total']['realization'], 0, ',', '.') }}</div>
                             </div>
                             <div class="col-4">
-                                <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                                <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp {{ number_format($prevDataMap['grand_total']['projection'] ?? 0, 0, ',', '.') }}</div>
+                                <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                <div class="fw-bold text-white text-warning rkap-font-075">Rp {{ number_format($prevDataMap['grand_total']['projection'] ?? 0, 0, ',', '.') }}</div>
                             </div>
                         </div>
                         @else

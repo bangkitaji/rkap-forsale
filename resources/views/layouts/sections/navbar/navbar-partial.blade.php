@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4">
     <a href="{{url('/')}}" class="app-brand-link gap-2">
         <!-- <span class="app-brand-logo">
-            <img src="{{ asset('assets/img/kcic/logo_kcic.png') }}" alt="KCIC Logo" class="img-fluid" style="height: 40px;">
+            <img src="{{ asset('assets/img/kcic/logo_kcic.png') }}" alt="KCIC Logo" class="img-fluid rkap-logo-navbar">
         </span> -->
         <img class="app-brand-logo" width="30%" src="{{ asset('assets/img/kcic/logo_kcic.png') }}" />
         <span class="app-brand-text demo menu-text fw-bold text-heading">{{config('variables.templateName')}}</span>

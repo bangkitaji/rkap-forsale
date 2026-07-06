@@ -69,7 +69,7 @@
                             <th>Name</th>
                             <th>Type</th>
                             <th>Description</th>
-                            <th style="width: 100px;">Actions</th>
+                            <th class="rkap-w-100">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -82,7 +82,7 @@
                                     {{ $group->type }}
                                 </span>
                             </td>
-                            <td class="text-wrap" style="max-width: 400px;">
+                            <td class="text-wrap rkap-mw-400">
                                 {{ $group->description ?? '-' }}
                             </td>
                             <td>
@@ -111,7 +111,7 @@
 
     <!-- Modal -->
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -220,7 +220,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
+                            <th class="rkap-w-40">
                                 <input class="form-check-input" type="checkbox" wire:click="toggleSelectAll($event.target.checked)"
                                     @if(count($selectedCoaGroups)> 0 && count($selectedCoaGroups) === $coaGroups->total()) checked @endif>
                             </th>
@@ -237,7 +237,7 @@
                             </td>
                             <td><strong>{{ $coaGroup->code }}</strong></td>
                             <td>{{ $coaGroup->name }}</td>
-                            <td style="width: 300px;">
+                            <td class="rkap-w-300">
                                 <select class="form-select form-select-sm" wire:change="mapSingleGroup({{ $coaGroup->id }}, $event.target.value)">
                                     <option value="">-- Unmapped --</option>
                                     @foreach($allReportGroups as $rg)
@@ -325,9 +325,9 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
+                            <th class="rkap-w-40">
                                 <input class="form-check-input" type="checkbox" wire:click="toggleSelectAllCashflow($event.target.checked)"
-                                    @if(count($selectedCashflowGroups) > 0 && count($selectedCashflowGroups) === $cashflowGroups->total()) checked @endif>
+                                    @if(count($selectedCashflowGroups)> 0 && count($selectedCashflowGroups) === $cashflowGroups->total()) checked @endif>
                             </th>
                             <th>Cashflow Group Code</th>
                             <th>Cashflow Group Name</th>
@@ -342,7 +342,7 @@
                             </td>
                             <td><strong>{{ $cg->code }}</strong></td>
                             <td>{{ $cg->name }}</td>
-                            <td style="width: 300px;">
+                            <td class="rkap-w-300">
                                 <select class="form-select form-select-sm" wire:change="mapSingleCashflowGroup({{ $cg->id }}, $event.target.value)">
                                     <option value="">-- Unmapped --</option>
                                     @foreach($allReportGroups as $rg)

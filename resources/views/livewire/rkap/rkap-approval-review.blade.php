@@ -197,7 +197,7 @@
             @endphp
 
             @if ($allTimelineSteps->count() > 1)
-            <div class="timeline-steps-line" style="width: {{ 165 * ($allTimelineSteps->count() - 1) }}px; left: 75px;"></div>
+            <div class="timeline-steps-line" :style="{ width: (165 * ({{ $allTimelineSteps->count() }} - 1)) + 'px', left: '75px' }"></div>
             @endif
 
             {{--
@@ -229,8 +229,8 @@
 
                 {{-- Top zone: card floats to bottom of this zone --}}
                 <div class="timeline-zone-top">
-                  <div class="timeline-card arrow-down" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
+                  <div class="timeline-card arrow-down timeline-card-{{ $step['color'] }}">
+                    <div class="timeline-card-header">
                       <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
@@ -271,8 +271,8 @@
 
                 {{-- Bottom zone: card floats to top of this zone --}}
                 <div class="timeline-zone-bottom">
-                  <div class="timeline-card arrow-up" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
+                  <div class="timeline-card arrow-up timeline-card-{{ $step['color'] }}">
+                    <div class="timeline-card-header">
                       <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
@@ -373,9 +373,9 @@
               <div class="progress mb-2 rkap-h-6">
                 @if ($totalActivities > 0)
                 <div class="progress-bar bg-success"
-                  style="width: {{ ($approvedCount / $totalActivities) * 100 }}%;"></div>
+                  :style="{ width: ({{ $approvedCount }} / {{ $totalActivities }} * 100) + '%' }"></div>
                 <div class="progress-bar bg-danger"
-                  style="width: {{ ($rejectedCount / $totalActivities) * 100 }}%;"></div>
+                  :style="{ width: ({{ $rejectedCount }} / {{ $totalActivities }} * 100) + '%' }"></div>
                 @endif
               </div>
               @if ($rejectedCount > 0 || $pendingCount > 0)
@@ -825,7 +825,7 @@
                 }" @coa-dropdown-open-new.window="dropdownOpen = true"
             @coa-dropdown-close-new.window="dropdownOpen = false">
 
-            <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
+            <div class="table-responsive" :class="dropdownOpen ? 'rkap-table-responsive-visible' : ''">
               <table class="table table-sm table-bordered align-middle mb-2">
                 <thead class="table-primary text-white fw-semibold">
                   <tr>
@@ -902,7 +902,7 @@
                                   currentLabel: @js($searchLabel),
                               }"
                       x-effect="if (!open && search !== currentLabel) search = currentLabel"
-                      :style="open ? 'position: relative; z-index: 1060;' : ''"
+                      :class="open ? 'rkap-position-relative rkap-z-1060' : ''"
                       @click.outside="open = false; $dispatch('coa-dropdown-close-new')" class="border-bottom-0">
                       <div class="position-relative">
                         <div class="input-group input-group-sm">
@@ -1141,20 +1141,20 @@
                   </div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                      <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                      <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                      <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
@@ -1318,7 +1318,7 @@
                 <i class="bx bx-edit-alt me-1"></i> Perubahan pada Revisi Ini (Versi
                 {{ $submission->current_version - 1 }} → {{ $submission->current_version }})
               </h6>
-              <ul class="mb-0 ps-3 small text-dark" style="list-style-type: disc;">
+              <ul class="mb-0 ps-3 small text-dark rkap-list-disc">
                 @foreach ($actChanges['activity_level_changes'] as $c)
                 <li><strong>{{ $c['field'] }}</strong> diubah dari <code>{{ $c['old'] }}</code>
                   menjadi <code>{{ $c['new'] }}</code></li>
@@ -1341,7 +1341,7 @@
                 <li>
                   <i class="bx bx-pencil text-warning me-1"></i> Mengubah anggaran
                   <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }}:
-                  <ul class="mb-0 ps-3" style="list-style-type: circle;">
+                  <ul class="mb-0 ps-3 rkap-list-circle">
                     @if (($item['old']['description'] ?? '') !== ($item['new']['description'] ?? ''))
                     <li>Deskripsi: <code>{{ $item['old']['description'] }}</code> →
                       <code>{{ $item['new']['description'] }}</code>
@@ -1411,9 +1411,9 @@
                       </div>
                       <div class="modal-body p-0 text-center bg-light">
                         @if (strtolower($file->file_type) === 'pdf')
-                        <iframe src="{{ route('rkap-files.view', $file->id) }}" width="100%" height="700px" style="border:none;"></iframe>
+                        <iframe src="{{ route('rkap-files.view', $file->id) }}" width="100%" height="700px" class="border-0"></iframe>
                         @else
-                        <img src="{{ route('rkap-files.view', $file->id) }}" class="img-fluid p-3" style="max-height:75vh; object-fit:contain;" />
+                        <img src="{{ route('rkap-files.view', $file->id) }}" class="img-fluid p-3 rkap-max-h-75vh rkap-obj-contain" />
                         @endif
                       </div>
                       <div class="modal-footer">
@@ -1461,11 +1461,11 @@
                 <thead>
                   <tr>
                     <th>Uraian & Detail Belanja</th>
-                    <th class="text-center" style="width: 10%;">Vol</th>
-                    <th style="width: 12%;">Satuan</th>
-                    <th class="text-end" style="width: 14%;">Harga Satuan</th>
-                    <th class="text-end" style="width: 16%;">Total</th>
-                    <th class="text-center" style="width: 8%;">Aksi</th>
+                    <th class="text-center rkap-w-10p">Vol</th>
+                    <th class="rkap-w-12p">Satuan</th>
+                    <th class="text-end rkap-w-14p">Harga Satuan</th>
+                    <th class="text-end rkap-w-16p">Total</th>
+                    <th class="text-center rkap-w-8p">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1504,8 +1504,8 @@
                           @endphp
 
 
-                          <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
-                            <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
+                          <div class="has-tooltip rkap-font-078 rkap-lh-12">
+                            <span class="text-muted rkap-font-068">Sub-total:</span>
                             <span class="fw-bold text-primary">
                               Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}
                             </span>
@@ -1515,22 +1515,22 @@
                                 Periode Sebelumnya ({{ $prevPeriod }})</div>
                               <div class="row text-center">
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran
+                                  <div class="text-white-50 small rkap-font-065">Anggaran
                                   </div>
-                                  <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                                  <div class="fw-bold text-white rkap-font-075">Rp
                                     {{ number_format($prevCoaData['budget'], 0, ',', '.') }}
                                   </div>
                                 </div>
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi
+                                  <div class="text-white-50 small rkap-font-065">Realisasi
                                   </div>
-                                  <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">
+                                  <div class="fw-bold text-white text-success rkap-font-075">
                                     Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
                                 </div>
                                 <div class="col-4">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi
+                                  <div class="text-white-50 small rkap-font-065">Proyeksi
                                   </div>
-                                  <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">
+                                  <div class="fw-bold text-white text-warning rkap-font-075">
                                     Rp {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}
                                   </div>
                                 </div>
@@ -1605,21 +1605,20 @@
                   : null;
                   @endphp
                   <tr
-                    @if ($isBiVirtual) style="background-color: #fff9f9;" @elseif($isBiRevisionAdded) style="background-color: #e8f5e9;" @elseif($biRevisionModifiedData) style="background-color: #fffde7;" @endif>
+                    class="@if ($isBiVirtual) rkap-bg-revision-alert @elseif($isBiRevisionAdded) rkap-bg-revision-added @elseif($biRevisionModifiedData) rkap-bg-revision-modified @endif">
                     <td>
                       <span
                         class="@if ($isBiVirtual) text-danger text-decoration-line-through @endif">
                         {{ $bi['remarks'] ?: $bi['description'] }}
                       </span>
                       @if ($isBiVirtual)
-                      <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
+                      <span class="badge bg-label-danger ms-1 rkap-font-06">Dihapus</span>
                       @endif
                       @if ($isBiRevisionAdded)
-                      <span class="badge bg-success ms-1" style="font-size: 0.6rem;">Baru</span>
+                      <span class="badge bg-success ms-1 rkap-font-06">Baru</span>
                       @endif
                       @if ($biRevisionModifiedData)
-                      <span class="badge bg-warning text-dark ms-1"
-                        style="font-size: 0.6rem;">Diubah</span>
+                      <span class="badge bg-warning text-dark ms-1 rkap-font-06">Diubah</span>
                       @endif
 
                       @if ($isEditMode && !$isBiVirtual)
@@ -1659,8 +1658,7 @@
                           @endforeach
                         </select>
                         <div x-show="open" x-cloak
-                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                          style="z-index: 1060; max-height: 200px; overflow-y: auto;">
+                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-z-1060 rkap-overflow-y-auto rkap-h-200-scroll">
                           @foreach ($this->coaOptionsList as $coaOption)
                           <div
                             class="px-3 py-2 cursor-pointer dropdown-item small {{ $currentCoaCode == $coaOption->code ? 'bg-primary text-white' : '' }}"
@@ -1718,23 +1716,23 @@
                     <td class="text-end text-nowrap">
                       <div class="fw-semibold @if ($isBiVirtual) text-danger @else text-primary @endif has-tooltip">
                         Rp {{ number_format($bi['total_price'], 0, ',', '.') }}
-                        <span class="custom-tooltip-content tooltip-align-right" style="width: 280px; font-weight: normal;">
+                        <span class="custom-tooltip-content tooltip-align-right rkap-w-280 fw-normal">
                           @if ($prevItemBudget !== null)
                           <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
-                          <div class="row text-center" style="min-width: 250px;">
+                          <div class="row text-center rkap-mw-250">
                             <div class="col-6 border-end">
-                              <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran Sblm</div>
-                              <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevItemBudget, 0, ',', '.') }}</div>
+                              <div class="text-white-50 small rkap-font-065">Anggaran Sblm</div>
+                              <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prevItemBudget, 0, ',', '.') }}</div>
                             </div>
                             <div class="col-6">
-                              <div class="text-white-50 small" style="font-size: 0.65rem;">Selisih (Δ)</div>
-                              <div class="fw-bold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-white @endif" style="font-size: 0.75rem;">
+                              <div class="text-white-50 small rkap-font-065">Selisih (Δ)</div>
+                              <div class="fw-bold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-white @endif rkap-font-075">
                                 @if ($itemDiff > 0)
-                                ↑ +{{ number_format($itemPct, 1) }}%<br><span style="font-size: 0.68rem;">(+Rp {{ number_format($itemDiff, 0, ',', '.') }})</span>
+                                ↑ +{{ number_format($itemPct, 1) }}%<br><span class="rkap-font-068">(+Rp {{ number_format($itemDiff, 0, ',', '.') }})</span>
                                 @elseif ($itemDiff < 0)
-                                  ↓ -{{ number_format(abs($itemPct), 1) }}%<br><span style="font-size: 0.68rem;">(-Rp {{ number_format(abs($itemDiff), 0, ',', '.') }})</span>
+                                  ↓ -{{ number_format(abs($itemPct), 1) }}%<br><span class="rkap-font-068">(-Rp {{ number_format(abs($itemDiff), 0, ',', '.') }})</span>
                                   @else
-                                  = 0%<br><span style="font-size: 0.68rem;">(Rp 0)</span>
+                                  = 0%<br><span class="rkap-font-068">(Rp 0)</span>
                                   @endif
                               </div>
                             </div>
@@ -1745,7 +1743,7 @@
                         </span>
                       </div>
                       @if ($biRevisionModifiedData && $biRevisionModifiedData['total_price'] != $bi['total_price'])
-                      <div class="text-muted small text-decoration-line-through text-end" style="font-size: 0.75rem;">Sblm: Rp
+                      <div class="text-muted small text-decoration-line-through text-end rkap-font-075">Sblm: Rp
                         {{ number_format($biRevisionModifiedData['total_price'], 0, ',', '.') }}
                       </div>
                       @endif
@@ -1841,21 +1839,21 @@
                                 </div>
                                 @else
                                 <div class="border rounded-2 table-responsive mb-2">
-                                  <table class="table table-sm table-bordered align-middle mb-0" style="min-width: 750px;">
+                                  <table class="table table-sm table-bordered align-middle mb-0 rkap-min-w-750">
                                     <thead class="table-primary">
                                       <tr>
-                                        <th class="text-center" style="width: 90px;">Bulan</th>
+                                        <th class="text-center rkap-w-90">Bulan</th>
                                         <th class="text-end">
                                           Distribusi Penganggaran (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->coaGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->coaGroup?->name ?: '-' }})</div>
                                         </th>
                                         <th class="text-end">
                                           Rencana Pendanaan (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->cashflowGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->cashflowGroup?->name ?: '-' }})</div>
                                         </th>
                                         <th class="text-end">
                                           Selisih (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
                                         </th>
                                       </tr>
                                     </thead>
@@ -1911,13 +1909,13 @@
                   {{-- Removed Budget Items in Revision --}}
                   @if ($actChanges && !empty($actChanges['removed_items']))
                   @foreach ($actChanges['removed_items'] as $removedBi)
-                  <tr style="background-color: #fff5f5;">
+                  <tr class="rkap-bg-revision-removed">
                     <td class="text-danger">
                       <span class="text-decoration-line-through">
                         <strong>{{ $removedBi['account_code'] }}</strong> -
                         {{ $removedBi['remarks'] ?: $removedBi['description'] }}
                       </span>
-                      <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus pada
+                      <span class="badge bg-label-danger ms-1 rkap-font-06">Dihapus pada
                         Revisi</span>
                     </td>
                     <td class="text-center text-danger">

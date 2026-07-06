@@ -38,8 +38,7 @@
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
-            x-cloak
-            style="display: none;">
+            x-cloak>
             <div class="toast-header text-white" :class="'bg-' + toastType">
                 <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-x-circle'"></i>
                 <div class="me-auto fw-semibold" x-text="toastType === 'success' ? 'Berhasil' : 'Error'"></div>
@@ -395,7 +394,7 @@
                                 <div class="text-muted small mt-1">Remarks: {{ $selectedItem->remarks }}</div>
                                 @endif
                             </div>
-                            <div class="text-end border-start ps-3" style="min-width: 220px;">
+                            <div class="text-end border-start ps-3 rkap-min-w-220">
                                 <span class="text-muted d-block small mb-1 fw-semibold">Rencana Anggaran (Total)</span>
                                 <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
                                 <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
@@ -529,14 +528,14 @@
                                 </div>
                         </div>
                         @else
-                        <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
+                        <div class="border rounded p-1 mb-3 bg-white rkap-timeline-scroll d-block">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead class="table-light sticky-top" style="z-index: 10;">
+                                <thead class="table-light sticky-top rkap-z-10">
                                     <tr>
-                                        <th style="width: 20%;">Bulan</th>
-                                        <th style="width: 25%;" class="text-end">Rencana Anggaran</th>
-                                        <th style="width: 25%;" class="text-end">Realisasi</th>
-                                        <th style="width: 30%;" class="text-end">Proyeksi</th>
+                                        <th class="rkap-w-20p">Bulan</th>
+                                        <th class="text-end rkap-w-25p">Rencana Anggaran</th>
+                                        <th class="text-end rkap-w-25p">Realisasi</th>
+                                        <th class="text-end rkap-w-30p">Proyeksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -563,11 +562,11 @@
                                             <td class="fw-semibold text-muted">
                                                 {{ $monthNames[$m] }}
                                                 @if($hasRealization)
-                                                <span class="d-block text-warning small" style="font-size: 0.7rem;">
+                                                <span class="d-block text-warning small rkap-font-07">
                                                     <i class="bx bx-lock-alt"></i> Terkunci (Realisasi Ada)
                                                 </span>
                                                 @elseif($isClosed)
-                                                <span class="d-block text-danger small" style="font-size: 0.7rem;">
+                                                <span class="d-block text-danger small rkap-font-07">
                                                     <i class="bx bx-lock-alt"></i> Terkunci (Closing Periode)
                                                 </span>
                                                 @endif
@@ -623,7 +622,7 @@
                                                     </div>
                                                 </div>
                                                 @if($isLocked && $existingProj)
-                                                <div class="small text-muted text-end mt-1" style="font-size:0.7rem;">
+                                                <div class="small text-muted text-end mt-1 rkap-font-07">
                                                     Nilai Proyeksi: Rp {{ number_format($existingProj->amount, 0, ',', '.') }}
                                                 </div>
                                                 @endif

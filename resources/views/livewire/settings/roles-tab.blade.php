@@ -1,16 +1,16 @@
 <div>
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible" role="alert">
-            {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        {{ session('message') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
 
     @if (session()->has('error'))
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -49,7 +49,7 @@
                     <td><strong>{{ $role->name }}</strong></td>
                     <td class="text-wrap">
                         @foreach($role->permissions as $perm)
-                            <span class="badge bg-label-info m-1">{{ $perm->name }}</span>
+                        <span class="badge bg-label-info m-1">{{ $perm->name }}</span>
                         @endforeach
                     </td>
                     <td>
@@ -76,7 +76,7 @@
 
     <!-- Modal -->
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -90,7 +90,7 @@
                             <input type="text" id="roleName" class="form-control @error('name') is-invalid @enderror" wire:model="name" placeholder="e.g. editor" autofocus>
                             @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Permissions</label>
                             <div class="row">

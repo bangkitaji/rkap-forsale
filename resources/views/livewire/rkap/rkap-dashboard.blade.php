@@ -168,7 +168,7 @@
                     @endphp
 
                     <div class="progress mb-3 rkap-h-12">
-                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: '{{ $progressPercent }}%' }" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
 
                     @if($verifiedDeptCount < $totalDeptCount)
@@ -473,7 +473,7 @@
                                 <td class="align-middle w-30p">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="progress w-100 rkap-h-8">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $percentage }}%"></div>
+                                            <div class="progress-bar bg-primary" role="progressbar" :style="{ width: '{{ $percentage }}%' }"></div>
                                         </div>
                                         <small>{{ number_format($percentage, 1) }}%</small>
                                     </div>

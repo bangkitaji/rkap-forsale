@@ -66,20 +66,20 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th wire:click="sortGroup('code')" style="cursor:pointer; user-select:none;">
+                            <th wire:click="sortGroup('code')" class="rkap-cursor-pointer rkap-user-select-none">
                                 Code
                                 @if($sortByGroup === 'code')
-                                    <i class="bx bx-chevron-{{ $sortDirGroup === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDirGroup === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sortGroup('name')" style="cursor:pointer; user-select:none;">
+                            <th wire:click="sortGroup('name')" class="rkap-cursor-pointer rkap-user-select-none">
                                 Group Name
                                 @if($sortByGroup === 'name')
-                                    <i class="bx bx-chevron-{{ $sortDirGroup === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDirGroup === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th>Description</th>
@@ -91,7 +91,7 @@
                         <tr>
                             <td><span class="badge bg-label-info fw-bold">{{ $group->code }}</span></td>
                             <td><strong>{{ $group->name }}</strong></td>
-                            <td class="text-wrap" style="max-width: 350px;">
+                            <td class="text-wrap rkap-mw-350">
                                 {{ $group->description ?? '-' }}
                             </td>
                             <td>
@@ -128,7 +128,7 @@
                         <option value="all">All COAs</option>
                         <option value="unmapped">Unmapped COAs</option>
                         @foreach($allGroups as $g)
-                            <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
+                        <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -162,7 +162,7 @@
                             <select id="bulk-target-group" class="form-select form-select-sm w-auto d-inline-block @error('targetGroupId') is-invalid @enderror" wire:model="targetGroupId">
                                 <option value="">Select Group...</option>
                                 @foreach($allGroups as $g)
-                                    <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
+                                <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
                                 @endforeach
                             </select>
                             <button class="btn btn-primary btn-sm" wire:click="mapSelected" @if(empty($selectedCoas) || !$targetGroupId) disabled @endif>
@@ -180,10 +180,10 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">
-                                <input type="checkbox" class="form-check-input" 
-                                       wire:click="selectAllCoas([{{ implode(',', $coas->pluck('id')->toArray()) }}])"
-                                       @if(count($coas) > 0 && collect($coas->pluck('id'))->every(fn($id) => in_array($id, $selectedCoas))) checked @endif>
+                            <th class="rkap-w-40">
+                                <input type="checkbox" class="form-check-input"
+                                    wire:click="selectAllCoas([{{ implode(',', $coas->pluck('id')->toArray()) }}])"
+                                    @if(count($coas)> 0 && collect($coas->pluck('id'))->every(fn($id) => in_array($id, $selectedCoas))) checked @endif>
                             </th>
                             <th>COA Code</th>
                             <th>COA Title</th>
@@ -198,18 +198,18 @@
                                 <input type="checkbox" class="form-check-input" value="{{ $coa->id }}" wire:model.live="selectedCoas">
                             </td>
                             <td><strong>{{ $coa->code }}</strong></td>
-                            <td class="text-wrap" style="max-width: 250px;">{{ $coa->title }}</td>
+                            <td class="text-wrap rkap-mw-250">{{ $coa->title }}</td>
                             <td>
                                 @if($coa->coaGroup)
-                                    <span class="badge bg-label-success fw-semibold">
-                                        <i class="bx bx-group me-1" style="font-size: 0.75rem;"></i>
-                                        {{ $coa->coaGroup->name }}
-                                    </span>
+                                <span class="badge bg-label-success fw-semibold">
+                                    <i class="bx bx-group me-1 rkap-font-075"></i>
+                                    {{ $coa->coaGroup->name }}
+                                </span>
                                 @else
-                                    <span class="badge bg-label-secondary text-muted">Unmapped</span>
+                                <span class="badge bg-label-secondary text-muted">Unmapped</span>
                                 @endif
                             </td>
-                            <td class="text-wrap" style="max-width: 250px;">
+                            <td class="text-wrap rkap-mw-250">
                                 {{ $coa->description ?? '-' }}
                             </td>
                         </tr>
@@ -234,7 +234,7 @@
     <!-- COA GROUP ADD/EDIT MODAL -->
     <!-- ------------------------------------------------------------- -->
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">

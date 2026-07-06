@@ -3,54 +3,6 @@
 @section('title', 'Laporan - Cash Flow')
 
 @section('content')
-<style>
-  .btn-check:checked+.btn-outline-primary {
-    color: #fff !important;
-    background-color: #696cff !important;
-    border-color: #696cff !important;
-  }
-
-  /* Freeze pane style for Cash Flow Table */
-  .table-pn-report th:first-child,
-  .table-pn-report td:first-child {
-    position: sticky;
-    left: 0;
-    background-color: #fff;
-    z-index: 2;
-    border-right: 2px solid #e6e8eb;
-  }
-
-  .table-pn-report th:first-child {
-    z-index: 3;
-    background-color: #f5f5f9 !important;
-  }
-
-  /* Alternate row background styles */
-  .table-pn-report tbody tr:nth-child(even) td:first-child {
-    background-color: #fafafa;
-  }
-
-  .table-pn-report tbody tr:nth-child(odd) td:first-child {
-    background-color: #ffffff;
-  }
-
-  .table-pn-report tbody tr.table-light td:first-child,
-  .table-pn-report tbody tr.bg-lighter td:first-child {
-    background-color: #f5f5f9 !important;
-  }
-
-  .table-pn-report tbody tr.table-primary td:first-child {
-    background-color: #e7e7ff !important;
-  }
-
-  .table-pn-report tbody tr.table-info td:first-child {
-    background-color: #d7f5fc !important;
-  }
-
-  .table-pn-report tbody tr.table-success td:first-child {
-    background-color: #e8fadf !important;
-  }
-</style>
 
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div>
@@ -488,13 +440,13 @@
               tbodyHtml += `
                         <tr>
                             <td class="ps-3">
-                                <div class="font-monospace fw-semibold text-primary" style="font-size:0.72rem;">${row.coa_code}</div>
-                                <div class="text-muted" style="font-size:0.72rem;">${row.coa_title || '-'}</div>
+                                <div class="font-monospace fw-semibold text-primary rkap-font-072">${row.coa_code}</div>
+                                <div class="text-muted rkap-font-072">${row.coa_title || '-'}</div>
                             </td>
                             <td>
-                                <div class="text-muted fw-semibold mb-1" style="font-size:0.68rem; letter-spacing: 0.5px;">${row.directorate_code || '-'} - ${row.department_code || '-'} - ${row.bureau_code || '-'}</div>
-                                <div class="font-monospace fw-semibold text-primary" style="font-size:0.72rem;">${row.program_code || '-'}</div>
-                                <div class="text-muted" style="font-size:0.72rem;">${row.program_name || '-'}</div>
+                                <div class="text-muted fw-semibold mb-1 rkap-font-068 rkap-ls-05">${row.directorate_code || '-'} - ${row.department_code || '-'} - ${row.bureau_code || '-'}</div>
+                                <div class="font-monospace fw-semibold text-primary rkap-font-072">${row.program_code || '-'}</div>
+                                <div class="text-muted rkap-font-072">${row.program_name || '-'}</div>
                             </td>
                             <td class="text-end font-monospace text-nowrap">${formatRp(b)}</td>
                             <td class="text-end font-monospace text-success text-nowrap">${formatRp(r)}</td>

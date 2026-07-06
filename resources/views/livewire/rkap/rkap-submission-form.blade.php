@@ -31,7 +31,7 @@
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      style="display: none;">
+      x-cloak>
       <div class="toast-header text-white" :class="'bg-' + toastType">
         <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-info-circle'"></i>
         <div class="me-auto fw-semibold">Berhasil</div>
@@ -56,7 +56,7 @@
       role="alert"
       aria-live="assertive"
       aria-atomic="true"
-      style="display: none;">
+      x-cloak>
       <div class="toast-header bg-danger text-white">
         <i class="bx bx-x-circle me-2 text-white"></i>
         <div class="me-auto fw-semibold">Gagal Menyimpan</div>
@@ -472,7 +472,7 @@
                       </div>
                       <div class="modal-body p-0 text-center bg-light">
                         @if (strtolower($file['file_type']) === 'pdf')
-                        <iframe src="{{ route('rkap-files.view', $file['id']) }}" width="100%" height="650px" class="rkap-preview-frame"></iframe>
+                        <iframe src="{{ route('rkap-files.view', $file['id']) }}" class="rkap-preview-frame"></iframe>
                         @else
                         <img src="{{ route('rkap-files.view', $file['id']) }}" class="img-fluid p-3 rkap-preview-image" />
                         @endif
