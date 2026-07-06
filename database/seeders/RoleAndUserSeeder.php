@@ -16,9 +16,9 @@ class RoleAndUserSeeder extends Seeder
      */
     public function run(): void
     {
-        if (app()->environment('production')) {
-            return;
-        }
+        // if (app()->environment('production')) {
+        //     return;
+        // }
 
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -144,7 +144,7 @@ class RoleAndUserSeeder extends Seeder
 
         // create admin user
         $admin = User::updateOrCreate(
-            ['email' => 'admin@rkap.com'],
+            ['email' => 'admin@kcic.co.id'],
             [
                 'name' => 'Administrator',
                 'password' => Hash::make(config('rkap.seed_default_password', 'password')),
