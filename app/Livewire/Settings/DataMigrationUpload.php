@@ -271,6 +271,9 @@ class DataMigrationUpload extends Component
       $submissionMap = [];
       $workPlanMap = [];
       $budgetItemMap = [];
+      $dirtyBudgetItems = [];
+      $monthlyUpdates = [];
+      $cashOutUpdates = [];
 
       $createdSubmissions = 0;
       $createdWorkPlans = 0;
@@ -392,49 +395,105 @@ class DataMigrationUpload extends Component
             $newRemarks = $budgetItem->remarks ? $budgetItem->remarks . '; ' . $row['remarks'] : $row['remarks'];
           }
 
-          $budgetItem->update([
-            'quantity' => $newQty,
-            'unit_price' => $newUnitPrice,
-            'remarks' => $newRemarks,
-          ]);
+          $budgetItem->quantity = $newQty;
+          $budgetItem->unit_price = $newUnitPrice;
+          $budgetItem->remarks = $newRemarks;
+          $dirtyBudgetItems[$budgetItem->id] = $budgetItem;
         }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["m{$m}"] ?? 0);
           if ($amount > 0) {
-            $monthly = $budgetItem->monthlies->firstWhere('month', $m);
-            if ($monthly) {
-              $monthly->update([
-                'amount' => $monthly->amount + $amount,
-              ]);
-            } else {
-              $newMonthly = $budgetItem->monthlies()->create([
-                'month' => $m,
-                'amount' => $amount,
-              ]);
-              $budgetItem->monthlies->push($newMonthly);
-              $createdMonthlies++;
-            }
+            $monthlyUpdates[$budgetItem->id][$m] = ($monthlyUpdates[$budgetItem->id][$m] ?? 0.0) + $amount;
           }
         }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["co{$m}"] ?? 0);
           if ($amount > 0) {
-            $cashOut = $budgetItem->cashOuts->firstWhere('month', $m);
-            if ($cashOut) {
-              $cashOut->update([
-                'amount' => $cashOut->amount + $amount,
-              ]);
-            } else {
-              $newCashOut = $budgetItem->cashOuts()->create([
-                'month' => $m,
-                'amount' => $amount,
-              ]);
-              $budgetItem->cashOuts->push($newCashOut);
-              $createdCashOuts++;
-            }
+            $cashOutUpdates[$budgetItem->id][$m] = ($cashOutUpdates[$budgetItem->id][$m] ?? 0.0) + $amount;
           }
+        }
+      }
+
+      // Save all dirty budget items in batch
+      foreach ($dirtyBudgetItems as $dirtyItem) {
+        $dirtyItem->save();
+      }
+
+      // Bulk fetch existing monthly and cashOut records for all processed budget items
+      $allBudgetItemIds = collect($budgetItemMap)->pluck('id')->filter()->unique()->all();
+
+      $existingMonthlies = !empty($allBudgetItemIds)
+        ? \App\Models\RkapBudgetItemMonthly::whereIn('rkap_budget_item_id', $allBudgetItemIds)->get()->groupBy('rkap_budget_item_id')
+        : collect();
+
+      $existingCashOuts = !empty($allBudgetItemIds)
+        ? \App\Models\RkapBudgetItemCashOut::whereIn('rkap_budget_item_id', $allBudgetItemIds)->get()->groupBy('rkap_budget_item_id')
+        : collect();
+
+      $monthliesToInsert = [];
+      $cashOutsToInsert = [];
+      $now = now();
+
+      foreach ($monthlyUpdates as $budgetItemId => $months) {
+        $budgetExistMonthlies = $existingMonthlies->get($budgetItemId) ?? collect();
+
+        foreach ($months as $month => $accumulatedAmount) {
+          $monthly = $budgetExistMonthlies->firstWhere('month', $month);
+
+          if ($monthly) {
+            $newAmount = $monthly->amount + $accumulatedAmount;
+            if (abs($monthly->amount - $newAmount) > 0.01) {
+              $monthly->update(['amount' => $newAmount]);
+            }
+          } else {
+            $monthliesToInsert[] = [
+              'rkap_budget_item_id' => $budgetItemId,
+              'month' => $month,
+              'amount' => $accumulatedAmount,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ];
+            $createdMonthlies++;
+          }
+        }
+      }
+
+      foreach ($cashOutUpdates as $budgetItemId => $months) {
+        $budgetExistCashOuts = $existingCashOuts->get($budgetItemId) ?? collect();
+
+        foreach ($months as $month => $accumulatedAmount) {
+          $cashOut = $budgetExistCashOuts->firstWhere('month', $month);
+
+          if ($cashOut) {
+            $newAmount = $cashOut->amount + $accumulatedAmount;
+            if (abs($cashOut->amount - $newAmount) > 0.01) {
+              $cashOut->update(['amount' => $newAmount]);
+            }
+          } else {
+            $cashOutsToInsert[] = [
+              'rkap_budget_item_id' => $budgetItemId,
+              'month' => $month,
+              'amount' => $accumulatedAmount,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ];
+            $createdCashOuts++;
+          }
+        }
+      }
+
+      // Execute bulk inserts
+      if (!empty($monthliesToInsert)) {
+        foreach (array_chunk($monthliesToInsert, 500) as $chunk) {
+          \App\Models\RkapBudgetItemMonthly::insert($chunk);
+        }
+      }
+
+      if (!empty($cashOutsToInsert)) {
+        foreach (array_chunk($cashOutsToInsert, 500) as $chunk) {
+          \App\Models\RkapBudgetItemCashOut::insert($chunk);
         }
       }
 
