@@ -29,7 +29,7 @@ class CashflowGroupsTest extends TestCase
         $this->seed(RoleAndUserSeeder::class);
 
         // Fetch seeded users and assign them
-        $this->adminUser = User::where('email', 'admin@rkap.com')->first();
+        $this->adminUser = User::where('email', 'admin@kcic.co.id')->first();
 
         // Create verifikator user
         $roleVerifikator = Role::where('name', 'verifikator')->first();

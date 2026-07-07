@@ -16,10 +16,10 @@ class MasterDataSeeder extends Seeder
     {
         Schema::disableForeignKeyConstraints();
 
-        // 1. Truncate tables in reverse dependency order
+        // 1. Clear tables in reverse dependency order (use delete instead of truncate to prevent cascade deletes on pgsql)
         $tables = ['activity_coa', 'activities', 'coas', 'work_plans', 'coa_groups', 'report_groups'];
         foreach ($tables as $table) {
-            DB::table($table)->truncate();
+            DB::table($table)->delete();
         }
 
         Schema::enableForeignKeyConstraints();

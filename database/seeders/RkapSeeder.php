@@ -359,10 +359,10 @@ class RkapSeeder extends Seeder
 
         // ── 5. Seed Users from Org Structure ──
         // Reset non-admin users first to keep db clean
-        User::where('email', '!=', 'admin@rkap.com')->delete();
+        User::where('email', '!=', 'admin@kcic.co.id')->delete();
 
         // Admin (already created by RoleAndUserSeeder, just update org if needed)
-        $admin = User::where('email', 'admin@rkap.com')->first();
+        $admin = User::where('email', 'admin@kcic.co.id')->first();
         if ($admin) {
             $admin->update(['directorate_id' => $dirHU->id, 'position' => 'Administrator Sistem']);
         }
