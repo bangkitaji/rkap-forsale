@@ -79,6 +79,16 @@ class RkapSubmission extends Model
   public function calculateTotalBudget(): float
   {
     $total = 0;
+    if (!$this->relationLoaded('workPlans')) {
+      $this->load('workPlans.budgetItems');
+    } else {
+      foreach ($this->workPlans as $workPlan) {
+        if (!$workPlan->relationLoaded('budgetItems')) {
+          $workPlan->load('budgetItems');
+        }
+      }
+    }
+
     foreach ($this->workPlans as $workPlan) {
       $total += $workPlan->budgetItems->sum('total_price');
     }

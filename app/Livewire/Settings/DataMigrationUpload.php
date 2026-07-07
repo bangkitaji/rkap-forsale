@@ -33,6 +33,11 @@ class DataMigrationUpload extends Component
   private array $coaCache = [];
   private array $bureauCache = [];
 
+  private array $workPlanModels = [];
+  private array $activityModels = [];
+  private array $coaModels = [];
+  private array $userCache = [];
+
   private array $requiredColumns = [
     'submission_key',
     'title',
@@ -93,6 +98,10 @@ class DataMigrationUpload extends Component
     $this->activityCache = [];
     $this->coaCache = [];
     $this->bureauCache = [];
+    $this->workPlanModels = [];
+    $this->activityModels = [];
+    $this->coaModels = [];
+    $this->userCache = [];
   }
 
   /**
@@ -204,7 +213,7 @@ class DataMigrationUpload extends Component
         $this->errorsList[] = "Baris {$rowNo}: bureau_code tidak ditemukan.";
       }
 
-      if (!$this->existsId(User::class, $row['created_by'] ?? null)) {
+      if (!$this->existsUser($row['created_by'] ?? null)) {
         $this->errorsList[] = "Baris {$rowNo}: created_by (user) tidak ditemukan.";
       }
 
@@ -313,8 +322,8 @@ class DataMigrationUpload extends Component
             ->first();
 
           if (!$workPlan) {
-            $masterWorkPlan = WorkPlan::withTrashed()->find($wpId);
-            $masterActivity = $actId ? Activity::withTrashed()->find($actId) : null;
+            $masterWorkPlan = $wpId ? ($this->workPlanModels[$wpId] ?? WorkPlan::withTrashed()->find($wpId)) : null;
+            $masterActivity = $actId ? ($this->activityModels[$actId] ?? Activity::withTrashed()->find($actId)) : null;
 
             $workPlan = RkapWorkPlan::create([
               'rkap_submission_id' => $submission->id,
@@ -338,7 +347,7 @@ class DataMigrationUpload extends Component
         $workPlan = $workPlanMap[$compositeWpKey];
         
         $coaId = $this->resolveCoaId($row['coa_code']);
-        $coa = Coa::withTrashed()->find($coaId);
+        $coa = $coaId ? ($this->coaModels[$coaId] ?? Coa::withTrashed()->find($coaId)) : null;
         $compositeBiKey = $compositeWpKey . '::' . $coaId;
 
         if (!isset($budgetItemMap[$compositeBiKey])) {
@@ -493,6 +502,9 @@ class DataMigrationUpload extends Component
     $wp = WorkPlan::withTrashed()->where('code', $code)->first();
     $id = $wp ? $wp->id : null;
     $this->workPlanCache[$code] = $id;
+    if ($wp) {
+      $this->workPlanModels[$id] = $wp;
+    }
     return $id;
   }
 
@@ -507,6 +519,9 @@ class DataMigrationUpload extends Component
     $act = Activity::withTrashed()->where('code', $code)->first();
     $id = $act ? $act->id : null;
     $this->activityCache[$code] = $id;
+    if ($act) {
+      $this->activityModels[$id] = $act;
+    }
     return $id;
   }
 
@@ -521,7 +536,24 @@ class DataMigrationUpload extends Component
     $coa = Coa::withTrashed()->where('code', $code)->first();
     $id = $coa ? $coa->id : null;
     $this->coaCache[$code] = $id;
+    if ($coa) {
+      $this->coaModels[$id] = $coa;
+    }
     return $id;
+  }
+
+  private function existsUser($id): bool
+  {
+    if ($id === null || $id === '') {
+      return false;
+    }
+    $id = (int) $id;
+    if (array_key_exists($id, $this->userCache)) {
+      return $this->userCache[$id];
+    }
+    $exists = User::whereKey($id)->exists();
+    $this->userCache[$id] = $exists;
+    return $exists;
   }
 
   private function existsId(string $modelClass, $id): bool
