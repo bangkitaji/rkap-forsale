@@ -128,6 +128,7 @@ class UsersTab extends Component
 
             if ($this->password) {
                 $data['password'] = Hash::make($this->password);
+                $data['must_change_password'] = true;
             }
 
             $user = User::updateOrCreate(

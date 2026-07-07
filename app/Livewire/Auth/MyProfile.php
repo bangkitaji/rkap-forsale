@@ -81,6 +81,7 @@ class MyProfile extends Component
 
         $user->update([
             'password' => Hash::make($this->new_password),
+            'must_change_password' => false,
         ]);
 
         $this->reset(['current_password', 'new_password', 'new_password_confirmation']);

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     ]);
+
+    $middleware->web(append: [
+        \App\Http\Middleware\ForcePasswordChange::class,
+    ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {
     // Handle Spatie permission/role unauthorized exceptions

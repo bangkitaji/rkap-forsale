@@ -97,6 +97,14 @@
                             </div>
                         @endif
 
+                        @if (session()->has('force_password_change'))
+                            <div class="alert alert-warning alert-dismissible" role="alert">
+                                <i class="bx bx-error-exclamation me-1"></i>
+                                {{ session('force_password_change') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
                         <form wire:submit.prevent="savePassword" novalidate>
                             <div class="row g-3">
                                 <div class="col-md-6">
