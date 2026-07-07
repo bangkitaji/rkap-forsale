@@ -1,15 +1,15 @@
 <div>
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible" role="alert">
-            {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        {{ session('message') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
     @if (session()->has('error'))
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -55,16 +55,16 @@
                     <td>{{ $dept->bureaus_count }}</td>
                     <td>
                         @if($dept->is_verifier)
-                            <span class="badge bg-label-primary"><i class="bx bx-check-shield me-1"></i>Ya</span>
+                        <span class="badge bg-label-primary"><i class="bx bx-check-shield me-1"></i>Ya</span>
                         @else
-                            <span class="text-muted">-</span>
+                        <span class="text-muted">-</span>
                         @endif
                     </td>
                     <td>
                         @if($dept->is_active)
-                            <span class="badge bg-label-success">Aktif</span>
+                        <span class="badge bg-label-success">Aktif</span>
                         @else
-                            <span class="badge bg-label-danger">Non-Aktif</span>
+                        <span class="badge bg-label-danger">Non-Aktif</span>
                         @endif
                     </td>
                     <td>
@@ -94,7 +94,7 @@
 
     {{-- Modal --}}
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -111,7 +111,7 @@
                             <select id="dept-directorate" class="form-select @error('directorate_id') is-invalid @enderror" wire:model="directorate_id">
                                 <option value="">-- Pilih Direktorat --</option>
                                 @foreach($directorates as $dir)
-                                    <option value="{{ $dir->id }}">{{ $dir->name }}</option>
+                                <option value="{{ $dir->id }}">{{ $dir->name }}</option>
                                 @endforeach
                             </select>
                             @error('directorate_id') <div class="invalid-feedback">{{ $message }}</div> @enderror

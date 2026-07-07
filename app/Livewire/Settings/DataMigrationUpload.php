@@ -33,6 +33,11 @@ class DataMigrationUpload extends Component
   private array $coaCache = [];
   private array $bureauCache = [];
 
+  private array $workPlanModels = [];
+  private array $activityModels = [];
+  private array $coaModels = [];
+  private array $userCache = [];
+
   private array $requiredColumns = [
     'submission_key',
     'title',
@@ -48,6 +53,10 @@ class DataMigrationUpload extends Component
 
   public function uploadAndImport(): void
   {
+    // Prevent timeouts and memory exhaustion during large file migrations
+    @set_time_limit(0);
+    @ini_set('memory_limit', '512M');
+
     $this->resetState();
 
     $this->validate([
@@ -89,6 +98,10 @@ class DataMigrationUpload extends Component
     $this->activityCache = [];
     $this->coaCache = [];
     $this->bureauCache = [];
+    $this->workPlanModels = [];
+    $this->activityModels = [];
+    $this->coaModels = [];
+    $this->userCache = [];
   }
 
   /**
@@ -200,7 +213,7 @@ class DataMigrationUpload extends Component
         $this->errorsList[] = "Baris {$rowNo}: bureau_code tidak ditemukan.";
       }
 
-      if (!$this->existsId(User::class, $row['created_by'] ?? null)) {
+      if (!$this->existsUser($row['created_by'] ?? null)) {
         $this->errorsList[] = "Baris {$rowNo}: created_by (user) tidak ditemukan.";
       }
 
@@ -258,6 +271,9 @@ class DataMigrationUpload extends Component
       $submissionMap = [];
       $workPlanMap = [];
       $budgetItemMap = [];
+      $dirtyBudgetItems = [];
+      $monthlyUpdates = [];
+      $cashOutUpdates = [];
 
       $createdSubmissions = 0;
       $createdWorkPlans = 0;
@@ -309,8 +325,8 @@ class DataMigrationUpload extends Component
             ->first();
 
           if (!$workPlan) {
-            $masterWorkPlan = WorkPlan::withTrashed()->find($wpId);
-            $masterActivity = $actId ? Activity::withTrashed()->find($actId) : null;
+            $masterWorkPlan = $wpId ? ($this->workPlanModels[$wpId] ?? WorkPlan::withTrashed()->find($wpId)) : null;
+            $masterActivity = $actId ? ($this->activityModels[$actId] ?? Activity::withTrashed()->find($actId)) : null;
 
             $workPlan = RkapWorkPlan::create([
               'rkap_submission_id' => $submission->id,
@@ -334,11 +350,12 @@ class DataMigrationUpload extends Component
         $workPlan = $workPlanMap[$compositeWpKey];
         
         $coaId = $this->resolveCoaId($row['coa_code']);
-        $coa = Coa::withTrashed()->find($coaId);
+        $coa = $coaId ? ($this->coaModels[$coaId] ?? Coa::withTrashed()->find($coaId)) : null;
         $compositeBiKey = $compositeWpKey . '::' . $coaId;
 
         if (!isset($budgetItemMap[$compositeBiKey])) {
-          $budgetItem = RkapBudgetItem::where('rkap_work_plan_id', $workPlan->id)
+          $budgetItem = RkapBudgetItem::with(['monthlies', 'cashOuts'])
+            ->where('rkap_work_plan_id', $workPlan->id)
             ->where('account_code', $coa?->code)
             ->first();
 
@@ -352,6 +369,8 @@ class DataMigrationUpload extends Component
               'unit_price' => (float) $row['unit_price'],
               'remarks' => ($row['remarks'] ?? null) ?: null,
             ]);
+            $budgetItem->setRelation('monthlies', collect());
+            $budgetItem->setRelation('cashOuts', collect());
             $createdBudgetItems++;
           }
           $budgetItemMap[$compositeBiKey] = $budgetItem;
@@ -376,47 +395,105 @@ class DataMigrationUpload extends Component
             $newRemarks = $budgetItem->remarks ? $budgetItem->remarks . '; ' . $row['remarks'] : $row['remarks'];
           }
 
-          $budgetItem->update([
-            'quantity' => $newQty,
-            'unit_price' => $newUnitPrice,
-            'remarks' => $newRemarks,
-          ]);
+          $budgetItem->quantity = $newQty;
+          $budgetItem->unit_price = $newUnitPrice;
+          $budgetItem->remarks = $newRemarks;
+          $dirtyBudgetItems[$budgetItem->id] = $budgetItem;
         }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["m{$m}"] ?? 0);
           if ($amount > 0) {
-            $monthly = $budgetItem->monthlies()->where('month', $m)->first();
-            if ($monthly) {
-              $monthly->update([
-                'amount' => $monthly->amount + $amount,
-              ]);
-            } else {
-              $budgetItem->monthlies()->create([
-                'month' => $m,
-                'amount' => $amount,
-              ]);
-              $createdMonthlies++;
-            }
+            $monthlyUpdates[$budgetItem->id][$m] = ($monthlyUpdates[$budgetItem->id][$m] ?? 0.0) + $amount;
           }
         }
 
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["co{$m}"] ?? 0);
           if ($amount > 0) {
-            $cashOut = $budgetItem->cashOuts()->where('month', $m)->first();
-            if ($cashOut) {
-              $cashOut->update([
-                'amount' => $cashOut->amount + $amount,
-              ]);
-            } else {
-              $budgetItem->cashOuts()->create([
-                'month' => $m,
-                'amount' => $amount,
-              ]);
-              $createdCashOuts++;
-            }
+            $cashOutUpdates[$budgetItem->id][$m] = ($cashOutUpdates[$budgetItem->id][$m] ?? 0.0) + $amount;
           }
+        }
+      }
+
+      // Save all dirty budget items in batch
+      foreach ($dirtyBudgetItems as $dirtyItem) {
+        $dirtyItem->save();
+      }
+
+      // Bulk fetch existing monthly and cashOut records for all processed budget items
+      $allBudgetItemIds = collect($budgetItemMap)->pluck('id')->filter()->unique()->all();
+
+      $existingMonthlies = !empty($allBudgetItemIds)
+        ? \App\Models\RkapBudgetItemMonthly::whereIn('rkap_budget_item_id', $allBudgetItemIds)->get()->groupBy('rkap_budget_item_id')
+        : collect();
+
+      $existingCashOuts = !empty($allBudgetItemIds)
+        ? \App\Models\RkapBudgetItemCashOut::whereIn('rkap_budget_item_id', $allBudgetItemIds)->get()->groupBy('rkap_budget_item_id')
+        : collect();
+
+      $monthliesToInsert = [];
+      $cashOutsToInsert = [];
+      $now = now();
+
+      foreach ($monthlyUpdates as $budgetItemId => $months) {
+        $budgetExistMonthlies = $existingMonthlies->get($budgetItemId) ?? collect();
+
+        foreach ($months as $month => $accumulatedAmount) {
+          $monthly = $budgetExistMonthlies->firstWhere('month', $month);
+
+          if ($monthly) {
+            $newAmount = $monthly->amount + $accumulatedAmount;
+            if (abs($monthly->amount - $newAmount) > 0.01) {
+              $monthly->update(['amount' => $newAmount]);
+            }
+          } else {
+            $monthliesToInsert[] = [
+              'rkap_budget_item_id' => $budgetItemId,
+              'month' => $month,
+              'amount' => $accumulatedAmount,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ];
+            $createdMonthlies++;
+          }
+        }
+      }
+
+      foreach ($cashOutUpdates as $budgetItemId => $months) {
+        $budgetExistCashOuts = $existingCashOuts->get($budgetItemId) ?? collect();
+
+        foreach ($months as $month => $accumulatedAmount) {
+          $cashOut = $budgetExistCashOuts->firstWhere('month', $month);
+
+          if ($cashOut) {
+            $newAmount = $cashOut->amount + $accumulatedAmount;
+            if (abs($cashOut->amount - $newAmount) > 0.01) {
+              $cashOut->update(['amount' => $newAmount]);
+            }
+          } else {
+            $cashOutsToInsert[] = [
+              'rkap_budget_item_id' => $budgetItemId,
+              'month' => $month,
+              'amount' => $accumulatedAmount,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ];
+            $createdCashOuts++;
+          }
+        }
+      }
+
+      // Execute bulk inserts
+      if (!empty($monthliesToInsert)) {
+        foreach (array_chunk($monthliesToInsert, 500) as $chunk) {
+          \App\Models\RkapBudgetItemMonthly::insert($chunk);
+        }
+      }
+
+      if (!empty($cashOutsToInsert)) {
+        foreach (array_chunk($cashOutsToInsert, 500) as $chunk) {
+          \App\Models\RkapBudgetItemCashOut::insert($chunk);
         }
       }
 
@@ -484,6 +561,9 @@ class DataMigrationUpload extends Component
     $wp = WorkPlan::withTrashed()->where('code', $code)->first();
     $id = $wp ? $wp->id : null;
     $this->workPlanCache[$code] = $id;
+    if ($wp) {
+      $this->workPlanModels[$id] = $wp;
+    }
     return $id;
   }
 
@@ -498,6 +578,9 @@ class DataMigrationUpload extends Component
     $act = Activity::withTrashed()->where('code', $code)->first();
     $id = $act ? $act->id : null;
     $this->activityCache[$code] = $id;
+    if ($act) {
+      $this->activityModels[$id] = $act;
+    }
     return $id;
   }
 
@@ -512,7 +595,24 @@ class DataMigrationUpload extends Component
     $coa = Coa::withTrashed()->where('code', $code)->first();
     $id = $coa ? $coa->id : null;
     $this->coaCache[$code] = $id;
+    if ($coa) {
+      $this->coaModels[$id] = $coa;
+    }
     return $id;
+  }
+
+  private function existsUser($id): bool
+  {
+    if ($id === null || $id === '') {
+      return false;
+    }
+    $id = (int) $id;
+    if (array_key_exists($id, $this->userCache)) {
+      return $this->userCache[$id];
+    }
+    $exists = User::whereKey($id)->exists();
+    $this->userCache[$id] = $exists;
+    return $exists;
   }
 
   private function existsId(string $modelClass, $id): bool

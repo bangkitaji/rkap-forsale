@@ -29,46 +29,6 @@ if ($val < 0) {
   }
   @endphp
 
-  <style>
-    /* Freeze pane style for Cash Flow Table */
-    .table-pn-report th:first-child,
-    .table-pn-report td:first-child {
-      position: sticky;
-      left: 0;
-      background-color: #fff;
-      z-index: 2;
-      border-right: 2px solid #e6e8eb;
-    }
-
-    .table-pn-report th:first-child {
-      z-index: 3;
-      background-color: #f5f5f9 !important;
-    }
-
-    /* Alternate row background styles */
-    .table-pn-report tbody tr:nth-child(even) td:first-child {
-      background-color: #fafafa;
-    }
-
-    .table-pn-report tbody tr:nth-child(odd) td:first-child {
-      background-color: #ffffff;
-    }
-
-    .table-pn-report tbody tr.table-light td:first-child,
-    .table-pn-report tbody tr.bg-lighter td:first-child {
-      background-color: #f5f5f9 !important;
-    }
-
-    .table-pn-report tbody tr.table-primary td:first-child {
-      background-color: #e7e7ff !important;
-    }
-
-    .table-pn-report tbody tr.table-dark td:first-child {
-      background-color: #233446 !important;
-      color: #fff;
-    }
-  </style>
-
   <div class="py-3 mb-4">
     <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Laporan Cash Flow</h4>
     <p class="text-muted mb-0">Menampilkan Perbandingan Laporan Cash Flow Multi-Versi (Lintas Tahun dan Versi Anggaran)</p>
@@ -99,16 +59,16 @@ if ($val < 0) {
           <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
             <thead>
               <tr class="table-light">
-                <th style="min-width: 320px;">GOLONGAN CASH FLOW</th>
+                <th class="rkap-mw-320">GOLONGAN CASH FLOW</th>
                 @foreach ($versions as $version)
-                <th class="text-end" style="min-width: 180px;">{{ formatVersionHeader($version) }}</th>
+                <th class="text-end rkap-mw-180">{{ formatVersionHeader($version) }}</th>
                 @endforeach
               </tr>
             </thead>
             <tbody>
               @foreach ($categories->where('category_id', '<', 4) as $category)
                 <!-- Category Header -->
-                <tr class="table-light fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                <tr class="table-light fw-bold text-uppercase rkap-ls-05">
                   <td colspan="{{ 1 + count($versions) }}">
                     @if ($category->category_id == 1)
                     <i class="bx bx-trending-up me-2 text-success"></i>
@@ -167,8 +127,8 @@ if ($val < 0) {
                 @endforeach
 
                 <!-- Overall Totals -->
-                <tr class="table-light fw-bold" style="border-top: 2px solid #a1acb8;">
-                  <td colspan="{{ 1 + count($versions) }}" class="text-uppercase py-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Ringkasan Akhir Kas</td>
+                <tr class="table-light fw-bold rkap-border-t-2-muted">
+                  <td colspan="{{ 1 + count($versions) }}" class="text-uppercase py-1 rkap-font-075 rkap-ls-05">Ringkasan Akhir Kas</td>
                 </tr>
 
                 <!-- Perubahan Kas Bersih -->
@@ -217,7 +177,7 @@ if ($val < 0) {
                 </tr>
 
                 <!-- Saldo Akhir -->
-                <tr class="table-dark fw-bold" style="border-top: 2px solid #233446;">
+                <tr class="table-dark fw-bold rkap-matrix-footer">
                   <td>
                     <i class="bx bx-wallet me-2"></i>Saldo Akhir
                   </td>

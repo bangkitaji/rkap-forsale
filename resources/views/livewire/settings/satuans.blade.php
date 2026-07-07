@@ -7,17 +7,17 @@
         <div class="card-body">
 
             @if (session()->has('message'))
-                <div class="alert alert-success alert-dismissible" role="alert">
-                    {{ session('message') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible" role="alert">
+                {{ session('message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             @if (session()->has('error'))
-                <div class="alert alert-danger alert-dismissible" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -52,7 +52,7 @@
                         @forelse($satuans as $satuan)
                         <tr>
                             <td><strong>{{ $satuan->name }}</strong></td>
-                            <td class="text-wrap" style="max-width: 400px;">
+                            <td class="text-wrap rkap-mw-400">
                                 {{ $satuan->description ?? '-' }}
                             </td>
                             <td>
@@ -82,7 +82,7 @@
 
     {{-- Modal --}}
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">

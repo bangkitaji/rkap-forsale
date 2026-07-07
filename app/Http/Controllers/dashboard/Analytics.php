@@ -101,7 +101,23 @@ class Analytics extends Controller
     ];
 
     $plGroups = [];
-    $plSummary = [];
+    $defaultSummaryItem = [
+      'label' => '',
+      'budget' => 0.0,
+      'realization' => 0.0,
+      'projection' => 0.0,
+    ];
+    $plSummary = [
+      'revenue' => array_merge($defaultSummaryItem, ['label' => 'Total Pendapatan']),
+      'direct_cost' => array_merge($defaultSummaryItem, ['label' => 'Total Beban Langsung']),
+      'gross_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba Kotor (Gross Profit)']),
+      'indirect_cost' => array_merge($defaultSummaryItem, ['label' => 'Total Beban Tidak Langsung']),
+      'operating_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba (Rugi) Usaha']),
+      'other_income' => array_merge($defaultSummaryItem, ['label' => 'Pendapatan Lain-lain (Other Income)']),
+      'other_expense' => array_merge($defaultSummaryItem, ['label' => 'Beban Lain-lain (Other Expense)']),
+      'net_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba Bersih (Net Profit)']),
+      'ebitda' => array_merge($defaultSummaryItem, ['label' => 'EBITDA']),
+    ];
     $unmappedGroup = null;
 
     $monthlyBudgetData = array_fill(1, 12, 0.0);

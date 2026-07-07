@@ -8,21 +8,6 @@
     showToast = true;
     setTimeout(() => showToast = false, 5000);
 " x-init="if (showToast) { setTimeout(() => showToast = false, 5000); }">
-    <style>
-        .activity-section {
-            background-color: #f8fafc;
-            border-left: 3px solid #666cff;
-        }
-
-        .table-responsive {
-            overflow: visible !important;
-        }
-
-        .form-control-projection {
-            min-width: 140px;
-        }
-    </style>
-
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Input Proyeksi</h4>
         <div class="d-flex align-items-center gap-2">
@@ -40,7 +25,7 @@
     </div>
 
     {{-- Toast Notification --}}
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+    <div class="toast-container position-fixed top-0 end-0 p-3 rkap-z-1090">
         <div x-show="showToast"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-2"
@@ -53,7 +38,7 @@
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
-            style="display: none;">
+            x-cloak>
             <div class="toast-header text-white" :class="'bg-' + toastType">
                 <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-x-circle'"></i>
                 <div class="me-auto fw-semibold" x-text="toastType === 'success' ? 'Berhasil' : 'Error'"></div>
@@ -99,9 +84,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -163,9 +147,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -227,9 +210,8 @@
                             <span x-text="selectedLabel"></span>
                         </button>
 
-                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
-                            :class="{ 'show': open }"
-                            style="position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1 rkap-dropdown-scroll"
+                            :class="{ 'show': open }">
 
                             <div class="input-group input-group-sm mb-2">
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
@@ -412,7 +394,7 @@
                                 <div class="text-muted small mt-1">Remarks: {{ $selectedItem->remarks }}</div>
                                 @endif
                             </div>
-                            <div class="text-end border-start ps-3" style="min-width: 220px;">
+                            <div class="text-end border-start ps-3 rkap-min-w-220">
                                 <span class="text-muted d-block small mb-1 fw-semibold">Rencana Anggaran (Total)</span>
                                 <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
                                 <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
@@ -546,14 +528,14 @@
                                 </div>
                         </div>
                         @else
-                        <div style="max-height: 400px; overflow-y: auto; display: block;" class="border rounded p-1 mb-3 bg-white">
+                        <div class="border rounded p-1 mb-3 bg-white rkap-timeline-scroll d-block">
                             <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead class="table-light sticky-top" style="z-index: 10;">
+                                <thead class="table-light sticky-top rkap-z-10">
                                     <tr>
-                                        <th style="width: 20%;">Bulan</th>
-                                        <th style="width: 25%;" class="text-end">Rencana Anggaran</th>
-                                        <th style="width: 25%;" class="text-end">Realisasi</th>
-                                        <th style="width: 30%;" class="text-end">Proyeksi</th>
+                                        <th class="rkap-w-20p">Bulan</th>
+                                        <th class="text-end rkap-w-25p">Rencana Anggaran</th>
+                                        <th class="text-end rkap-w-25p">Realisasi</th>
+                                        <th class="text-end rkap-w-30p">Proyeksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -580,11 +562,11 @@
                                             <td class="fw-semibold text-muted">
                                                 {{ $monthNames[$m] }}
                                                 @if($hasRealization)
-                                                <span class="d-block text-warning small" style="font-size: 0.7rem;">
+                                                <span class="d-block text-warning small rkap-font-07">
                                                     <i class="bx bx-lock-alt"></i> Terkunci (Realisasi Ada)
                                                 </span>
                                                 @elseif($isClosed)
-                                                <span class="d-block text-danger small" style="font-size: 0.7rem;">
+                                                <span class="d-block text-danger small rkap-font-07">
                                                     <i class="bx bx-lock-alt"></i> Terkunci (Closing Periode)
                                                 </span>
                                                 @endif
@@ -640,7 +622,7 @@
                                                     </div>
                                                 </div>
                                                 @if($isLocked && $existingProj)
-                                                <div class="small text-muted text-end mt-1" style="font-size:0.7rem;">
+                                                <div class="small text-muted text-end mt-1 rkap-font-07">
                                                     Nilai Proyeksi: Rp {{ number_format($existingProj->amount, 0, ',', '.') }}
                                                 </div>
                                                 @endif

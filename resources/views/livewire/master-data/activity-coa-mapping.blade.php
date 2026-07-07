@@ -57,14 +57,14 @@
 
           {{-- Selected badge --}}
           @if ($selectedActivity)
-          <div class="alert alert-primary py-2 px-3 mb-3 d-flex align-items-start gap-2" style="border-left: 4px solid var(--bs-primary);">
+          <div class="alert alert-primary py-2 px-3 mb-3 d-flex align-items-start gap-2 rkap-border-l-4-primary">
             <i class="bx bx-check-circle text-primary mt-1 flex-shrink-0"></i>
             <div class="flex-grow-1 min-width-0">
-              <div class="fw-semibold small" style="line-height:1.3;">{{ $selectedActivity->code }}</div>
-              <div class="text-muted" style="font-size:0.78rem; word-break:break-word;">{{ $selectedActivity->title }}</div>
+              <div class="fw-semibold small rkap-lh-13">{{ $selectedActivity->code }}</div>
+              <div class="text-muted rkap-font-078 rkap-word-break-word">{{ $selectedActivity->title }}</div>
               @if($selectedActivity->workPlan)
               <div class="mt-1">
-                <span class="badge bg-label-secondary" style="font-size:0.7rem;">{{ $selectedActivity->workPlan->code }}</span>
+                <span class="badge bg-label-secondary rkap-font-07">{{ $selectedActivity->workPlan->code }}</span>
               </div>
               @endif
             </div>
@@ -75,27 +75,25 @@
           @endif
 
           {{-- Activity list --}}
-          <div style="max-height: 460px; overflow-y: auto;">
+          <div class="rkap-h460-scroll">
             @forelse($activities as $activity)
             <button
               type="button"
               wire:click="selectActivity({{ $activity->id }})"
               @click="isDirty = false"
-              class="w-100 text-start border rounded-2 mb-2 px-3 py-2 d-flex align-items-start gap-2 position-relative
+              class="w-100 text-start border rounded-2 mb-2 px-3 py-2 d-flex align-items-start gap-2 position-relative rkap-cursor-pointer rkap-transition-15
                      {{ $activityId == $activity->id
                           ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-body border-light-subtle hover-bg-light' }}"
-              style="transition: all 0.15s ease; cursor: pointer;">
+                          : 'bg-white text-body border-light-subtle hover-bg-light' }}">
               <i class="bx bx-task mt-1 flex-shrink-0 {{ $activityId == $activity->id ? 'text-white' : 'text-primary' }}"></i>
               <div class="flex-grow-1 min-width-0">
                 <div class="fw-semibold small lh-sm">{{ $activity->code }}</div>
-                <div class="small {{ $activityId == $activity->id ? 'text-white opacity-75' : 'text-muted' }}"
-                     style="font-size:0.78rem; white-space:normal; word-break:break-word;">
+                <div class="small rkap-font-078 rkap-ws-normal rkap-word-break-word {{ $activityId == $activity->id ? 'text-white opacity-75' : 'text-muted' }}">
                   {{ $activity->title }}
                 </div>
                 @if($activity->workPlan)
                 <div class="mt-1">
-                  <span class="badge {{ $activityId == $activity->id ? 'bg-white text-primary' : 'bg-label-secondary' }}" style="font-size:0.65rem;">
+                  <span class="badge {{ $activityId == $activity->id ? 'bg-white text-primary' : 'bg-label-secondary' }} rkap-font-065">
                     {{ $activity->workPlan->code }}
                   </span>
                 </div>
@@ -191,8 +189,8 @@
 
           {{-- Mapped COAs section (pinned to top) --}}
           @php
-            // $mappedCoas is passed directly from the component to ensure mapped COAs are pinned globally.
-            // $coas contains the paginated list of unmapped COAs.
+          // $mappedCoas is passed directly from the component to ensure mapped COAs are pinned globally.
+          // $coas contains the paginated list of unmapped COAs.
           @endphp
 
           @if($mappedCoas->isNotEmpty())
@@ -206,23 +204,21 @@
             <div class="rounded-2 overflow-hidden border border-success border-opacity-25">
               @foreach($mappedCoas as $coa)
               <label for="coa_{{ $coa->id }}"
-                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer bg-success bg-opacity-10
-                       {{ !$loop->last ? 'border-bottom border-success border-opacity-10' : '' }}"
-                style="transition: background 0.1s;">
+                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer bg-success bg-opacity-10 rkap-transition-1
+                       {{ !$loop->last ? 'border-bottom border-success border-opacity-10' : '' }}">
                 <input
                   type="checkbox"
-                  class="form-check-input flex-shrink-0 mt-0"
+                  class="form-check-input flex-shrink-0 mt-0 rkap-checkbox-11"
                   value="{{ $coa->id }}"
                   wire:model.live="selectedCoaIds"
-                  id="coa_{{ $coa->id }}"
-                  style="width:1.1em; height:1.1em;">
+                  id="coa_{{ $coa->id }}">
                 <div class="flex-grow-1 min-width-0">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge bg-success fw-semibold" style="font-size:0.75rem;">{{ $coa->code }}</span>
+                    <span class="badge bg-success fw-semibold rkap-font-075">{{ $coa->code }}</span>
                     <span class="fw-semibold small text-success-emphasis">{{ $coa->title }}</span>
                   </div>
                   @if($coa->description)
-                  <div class="text-muted mt-1" style="font-size:0.75rem;">{{ Str::limit($coa->description, 80) }}</div>
+                  <div class="text-muted mt-1 rkap-font-075">{{ Str::limit($coa->description, 80) }}</div>
                   @endif
                 </div>
                 <i class="bx bx-check-circle text-success fs-5 flex-shrink-0"></i>
@@ -244,23 +240,21 @@
             <div class="rounded-2 overflow-hidden border">
               @foreach($coas as $coa)
               <label for="coa_{{ $coa->id }}"
-                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer
-                       {{ !$loop->last ? 'border-bottom' : '' }}"
-                style="transition: background 0.12s; cursor: pointer;">
+                class="d-flex align-items-center gap-3 px-3 py-2 cursor-pointer rkap-transition-12 rkap-cursor-pointer
+                       {{ !$loop->last ? 'border-bottom' : '' }}">
                 <input
                   type="checkbox"
-                  class="form-check-input flex-shrink-0 mt-0"
+                  class="form-check-input flex-shrink-0 mt-0 rkap-checkbox-11"
                   value="{{ $coa->id }}"
                   wire:model.live="selectedCoaIds"
-                  id="coa_{{ $coa->id }}"
-                  style="width:1.1em; height:1.1em;">
+                  id="coa_{{ $coa->id }}">
                 <div class="flex-grow-1 min-width-0">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge bg-label-secondary fw-semibold" style="font-size:0.75rem;">{{ $coa->code }}</span>
+                    <span class="badge bg-label-secondary fw-semibold rkap-font-075">{{ $coa->code }}</span>
                     <span class="small">{{ $coa->title }}</span>
                   </div>
                   @if($coa->description)
-                  <div class="text-muted mt-1" style="font-size:0.75rem;">{{ Str::limit($coa->description, 80) }}</div>
+                  <div class="text-muted mt-1 rkap-font-075">{{ Str::limit($coa->description, 80) }}</div>
                   @endif
                 </div>
               </label>
@@ -287,10 +281,10 @@
         {{-- Sticky save footer (only shown when activity is selected and there are changes) --}}
         @if($activityId)
         <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center"
-             x-show="isDirty"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0">
+          x-show="isDirty"
+          x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2"
+          x-transition:enter-end="opacity-100 translate-y-0">
           <span class="text-warning small">
             <i class="bx bx-error-circle me-1"></i> Ada perubahan yang belum disimpan.
           </span>
@@ -312,7 +306,7 @@
 
   {{-- ═══════════════ Upload Modal ═══════════════ --}}
   @if($isUploadModalOpen)
-  <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+  <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -338,7 +332,7 @@
             </div>
             @if($importMessage)
             <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
-              <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
+              <pre class="mb-0 rkap-font-0875 text-wrap">{{ $importMessage }}</pre>
             </div>
             @endif
           </div>

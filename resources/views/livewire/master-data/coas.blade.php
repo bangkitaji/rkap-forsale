@@ -46,37 +46,37 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th wire:click="sort('code')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('code')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Code
                                 @if($sortBy === 'code')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sort('title')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('title')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Title
                                 @if($sortBy === 'title')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th>Group</th>
-                            <th wire:click="sort('cf_type')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('cf_type')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 CF Type
                                 @if($sortBy === 'cf_type')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sort('description')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('description')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Description
                                 @if($sortBy === 'description')
-                                    <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
-                                    <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
+                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
                             <th>Actions</th>
@@ -89,23 +89,23 @@
                             <td>{{ $coa->title }}</td>
                             <td>
                                 @if($coa->coaGroup)
-                                    <span class="badge bg-label-info fw-semibold">{{ $coa->coaGroup->name }}</span>
+                                <span class="badge bg-label-info fw-semibold">{{ $coa->coaGroup->name }}</span>
                                 @else
-                                    <span class="badge bg-label-secondary text-muted">Unmapped</span>
+                                <span class="badge bg-label-secondary text-muted">Unmapped</span>
                                 @endif
                             </td>
                             <td>
                                 @if($coa->cf_type === 'CASH IN')
-                                    <span class="badge bg-label-success fw-semibold">CASH IN</span>
+                                <span class="badge bg-label-success fw-semibold">CASH IN</span>
                                 @elseif($coa->cf_type === 'CASH OUT')
-                                    <span class="badge bg-label-danger fw-semibold">CASH OUT</span>
+                                <span class="badge bg-label-danger fw-semibold">CASH OUT</span>
                                 @elseif($coa->cf_type === 'NO CASHFLOW')
-                                    <span class="badge bg-label-warning fw-semibold">NO CASHFLOW</span>
+                                <span class="badge bg-label-warning fw-semibold">NO CASHFLOW</span>
                                 @else
-                                    <span class="badge bg-label-secondary text-muted">-</span>
+                                <span class="badge bg-label-secondary text-muted">-</span>
                                 @endif
                             </td>
-                            <td class="text-wrap" style="max-width: 300px;">
+                            <td class="text-wrap rkap-mw-300">
                                 {{ $coa->description ?? '-' }}
                             </td>
                             <td>
@@ -135,7 +135,7 @@
 
     {{-- Modal --}}
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -161,7 +161,7 @@
                             <select id="coa-group" class="form-select @error('coaGroupId') is-invalid @enderror" wire:model="coaGroupId">
                                 <option value="">Select Group...</option>
                                 @foreach($coaGroups as $g)
-                                    <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
+                                <option value="{{ $g->id }}">{{ $g->name }} ({{ $g->code }})</option>
                                 @endforeach
                             </select>
                             @error('coaGroupId') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -196,7 +196,7 @@
 
     {{-- Upload Modal --}}
     @if($isUploadModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -215,7 +215,7 @@
 
                         @if($importMessage)
                         <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
-                            <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
+                            <pre class="mb-0 rkap-font-0875 rkap-ws-pre-wrap">{{ $importMessage }}</pre>
                         </div>
                         @endif
                     </div>

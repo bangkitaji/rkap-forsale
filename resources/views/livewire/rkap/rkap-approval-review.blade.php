@@ -8,328 +8,6 @@
     }
   });
 ">
-  <style>
-    /* Custom CSS Tooltip styling */
-    .has-tooltip {
-      position: relative;
-      cursor: help;
-    }
-
-    .custom-tooltip-content {
-      visibility: hidden;
-      width: 520px;
-      background-color: #2f3349;
-      color: #ffffff;
-      text-align: left;
-      border-radius: 6px;
-      padding: 10px;
-      position: absolute;
-      z-index: 1080;
-      top: 110%;
-      /* Position below the element */
-      bottom: auto;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      font-size: 0.72rem;
-      line-height: 1.4;
-      pointer-events: none;
-      /* Make sure it doesn't block mouse movements */
-      font-weight: normal;
-    }
-
-    .custom-tooltip-content::after {
-      content: "";
-      position: absolute;
-      bottom: 100%;
-      /* At the top of the tooltip */
-      top: auto;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: transparent transparent #2f3349 transparent;
-    }
-
-    .has-tooltip:hover .custom-tooltip-content {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .tooltip-align-right {
-      right: 0 !important;
-      left: auto !important;
-      transform: none !important;
-    }
-
-    .tooltip-align-right::after {
-      left: auto !important;
-      right: 15px !important;
-      margin-left: 0 !important;
-    }
-
-    .table-responsive,
-    .card,
-    .card-header {
-      overflow: visible !important;
-    }
-
-    .activity-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.5rem;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .activity-card:hover {
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-      border-color: #cbd5e1;
-    }
-
-    .bg-group-alt {
-      background-color: #f8fafc !important;
-    }
-
-    .bg-group-alt td {
-      background-color: inherit !important;
-    }
-
-    /* Scoped Horizontal Timeline Styles */
-    .timeline-steps-container {
-      overflow-x: auto;
-      padding: 10px 10px;
-      width: 100%;
-      background: #fafbfc;
-      border-radius: 8px;
-    }
-
-    /* 
-     * Each column is split into 3 zones:
-     *   [card-zone-top]   -- card extends upward (for odd/above steps)
-     *   [axis-zone]       -- node dot + numbered circle, right on the axis
-     *   [card-zone-bottom]-- card extends downward (for even/below steps)
-     */
-    .timeline-steps-wrapper {
-      position: relative;
-      padding: 10px 0;
-      width: max-content;
-      min-width: 100%;
-      display: flex;
-      align-items: stretch;
-      /* stretch so columns share full height */
-      height: 160px;
-    }
-
-    /* Horizontal axis line sits at vertical center */
-    .timeline-steps-line {
-      position: absolute;
-      top: calc(50% - 2px);
-      height: 4px;
-      background: #2b354e;
-      z-index: 1;
-      border-radius: 2px;
-    }
-
-    .timeline-step-column {
-      width: 150px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      z-index: 2;
-      flex-shrink: 0;
-    }
-
-    /* Top half: card area for "above" steps */
-    .timeline-zone-top {
-      height: 68px;
-      /* (160px wrapper - 24px axis) / 2 */
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      /* card sits at bottom of top zone */
-      align-items: center;
-      padding-bottom: 4px;
-      position: relative;
-    }
-
-    /* Axis zone: holds node-dot and numbered circle, sits right on the axis */
-    .timeline-zone-axis {
-      height: 24px;
-      /* node-dot area, vertically centred */
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      gap: 2px;
-      z-index: 4;
-    }
-
-    /* Bottom half: card area for "below" steps */
-    .timeline-zone-bottom {
-      height: 68px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      /* card sits at top of bottom zone */
-      align-items: center;
-      padding-top: 4px;
-      position: relative;
-    }
-
-    .timeline-step-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background-color: #fff;
-      border: 2.5px solid #8592a3;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0, 0, 0, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.72rem;
-      color: #2b354e;
-      transition: all 0.25s ease;
-      z-index: 3;
-      flex-shrink: 0;
-    }
-
-    .timeline-step-circle.border-success {
-      border-color: #28c76f !important;
-      color: #28c76f !important;
-    }
-
-    .timeline-step-circle.border-danger {
-      border-color: #ea5455 !important;
-      color: #ea5455 !important;
-    }
-
-    .timeline-step-circle.border-warning {
-      border-color: #ff9f43 !important;
-      color: #ff9f43 !important;
-    }
-
-    .timeline-step-circle.border-secondary {
-      border-color: #8592a3 !important;
-      color: #8592a3 !important;
-    }
-
-    .timeline-step-circle.border-primary {
-      border-color: #7367f0 !important;
-      color: #7367f0 !important;
-    }
-
-    .timeline-node-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background-color: #8592a3;
-      border: 2px solid #fff;
-      box-shadow: 0 0 0 1.5px #2b354e;
-      z-index: 4;
-      transition: all 0.25s ease;
-      flex-shrink: 0;
-    }
-
-    .timeline-node-dot.bg-success {
-      background-color: #28c76f !important;
-    }
-
-    .timeline-node-dot.bg-danger {
-      background-color: #ea5455 !important;
-    }
-
-    .timeline-node-dot.bg-warning {
-      background-color: #ff9f43 !important;
-    }
-
-    .timeline-node-dot.bg-secondary {
-      background-color: #8592a3 !important;
-    }
-
-    .timeline-node-dot.bg-primary {
-      background-color: #7367f0 !important;
-    }
-
-    .timeline-card {
-      width: 135px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      position: relative;
-      transition: all 0.25s ease;
-    }
-
-    .timeline-card:hover {
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-    }
-
-    .timeline-card-header {
-      padding: 3px 6px;
-      font-size: 0.58rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #fff;
-      text-align: center;
-      border-top-left-radius: 3px;
-      border-top-right-radius: 3px;
-    }
-
-    .timeline-card-body {
-      padding: 6px;
-    }
-
-    .timeline-card-body h6 {
-      font-size: 0.65rem !important;
-      margin-bottom: 2px !important;
-    }
-
-    .timeline-card-body .text-muted {
-      font-size: 0.58rem !important;
-      margin-bottom: 2px !important;
-    }
-
-    .timeline-card-body .small {
-      font-size: 0.52rem !important;
-    }
-
-    /* Arrow pointing DOWN from the card (card is above axis) */
-    .timeline-card.arrow-down::after {
-      content: "";
-      position: absolute;
-      bottom: -7px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 7px 6px 0 6px;
-      border-style: solid;
-      border-color: var(--theme-color) transparent transparent transparent;
-      z-index: 5;
-    }
-
-    /* Arrow pointing UP from the card (card is below axis) */
-    .timeline-card.arrow-up::after {
-      content: "";
-      position: absolute;
-      top: -7px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 0 6px 7px 6px;
-      border-style: solid;
-      border-color: transparent transparent var(--theme-color) transparent;
-      z-index: 5;
-    }
-  </style>
-
-
 
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
@@ -364,7 +42,7 @@
   <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
     <span class="badge bg-warning text-white me-3 p-1"><i class="bx bx-error fs-4"></i></span>
     <div>
-      <h6 class="alert-heading mb-1 fw-bold text-warning" style="color: #ffab00 !important;">Persetujuan Ditangguhkan
+      <h6 class="alert-heading mb-1 fw-bold text-warning text-warning-bold">Persetujuan Ditangguhkan
         (Persetujuan Belum Dapat Dilakukan)</h6>
       <span>
         Persetujuan akhir oleh Direktur Utama dan Direktur Finance hanya dapat dilakukan setelah <strong>seluruh
@@ -415,20 +93,20 @@
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                      <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevTotal, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                      <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevRealization, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                      <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProjection, 0, ',', '.') }}
                       </div>
                     </div>
@@ -446,17 +124,16 @@
               $totalPct = $prevTotal > 0 ? ($totalDiff / $prevTotal) * 100 : 0;
               @endphp
               <div class="small mt-1 p-1 bg-lighter rounded">
-                <span class="text-muted d-block" style="font-size: 0.65rem;">Sebelumnya
+                <span class="text-muted d-block rkap-font-065">Sebelumnya
                   ({{ $prevData['period'] }}):</span>
-                <span class="fw-semibold text-secondary" style="font-size: 0.72rem;">Rp
+                <span class="fw-semibold text-secondary rkap-font-072">Rp
                   {{ number_format($prevTotal, 0, ',', '.') }}</span>
                 <span
-                  class="fw-bold d-block mt-0.5 @if ($totalDiff > 0) text-danger @elseif($totalDiff < 0) text-success @else text-muted @endif"
-                  style="font-size: 0.72rem;">
+                  class="fw-bold d-block mt-0.5 @if ($totalDiff > 0) text-danger @elseif($totalDiff < 0) text-success @else text-muted @endif rkap-font-072">
                   @if ($totalDiff > 0)
-                  <i class="bx bx-trending-up" style="font-size: 0.8rem;"></i> +{{ number_format($totalPct, 1) }}%
+                  <i class="bx bx-trending-up rkap-font-08"></i> +{{ number_format($totalPct, 1) }}%
                   @elseif($totalDiff < 0)
-                    <i class="bx bx-trending-down" style="font-size: 0.8rem;"></i>
+                    <i class="bx bx-trending-down rkap-font-08"></i>
                     -{{ number_format(abs($totalPct), 1) }}%
                     @else
                     = 0%
@@ -520,7 +197,7 @@
             @endphp
 
             @if ($allTimelineSteps->count() > 1)
-            <div class="timeline-steps-line" style="width: {{ 165 * ($allTimelineSteps->count() - 1) }}px; left: 75px;"></div>
+            <div class="timeline-steps-line" :style="{ width: (165 * ({{ $allTimelineSteps->count() }} - 1)) + 'px', left: '75px' }"></div>
             @endif
 
             {{--
@@ -532,7 +209,7 @@
               ODD  steps (1, 3, 5…): card is ABOVE the axis → top zone has card, axis has dot-above-circle
               EVEN steps (2, 4, 6…): card is BELOW the axis → bottom zone has card, axis has circle-above-dot
             --}}
-            <div class="d-flex align-items-stretch justify-content-start" style="gap: 15px; z-index: 2; position: relative;">
+            <div class="d-flex align-items-stretch justify-content-start rkap-position-relative rkap-gap-15 rkap-z-2">
               @foreach ($allTimelineSteps as $step)
               @php
               $isOdd = $loop->iteration % 2 !== 0;
@@ -552,23 +229,23 @@
 
                 {{-- Top zone: card floats to bottom of this zone --}}
                 <div class="timeline-zone-top">
-                  <div class="timeline-card arrow-down" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
-                      <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                  <div class="timeline-card arrow-down timeline-card-{{ $step['color'] }}">
+                    <div class="timeline-card-header">
+                      <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="fw-semibold text-dark text-truncate mb-0.5" style="font-size: 0.62rem;" title="{{ $step['name'] }}">
+                      <div class="fw-semibold text-dark text-truncate mb-0.5 rkap-font-062" title="{{ $step['name'] }}">
                         {{ $step['name'] }}
                       </div>
-                      <div class="text-muted" style="font-size: 0.52rem !important; white-space: nowrap;">
-                        <i class="bx bx-calendar me-0.5" style="font-size: 0.6rem;"></i>{{ $step['time'] }}
+                      <div class="text-muted rkap-font-052 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-06"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {{-- Axis zone: numbered circle (top), then node-dot (bottom) --}}
-                <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                <div class="timeline-zone-axis">
                   <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
                     {{ $loop->iteration }}
                   </div>
@@ -585,7 +262,7 @@
                 <div class="timeline-zone-top"></div>
 
                 {{-- Axis zone: node-dot (top), then numbered circle (bottom) --}}
-                <div class="timeline-zone-axis" style="flex-direction: column; justify-content: center; gap: 2px;">
+                <div class="timeline-zone-axis">
                   <div class="timeline-node-dot bg-{{ $step['color'] }}"></div>
                   <div class="timeline-step-circle border-{{ $step['color'] }}" title="{{ $step['role'] }}">
                     {{ $loop->iteration }}
@@ -594,16 +271,16 @@
 
                 {{-- Bottom zone: card floats to top of this zone --}}
                 <div class="timeline-zone-bottom">
-                  <div class="timeline-card arrow-up" style="--theme-color: {{ $themeColor }}; border-color: {{ $themeColor }};">
-                    <div class="timeline-card-header" style="background-color: {{ $themeColor }};">
-                      <i class="{{ $step['icon'] }} me-1" style="font-size: 0.85rem;"></i> {{ $step['status'] }}
+                  <div class="timeline-card arrow-up timeline-card-{{ $step['color'] }}">
+                    <div class="timeline-card-header">
+                      <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="fw-semibold text-dark text-truncate mb-0.5" style="font-size: 0.62rem;" title="{{ $step['name'] }}">
+                      <div class="fw-semibold text-dark text-truncate mb-0.5 rkap-font-062" title="{{ $step['name'] }}">
                         {{ $step['name'] }}
                       </div>
-                      <div class="text-muted" style="font-size: 0.52rem !important; white-space: nowrap;">
-                        <i class="bx bx-calendar me-0.5" style="font-size: 0.6rem;"></i>{{ $step['time'] }}
+                      <div class="text-muted rkap-font-052 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-06"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>
@@ -693,16 +370,16 @@
                   class="fw-bold text-{{ $allApproved ? 'success' : 'secondary' }}">{{ $approvedCount }}/{{ $totalActivities }}
                   Disetujui</small>
               </div>
-              <div class="progress mb-2" style="height: 6px;">
+              <div class="progress mb-2 rkap-h-6">
                 @if ($totalActivities > 0)
                 <div class="progress-bar bg-success"
-                  style="width: {{ ($approvedCount / $totalActivities) * 100 }}%;"></div>
+                  :style="{ width: ({{ $approvedCount }} / {{ $totalActivities }} * 100) + '%' }"></div>
                 <div class="progress-bar bg-danger"
-                  style="width: {{ ($rejectedCount / $totalActivities) * 100 }}%;"></div>
+                  :style="{ width: ({{ $rejectedCount }} / {{ $totalActivities }} * 100) + '%' }"></div>
                 @endif
               </div>
               @if ($rejectedCount > 0 || $pendingCount > 0)
-              <div class="d-flex gap-3" style="font-size: 0.75rem;">
+              <div class="d-flex gap-3 rkap-font-075">
                 @if ($approvedCount > 0)
                 <span class="text-success fw-medium"><i class="bx bx-check-circle me-1"></i>{{ $approvedCount }}
                   Disetujui</span>
@@ -771,7 +448,7 @@
           @endphp
 
           @foreach ($groupedCategories as $groupName => $cats)
-          <h6 class="text-uppercase text-muted small fw-bold mb-3 mt-4" style="letter-spacing: 1px;">
+          <h6 class="text-uppercase text-muted small fw-bold mb-3 mt-4 rkap-ls-1">
             <i class="bx bx-folder-open me-1 text-secondary"></i> {{ $groupName }}
           </h6>
           <div class="row g-3">
@@ -779,16 +456,16 @@
             <div class="col-12">
               <div class="card mb-2 border-start border-{{ $cat['color'] }} border-3 shadow-sm">
                 <div class="card-body py-3">
-                  <div class="d-flex justify-content-between align-items-center cursor-pointer collapsed"
+                  <div class="d-flex justify-content-between align-items-center cursor-pointer collapsed rkap-user-select-none"
                     data-bs-toggle="collapse" data-bs-target="#cat-collapse-{{ $cat['key'] }}"
-                    aria-expanded="false" style="user-select: none;">
+                    aria-expanded="false">
                     <div>
                       <h6 class="mb-1 fw-bold text-dark">{{ $cat['label'] }}</h6>
                       <small class="text-muted"><i class="bx bx-chevron-down me-1"></i> Klik untuk melihat rincian
                         {{ count($cat['coas']) }} COA</small>
                     </div>
                     <div class="text-end">
-                      <span class="text-muted small d-block" style="font-size: 0.7rem;">Anggaran Diajukan</span>
+                      <span class="text-muted small d-block rkap-font-07">Anggaran Diajukan</span>
                       <span class="fw-bold text-{{ $cat['color'] }} fs-5">Rp
                         {{ number_format($cat['current_total'], 0, ',', '.') }}</span>
 
@@ -798,7 +475,7 @@
                       $diff = $cat['current_total'] - $prevTotal;
                       $pct = $prevTotal > 0 ? ($diff / $prevTotal) * 100 : 0;
                       @endphp
-                      <div style="font-size: 0.75rem; line-height: 1.2;">
+                      <div class="rkap-font-075 rkap-lh-12">
                         <span class="text-muted">Sebelumnya ({{ $helicopterViewData['prevPeriod'] }}): Rp
                           {{ number_format($prevTotal, 0, ',', '.') }}</span>
                         <span
@@ -824,13 +501,13 @@
                     </div>
                     @else
                     <div class="table-responsive">
-                      <table class="table table-sm table-hover table-striped mb-0" style="font-size: 0.8rem;">
+                      <table class="table table-sm table-hover table-striped mb-0 rkap-font-08">
                         <thead>
                           <tr>
-                            <th style="width: 20%;">Kode Akun</th>
-                            <th style="width: 50%;">Judul Akun (COA)</th>
-                            <th class="text-end" style="width: 15%;">Anggaran Ajuan</th>
-                            <th class="text-end" style="width: 15%;">Selisih (Δ)</th>
+                            <th class="w-20p">Kode Akun</th>
+                            <th class="w-50p">Judul Akun (COA)</th>
+                            <th class="text-end w-15p">Anggaran Ajuan</th>
+                            <th class="text-end w-15p">Selisih (Δ)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -888,9 +565,9 @@
             <div class="col-12">
               <div class="card mb-2 border-start border-secondary border-3 shadow-sm">
                 <div class="card-body py-3">
-                  <div class="d-flex justify-content-between align-items-center cursor-pointer collapsed"
+                  <div class="d-flex justify-content-between align-items-center cursor-pointer collapsed rkap-user-select-none"
                     data-bs-toggle="collapse" data-bs-target="#group-collapse-{{ $group['group_id'] }}"
-                    aria-expanded="false" style="user-select: none;">
+                    aria-expanded="false">
                     <div>
                       <h6 class="mb-1 fw-bold text-secondary">{{ $group['group_name'] }} (Grup:
                         {{ $group['group_code'] }})
@@ -899,7 +576,7 @@
                         {{ count($group['coas']) }} COA</small>
                     </div>
                     <div class="text-end">
-                      <span class="text-muted small d-block" style="font-size: 0.7rem;">Anggaran Diajukan</span>
+                      <span class="text-muted small d-block rkap-font-07">Anggaran Diajukan</span>
                       <span class="fw-bold text-secondary fs-5">Rp
                         {{ number_format($group['current_total'], 0, ',', '.') }}</span>
 
@@ -909,7 +586,7 @@
                       $diff = $group['current_total'] - $prevTotal;
                       $pct = $prevTotal > 0 ? ($diff / $prevTotal) * 100 : 0;
                       @endphp
-                      <div style="font-size: 0.75rem; line-height: 1.2;">
+                      <div class="rkap-font-075 rkap-lh-12">
                         <span class="text-muted">Sebelumnya ({{ $helicopterViewData['prevPeriod'] }}): Rp
                           {{ number_format($prevTotal, 0, ',', '.') }}</span>
                         <span
@@ -930,13 +607,13 @@
                   <div class="collapse mt-3" id="group-collapse-{{ $group['group_id'] }}">
                     <hr class="my-2">
                     <div class="table-responsive">
-                      <table class="table table-sm table-hover table-striped mb-0" style="font-size: 0.8rem;">
+                      <table class="table table-sm table-hover table-striped mb-0 rkap-font-08">
                         <thead>
                           <tr>
-                            <th style="width: 20%;">Kode Akun</th>
-                            <th style="width: 50%;">Judul Akun (COA)</th>
-                            <th class="text-end" style="width: 15%;">Anggaran Ajuan</th>
-                            <th class="text-end" style="width: 15%;">Selisih (Δ)</th>
+                            <th class="w-20p">Kode Akun</th>
+                            <th class="w-50p">Judul Akun (COA)</th>
+                            <th class="text-end w-15p">Anggaran Ajuan</th>
+                            <th class="text-end w-15p">Selisih (Δ)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1025,8 +702,7 @@
               </select>
 
               {{-- Dropdown options --}}
-              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                 @forelse($this->workPlansList as $wp)
                 <div
                   class="px-3 py-2 cursor-pointer dropdown-item small {{ $selectedWorkPlanId == $wp->id ? 'bg-primary text-white' : '' }}"
@@ -1081,8 +757,7 @@
               </select>
 
               {{-- Dropdown options --}}
-              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                 @forelse($this->activitiesList as $act)
                 <div
                   class="px-3 py-2 cursor-pointer dropdown-item small {{ $selectedActivityId == $act->id ? 'bg-primary text-white' : '' }}"
@@ -1094,7 +769,7 @@
                         ">
                   <div class="d-flex flex-column gap-1">
                     <span class="fw-semibold text-primary">{{ $act->code }}</span>
-                    <span class="text-secondary" style="font-size: 0.85rem;">{{ $act->title }}</span>
+                    <span class="text-secondary rkap-font-085">{{ $act->title }}</span>
                   </div>
                 </div>
                 @empty
@@ -1150,16 +825,16 @@
                 }" @coa-dropdown-open-new.window="dropdownOpen = true"
             @coa-dropdown-close-new.window="dropdownOpen = false">
 
-            <div class="table-responsive" :style="dropdownOpen ? 'overflow: visible;' : ''">
+            <div class="table-responsive" :class="dropdownOpen ? 'rkap-table-responsive-visible' : ''">
               <table class="table table-sm table-bordered align-middle mb-2">
                 <thead class="table-primary text-white fw-semibold">
                   <tr>
-                    <th style="width:30%" class="text-center align-middle">Uraian & Detail Belanja <span class="text-warning">*</span></th>
-                    <th style="width:10%" class="text-center align-middle">Vol <span class="text-warning">*</span></th>
-                    <th style="width:8%" class="text-center align-middle">Satuan</th>
-                    <th style="width:180px" class="text-center align-middle">Harga Satuan (Rp) <span class="text-warning">*</span></th>
-                    <th style="width:160px" class="text-center align-middle">Total (Rp)</th>
-                    <th style="width:80px" class="text-center align-middle">Aksi</th>
+                    <th class="text-center align-middle w-30p">Uraian & Detail Belanja <span class="text-warning">*</span></th>
+                    <th class="text-center align-middle w-10p">Vol <span class="text-warning">*</span></th>
+                    <th class="text-center align-middle w-8p">Satuan</th>
+                    <th class="text-center align-middle rkap-col-180">Harga Satuan (Rp) <span class="text-warning">*</span></th>
+                    <th class="text-center align-middle rkap-col-160">Total (Rp)</th>
+                    <th class="text-center align-middle w-80p">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1227,7 +902,7 @@
                                   currentLabel: @js($searchLabel),
                               }"
                       x-effect="if (!open && search !== currentLabel) search = currentLabel"
-                      :style="open ? 'position: relative; z-index: 1060;' : ''"
+                      :class="open ? 'rkap-position-relative rkap-z-1060' : ''"
                       @click.outside="open = false; $dispatch('coa-dropdown-close-new')" class="border-bottom-0">
                       <div class="position-relative">
                         <div class="input-group input-group-sm">
@@ -1252,9 +927,8 @@
                             <i class="bx bx-trash"></i>
                           </button>
                           @endif
-                          <span class="input-group-text px-2 fw-semibold text-nowrap"
-                            style="font-size:0.78rem; background:#f0f4ff; border-color:#c9d4f5; color:#2563eb;">
-                            <i class="bx bx-sum me-1" style="font-size:0.85rem;"></i>
+                          <span class="input-group-text px-2 fw-semibold text-nowrap rkap-coa-sum-chip">
+                            <i class="bx bx-sum me-1 rkap-coa-sum-icon"></i>
                             Rp {{ number_format($groupSubtotal, 0, ',', '.') }}
                           </span>
                         </div>
@@ -1268,8 +942,7 @@
                           @endforeach
                         </select>
                         <div x-show="open" x-cloak
-                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                          style="z-index: 1050; max-height: 220px; overflow-y: auto;">
+                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                           @foreach ($filteredCoasOrdered as $coa)
                           <div
                             class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
@@ -1304,7 +977,7 @@
                         wire:model="newActivityBudgetItems.{{ $biIdx }}.remarks"
                         placeholder="Detail Belanja / Ket...">
                     </td>
-                    <td class="border-top-0" style="min-width: 120px;">
+                    <td class="border-top-0 rkap-rp-input">
                       {{-- Vol 1 --}}
                       <input type="number"
                         class="form-control form-control-sm mb-2 @error('newActivityBudgetItems.' . $biIdx . '.quantity') is-invalid @enderror"
@@ -1317,7 +990,7 @@
                         wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.quantity_2"
                         min="1" placeholder="Vol 2">
                     </td>
-                    <td class="border-top-0" style="position: relative; min-width: 120px;">
+                    <td class="border-top-0 rkap-position-relative rkap-rp-input">
                       {{-- Satuan 1 --}}
                       <input type="text"
                         class="form-control form-control-sm mb-2 @error('newActivityBudgetItems.' . $biIdx . '.unit') is-invalid @enderror"
@@ -1330,7 +1003,7 @@
                         wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.unit_2"
                         list="satuan-options-verifier" placeholder="Satuan 2 (opsional)" autocomplete="off">
                     </td>
-                    <td class="border-top-0" style="min-width: 180px;">
+                    <td class="border-top-0 rkap-min-w-180">
                       <div x-data="{
                                     raw: {{ (int) ($bi['unit_price'] ?? 0) }},
                                     display: '',
@@ -1357,7 +1030,7 @@
                                     }
                                 }" x-init="display = fmt(raw)">
                         <div class="input-group input-group-sm">
-                          <span class="input-group-text" style="font-size: 0.75rem;">Rp</span>
+                          <span class="input-group-text rkap-font-075">Rp</span>
                           <input type="text"
                             class="form-control form-control-sm text-end @error('newActivityBudgetItems.' . $biIdx . '.unit_price') is-invalid @enderror"
                             :value="display" @input="onInput($event)" @blur="onBlur($event)"
@@ -1433,10 +1106,8 @@
       $isProgramVirtual = collect($wpGroup)->every(fn($item) => $item['is_virtual'] ?? false);
       @endphp
       <div
-        class="card mb-4 border-start border-primary border-3 @if ($isProgramVirtual) border-danger @endif"
-        style="@if ($isProgramVirtual) border-left-color: #ff3e1d !important; background-color: #fff5f5; @endif">
-        <div class="card-header border-bottom py-3"
-          style="@if ($isProgramVirtual) background-color: #fff0f0; @endif">
+        class="card mb-4 border-start border-primary border-3 @if ($isProgramVirtual) rkap-virtual-program-card @endif">
+        <div class="card-header border-bottom py-3 @if ($isProgramVirtual) rkap-virtual-program-header @endif">
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex flex-column">
               <div class="d-flex align-items-center gap-2">
@@ -1470,20 +1141,20 @@
                   </div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                      <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                      <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                      <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
@@ -1497,7 +1168,7 @@
           </div>
         </div>
 
-        <div class="card-body bg-light-gray p-3" style="background-color: #f8fafc;">
+        <div class="card-body bg-group-alt p-3">
           @foreach ($wpGroup as $actIdx => $wp)
           @php
           $isWpVirtual = $wp['is_virtual'] ?? false;
@@ -1506,8 +1177,7 @@
           $activityTitle = $activity ? $activity->title : ($wp['program_name'] ?: '-');
           $actSubtotal = (float) $wp['total_budget'];
           @endphp
-          <div class="activity-card p-3 mb-3 @if ($isWpVirtual) border-danger @endif"
-            style="@if ($isWpVirtual) border-color: #ff3e1d !important; background-color: #fff9f9; @else background-color: #ffffff; @endif">
+          <div class="activity-card p-3 mb-3 @if ($isWpVirtual) rkap-activity-card-virtual @endif">
             <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-2 mb-3">
               {{-- Left: icon + activity info --}}
               <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
@@ -1520,10 +1190,10 @@
                       {{ $actIdx + 1 }}
                     </h6>
                     @if ($isWpVirtual)
-                    <span class="badge bg-danger" style="font-size: 0.6rem;">Tidak Diajukan Kembali</span>
+                    <span class="badge bg-danger rkap-font-06">Tidak Diajukan Kembali</span>
                     @endif
                     @if ($wp['model'] && $wp['model']->is_past_period_payment)
-                    <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">
+                    <span class="badge bg-warning text-dark ms-1 rkap-font-06">
                       <i class="bx bx-calendar-exclamation me-1"></i>Pembayaran Periode Lalu
                       @if ($wp['model']->pastPeriod) — {{ $wp['model']->pastPeriod->year }}@endif
                     </span>
@@ -1533,7 +1203,7 @@
                     class="@if ($isWpVirtual) text-danger @else text-muted @endif small d-block text-truncate">{{ $activityCode }}
                     — {{ $activityTitle }}</span>
                   @if ($wp['model'] && $wp['model']->is_past_period_payment && $wp['model']->pastPeriod)
-                  <div class="d-flex align-items-center gap-1 mt-1" style="font-size: 0.78rem;">
+                  <div class="d-flex align-items-center gap-1 mt-1 rkap-font-078">
                     <i class="bx bx-info-circle text-warning flex-shrink-0"></i>
                     <span class="text-warning fw-semibold">Anggaran rencana pembayaran kewajiban untuk
                       RKAP {{ $wp['model']->pastPeriod->year }} — {{ $wp['model']->pastPeriod->title }}</span>
@@ -1603,20 +1273,20 @@
                         Sebelumnya ({{ $prevPeriod }})</div>
                       <div class="row text-center">
                         <div class="col-4 border-end">
-                          <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran</div>
-                          <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                          <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                          <div class="fw-bold text-white rkap-font-075">Rp
                             {{ number_format($prevActivityData['budget'], 0, ',', '.') }}
                           </div>
                         </div>
                         <div class="col-4 border-end">
-                          <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi</div>
-                          <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">Rp
+                          <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                          <div class="fw-bold text-white text-success rkap-font-075">Rp
                             {{ number_format($prevActivityData['realization'], 0, ',', '.') }}
                           </div>
                         </div>
                         <div class="col-4">
-                          <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi</div>
-                          <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">Rp
+                          <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                          <div class="fw-bold text-white text-warning rkap-font-075">Rp
                             {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}
                           </div>
                         </div>
@@ -1633,8 +1303,7 @@
             @if ($wp['description'])
             <div class="mb-3">
               <label class="text-muted small d-block">Deskripsi / Tujuan</label>
-              <p class="mb-0 text-dark @if ($isWpVirtual) text-danger @endif"
-                style="white-space: pre-line;">{{ $wp['description'] }}</p>
+              <p class="mb-0 text-dark @if ($isWpVirtual) text-danger @endif rkap-preline">{{ $wp['description'] }}</p>
             </div>
             @endif
 
@@ -1644,12 +1313,12 @@
             $actChanges = $revisionChanges[$wp['model']->id];
             @endphp
             @if ($actChanges['has_changes'])
-            <div class="alert alert-warning border-warning p-3 mb-3" style="background-color: #fffdf5;">
+            <div class="alert alert-warning border-warning p-3 mb-3 rkap-bg-revision-alert">
               <h6 class="alert-heading fw-bold text-warning mb-2 d-flex align-items-center">
                 <i class="bx bx-edit-alt me-1"></i> Perubahan pada Revisi Ini (Versi
                 {{ $submission->current_version - 1 }} → {{ $submission->current_version }})
               </h6>
-              <ul class="mb-0 ps-3 small text-dark" style="list-style-type: disc;">
+              <ul class="mb-0 ps-3 small text-dark rkap-list-disc">
                 @foreach ($actChanges['activity_level_changes'] as $c)
                 <li><strong>{{ $c['field'] }}</strong> diubah dari <code>{{ $c['old'] }}</code>
                   menjadi <code>{{ $c['new'] }}</code></li>
@@ -1672,7 +1341,7 @@
                 <li>
                   <i class="bx bx-pencil text-warning me-1"></i> Mengubah anggaran
                   <strong>{{ $item['account_code'] }}</strong> - {{ $item['description'] }}:
-                  <ul class="mb-0 ps-3" style="list-style-type: circle;">
+                  <ul class="mb-0 ps-3 rkap-list-circle">
                     @if (($item['old']['description'] ?? '') !== ($item['new']['description'] ?? ''))
                     <li>Deskripsi: <code>{{ $item['old']['description'] }}</code> →
                       <code>{{ $item['new']['description'] }}</code>
@@ -1725,40 +1394,40 @@
               <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>File Referensi:</label>
               <div class="d-flex flex-wrap gap-2">
                 @foreach ($wp['model']->activityFiles as $file)
-                  @php
-                    $isViewable = in_array(strtolower($file->file_type), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
-                  @endphp
-                  @if ($isViewable)
-                    <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewFileModal-{{ $file->id }}">
-                      <i class="bx bx-show me-1"></i> {{ $file->original_name }}
-                    </button>
-                    <!-- Modal for displaying inline -->
-                    <div class="modal fade" id="viewFileModal-{{ $file->id }}" tabindex="-1" aria-hidden="true" wire:key="view-file-modal-approval-{{ $file->id }}">
-                      <div class="modal-dialog modal-dialog-centered modal-xl">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title"><i class="bx bx-file me-2 text-primary"></i>{{ $file->original_name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body p-0 text-center bg-light">
-                            @if (strtolower($file->file_type) === 'pdf')
-                              <iframe src="{{ route('rkap-files.view', $file->id) }}" width="100%" height="700px" style="border:none;"></iframe>
-                            @else
-                              <img src="{{ route('rkap-files.view', $file->id) }}" class="img-fluid p-3" style="max-height:75vh; object-fit:contain;" />
-                            @endif
-                          </div>
-                          <div class="modal-footer">
-                            <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
-                          </div>
-                        </div>
+                @php
+                $isViewable = in_array(strtolower($file->file_type), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
+                @endphp
+                @if ($isViewable)
+                <button type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewFileModal-{{ $file->id }}">
+                  <i class="bx bx-show me-1"></i> {{ $file->original_name }}
+                </button>
+                <!-- Modal for displaying inline -->
+                <div class="modal fade" id="viewFileModal-{{ $file->id }}" tabindex="-1" aria-hidden="true" wire:key="view-file-modal-approval-{{ $file->id }}">
+                  <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-file me-2 text-primary"></i>{{ $file->original_name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body p-0 text-center bg-light">
+                        @if (strtolower($file->file_type) === 'pdf')
+                        <iframe src="{{ route('rkap-files.view', $file->id) }}" width="100%" height="700px" class="border-0"></iframe>
+                        @else
+                        <img src="{{ route('rkap-files.view', $file->id) }}" class="img-fluid p-3 rkap-max-h-75vh rkap-obj-contain" />
+                        @endif
+                      </div>
+                      <div class="modal-footer">
+                        <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
                       </div>
                     </div>
-                  @else
-                    <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-xs btn-outline-secondary">
-                      <i class="bx bx-download me-1"></i> {{ $file->original_name }}
-                    </a>
-                  @endif
+                  </div>
+                </div>
+                @else
+                <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-xs btn-outline-secondary">
+                  <i class="bx bx-download me-1"></i> {{ $file->original_name }}
+                </a>
+                @endif
                 @endforeach
               </div>
             </div>
@@ -1792,11 +1461,11 @@
                 <thead>
                   <tr>
                     <th>Uraian & Detail Belanja</th>
-                    <th class="text-center" style="width: 10%;">Vol</th>
-                    <th style="width: 12%;">Satuan</th>
-                    <th class="text-end" style="width: 14%;">Harga Satuan</th>
-                    <th class="text-end" style="width: 16%;">Total</th>
-                    <th class="text-center" style="width: 8%;">Aksi</th>
+                    <th class="text-center rkap-w-10p">Vol</th>
+                    <th class="rkap-w-12p">Satuan</th>
+                    <th class="text-end rkap-w-14p">Harga Satuan</th>
+                    <th class="text-end rkap-w-16p">Total</th>
+                    <th class="text-center rkap-w-8p">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1835,8 +1504,8 @@
                           @endphp
 
 
-                          <div class="has-tooltip" style="font-size:0.78rem; line-height:1.2;">
-                            <span class="text-muted" style="font-size:0.68rem;">Sub-total:</span>
+                          <div class="has-tooltip rkap-font-078 rkap-lh-12">
+                            <span class="text-muted rkap-font-068">Sub-total:</span>
                             <span class="fw-bold text-primary">
                               Rp {{ number_format($coaGroupSubtotal, 0, ',', '.') }}
                             </span>
@@ -1846,22 +1515,22 @@
                                 Periode Sebelumnya ({{ $prevPeriod }})</div>
                               <div class="row text-center">
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran
+                                  <div class="text-white-50 small rkap-font-065">Anggaran
                                   </div>
-                                  <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp
+                                  <div class="fw-bold text-white rkap-font-075">Rp
                                     {{ number_format($prevCoaData['budget'], 0, ',', '.') }}
                                   </div>
                                 </div>
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Realisasi
+                                  <div class="text-white-50 small rkap-font-065">Realisasi
                                   </div>
-                                  <div class="fw-bold text-white text-success" style="font-size: 0.75rem;">
+                                  <div class="fw-bold text-white text-success rkap-font-075">
                                     Rp {{ number_format($prevCoaData['realization'], 0, ',', '.') }}</div>
                                 </div>
                                 <div class="col-4">
-                                  <div class="text-white-50 small" style="font-size: 0.65rem;">Proyeksi
+                                  <div class="text-white-50 small rkap-font-065">Proyeksi
                                   </div>
-                                  <div class="fw-bold text-white text-warning" style="font-size: 0.75rem;">
+                                  <div class="fw-bold text-white text-warning rkap-font-075">
                                     Rp {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}
                                   </div>
                                 </div>
@@ -1936,21 +1605,20 @@
                   : null;
                   @endphp
                   <tr
-                    @if ($isBiVirtual) style="background-color: #fff9f9;" @elseif($isBiRevisionAdded) style="background-color: #e8f5e9;" @elseif($biRevisionModifiedData) style="background-color: #fffde7;" @endif>
+                    class="@if ($isBiVirtual) rkap-bg-revision-alert @elseif($isBiRevisionAdded) rkap-bg-revision-added @elseif($biRevisionModifiedData) rkap-bg-revision-modified @endif">
                     <td>
                       <span
                         class="@if ($isBiVirtual) text-danger text-decoration-line-through @endif">
                         {{ $bi['remarks'] ?: $bi['description'] }}
                       </span>
                       @if ($isBiVirtual)
-                      <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus</span>
+                      <span class="badge bg-label-danger ms-1 rkap-font-06">Dihapus</span>
                       @endif
                       @if ($isBiRevisionAdded)
-                      <span class="badge bg-success ms-1" style="font-size: 0.6rem;">Baru</span>
+                      <span class="badge bg-success ms-1 rkap-font-06">Baru</span>
                       @endif
                       @if ($biRevisionModifiedData)
-                      <span class="badge bg-warning text-dark ms-1"
-                        style="font-size: 0.6rem;">Diubah</span>
+                      <span class="badge bg-warning text-dark ms-1 rkap-font-06">Diubah</span>
                       @endif
 
                       @if ($isEditMode && !$isBiVirtual)
@@ -1990,8 +1658,7 @@
                           @endforeach
                         </select>
                         <div x-show="open" x-cloak
-                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
-                          style="z-index: 1060; max-height: 200px; overflow-y: auto;">
+                          class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-z-1060 rkap-overflow-y-auto rkap-h-200-scroll">
                           @foreach ($this->coaOptionsList as $coaOption)
                           <div
                             class="px-3 py-2 cursor-pointer dropdown-item small {{ $currentCoaCode == $coaOption->code ? 'bg-primary text-white' : '' }}"
@@ -2049,23 +1716,23 @@
                     <td class="text-end text-nowrap">
                       <div class="fw-semibold @if ($isBiVirtual) text-danger @else text-primary @endif has-tooltip">
                         Rp {{ number_format($bi['total_price'], 0, ',', '.') }}
-                        <span class="custom-tooltip-content tooltip-align-right" style="width: 280px; font-weight: normal;">
+                        <span class="custom-tooltip-content tooltip-align-right rkap-w-280 fw-normal">
                           @if ($prevItemBudget !== null)
                           <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
-                          <div class="row text-center" style="min-width: 250px;">
+                          <div class="row text-center rkap-mw-250">
                             <div class="col-6 border-end">
-                              <div class="text-white-50 small" style="font-size: 0.65rem;">Anggaran Sblm</div>
-                              <div class="fw-bold text-white" style="font-size: 0.75rem;">Rp {{ number_format($prevItemBudget, 0, ',', '.') }}</div>
+                              <div class="text-white-50 small rkap-font-065">Anggaran Sblm</div>
+                              <div class="fw-bold text-white rkap-font-075">Rp {{ number_format($prevItemBudget, 0, ',', '.') }}</div>
                             </div>
                             <div class="col-6">
-                              <div class="text-white-50 small" style="font-size: 0.65rem;">Selisih (Δ)</div>
-                              <div class="fw-bold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-white @endif" style="font-size: 0.75rem;">
+                              <div class="text-white-50 small rkap-font-065">Selisih (Δ)</div>
+                              <div class="fw-bold @if($itemDiff > 0) text-danger @elseif($itemDiff < 0) text-success @else text-white @endif rkap-font-075">
                                 @if ($itemDiff > 0)
-                                ↑ +{{ number_format($itemPct, 1) }}%<br><span style="font-size: 0.68rem;">(+Rp {{ number_format($itemDiff, 0, ',', '.') }})</span>
+                                ↑ +{{ number_format($itemPct, 1) }}%<br><span class="rkap-font-068">(+Rp {{ number_format($itemDiff, 0, ',', '.') }})</span>
                                 @elseif ($itemDiff < 0)
-                                  ↓ -{{ number_format(abs($itemPct), 1) }}%<br><span style="font-size: 0.68rem;">(-Rp {{ number_format(abs($itemDiff), 0, ',', '.') }})</span>
+                                  ↓ -{{ number_format(abs($itemPct), 1) }}%<br><span class="rkap-font-068">(-Rp {{ number_format(abs($itemDiff), 0, ',', '.') }})</span>
                                   @else
-                                  = 0%<br><span style="font-size: 0.68rem;">(Rp 0)</span>
+                                  = 0%<br><span class="rkap-font-068">(Rp 0)</span>
                                   @endif
                               </div>
                             </div>
@@ -2076,7 +1743,7 @@
                         </span>
                       </div>
                       @if ($biRevisionModifiedData && $biRevisionModifiedData['total_price'] != $bi['total_price'])
-                      <div class="text-muted small text-decoration-line-through text-end" style="font-size: 0.75rem;">Sblm: Rp
+                      <div class="text-muted small text-decoration-line-through text-end rkap-font-075">Sblm: Rp
                         {{ number_format($biRevisionModifiedData['total_price'], 0, ',', '.') }}
                       </div>
                       @endif
@@ -2172,21 +1839,21 @@
                                 </div>
                                 @else
                                 <div class="border rounded-2 table-responsive mb-2">
-                                  <table class="table table-sm table-bordered align-middle mb-0" style="min-width: 750px;">
+                                  <table class="table table-sm table-bordered align-middle mb-0 rkap-min-w-750">
                                     <thead class="table-primary">
                                       <tr>
-                                        <th class="text-center" style="width: 90px;">Bulan</th>
+                                        <th class="text-center rkap-w-90">Bulan</th>
                                         <th class="text-end">
                                           Distribusi Penganggaran (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->coaGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->coaGroup?->name ?: '-' }})</div>
                                         </th>
                                         <th class="text-end">
                                           Rencana Pendanaan (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->cashflowGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->cashflowGroup?->name ?: '-' }})</div>
                                         </th>
                                         <th class="text-end">
                                           Selisih (Rp)
-                                          <div class="small fw-normal text-muted" style="font-size: 0.65rem; opacity: 0.85;">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
                                         </th>
                                       </tr>
                                     </thead>
@@ -2242,13 +1909,13 @@
                   {{-- Removed Budget Items in Revision --}}
                   @if ($actChanges && !empty($actChanges['removed_items']))
                   @foreach ($actChanges['removed_items'] as $removedBi)
-                  <tr style="background-color: #fff5f5;">
+                  <tr class="rkap-bg-revision-removed">
                     <td class="text-danger">
                       <span class="text-decoration-line-through">
                         <strong>{{ $removedBi['account_code'] }}</strong> -
                         {{ $removedBi['remarks'] ?: $removedBi['description'] }}
                       </span>
-                      <span class="badge bg-label-danger ms-1" style="font-size: 0.6rem;">Dihapus pada
+                      <span class="badge bg-label-danger ms-1 rkap-font-06">Dihapus pada
                         Revisi</span>
                     </td>
                     <td class="text-center text-danger">

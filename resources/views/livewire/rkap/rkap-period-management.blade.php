@@ -7,16 +7,16 @@
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible" role="alert">
-            {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        {{ session('message') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     @endif
     @if (session()->has('error'))
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
     @endif
 
     <div class="row g-4">
@@ -43,7 +43,7 @@
                     </div>
 
                     @if($period->description)
-                        <p class="text-muted small mb-3">{{ $period->description }}</p>
+                    <p class="text-muted small mb-3">{{ $period->description }}</p>
                     @endif
 
                     <div class="d-flex gap-3 mb-3 small text-muted">
@@ -64,22 +64,22 @@
                             <i class="bx bx-edit me-1"></i> Edit
                         </button>
                         @if($period->status === 'draft')
-                            <button wire:click="openPeriod({{ $period->id }})" wire:confirm="Buka periode ini untuk pengajuan?" class="btn btn-sm btn-success">
-                                <i class="bx bx-lock-open me-1"></i> Buka
-                            </button>
+                        <button wire:click="openPeriod({{ $period->id }})" wire:confirm="Buka periode ini untuk pengajuan?" class="btn btn-sm btn-success">
+                            <i class="bx bx-lock-open me-1"></i> Buka
+                        </button>
                         @elseif($period->status === 'open')
-                            <button wire:click="closePeriod({{ $period->id }})" wire:confirm="Tutup periode ini?" class="btn btn-sm btn-warning">
-                                <i class="bx bx-lock me-1"></i> Tutup
-                            </button>
+                        <button wire:click="closePeriod({{ $period->id }})" wire:confirm="Tutup periode ini?" class="btn btn-sm btn-warning">
+                            <i class="bx bx-lock me-1"></i> Tutup
+                        </button>
                         @elseif($period->status === 'closed')
-                            <button wire:click="finalizePeriod({{ $period->id }})" wire:confirm="Finalisasi periode ini?" class="btn btn-sm btn-primary">
-                                <i class="bx bx-check-double me-1"></i> Finalisasi
-                            </button>
+                        <button wire:click="finalizePeriod({{ $period->id }})" wire:confirm="Finalisasi periode ini?" class="btn btn-sm btn-primary">
+                            <i class="bx bx-check-double me-1"></i> Finalisasi
+                        </button>
                         @endif
                         @if($period->submissions_count == 0)
-                            <button wire:click="delete({{ $period->id }})" wire:confirm="Hapus periode ini?" class="btn btn-sm btn-label-danger">
-                                <i class="bx bx-trash"></i>
-                            </button>
+                        <button wire:click="delete({{ $period->id }})" wire:confirm="Hapus periode ini?" class="btn btn-sm btn-label-danger">
+                            <i class="bx bx-trash"></i>
+                        </button>
                         @endif
                     </div>
                 </div>
@@ -99,7 +99,7 @@
 
     {{-- Modal --}}
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">

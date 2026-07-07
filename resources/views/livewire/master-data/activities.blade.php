@@ -47,7 +47,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th wire:click="sort('work_plan')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('work_plan')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Work Plan
                                 @if($sortBy === 'work_plan')
                                 <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
@@ -55,7 +55,7 @@
                                 <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sort('code')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('code')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Code
                                 @if($sortBy === 'code')
                                 <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
@@ -63,7 +63,7 @@
                                 <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sort('title')" style="cursor:pointer; user-select:none; white-space:nowrap;">
+                            <th wire:click="sort('title')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
                                 Title
                                 @if($sortBy === 'title')
                                 <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
@@ -112,7 +112,7 @@
 
     <!-- Modal -->
     @if($isModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -162,7 +162,7 @@
 
     <!-- Upload Modal -->
     @if($isUploadModalOpen)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -181,7 +181,7 @@
 
                         @if($importMessage)
                         <div class="alert alert-{{ $importStatus === 'success' ? 'success' : 'danger' }} alert-dismissible" role="alert">
-                            <pre class="mb-0" style="font-size: 0.875rem; white-space: pre-wrap;">{{ $importMessage }}</pre>
+                            <pre class="mb-0 small text-wrap">{{ $importMessage }}</pre>
                         </div>
                         @endif
                     </div>
