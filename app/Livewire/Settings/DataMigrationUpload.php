@@ -48,6 +48,10 @@ class DataMigrationUpload extends Component
 
   public function uploadAndImport(): void
   {
+    // Prevent timeouts and memory exhaustion during large file migrations
+    @set_time_limit(0);
+    @ini_set('memory_limit', '512M');
+
     $this->resetState();
 
     $this->validate([
@@ -338,7 +342,8 @@ class DataMigrationUpload extends Component
         $compositeBiKey = $compositeWpKey . '::' . $coaId;
 
         if (!isset($budgetItemMap[$compositeBiKey])) {
-          $budgetItem = RkapBudgetItem::where('rkap_work_plan_id', $workPlan->id)
+          $budgetItem = RkapBudgetItem::with(['monthlies', 'cashOuts'])
+            ->where('rkap_work_plan_id', $workPlan->id)
             ->where('account_code', $coa?->code)
             ->first();
 
@@ -352,6 +357,8 @@ class DataMigrationUpload extends Component
               'unit_price' => (float) $row['unit_price'],
               'remarks' => ($row['remarks'] ?? null) ?: null,
             ]);
+            $budgetItem->setRelation('monthlies', collect());
+            $budgetItem->setRelation('cashOuts', collect());
             $createdBudgetItems++;
           }
           $budgetItemMap[$compositeBiKey] = $budgetItem;
@@ -386,16 +393,17 @@ class DataMigrationUpload extends Component
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["m{$m}"] ?? 0);
           if ($amount > 0) {
-            $monthly = $budgetItem->monthlies()->where('month', $m)->first();
+            $monthly = $budgetItem->monthlies->firstWhere('month', $m);
             if ($monthly) {
               $monthly->update([
                 'amount' => $monthly->amount + $amount,
               ]);
             } else {
-              $budgetItem->monthlies()->create([
+              $newMonthly = $budgetItem->monthlies()->create([
                 'month' => $m,
                 'amount' => $amount,
               ]);
+              $budgetItem->monthlies->push($newMonthly);
               $createdMonthlies++;
             }
           }
@@ -404,16 +412,17 @@ class DataMigrationUpload extends Component
         for ($m = 1; $m <= 12; $m++) {
           $amount = (float) ($row["co{$m}"] ?? 0);
           if ($amount > 0) {
-            $cashOut = $budgetItem->cashOuts()->where('month', $m)->first();
+            $cashOut = $budgetItem->cashOuts->firstWhere('month', $m);
             if ($cashOut) {
               $cashOut->update([
                 'amount' => $cashOut->amount + $amount,
               ]);
             } else {
-              $budgetItem->cashOuts()->create([
+              $newCashOut = $budgetItem->cashOuts()->create([
                 'month' => $m,
                 'amount' => $amount,
               ]);
+              $budgetItem->cashOuts->push($newCashOut);
               $createdCashOuts++;
             }
           }
