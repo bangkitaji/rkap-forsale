@@ -516,6 +516,9 @@ a {
 .bg-lighter {
   background-color: #f8fafc !important;
 }
+.bg-light-gray {
+  background-color: #f4f5f7 !important;
+}
 .rkap-gradient-blue {
   background: linear-gradient(135deg, #1a3c6e 0%, #2563eb 100%) !important;
 }
@@ -607,6 +610,13 @@ a {
   z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
+}
+
+.rkap-dropdown-menu {
+  z-index: 1050;
+  max-height: 250px;
+  overflow-y: auto;
+  background-color: #fff !important;
 }
 
 // -- MODAL UTILITIES --
@@ -785,6 +795,7 @@ a {
 }
 
 // -- Cards --
+.activity-card,
 .rkap-activity-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
