@@ -529,7 +529,7 @@
     }
 
     // Create initial chart with appropriate data based on role
-    const isKadept = @json(auth() - > user() - > isKepalaDepartemen());
+    const isKadept = @json(auth()->user()->isKepalaDepartemen());
     let divisionChart = null;
     setTimeout(() => {
       divisionChart = new ApexCharts(
