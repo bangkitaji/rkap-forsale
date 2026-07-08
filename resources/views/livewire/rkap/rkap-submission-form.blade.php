@@ -1124,7 +1124,7 @@
                   <table class="table table-sm table-bordered mb-0 rkap-summary-table">
                     <thead class="table-primary">
                       <tr>
-                        <th class="text-center w-80p">Bulan</th>
+                        <th class="text-center rkap-w-80">Bulan</th>
                         <th class="text-end">
                           Distribusi Penganggaran (Rp)
                           <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['coa_group_name'] ?: '-' }})</div>

@@ -834,7 +834,7 @@
                     <th class="text-center align-middle w-8p">Satuan</th>
                     <th class="text-center align-middle rkap-col-180">Harga Satuan (Rp) <span class="text-warning">*</span></th>
                     <th class="text-center align-middle rkap-col-160">Total (Rp)</th>
-                    <th class="text-center align-middle w-80p">Aksi</th>
+                    <th class="text-center align-middle rkap-w-80">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
