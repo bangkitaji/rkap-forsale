@@ -1153,13 +1153,42 @@
                       @endphp
                       <tr>
                         <td class="text-center fw-semibold small align-middle">{{ $monthLabel }}</td>
-                        <td class="text-end align-middle">
+                         <td class="text-end align-middle">
                           @if ($isDistribMonth)
-                          <div class="input-group input-group-sm justify-content-end">
+                          <div x-data="{
+                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.monthly_distribution.' . $monthNum).live,
+                                display: '',
+                                init() {
+                                    this.display = this.format(this.raw);
+                                    this.$watch('raw', v => {
+                                        this.display = this.format(v);
+                                    });
+                                },
+                                format(val) {
+                                    if (val === null || val === undefined || val === '') return '';
+                                    let num = Math.round(parseFloat(val));
+                                    if (isNaN(num)) return '';
+                                    return new Intl.NumberFormat('id-ID').format(num);
+                                },
+                                onInput(e) {
+                                    let cursor = e.target.selectionStart;
+                                    let originalLength = e.target.value.length;
+                                    let clean = e.target.value.replace(/[^0-9]/g, '');
+                                    this.raw = clean === '' ? null : parseFloat(clean);
+                                    this.display = this.format(clean);
+                                    this.$nextTick(() => {
+                                        let newLength = this.display.length;
+                                        let diff = newLength - originalLength;
+                                        e.target.setSelectionRange(cursor + diff, cursor + diff);
+                                    });
+                                }
+                              }"
+                              wire:key="dist-input-{{ $wpIdx }}-{{ $actIdx }}-{{ $biIdx }}-{{ $monthNum }}"
+                              class="input-group input-group-sm justify-content-end">
                             <span class="input-group-text rkap-rp-chip">Rp</span>
-                            <input type="number" class="form-control form-control-sm text-end rkap-rp-input"
-                              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.monthly_distribution.{{ $monthNum }}"
-                              min="0" step="1000" placeholder="0"
+                            <input type="text" class="form-control form-control-sm text-end rkap-rp-input"
+                              :value="display" @input="onInput($event)"
+                              @focus="$event.target.select()" placeholder="0" inputmode="numeric"
                               @disabled($isApproved)>
                           </div>
                           @else
@@ -1168,11 +1197,40 @@
                         </td>
                         <td class="text-end align-middle">
                           @if ($isCashOutMonth)
-                          <div class="input-group input-group-sm justify-content-end">
+                          <div x-data="{
+                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.cash_out_distribution.' . $monthNum).live,
+                                display: '',
+                                init() {
+                                    this.display = this.format(this.raw);
+                                    this.$watch('raw', v => {
+                                        this.display = this.format(v);
+                                    });
+                                },
+                                format(val) {
+                                    if (val === null || val === undefined || val === '') return '';
+                                    let num = Math.round(parseFloat(val));
+                                    if (isNaN(num)) return '';
+                                    return new Intl.NumberFormat('id-ID').format(num);
+                                },
+                                onInput(e) {
+                                    let cursor = e.target.selectionStart;
+                                    let originalLength = e.target.value.length;
+                                    let clean = e.target.value.replace(/[^0-9]/g, '');
+                                    this.raw = clean === '' ? null : parseFloat(clean);
+                                    this.display = this.format(clean);
+                                    this.$nextTick(() => {
+                                        let newLength = this.display.length;
+                                        let diff = newLength - originalLength;
+                                        e.target.setSelectionRange(cursor + diff, cursor + diff);
+                                    });
+                                }
+                              }"
+                              wire:key="cashout-input-{{ $wpIdx }}-{{ $actIdx }}-{{ $biIdx }}-{{ $monthNum }}"
+                              class="input-group input-group-sm justify-content-end">
                             <span class="input-group-text rkap-rp-chip">Rp</span>
-                            <input type="number" class="form-control form-control-sm text-end rkap-rp-input"
-                              wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.cash_out_distribution.{{ $monthNum }}"
-                              min="0" step="1000" placeholder="0"
+                            <input type="text" class="form-control form-control-sm text-end rkap-rp-input"
+                              :value="display" @input="onInput($event)"
+                              @focus="$event.target.select()" placeholder="0" inputmode="numeric"
                               @disabled($isApproved)>
                           </div>
                           @else
