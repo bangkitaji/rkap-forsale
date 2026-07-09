@@ -557,6 +557,7 @@ class RkapSubmissionForm extends Component
 
             $this->workPlans[] = [
                 'work_plan_id' => $wpId,
+                '_uid'         => 'wp_' . $wpId,
                 'activities' => $activities,
             ];
         }
@@ -577,6 +578,7 @@ class RkapSubmissionForm extends Component
 
         $this->workPlans[] = [
             'work_plan_id'  => null,
+            '_uid'          => uniqid('wp_new_', true),
             'activities'    => [
                 $this->emptyActivityBlock(0)
             ],
