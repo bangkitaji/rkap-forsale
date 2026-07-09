@@ -68,6 +68,13 @@ class WorkPlans extends Component
     {
         $this->ensureCanManage();
         $this->resetInputFields();
+
+        $maxCode = WorkPlan::pluck('code')
+            ->filter(fn($c) => is_numeric($c))
+            ->map(fn($c) => (int)$c)
+            ->max();
+        $this->code = $maxCode ? (string)($maxCode + 1) : '1000000001';
+
         $this->isEditMode = false;
         $this->isModalOpen = true;
     }
