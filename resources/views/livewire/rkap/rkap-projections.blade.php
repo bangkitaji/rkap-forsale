@@ -411,8 +411,8 @@
                                     if ($__hasRealization) {
                                     $totalEditingProj += $__realizationAmount;
                                     } elseif ($__isClosed) {
-                                    // Closed without realization: contributes 0
-                                    $totalEditingProj += 0.00;
+                                    // Closed without realization: keep the stored projection amount
+                                    $totalEditingProj += (float) ($selectedItem->projections->where('month', $__m)->first()?->amount ?? 0.00);
                                     } else {
                                     $__val = $editingProjections[$__m] ?? 0;
                                     $totalEditingProj += is_numeric($__val) ? (float)$__val : 0.00;

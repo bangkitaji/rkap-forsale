@@ -379,4 +379,79 @@ class RkapPeriodClosingTest extends TestCase
             ->call('saveMonthlyProjections')
             ->assertHasErrors(['yearlyProjection']);
     }
+
+    public function test_projection_save_succeeds_for_closed_month_with_realization_but_no_projection(): void
+    {
+        $directorate = Directorate::create(['code' => 'D2', 'name' => 'Dir 2']);
+        $department = Department::create(['directorate_id' => $directorate->id, 'code' => 'DP2', 'name' => 'Dept 2']);
+        $bureau = Bureau::create(['department_id' => $department->id, 'code' => 'B2', 'name' => 'Bur 2']);
+
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'created_by' => $this->verifikator->id,
+            'status' => 'approved',
+            'total_budget' => 100000,
+        ]);
+
+        $wpMaster = WorkPlan::create([
+            'code' => 'WP002',
+            'title' => 'Work Plan 2',
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP002',
+            'program_name' => 'Work Plan 2',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521222',
+            'description' => 'Item With Realization',
+            'quantity' => 1,
+            'unit_price' => 100000,
+            'total_price' => 100000,
+        ]);
+
+        // Add realization for month 6 (Juni) — but NO projection exists yet
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id' => $this->period->id,
+            'month' => 6,
+            'amount' => 15000,
+            'uploaded_by' => $this->verifikator->id,
+            'uploaded_at' => now(),
+        ]);
+
+        Setting::set('rkap_closing_day', 1); // Juni (6) is closed as of July 4th
+
+        // User opens the projection modal — month 6 should be initialized to the realization amount (15000)
+        $component = Livewire::actingAs($this->verifikator)
+            ->test(RkapProjections::class)
+            ->call('selectBudgetItem', $budgetItem->id)
+            ->assertSet('editingProjections.6', 15000);
+
+        // Set all other months to 0 so total doesn't exceed budget
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== 6) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
+        // Saving should succeed — closed month with realization should not block save
+        $component
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors()
+            ->assertDispatched('projections-saved');
+
+        // Verify the projection was saved with the realization amount
+        $savedProjection = RkapBudgetItemProjection::where('rkap_budget_item_id', $budgetItem->id)
+            ->where('month', 6)
+            ->first();
+
+        $this->assertNotNull($savedProjection);
+        $this->assertEquals(15000, (float) $savedProjection->amount);
+    }
 }

@@ -110,15 +110,15 @@ class RkapProjections extends Component
         if ($user->isKepalaBiro() || $user->isKepalaDepartemen()) {
             return Department::where('id', $user->department_id)->get();
         }
-        
+
         $query = Department::where('is_active', true);
-        
+
         if ($this->directorateId) {
             $query->where('directorate_id', $this->directorateId);
         } elseif ($user->isDireksi()) {
             $query->where('directorate_id', $user->directorate_id);
         }
-        
+
         return $query->orderBy('name')->get();
     }
 
@@ -187,11 +187,11 @@ class RkapProjections extends Component
         }
 
         return RkapSubmission::with([
-                'bureau',
-                'workPlans.budgetItems.realizations',
-                'workPlans.budgetItems.projections',
-                'period'
-            ])
+            'bureau',
+            'workPlans.budgetItems.realizations',
+            'workPlans.budgetItems.projections',
+            'period'
+        ])
             ->whereIn('bureau_id', $targetBureauIds)
             ->where('rkap_period_id', $this->activePeriodId)
             ->where('status', 'approved')
@@ -206,7 +206,7 @@ class RkapProjections extends Component
 
         $this->selectedBudgetItemId = $id;
         $budgetItem = RkapBudgetItem::with(['projections', 'monthlies', 'realizations'])->find($id);
-        
+
         $this->editingProjections = [];
 
         $activePeriod = RkapPeriod::find($this->activePeriodId);
@@ -314,7 +314,7 @@ class RkapProjections extends Component
 
         if ($hasRealization || $isClosed) {
             $this->resetErrorBag("editingProjections.{$monthVal}");
-            if ($isClosed) {
+            if ($isClosed && !$hasRealization) {
                 $existing = $selectedItem->projections->where('month', $monthVal)->first();
                 $existingAmount = $existing ? (float)$existing->amount : 0.00;
                 $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
@@ -423,7 +423,7 @@ class RkapProjections extends Component
                 $hasRealization = $selectedItem->realizations->where('month', $month)->count() > 0;
                 $isClosed = $period && $period->isMonthClosed($month);
 
-                if ($isClosed) {
+                if ($isClosed && !$hasRealization) {
                     $existing = $selectedItem->projections->where('month', $month)->first();
                     $existingAmount = $existing ? (float)$existing->amount : 0.00;
                     $sanitizedAmount = $amount !== '' && $amount !== null ? (float)$amount : 0.00;
