@@ -171,6 +171,15 @@
                         <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: '{{ $progressPercent }}%' }" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
 
+                    <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+                        <span class="fw-semibold">Presentasi Pengajuan</span>
+                        <span class="badge bg-label-primary">Rata-rata {{ number_format($averagePresentation, 2, ',', '.') }}%</span>
+                    </div>
+
+                    <div class="progress mb-3 rkap-h-12">
+                        <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: '{{ $averagePresentation }}%' }" aria-valuenow="{{ $averagePresentation }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
                     @if($verifiedDeptCount < $totalDeptCount)
                         <div class="alert alert-warning py-2 px-3 mb-0 rkap-font-075">
                         <i class="bx bx-lock-alt me-1"></i>
@@ -264,6 +273,7 @@
                                 <tr>
                                     <th>Kode</th>
                                     <th>Nama Departemen</th>
+                                    <th>Presentasi Pengajuan</th>
                                     <th>Status Pengajuan</th>
                                     <th class="text-end">Total Anggaran</th>
                                     <th class="text-start">Aksi</th>
@@ -282,6 +292,17 @@
                                 <tr>
                                     <td><strong>{{ $ds['department']->code }}</strong></td>
                                     <td>{{ $ds['department']->name }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1 rkap-h-12">
+                                                <div class="progress-bar bg-primary" role="progressbar" :style="{ width: '{{ $ds['presentation_percent'] }}%' }" aria-valuenow="{{ $ds['presentation_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <span class="fw-semibold text-primary small text-nowrap">{{ number_format($ds['presentation_percent'], 2, ',', '.') }}%</span>
+                                        </div>
+                                        <div class="text-muted small mt-1">
+                                            {{ $ds['submitted_bureaus'] }} dari {{ $ds['total_bureaus'] }} biro aktif
+                                        </div>
+                                    </td>
                                     <td>
                                         <span class="badge bg-label-{{ $statusColor }} fw-semibold">{{ $ds['status'] }}</span>
                                     </td>

@@ -5,6 +5,7 @@ namespace App\Livewire\Rkap;
 use Livewire\Component;
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
+use App\Models\Department;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -54,14 +55,14 @@ class RkapDashboard extends Component
                     ->where(function ($query) use ($user) {
                         $query->where(function ($q1) use ($user) {
                             $q1->where('status', 'dir_review')
-                               ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
+                                ->whereHas('bureau.department', fn($d) => $d->where('directorate_id', $user->directorate_id));
                         })->orWhere(function ($q2) {
                             $q2->where('status', 'pdir_review')
-                               ->whereDoesntHave('approvals', function ($q) {
-                                   $q->whereColumn('version_number', 'rkap_submissions.current_version')
-                                     ->where('role', 'direktur_keuangan')
-                                     ->where('action', 'approved');
-                               });
+                                ->whereDoesntHave('approvals', function ($q) {
+                                    $q->whereColumn('version_number', 'rkap_submissions.current_version')
+                                        ->where('role', 'direktur_keuangan')
+                                        ->where('action', 'approved');
+                                });
                         });
                     })
                     ->latest('updated_at')
@@ -83,8 +84,8 @@ class RkapDashboard extends Component
                 ->where('status', 'pdir_review')
                 ->whereDoesntHave('approvals', function ($q) {
                     $q->whereColumn('version_number', 'rkap_submissions.current_version')
-                      ->where('role', 'direktur_utama')
-                      ->where('action', 'approved');
+                        ->where('role', 'direktur_utama')
+                        ->where('action', 'approved');
                 })
                 ->latest('updated_at')
                 ->limit(5)->get();
@@ -118,6 +119,7 @@ class RkapDashboard extends Component
         $departmentsSubmissions = [];
         $verifiedDeptCount = 0;
         $totalDeptCount = 0;
+        $totalPresentation = 0;
 
         if ($user->isPresidentDirector() || $user->isDirekturFinance() || $user->isVerifikator() || $user->isAdmin()) {
             // Tabulated submissions
@@ -130,19 +132,28 @@ class RkapDashboard extends Component
             $submissionsByStatus['draft']    = $allSubmissions->filter(fn($s) => in_array($s->status, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision']));
 
             // Department compilation
-            $departments = \App\Models\Department::active()->orderBy('code')->get();
+            $departments = Department::active()->with(['bureaus' => fn($q) => $q->active()])->orderBy('code')->get();
             $totalDeptCount = $departments->count();
 
             foreach ($departments as $dept) {
-                $submissions = RkapSubmission::whereHas('bureau', fn($b) => $b->where('department_id', $dept->id))
+                $submissions = RkapSubmission::whereHas('bureau', fn($b) => $b->where('department_id', $dept->id)->active())
                     ->when($activePeriod, fn($q) => $q->where('rkap_period_id', $activePeriod->id))
                     ->with(['bureau', 'creator'])
                     ->get();
 
+                $activeBureaus = $dept->bureaus ?? collect();
+                $submittedBureauIds = $submissions->pluck('bureau_id')->unique()->values();
+                $submittedBureausCount = $activeBureaus->whereIn('id', $submittedBureauIds)->count();
+                $totalBureausCount = $activeBureaus->count();
+                $presentationPercent = $totalBureausCount > 0
+                    ? round(($submittedBureausCount / $totalBureausCount) * 100, 2)
+                    : 0;
+                $totalPresentation += $presentationPercent;
+
                 $status = 'Belum Mengajukan';
                 if ($submissions->isNotEmpty()) {
                     $statuses = $submissions->pluck('status')->unique();
-                    
+
                     if ($statuses->contains(fn($s) => in_array($s, ['draft', 'dept_revision', 'dir_revision', 'final_revision', 'pdir_revision']))) {
                         $status = 'Draf / Revisi';
                     } elseif ($statuses->every(fn($s) => in_array($s, ['pdir_review', 'approved']))) {
@@ -157,10 +168,15 @@ class RkapDashboard extends Component
                     'department' => $dept,
                     'submissions' => $submissions,
                     'total_budget' => $submissions->sum('total_budget'),
+                    'total_bureaus' => $totalBureausCount,
+                    'submitted_bureaus' => $submittedBureausCount,
+                    'presentation_percent' => $presentationPercent,
                     'status' => $status,
                 ];
             }
         }
+
+        $averagePresentation = $totalDeptCount > 0 ? round($totalPresentation / $totalDeptCount, 2) : 0;
 
         // Recent activity
         $recentActivity = RkapSubmission::with(['bureau', 'period'])
@@ -170,8 +186,16 @@ class RkapDashboard extends Component
             ->latest('updated_at')->limit(8)->get();
 
         return view('livewire.rkap.rkap-dashboard', compact(
-            'activePeriod', 'stats', 'myActions', 'budgetByDirectorate', 'recentActivity',
-            'submissionsByStatus', 'departmentsSubmissions', 'verifiedDeptCount', 'totalDeptCount'
+            'activePeriod',
+            'stats',
+            'myActions',
+            'budgetByDirectorate',
+            'recentActivity',
+            'submissionsByStatus',
+            'departmentsSubmissions',
+            'verifiedDeptCount',
+            'totalDeptCount',
+            'averagePresentation'
         ))->layout('layouts.contentNavbarLayout');
     }
 }
