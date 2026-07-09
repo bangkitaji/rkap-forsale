@@ -75,7 +75,7 @@ class RkapSubmissionForm extends Component
                 'workPlans.activityFiles',
                 'workPlans.budgetItems.monthlies',
                 'workPlans.budgetItems.cashOuts',
-                'workPlans.budgetItems.realizations' => fn ($q) => $q->where('rkap_period_id', $this->periodId),
+                'workPlans.budgetItems.realizations' => fn($q) => $q->where('rkap_period_id', $this->periodId),
                 'approvals.user',
             ]);
             $this->notes = $this->submission->notes ?? '';
@@ -251,6 +251,7 @@ class RkapSubmissionForm extends Component
     {
         return [
             'id'                     => null,
+            '_uid'                   => uniqid('act_new_', true),
             'activity_id'            => null,
             'description'            => '',
             'output_target'          => '',
@@ -509,6 +510,7 @@ class RkapSubmissionForm extends Component
             foreach ($rkapWorkPlans as $wp) {
                 $activities[] = [
                     'id'              => $wp->id,
+                    '_uid'            => 'act_' . $wp->id,
                     'activity_id'     => $wp->activity_id,
                     'description'     => $wp->description ?? '',
                     'output_target'   => $wp->output_target ?? '',
@@ -542,11 +544,11 @@ class RkapSubmissionForm extends Component
                             'quantity_2'               => $bi->quantity_2,
                             'unit_price'               => $bi->unit_price,
                             'remarks'                  => $bi->remarks ?? '',
-                            'monthly_distribution'     => $bi->monthlies->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'monthly_distribution'     => $bi->monthlies->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                             'distribution_months'      => $bi->monthlies->pluck('month')->toArray(),
-                            'cash_out_distribution'    => $bi->cashOuts->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'cash_out_distribution'    => $bi->cashOuts->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                             'cash_out_months'          => $bi->cashOuts->pluck('month')->toArray(),
-                            'realization_distribution' => $bi->realizations->pluck('amount', 'month')->map(fn ($v) => (float) $v)->toArray(),
+                            'realization_distribution' => $bi->realizations->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                             'realization_months'       => $bi->realizations->pluck('month')->toArray(),
                         ];
                     })->toArray(),
@@ -634,7 +636,7 @@ class RkapSubmissionForm extends Component
         $originalName = $this->referenceFile->getClientOriginalName();
         $extension = strtolower($this->referenceFile->getClientOriginalExtension());
         $randomName = \Illuminate\Support\Str::random(40) . '.' . $extension;
-        
+
         $fileSize = $this->referenceFile->getSize();
         $filePath = $this->referenceFile->storeAs('rkap_files', $randomName);
 
@@ -907,7 +909,7 @@ class RkapSubmissionForm extends Component
                             if ($coa && !str_starts_with((string) $coa->code, '2')) {
                                 throw \Illuminate\Validation\ValidationException::withMessages([
                                     "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.coa_id" =>
-                                        'Untuk anggaran pembayaran periode lalu, COA harus berupa akun Kewajiban (Kepala 2).',
+                                    'Untuk anggaran pembayaran periode lalu, COA harus berupa akun Kewajiban (Kepala 2).',
                                 ]);
                             }
                         }
@@ -934,7 +936,7 @@ class RkapSubmissionForm extends Component
                 if (empty($actData['past_period_id'])) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         "workPlans.{$wpIdx}.activities.{$actIdx}.past_period_id" =>
-                            'Periode anggaran lalu wajib dipilih ketika opsi Periode Anggaran Lalu diaktifkan.',
+                        'Periode anggaran lalu wajib dipilih ketika opsi Periode Anggaran Lalu diaktifkan.',
                     ]);
                 }
             }
@@ -1113,8 +1115,8 @@ class RkapSubmissionForm extends Component
                             'sort_order'             => $sortIdx++,
                             'is_past_period_payment' => (bool) ($actData['is_past_period_payment'] ?? false),
                             'past_period_id'         => ($actData['is_past_period_payment'] ?? false)
-                                                            ? ($actData['past_period_id'] ?: null)
-                                                            : null,
+                                ? ($actData['past_period_id'] ?: null)
+                                : null,
                         ]
                     );
 

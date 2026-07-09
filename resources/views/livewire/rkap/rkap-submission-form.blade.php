@@ -285,11 +285,12 @@
       @foreach ($wp['activities'] as $actIdx => $act)
       @php
       $selectedActivity = $act['activity_id'] ? \App\Models\Activity::find($act['activity_id']) : null;
+      $actUid = $act['_uid'] ?? ('act_idx_' . $actIdx);
       $isApproved = ($act['approval_status'] ?? 'pending') === 'approved';
       $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
       @endphp
 
-      <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wp['_uid'] }}-act-card-{{ $actIdx }}">
+      <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wp['_uid'] }}-act-card-{{ $actUid }}">
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
           <div class="d-flex align-items-center gap-2">
             <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
@@ -319,7 +320,7 @@
                   open: false,
                   search: '{{ $selectedActivity ? $selectedActivity->code . ' — ' . $selectedActivity->title : '' }}',
               }" class="position-relative" @click.outside="open = false"
-              wire:key="wp-{{ $wp['_uid'] }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $actIdx }}-{{ $act['activity_id'] ?? 'null' }}">
+              wire:key="wp-{{ $wp['_uid'] }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $actUid }}-{{ $act['activity_id'] ?? 'null' }}">
 
               <div class="input-group">
                 <input type="text"
@@ -384,7 +385,7 @@
             </div>
 
             @if ($act['is_past_period_payment'] ?? false)
-            <div class="mt-2" wire:key="ppp-section-{{ $wp['_uid'] }}-{{ $actIdx }}">
+            <div class="mt-2" wire:key="ppp-section-{{ $wp['_uid'] }}-{{ $actUid }}">
               <select class="form-select form-select-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.past_period_id') is-invalid @enderror"
                 wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.past_period_id"
                 @disabled($isApproved)>
@@ -416,7 +417,7 @@
             @endif
 
             {{-- Tombol upload & list file referensi --}}
-            <div class="mt-2" wire:key="wp-{{ $wp['_uid'] }}-act-files-{{ $actIdx }}">
+            <div class="mt-2" wire:key="wp-{{ $wp['_uid'] }}-act-files-{{ $actUid }}">
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <button type="button" class="btn btn-xs btn-outline-primary"
                   wire:click="openUploadModal({{ $wpIdx }}, {{ $actIdx }})"
@@ -431,7 +432,7 @@
                 @php
                 $isViewable = in_array(strtolower($file['file_type'] ?? ''), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
                 @endphp
-                <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1 rkap-file-list-item" wire:key="file-item-{{ $wp['_uid'] }}-{{ $actIdx }}-{{ $fileIdx }}">
+                <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1 rkap-file-list-item" wire:key="file-item-{{ $wp['_uid'] }}-{{ $actUid }}-{{ $fileIdx }}">
                   <div class="d-flex align-items-center gap-1 text-truncate rkap-file-name">
                     <i class="bx bx-file text-secondary flex-shrink-0"></i>
                     @if (isset($file['id']))
@@ -657,10 +658,10 @@
                 }
                 @endphp
 
-                <tr wire:key="wp-{{ $wp['_uid'] }}-act-{{ $actIdx }}-group-{{ $gIdx }}-coa"
+                <tr wire:key="wp-{{ $wp['_uid'] }}-act-{{ $actUid }}-group-{{ $gIdx }}-coa"
                   class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
                   <td colspan="6"
-                    wire:key="coa-cell-{{ $wp['_uid'] }}-{{ $actIdx }}-g{{ $gIdx }}-{{ $firstBi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
+                    wire:key="coa-cell-{{ $wp['_uid'] }}-{{ $actUid }}-g{{ $gIdx }}-{{ $firstBi['coa_id'] ?? 'none' }}-{{ md5($searchLabel) }}"
                     x-data="{
                               open: false,
                               search: @js($searchLabel),
@@ -806,10 +807,10 @@
                 $selectedCashOutMonths = $bi['cash_out_months'] ?? [];
                 $realizationAllocated = array_sum($bi['realization_distribution'] ?? []);
                 $selectedRealizationMonths = $bi['realization_months'] ?? [];
-                $modalKey = 'wp' . $wp['_uid'] . '-act' . $actIdx . '-bi' . $biIdx;
+                $modalKey = 'wp' . $wp['_uid'] . '-act' . $actUid . '-bi' . $biIdx;
                 @endphp
                 <tr
-                  wire:key="wp-{{ $wp['_uid'] }}-act-{{ $actIdx }}-bi-{{ $biIdx }}-detail"
+                  wire:key="wp-{{ $wp['_uid'] }}-act-{{ $actUid }}-bi-{{ $biIdx }}-detail"
                   class="{{ $gIdx % 2 == 1 ? 'bg-group-alt' : '' }}">
                   <td class="border-top-0">
                     <input type="text" class="form-control form-control-sm"
@@ -964,9 +965,9 @@
           array_merge($selectedMonths, $selectedCashOutMonths, $selectedRealizationMonths),
           );
           sort($allMonths);
-          $modalKey = 'wp' . $wp['_uid'] . '-act' . $actIdx . '-bi' . $biIdx;
+          $modalKey = 'wp' . $wp['_uid'] . '-act' . $actUid . '-bi' . $biIdx;
           @endphp
-          <div wire:key="modal-{{ $wp['_uid'] }}-{{ $actIdx }}-{{ $biIdx }}"
+          <div wire:key="modal-{{ $wp['_uid'] }}-{{ $actUid }}-{{ $biIdx }}"
             x-show="modalKey === '{{ $modalKey }}'" x-cloak
             class="position-fixed top-0 start-0 w-100 h-100 overflow-y-auto py-3 px-2 rkap-modal-overlay"
             :class="modalKey === '{{ $modalKey }}' ? 'd-flex align-items-start justify-content-center' : 'd-none'">
@@ -1153,7 +1154,7 @@
                       @endphp
                       <tr>
                         <td class="text-center fw-semibold small align-middle">{{ $monthLabel }}</td>
-                         <td class="text-end align-middle">
+                        <td class="text-end align-middle">
                           @if ($isDistribMonth)
                           <div x-data="{
                                 raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.monthly_distribution.' . $monthNum).live,
@@ -1183,8 +1184,8 @@
                                     });
                                 }
                               }"
-                              wire:key="dist-input-{{ $wp['_uid'] }}-{{ $actIdx }}-{{ $biIdx }}-{{ $monthNum }}"
-                              class="input-group input-group-sm justify-content-end">
+                            wire:key="dist-input-{{ $wp['_uid'] }}-{{ $actUid }}-{{ $biIdx }}-{{ $monthNum }}"
+                            class="input-group input-group-sm justify-content-end">
                             <span class="input-group-text rkap-rp-chip">Rp</span>
                             <input type="text" class="form-control form-control-sm text-end rkap-rp-input"
                               :value="display" @input="onInput($event)"
@@ -1225,8 +1226,8 @@
                                     });
                                 }
                               }"
-                              wire:key="cashout-input-{{ $wp['_uid'] }}-{{ $actIdx }}-{{ $biIdx }}-{{ $monthNum }}"
-                              class="input-group input-group-sm justify-content-end">
+                            wire:key="cashout-input-{{ $wp['_uid'] }}-{{ $actUid }}-{{ $biIdx }}-{{ $monthNum }}"
+                            class="input-group input-group-sm justify-content-end">
                             <span class="input-group-text rkap-rp-chip">Rp</span>
                             <input type="text" class="form-control form-control-sm text-end rkap-rp-input"
                               :value="display" @input="onInput($event)"
