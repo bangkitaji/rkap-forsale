@@ -168,7 +168,7 @@
             'name' => $submission->creator->name ?? '-',
             'status' => 'Diajukan',
             'color' => 'secondary',
-            'time' => $submission->created_at->format('d M Y, H:i'),
+            'time' => $submission->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i'),
             'comment' => null,
             'icon' => 'bx bx-send'
             ]);
@@ -189,7 +189,7 @@
             'name' => $approval->user->name,
             'status' => $approval->action_label,
             'color' => $approval->action_color,
-            'time' => $approval->created_at->format('d M Y, H:i'),
+            'time' => $approval->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i'),
             'comment' => $approval->comments,
             'icon' => $icon
             ]);

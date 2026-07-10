@@ -383,7 +383,7 @@
                   </td>
                   <td class="small">
                     <strong class="text-dark">{{ $real->uploader?->name ?: '-' }}</strong>
-                    <div class="text-muted rkap-font-07">{{ $real->uploaded_at?->format('d/m/Y H:i') }}</div>
+                    <div class="text-muted rkap-font-07">{{ $real->uploaded_at?->timezone('Asia/Jakarta')->format('d/m/Y H:i') }}</div>
                   </td>
                   <td class="text-center">
                     <button type="button"

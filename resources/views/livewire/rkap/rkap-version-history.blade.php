@@ -29,7 +29,7 @@
                         <button type="button" class="list-group-item list-group-item-action @if($selectedVersionNumber === $version->version_number) active @endif flex-column align-items-start p-3" wire:click="selectVersion({{ $version->version_number }})">
                             <div class="d-flex w-100 justify-content-between align-items-center mb-1">
                                 <h6 class="mb-0 @if($selectedVersionNumber === $version->version_number) text-white @endif">Versi {{ $version->version_number }} @if($version->version_number === $submission->current_version) <span class="badge bg-white text-primary ms-1">Current</span> @endif</h6>
-                                <small class="@if($selectedVersionNumber === $version->version_number) text-white @else text-muted @endif">{{ $version->created_at->format('d/m/Y') }}</small>
+                                <small class="@if($selectedVersionNumber === $version->version_number) text-white @else text-muted @endif">{{ $version->created_at->timezone('Asia/Jakarta')->format('d/m/Y') }}</small>
                             </div>
                             <p class="mb-1 small @if($selectedVersionNumber === $version->version_number) text-white @else text-muted @endif">{{ $version->change_type_label }}</p>
                             <small class="@if($selectedVersionNumber === $version->version_number) text-white @else text-muted @endif"><i class="bx bx-user me-1"></i> {{ $version->creator->name ?? '-' }}</small>
@@ -47,7 +47,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center border-bottom">
                     <div>
                         <h5 class="mb-0">Detail Versi {{ $this->selectedVersion->version_number }}</h5>
-                        <small class="text-muted">Disimpan pada {{ $this->selectedVersion->created_at->format('d M Y, H:i') }} oleh {{ $this->selectedVersion->creator->name ?? '-' }}</small>
+                        <small class="text-muted">Disimpan pada {{ $this->selectedVersion->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }} oleh {{ $this->selectedVersion->creator->name ?? '-' }}</small>
                     </div>
                     <div class="text-end">
                         <span class="text-muted small d-block">Total Anggaran Versi Ini</span>

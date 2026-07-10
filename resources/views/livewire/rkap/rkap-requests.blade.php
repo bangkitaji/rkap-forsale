@@ -106,7 +106,7 @@
               @endif
             </td>
             <td>{{ $req->requestedBureau->name ?? '-' }}</td>
-            <td>{{ $req->created_at ? $req->created_at->format('d M Y, H:i') : '-' }}</td>
+            <td>{{ $req->created_at ? $req->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') : '-' }}</td>
             @if($isApprover)
             <td class="text-center">
               @if($req->approval_status === 'pending')
@@ -152,7 +152,7 @@
               @endif
             </td>
             <td>{{ $req->requestedBureau->name ?? '-' }}</td>
-            <td>{{ $req->created_at ? $req->created_at->format('d M Y, H:i') : '-' }}</td>
+            <td>{{ $req->created_at ? $req->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') : '-' }}</td>
             @if($isApprover)
             <td class="text-center">
               @if($req->approval_status === 'pending')

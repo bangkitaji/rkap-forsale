@@ -99,7 +99,7 @@
             'name' => $submission->creator->name ?? '-',
             'status' => 'Diajukan',
             'color' => 'secondary',
-            'time' => $submission->created_at->format('d M Y, H:i'),
+            'time' => $submission->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i'),
             'comment' => null,
             'icon' => 'bx bx-send'
             ]);
@@ -120,7 +120,7 @@
             'name' => $approval->user->name,
             'status' => $approval->action_label,
             'color' => $approval->action_color,
-            'time' => $approval->created_at->format('d M Y, H:i'),
+            'time' => $approval->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i'),
             'comment' => $approval->comments,
             'icon' => $icon
             ]);
@@ -165,8 +165,11 @@
                       <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="text-muted rkap-font-058 text-nowrap">
-                        <i class="bx bx-calendar me-0.5 rkap-font-068"></i>{{ $step['time'] }}
+                      <div class="fw-semibold text-dark text-truncate mb-0.5 rkap-font-062" title="{{ $step['name'] }}">
+                        {{ $step['name'] }}
+                      </div>
+                      <div class="text-muted rkap-font-052 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-06"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>
@@ -204,8 +207,11 @@
                       <i class="{{ $step['icon'] }} me-1 rkap-font-085"></i> {{ $step['status'] }}
                     </div>
                     <div class="timeline-card-body text-center py-1 px-2">
-                      <div class="text-muted rkap-font-058 text-nowrap">
-                        <i class="bx bx-calendar me-0.5 rkap-font-068"></i>{{ $step['time'] }}
+                      <div class="fw-semibold text-dark text-truncate mb-0.5 rkap-font-062" title="{{ $step['name'] }}">
+                        {{ $step['name'] }}
+                      </div>
+                      <div class="text-muted rkap-font-052 text-nowrap">
+                        <i class="bx bx-calendar me-0.5 rkap-font-06"></i>{{ $step['time'] }}
                       </div>
                     </div>
                   </div>

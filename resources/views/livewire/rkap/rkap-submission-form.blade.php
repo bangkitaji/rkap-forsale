@@ -78,7 +78,7 @@
   $latestRevision = $submission->approvals->firstWhere('action', 'revision_requested');
   $revisionReason = $latestRevision?->comments;
   $revisionByName = $latestRevision?->user?->name ?? 'Reviewer';
-  $revisionAt = $latestRevision?->created_at?->format('d M Y, H:i');
+  $revisionAt = $latestRevision?->created_at?->timezone('Asia/Jakarta')->format('d M Y, H:i');
   $rejectedCount = $submission->workPlans
   ->filter(fn($wp) => ($wp->approval_status ?? 'pending') === 'rejected')
   ->count();
