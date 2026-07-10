@@ -1121,6 +1121,10 @@ class Analytics extends Controller
         ->toArray();
     }
 
+    // Determine whether to include all submission statuses based on the period's status
+    $period = RkapPeriod::find($periodId);
+    $includeAllStatuses = ($period && $period->status !== 'finalized');
+
     // Fetch budget item rows for this coa_group in the given period
     $rows = DB::table('rkap_budget_items')
       ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
@@ -1133,7 +1137,7 @@ class Analytics extends Controller
       ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
       ->where('coa_groups.id', $coaGroupId)
       ->where('rkap_submissions.rkap_period_id', $periodId)
-      ->where('rkap_submissions.status', 'approved')
+      ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
       ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
       ->whereNull('coas.deleted_at')
       ->selectRaw('
