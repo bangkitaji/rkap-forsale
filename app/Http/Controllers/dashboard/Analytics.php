@@ -43,7 +43,7 @@ class Analytics extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
     } else {
-      $finalizedPeriods = RkapPeriod::where('status', 'finalized')
+      $finalizedPeriods = RkapPeriod::whereIn('status', ['finalized', 'open'])
         ->orderBy('year', 'desc')
         ->orderBy('created_at', 'desc')
         ->get();
@@ -57,7 +57,7 @@ class Analytics extends Controller
       if ($isReport) {
         $activePeriod = RkapPeriod::find($selectedPeriodId);
       } else {
-        $activePeriod = RkapPeriod::where('status', 'finalized')->find($selectedPeriodId);
+        $activePeriod = RkapPeriod::whereIn('status', ['finalized', 'open'])->find($selectedPeriodId);
       }
     }
 
@@ -66,8 +66,8 @@ class Analytics extends Controller
         $activePeriod = RkapPeriod::where('year', $currentYear)->first()
           ?? RkapPeriod::latest()->first();
       } else {
-        $activePeriod = RkapPeriod::where('year', $currentYear)->where('status', 'finalized')->first()
-          ?? RkapPeriod::where('status', 'finalized')->latest()->first()
+        $activePeriod = RkapPeriod::where('year', $currentYear)->whereIn('status', ['finalized', 'open'])->first()
+          ?? RkapPeriod::whereIn('status', ['finalized', 'open'])->latest()->first()
           ?? RkapPeriod::latest()->first();
       }
     }
@@ -1175,7 +1175,7 @@ class Analytics extends Controller
       abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
     }
 
-    $finalizedPeriods = RkapPeriod::where('status', 'finalized')
+    $finalizedPeriods = RkapPeriod::whereIn('status', ['finalized', 'open'])
       ->orderBy('year', 'desc')
       ->orderBy('created_at', 'desc')
       ->get();
@@ -1184,15 +1184,17 @@ class Analytics extends Controller
     $activePeriod = null;
 
     if ($selectedPeriodId) {
-      $activePeriod = RkapPeriod::where('status', 'finalized')->find($selectedPeriodId);
+      $activePeriod = RkapPeriod::whereIn('status', ['finalized', 'open'])->find($selectedPeriodId);
     }
 
     if (!$activePeriod) {
       $currentYear = (int) date('Y');
-      $activePeriod = RkapPeriod::where('year', $currentYear)->first()
-        ?? RkapPeriod::where('status', 'finalized')->latest()->first()
+      $activePeriod = RkapPeriod::where('year', $currentYear)->whereIn('status', ['finalized', 'open'])->first()
+        ?? RkapPeriod::whereIn('status', ['finalized', 'open'])->latest()->first()
         ?? RkapPeriod::latest()->first();
     }
+
+    $includeAllStatuses = ($activePeriod && $activePeriod->status !== 'finalized');
 
     $inflowGroups = [];
     $outflowGroups = [];
@@ -1213,7 +1215,7 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
-        ->where('rkap_submissions.status', 'approved')
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
@@ -1228,7 +1230,7 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
-        ->where('rkap_submissions.status', 'approved')
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
@@ -1242,7 +1244,7 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
-        ->where('rkap_submissions.status', 'approved')
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
