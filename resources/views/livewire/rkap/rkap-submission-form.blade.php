@@ -2,6 +2,7 @@
   @form-saved.window="toastMessage = $event.detail.message || 'Draf RKAP berhasil disimpan.'; toastType = 'success'; showToast = true; isDirty = false; setTimeout(() => showToast = false, 5000)"
   @work-plan-duplicate-rejected.window="toastMessage = 'Program Kerja ini sudah dipilih pada kartu lain. Silakan pilih Program Kerja yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
   @activity-duplicate-rejected.window="toastMessage = 'Kegiatan ini sudah dipilih di baris lain dalam Program Kerja yang sama. Silakan pilih kegiatan yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
+  @coa-change-locked.window="toastMessage = 'COA yang sudah termapping tidak dapat diubah oleh Kepala Biro.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
   @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
   <div class="py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
@@ -656,6 +657,7 @@
                 (!empty($firstBi['description']) ? ' — ' . ($firstBi['description'] ?? '') : ''),
                 );
                 }
+                $isCoaLockedForKepalaBiro = ($isKepalaBiroUser ?? false) && (bool) ($firstBi['is_coa_locked'] ?? false);
                 @endphp
 
                 <tr wire:key="wp-{{ $wp['_uid'] }}-act-{{ $actUid }}-group-{{ $gIdx }}-coa"
@@ -692,10 +694,10 @@
                         <input type="text"
                           class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $firstIdx . '.coa_id') is-invalid @enderror"
                           placeholder="Cari akun/belanja..." x-model="search"
-                          @focus="open = true; $dispatch('coa-dropdown-open')"
-                          @input="open = true; $dispatch('coa-dropdown-open')" autocomplete="off"
-                          @disabled($isApproved)>
-                        @if ($firstBi['coa_id'] && !$isApproved)
+                          @focus="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }"
+                          @input="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }" autocomplete="off"
+                          @disabled($isApproved || $isCoaLockedForKepalaBiro)>
+                        @if ($firstBi['coa_id'] && !$isApproved && !$isCoaLockedForKepalaBiro)
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                           wire:click="updateGroupCoa({{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, null)"
                           @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
@@ -763,14 +765,14 @@
                       @enderror
                       <select
                         wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $firstIdx }}.coa_id"
-                        class="d-none">
+                        class="d-none" @disabled($isApproved || $isCoaLockedForKepalaBiro)>
                         <option value=""></option>
                         @foreach ($filteredCoasOrdered as $coa)
                         <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}
                         </option>
                         @endforeach
                       </select>
-                      <div x-show="open" x-cloak
+                      <div x-show="open && !@js($isCoaLockedForKepalaBiro)" x-cloak
                         class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
                         @foreach ($filteredCoasOrdered as $coa)
                         <div

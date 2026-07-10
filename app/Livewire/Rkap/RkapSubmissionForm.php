@@ -20,6 +20,13 @@ class RkapSubmissionForm extends Component
 {
     use HandlesDistribution, WithFileUploads;
 
+    /**
+     * Cached mapped COA IDs by activity ID.
+     *
+     * @var array<int, array<int>>
+     */
+    private array $activityMappedCoaCache = [];
+
     public ?int $submissionId = null;
     public ?int $periodId = null;
 
@@ -180,9 +187,12 @@ class RkapSubmissionForm extends Component
                     }
 
                     if ($activity && $activity->coas->isNotEmpty()) {
-                        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = $activity->coas->map(function ($coa) {
+                        $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'] = $activity->coas->map(function ($coa) use ($activityId) {
+                            $isLocked = $this->shouldLockMappedCoaForCurrentUser($activityId, $coa->id);
                             return array_merge($this->emptyBudgetItem(), [
                                 'coa_id'                => $coa->id,
+                                'is_coa_locked'         => $isLocked,
+                                'locked_coa_id'         => $isLocked ? $coa->id : null,
                                 'account_code'          => $coa->code,
                                 'description'           => $coa->title,
                                 'coa_group_name'        => $coa->coaGroup ? $coa->coaGroup->name : '',
@@ -224,6 +234,8 @@ class RkapSubmissionForm extends Component
         return [
             'id'                        => null,
             'coa_id'                    => null,
+            'is_coa_locked'             => false,
+            'locked_coa_id'             => null,
             'account_code'              => '',
             'description'               => '',
             'coa_group_name'            => '',
@@ -528,11 +540,16 @@ class RkapSubmissionForm extends Component
                         'file_size'     => $f->file_size,
                     ])->toArray(),
                     'files_to_delete'        => [],
-                    'budget_items'           => $wp->budgetItems->map(function ($bi) use ($coaMap) {
+                    'budget_items'           => $wp->budgetItems->map(function ($bi) use ($coaMap, $wp) {
                         $coa = $coaMap->get($bi->account_code);
+                        $activityId = $wp->activity_id ?? null;
+                        $coaId = $coa ? $coa->id : null;
+                        $isLocked = $this->shouldLockMappedCoaForCurrentUser($activityId, $coaId);
                         return [
                             'id'                       => $bi->id,
-                            'coa_id'                   => $coa ? $coa->id : null,
+                            'coa_id'                   => $coaId,
+                            'is_coa_locked'            => $isLocked,
+                            'locked_coa_id'            => $isLocked ? $coaId : null,
                             'account_code'             => $bi->account_code ?? '',
                             'description'              => $bi->description,
                             'coa_group_name'           => $coa && $coa->coaGroup ? $coa->coaGroup->name : '',
@@ -684,6 +701,8 @@ class RkapSubmissionForm extends Component
 
         $newItem = array_merge($this->emptyBudgetItem(), [
             'coa_id' => $sourceItem['coa_id'] ?? null,
+            'is_coa_locked' => (bool) ($sourceItem['is_coa_locked'] ?? false),
+            'locked_coa_id' => $sourceItem['locked_coa_id'] ?? null,
             'account_code' => $sourceItem['account_code'] ?? '',
             'description' => $sourceItem['description'] ?? '',
             'coa_group_name' => $sourceItem['coa_group_name'] ?? '',
@@ -696,6 +715,17 @@ class RkapSubmissionForm extends Component
 
     public function updateGroupCoa(int $wpIndex, int $actIndex, int $biIndex, ?int $coaId): void
     {
+        $activityId = $this->workPlans[$wpIndex]['activities'][$actIndex]['activity_id'] ?? null;
+        $currentItem = $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex] ?? [];
+        $lockedCoaId = $currentItem['locked_coa_id'] ?? null;
+        $isLocked = (bool) ($currentItem['is_coa_locked'] ?? false);
+
+        if ($this->isCurrentUserKepalaBiro() && $isLocked && $lockedCoaId && (int) $coaId !== (int) $lockedCoaId) {
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_id'] = (int) $lockedCoaId;
+            $this->dispatch('coa-change-locked');
+            return;
+        }
+
         $oldCoaId = $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_id'] ?? null;
 
         $coa = null;
@@ -708,9 +738,12 @@ class RkapSubmissionForm extends Component
         $groupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : '';
         $cashflowGroupName = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->name : '';
         $differenceGroupName = ($coa && $coa->differenceGroup) ? $coa->differenceGroup->name : '';
+        $shouldLock = $this->shouldLockMappedCoaForCurrentUser($activityId, $coaId);
 
         if ($oldCoaId === null) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['is_coa_locked'] = $shouldLock;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['locked_coa_id'] = $shouldLock ? $coaId : null;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['account_code'] = $code;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_group_name'] = $groupName;
@@ -728,6 +761,8 @@ class RkapSubmissionForm extends Component
             ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId
         ) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['is_coa_locked'] = $shouldLock;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['locked_coa_id'] = $shouldLock ? $coaId : null;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_group_name'] = $groupName;
@@ -745,6 +780,8 @@ class RkapSubmissionForm extends Component
             ($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] ?? null) === $oldCoaId
         ) {
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_id'] = $coaId;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['is_coa_locked'] = $shouldLock;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['locked_coa_id'] = $shouldLock ? $coaId : null;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['account_code'] = $code;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_group_name'] = $groupName;
@@ -774,6 +811,48 @@ class RkapSubmissionForm extends Component
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_group_name']            = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_name']       = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['difference_group_name']     = '';
+    }
+
+    private function isCurrentUserKepalaBiro(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (method_exists($user, 'isKepalaBiro')) {
+            return (bool) $user->isKepalaBiro();
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int>
+     */
+    private function getMappedCoaIdsByActivity(int $activityId): array
+    {
+        if (!array_key_exists($activityId, $this->activityMappedCoaCache)) {
+            $mappedCoaIds = DB::table('activity_coa')
+                ->where('activity_id', $activityId)
+                ->pluck('coa_id')
+                ->map(fn($id) => (int) $id)
+                ->all();
+
+            $this->activityMappedCoaCache[$activityId] = $mappedCoaIds;
+        }
+
+        return $this->activityMappedCoaCache[$activityId];
+    }
+
+    private function shouldLockMappedCoaForCurrentUser(?int $activityId, ?int $coaId): bool
+    {
+        if (!$this->isCurrentUserKepalaBiro() || !$activityId || !$coaId) {
+            return false;
+        }
+
+        return in_array((int) $coaId, $this->getMappedCoaIdsByActivity((int) $activityId), true);
     }
 
     public function removeGroup(int $wpIndex, int $actIndex, array $indices): void
@@ -822,6 +901,7 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
+        $this->validateLockedMappedCoaForKepalaBiro();
         $this->validateBudgetItemsCoaMapping();
         $this->validatePastPeriodPayments();
         $this->saveSubmission('draft');
@@ -834,6 +914,7 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
+        $this->validateLockedMappedCoaForKepalaBiro();
         $this->validateBudgetItemsCoaMapping();
         $this->validatePastPeriodPayments();
         $this->validateMonthlyDistribution();
@@ -919,6 +1000,30 @@ class RkapSubmissionForm extends Component
                     if (!$activityId && !empty($coaId)) {
                         throw \Illuminate\Validation\ValidationException::withMessages([
                             'workPlans' => 'Activity harus dipilih jika COA telah dipilih pada salah satu baris.',
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    private function validateLockedMappedCoaForKepalaBiro(): void
+    {
+        if (!$this->isCurrentUserKepalaBiro()) {
+            return;
+        }
+
+        foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
+            foreach (($wpData['activities'] ?? []) as $actIdx => $actData) {
+                foreach (($actData['budget_items'] ?? []) as $biIdx => $biData) {
+                    $lockedCoaId = $biData['locked_coa_id'] ?? null;
+                    $isLocked = (bool) ($biData['is_coa_locked'] ?? false);
+                    $currentCoaId = $biData['coa_id'] ?? null;
+
+                    if ($isLocked && $lockedCoaId && (int) $currentCoaId !== (int) $lockedCoaId) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.coa_id" =>
+                            'COA yang sudah termapping pada Activity tidak dapat diubah oleh Kepala Biro.',
                         ]);
                     }
                 }
@@ -1241,6 +1346,7 @@ class RkapSubmissionForm extends Component
             'coaOptions' => $this->coaOptions,
             'monthLabels' => self::MONTH_LABELS,
             'prevData' => $this->buildPreviousMap(),
+            'isKepalaBiroUser' => $this->isCurrentUserKepalaBiro(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }
