@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ApprovalAction;
 use App\Enums\ApprovalRole;
 use App\Enums\SubmissionStatus;
+use App\Services\AnalyticsCacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -148,6 +149,7 @@ class RkapSubmission extends Model
     $this->calculateTotalBudget();
     $this->createVersion('initial', 'Pengajuan awal');
     $this->update(['status' => SubmissionStatus::Submitted->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission submitted', [
         'submission_id' => $this->id,
         'bureau_id' => $this->bureau_id,
@@ -166,6 +168,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::DeptApproved->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission approved by Department Head', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -183,6 +186,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::DeptRevision->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission revision requested by Department Head', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -200,6 +204,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::DirApproved->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission approved by Board of Directors', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -217,6 +222,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::DirRevision->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission revision requested by Board of Directors', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -234,6 +240,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::VerifikatorApproved->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission verified by Verificator', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -251,6 +258,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::FinalRevision->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission revision requested by Verificator', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -305,6 +313,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::PdirRevision->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission revision requested by President Director', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -339,6 +348,7 @@ class RkapSubmission extends Model
       'comments' => $comments,
     ]);
     $this->update(['status' => SubmissionStatus::PdirRevision->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     Log::info('RKAP Submission revision requested by Finance Director', [
         'submission_id' => $this->id,
         'user_id' => $user->id,
@@ -362,11 +372,13 @@ class RkapSubmission extends Model
 
     if ($hasDirut && $hasFinance) {
       $this->update(['status' => SubmissionStatus::Approved->value]);
+      AnalyticsCacheService::flushPeriod($this->rkap_period_id);
       Log::info('RKAP Submission finalized and fully approved', [
           'submission_id' => $this->id,
       ]);
     } else {
       $this->update(['status' => SubmissionStatus::PdirReview->value]);
+      AnalyticsCacheService::flushPeriod($this->rkap_period_id);
     }
   }
 
@@ -378,6 +390,7 @@ class RkapSubmission extends Model
     ]);
     $this->increment('current_version');
     $this->update(['status' => SubmissionStatus::Draft->value]);
+    AnalyticsCacheService::flushPeriod($this->rkap_period_id);
   }
 
   // ── Authorization Helpers ──

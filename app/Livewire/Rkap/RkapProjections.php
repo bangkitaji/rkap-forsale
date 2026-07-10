@@ -10,6 +10,7 @@ use App\Models\RkapBudgetItemProjection;
 use App\Models\Bureau;
 use App\Models\Department;
 use App\Models\Directorate;
+use App\Services\AnalyticsCacheService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
@@ -482,6 +483,10 @@ class RkapProjections extends Component
         }
 
         $this->dispatch('close-projection-modal');
+        // Flush analytics cache so dashboard reflects updated projections
+        if ($this->activePeriodId) {
+            AnalyticsCacheService::flushPeriod($this->activePeriodId);
+        }
         session()->flash('message', 'Proyeksi RKAP berhasil disimpan.');
         $this->dispatch('projections-saved');
     }

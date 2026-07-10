@@ -5,6 +5,7 @@ namespace App\Livewire\Rkap;
 use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemRealization;
 use App\Models\RkapPeriod;
+use App\Services\AnalyticsCacheService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -206,6 +207,9 @@ class RkapRealizationUpload extends Component
         }
 
         $this->importRows($normalizedRows);
+
+        // Flush analytics cache for this period since realization data changed
+        AnalyticsCacheService::flushPeriod($this->periodId);
 
         $this->importedMonthName = $this->getMonthName($this->month);
         $this->month = null;
@@ -443,6 +447,7 @@ class RkapRealizationUpload extends Component
                 return;
             }
             $realization->delete();
+            AnalyticsCacheService::flushPeriod($realization->rkap_period_id);
             session()->flash('message', 'Data realisasi berhasil dihapus.');
         }
     }
