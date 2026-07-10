@@ -210,20 +210,6 @@ class RkapProjections extends Component
         $this->editingProjections = [];
 
         $activePeriod = RkapPeriod::find($this->activePeriodId);
-        $totalRealization = (float) ($budgetItem->realizations->sum('amount'));
-        $remainingAmount = max(0.00, (float) $budgetItem->total_price - $totalRealization);
-
-        // Count eligible months (not closed, and no realization)
-        $eligibleMonthsCount = 0;
-        for ($m = 1; $m <= 12; $m++) {
-            $hasRealization = $budgetItem->realizations->where('month', $m)->count() > 0;
-            $isClosed = $activePeriod && $activePeriod->isMonthClosed($m);
-            if (!$isClosed && !$hasRealization) {
-                $eligibleMonthsCount++;
-            }
-        }
-
-        $allocatedAmount = $eligibleMonthsCount > 0 ? round($remainingAmount / $eligibleMonthsCount, 2) : 0.00;
 
         // Initialize projection values based on realization or closing period status
         for ($m = 1; $m <= 12; $m++) {
@@ -239,7 +225,8 @@ class RkapProjections extends Component
                 $this->editingProjections[$m] = 0.00;
             } else {
                 $existing = $budgetItem->projections->where('month', $m)->first();
-                $this->editingProjections[$m] = $existing ? (float) $existing->amount : $allocatedAmount;
+                $monthlyPlan = $budgetItem->monthlies->where('month', $m)->first();
+                $this->editingProjections[$m] = $existing ? (float) $existing->amount : (float) ($monthlyPlan?->amount ?? 0.00);
             }
         }
 
