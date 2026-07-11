@@ -195,7 +195,7 @@ class RkapSubmissionList extends Component
         $user = Auth::user();
 
         $query = RkapSubmission::with(['bureau.department.directorate', 'period', 'creator'])
-            ->search('bureau.name|period.title', $this->search)
+            ->search('bureau.name|bureau.code|period.title', $this->search)
             ->when($this->filterStatus, fn($q) => $q->where('status', $this->filterStatus))
             ->when($this->filterPeriod, fn($q) => $q->where('rkap_period_id', $this->filterPeriod));
 

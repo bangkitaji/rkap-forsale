@@ -106,7 +106,7 @@
         <div class="col-md-4">
           <div class="input-group">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" class="form-control" placeholder="Cari biro atau periode..."
+            <input type="text" class="form-control" placeholder="Cari biro (nama/kode) atau periode..."
               wire:model.live.debounce.300ms="search">
           </div>
         </div>
