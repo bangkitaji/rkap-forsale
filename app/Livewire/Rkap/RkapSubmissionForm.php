@@ -27,6 +27,16 @@ class RkapSubmissionForm extends Component
      */
     private array $activityMappedCoaCache = [];
 
+    /**
+     * Memoization cache for past-period COAs (code starting with '2').
+     */
+    private ?\Illuminate\Database\Eloquent\Collection $pastPeriodCoasCache = null;
+
+    /**
+     * Memoization cache for buildPreviousMap() result per render cycle.
+     */
+    private ?array $prevDataCache = null;
+
     public ?int $submissionId = null;
     public ?int $periodId = null;
 
@@ -325,7 +335,14 @@ class RkapSubmissionForm extends Component
     public function getWorkPlanOptionsForIndex(int $wpIndex): \Illuminate\Database\Eloquent\Collection
     {
         $usedIds = $this->getUsedWorkPlanIds(excludeIndex: $wpIndex);
+        $allOptions = $this->workPlanOptions; // Use cached computed property
 
+        // Filter in memory instead of new DB query
+        $filtered = $allOptions->filter(function ($wp) use ($usedIds) {
+            return !in_array($wp->id, $usedIds, true);
+        });
+
+        // If an activity is already selected, narrow down to its parent work plan
         $activityId = null;
         foreach (($this->workPlans[$wpIndex]['activities'] ?? []) as $act) {
             if (!empty($act['activity_id'])) {
@@ -334,26 +351,24 @@ class RkapSubmissionForm extends Component
             }
         }
 
-        if (!$activityId) {
-            return WorkPlan::where('approval_status', 'approved')
-                ->orderBy('code')
-                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
-                ->get();
+        if ($activityId) {
+            // Search in the eager-loaded activities relationship
+            $parentWpId = null;
+            foreach ($allOptions as $wp) {
+                if ($wp->activities->contains('id', $activityId)) {
+                    $parentWpId = $wp->id;
+                    break;
+                }
+            }
+            if ($parentWpId) {
+                $wpMatch = $filtered->firstWhere('id', $parentWpId);
+                if ($wpMatch) {
+                    return new \Illuminate\Database\Eloquent\Collection([$wpMatch]);
+                }
+            }
         }
 
-        $activity = Activity::find($activityId);
-        if ($activity && $activity->work_plan_id) {
-            return WorkPlan::where('approval_status', 'approved')
-                ->where('id', $activity->work_plan_id)
-                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
-                ->orderBy('code')
-                ->get();
-        }
-
-        return WorkPlan::where('approval_status', 'approved')
-            ->orderBy('code')
-            ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
-            ->get();
+        return new \Illuminate\Database\Eloquent\Collection($filtered->values()->all());
     }
 
     /**
@@ -394,18 +409,22 @@ class RkapSubmissionForm extends Component
         $workPlanId = $this->workPlans[$wpIndex]['work_plan_id'] ?? null;
         $usedIds    = $this->getUsedActivityIds($wpIndex, excludeActIndex: $excludeActIndex);
 
-        if (!$workPlanId) {
-            return Activity::where('approval_status', 'approved')
-                ->orderBy('code')
-                ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
-                ->get();
+        // Filter from the eager-loaded activities in the cached workPlanOptions
+        $allOptions = $this->workPlanOptions;
+
+        if ($workPlanId) {
+            $wp = $allOptions->firstWhere('id', $workPlanId);
+            $activities = $wp ? $wp->activities : collect();
+        } else {
+            // No work plan selected: show all approved activities from all work plans
+            $activities = $allOptions->flatMap->activities;
         }
 
-        return Activity::where('approval_status', 'approved')
-            ->where('work_plan_id', $workPlanId)
-            ->when(!empty($usedIds), fn($q) => $q->whereNotIn('id', $usedIds))
-            ->orderBy('code')
-            ->get();
+        $filtered = $activities->filter(function ($act) use ($usedIds) {
+            return !in_array($act->id, $usedIds, true);
+        })->sortBy('code')->values();
+
+        return new \Illuminate\Database\Eloquent\Collection($filtered->all());
     }
 
     public function getCoaOptionsForIndex(int $wpIndex, int $actIndex = 0): \Illuminate\Database\Eloquent\Collection
@@ -413,7 +432,11 @@ class RkapSubmissionForm extends Component
         $isPastPeriod = (bool) ($this->workPlans[$wpIndex]['activities'][$actIndex]['is_past_period_payment'] ?? false);
 
         if ($isPastPeriod) {
-            return Coa::where('code', 'like', '2%')->orderBy('code')->get();
+            // Memoize: only query once per render cycle
+            if ($this->pastPeriodCoasCache === null) {
+                $this->pastPeriodCoasCache = Coa::where('code', 'like', '2%')->orderBy('code')->get();
+            }
+            return $this->pastPeriodCoasCache;
         }
 
         return $this->coaOptions;
@@ -1326,27 +1349,41 @@ class RkapSubmissionForm extends Component
 
     public function buildPreviousMap(): array
     {
+        // Memoize: only compute once per render cycle
+        if ($this->prevDataCache !== null) {
+            return $this->prevDataCache;
+        }
+
         $user = Auth::user();
         $bureauId = $user->bureau_id;
         $currentPeriodYear = $this->period?->year ?? 0;
 
         if (!$bureauId || !$currentPeriodYear) {
+            $this->prevDataCache = [];
             return [];
         }
 
         $service = app(\App\Services\RkapPreviousDataService::class);
         $prevSubmission = $service->getPreviousApprovedSubmission($bureauId, $currentPeriodYear);
-        return $service->buildPreviousMap($prevSubmission);
+        $this->prevDataCache = $service->buildPreviousMap($prevSubmission);
+        return $this->prevDataCache;
     }
 
     public function render()
     {
+        // Pre-load all selected Activity models to avoid N+1 Activity::find() in Blade
+        $selectedActivityIds = collect($this->workPlans)
+            ->flatMap(fn($wp) => collect($wp['activities'])->pluck('activity_id'))
+            ->filter()->unique()->toArray();
+        $activitiesMap = Activity::whereIn('id', $selectedActivityIds)->get()->keyBy('id');
+
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,
             'coaOptions' => $this->coaOptions,
             'monthLabels' => self::MONTH_LABELS,
             'prevData' => $this->buildPreviousMap(),
             'isKepalaBiroUser' => $this->isCurrentUserKepalaBiro(),
+            'activitiesMap' => $activitiesMap,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

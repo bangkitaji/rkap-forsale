@@ -194,13 +194,17 @@
             <select wire:model.live="workPlans.{{ $wpIdx }}.work_plan_id" class="d-none"
               id="wp-select-{{ $wpIdx }}">
               <option value=""></option>
-              @foreach ($rowWorkPlanOptions as $wpo)
-              <option value="{{ $wpo->id }}">{{ $wpo->code }} — {{ $wpo->title }}</option>
-              @endforeach
+              @if ($wp['work_plan_id'])
+              @php $selectedWpForSelect = $workPlanOptions->firstWhere('id', $wp['work_plan_id']); @endphp
+              @if ($selectedWpForSelect)
+              <option value="{{ $selectedWpForSelect->id }}" selected>{{ $selectedWpForSelect->code }} — {{ $selectedWpForSelect->title }}</option>
+              @endif
+              @endif
             </select>
 
             {{-- Dropdown options --}}
             <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
+              @php $wpRenderCount = 0; @endphp
               @forelse($rowWorkPlanOptions as $wpo)
               <div
                 class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
@@ -213,9 +217,14 @@
                 <span class="fw-semibold text-primary">{{ $wpo->code }}</span>
                 <span class="ms-1">{{ $wpo->title }}</span>
               </div>
+              @php $wpRenderCount++; @endphp
+              @if ($wpRenderCount >= 30) @break @endif
               @empty
               <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
               @endforelse
+              @if ($wpRenderCount >= 30)
+              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 30 ditampilkan.</div>
+              @endif
             </div>
           </div>
         </div>
@@ -285,7 +294,7 @@
     <div class="card-body bg-light-gray p-3">
       @foreach ($wp['activities'] as $actIdx => $act)
       @php
-      $selectedActivity = $act['activity_id'] ? \App\Models\Activity::find($act['activity_id']) : null;
+      $selectedActivity = $act['activity_id'] ? ($activitiesMap[$act['activity_id']] ?? null) : null;
       $actUid = $act['_uid'] ?? ('act_idx_' . $actIdx);
       $isApproved = ($act['approval_status'] ?? 'pending') === 'approved';
       $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
@@ -345,13 +354,16 @@
               <select wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id"
                 class="d-none" id="act-select-{{ $wpIdx }}-{{ $actIdx }}">
                 <option value=""></option>
-                @foreach ($activities as $a)
-                <option value="{{ $a->id }}">{{ $a->code }} — {{ $a->title }}</option>
-                @endforeach
+                @if ($act['activity_id'])
+                @if ($selectedActivity)
+                <option value="{{ $selectedActivity->id }}" selected>{{ $selectedActivity->code }} — {{ $selectedActivity->title }}</option>
+                @endif
+                @endif
               </select>
 
               {{-- Dropdown options --}}
               <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
+                @php $actRenderCount = 0; @endphp
                 @forelse($activities as $a)
                 <div
                   class="px-3 py-2 cursor-pointer dropdown-item small {{ $act['activity_id'] == $a->id ? 'bg-primary text-white' : '' }}"
@@ -366,9 +378,14 @@
                     <span class="text-secondary rkap-font-085">{{ $a->title }}</span>
                   </div>
                 </div>
+                @php $actRenderCount++; @endphp
+                @if ($actRenderCount >= 30) @break @endif
                 @empty
                 <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
                 @endforelse
+                @if ($actRenderCount >= 30)
+                <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 30 ditampilkan.</div>
+                @endif
               </div>
             </div>
 
@@ -767,13 +784,16 @@
                         wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $firstIdx }}.coa_id"
                         class="d-none" @disabled($isApproved || $isCoaLockedForKepalaBiro)>
                         <option value=""></option>
-                        @foreach ($filteredCoasOrdered as $coa)
-                        <option value="{{ $coa->id }}">{{ $coa->code }} — {{ $coa->title }}
-                        </option>
-                        @endforeach
+                        @if ($firstBi['coa_id'])
+                        @php $selectedCoaForSelect = $coaOptions->firstWhere('id', $firstBi['coa_id']); @endphp
+                        @if ($selectedCoaForSelect)
+                        <option value="{{ $selectedCoaForSelect->id }}" selected>{{ $selectedCoaForSelect->code }} — {{ $selectedCoaForSelect->title }}</option>
+                        @endif
+                        @endif
                       </select>
                       <div x-show="open && !@js($isCoaLockedForKepalaBiro)" x-cloak
                         class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
+                        @php $coaRenderCount = 0; @endphp
                         @foreach ($filteredCoasOrdered as $coa)
                         <div
                           class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
@@ -789,7 +809,12 @@
                           <span class="fw-semibold text-primary">{{ $coa->code }}</span>
                           <span class="ms-1">{{ $coa->title }}</span>
                         </div>
+                        @php $coaRenderCount++; @endphp
+                        @if ($coaRenderCount >= 50) @break @endif
                         @endforeach
+                        @if ($coaRenderCount >= 50)
+                        <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 50 ditampilkan.</div>
+                        @endif
                       </div>
                     </div>
                   </td>
@@ -1159,7 +1184,7 @@
                         <td class="text-end align-middle">
                           @if ($isDistribMonth)
                           <div x-data="{
-                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.monthly_distribution.' . $monthNum).live,
+                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.monthly_distribution.' . $monthNum),
                                 display: '',
                                 init() {
                                     this.display = this.format(this.raw);
@@ -1201,7 +1226,7 @@
                         <td class="text-end align-middle">
                           @if ($isCashOutMonth)
                           <div x-data="{
-                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.cash_out_distribution.' . $monthNum).live,
+                                raw: @entangle('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.cash_out_distribution.' . $monthNum),
                                 display: '',
                                 init() {
                                     this.display = this.format(this.raw);
