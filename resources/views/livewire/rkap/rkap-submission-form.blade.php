@@ -204,11 +204,10 @@
 
             {{-- Dropdown options --}}
             <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
-              @php $wpRenderCount = 0; @endphp
               @forelse($rowWorkPlanOptions as $wpo)
               <div
                 class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
-                x-show="'{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
+                x-show="search === '' || '{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
                 @click="
                                         $wire.set('workPlans.{{ $wpIdx }}.work_plan_id', {{ $wpo->id }});
                                         search = '{{ $wpo->code }} — {{ $wpo->title }}';
@@ -217,14 +216,10 @@
                 <span class="fw-semibold text-primary">{{ $wpo->code }}</span>
                 <span class="ms-1">{{ $wpo->title }}</span>
               </div>
-              @php $wpRenderCount++; @endphp
-              @if ($wpRenderCount >= 30) @break @endif
               @empty
               <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
               @endforelse
-              @if ($wpRenderCount >= 30)
-              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 30 ditampilkan.</div>
-              @endif
+              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring program kerja.</div>
             </div>
           </div>
         </div>
