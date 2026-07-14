@@ -357,15 +357,15 @@
               </select>
 
               {{-- Dropdown options --}}
-              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
-                @php $actRenderCount = 0; @endphp
+              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu"
+                style="z-index: 1055; max-height: 250px; overflow-y: auto;">
                 @forelse($activities as $a)
                 <div
                   class="px-3 py-2 cursor-pointer dropdown-item small {{ $act['activity_id'] == $a->id ? 'bg-primary text-white' : '' }}"
-                  x-show="'{{ strtolower($a->code . ' ' . $a->title) }}'.includes(search.toLowerCase())"
+                  x-show="search === '' || '{{ strtolower($a->code . ' ' . $a->title) }}'.includes(search.toLowerCase())"
                   @click="
                                             $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id', {{ $a->id }});
-                                            search = '{{ $a->code }} — {{ $a->title }}';
+                                            search = '{{ addslashes($a->code . ' — ' . $a->title) }}';
                                             open = false;
                                         ">
                   <div class="d-flex flex-column gap-1">
@@ -373,14 +373,12 @@
                     <span class="text-secondary rkap-font-085">{{ $a->title }}</span>
                   </div>
                 </div>
-                @php $actRenderCount++; @endphp
-                @if ($actRenderCount >= 30) @break @endif
                 @empty
                 <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
                 @endforelse
-                @if ($actRenderCount >= 30)
-                <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 30 ditampilkan.</div>
-                @endif
+                <div class="px-3 py-2 text-muted small border-top bg-light">
+                  <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring kegiatan.
+                </div>
               </div>
             </div>
 
