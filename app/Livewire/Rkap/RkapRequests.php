@@ -41,9 +41,13 @@ class RkapRequests extends Component
     public ?int $rejectId = null;
     public string $rejectionNote = '';
 
+    // Filter State
+    public bool $onlyPending = false;
+
     protected $queryString = [
         'activeTab' => ['except' => 'work_plan'],
         'search' => ['except' => ''],
+        'onlyPending' => ['except' => false],
     ];
 
     public function mount(): void
@@ -58,6 +62,11 @@ class RkapRequests extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingOnlyPending(): void
     {
         $this->resetPage();
     }
@@ -278,6 +287,7 @@ class RkapRequests extends Component
                 ->when(!$isApprover, fn($q) => $q->where('requested_by_bureau_id', $user->bureau_id))
                 // Only show those that were actually requested (i.e. has requested_by_bureau_id or status is not 'approved' initially, wait: we want to show all requests. A requested work plan has requested_by_bureau_id set!)
                 ->whereNotNull('requested_by_bureau_id')
+                ->when($this->onlyPending, fn($q) => $q->where('approval_status', 'pending'))
                 ->when($this->search, function ($q) {
                     $q->where(function ($sub) {
                         $sub->where('code', 'like', '%' . $this->search . '%')
@@ -293,6 +303,7 @@ class RkapRequests extends Component
                 // Non-approvers only see their bureau's requests
                 ->when(!$isApprover, fn($q) => $q->where('requested_by_bureau_id', $user->bureau_id))
                 ->whereNotNull('requested_by_bureau_id')
+                ->when($this->onlyPending, fn($q) => $q->where('approval_status', 'pending'))
                 ->when($this->search, function ($q) {
                     $q->where(function ($sub) {
                         $sub->where('code', 'like', '%' . $this->search . '%')

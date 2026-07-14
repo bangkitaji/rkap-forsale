@@ -107,6 +107,7 @@ class WorkPlans extends Component
                 [
                     'code' => $this->code,
                     'title' => $this->title,
+                    'approval_status' => 'approved',
                 ]
             );
 
@@ -202,6 +203,7 @@ class WorkPlans extends Component
     public function render()
     {
         $workPlans = WorkPlan::search('code|title', $this->search)
+            ->where('approval_status', 'approved')
             ->orderBy($this->sortBy, $this->sortDir)
             ->paginate($this->perPage);
 

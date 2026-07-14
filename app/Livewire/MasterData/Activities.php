@@ -142,6 +142,7 @@ class Activities extends Component
                     'code' => $this->code,
                     'title' => $this->title,
                     'description' => $this->description,
+                    'approval_status' => 'approved',
                 ]
             );
 
@@ -327,6 +328,7 @@ class Activities extends Component
         $activities = Activity::with(['workPlan', 'coas'])
             ->leftJoin('work_plans', 'activities.work_plan_id', '=', 'work_plans.id')
             ->select('activities.*')
+            ->where('activities.approval_status', 'approved')
             ->search('code|title|workPlan.title|workPlan.code|coas.code|coas.title', $this->search)
             ->when($this->onlyUnmapped, fn($q) => $q->doesntHave('coas'))
             ->orderBy($sortColumn, $this->sortDir)
@@ -339,7 +341,7 @@ class Activities extends Component
 
         return view('livewire.master-data.activities', [
             'activities' => $activities,
-            'workPlans'  => WorkPlan::orderBy('code')->get(),
+            'workPlans'  => WorkPlan::where('approval_status', 'approved')->orderBy('code')->get(),
             'allCoas'    => $allCoas,
         ])->layout('layouts.contentNavbarLayout');
     }

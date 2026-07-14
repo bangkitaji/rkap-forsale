@@ -42,15 +42,35 @@
           </li>
         </ul>
 
-        {{-- Search input --}}
-        <div class="rkap-w-300 w-100">
-          <div class="input-group input-group-merge">
-            <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Cari usulan...">
+        {{-- Search and Filter --}}
+        <div class="d-flex align-items-center gap-3 flex-wrap flex-grow-1 justify-content-md-end">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="onlyPending" wire:model.live="onlyPending" style="cursor:pointer">
+            <label class="form-check-label small fw-semibold text-nowrap" for="onlyPending" style="cursor:pointer">
+              <i class="bx bx-time-five me-1 text-warning"></i>Belum ditanggapi
+            </label>
+          </div>
+          <div class="rkap-w-300 w-100">
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="bx bx-search"></i></span>
+              <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Cari usulan...">
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    @if($onlyPending)
+    <div class="card-body py-2 px-4 border-bottom bg-light bg-opacity-50">
+      <div class="alert alert-warning py-2 px-3 mb-0 d-flex align-items-center gap-2 small">
+        <i class="bx bx-filter-alt flex-shrink-0"></i>
+        Menampilkan usulan yang <strong class="ms-1">belum ditanggapi (menunggu persetujuan)</strong>.
+        <button wire:click="$set('onlyPending', false)" class="btn btn-xs btn-link p-0 ms-2 text-warning">
+          Tampilkan semua
+        </button>
+      </div>
+    </div>
+    @endif
 
     {{-- Requests Table List --}}
     <div class="table-responsive text-nowrap">

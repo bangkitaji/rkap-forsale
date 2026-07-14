@@ -175,6 +175,7 @@ class ActivityCoaMapping extends Component
     {
         $activities = Activity::query()
             ->with('workPlan')
+            ->where('approval_status', 'approved')
             ->when(
                 !empty($this->activitySearch),
                 fn($q) => $q->search('code|title|workPlan.title|workPlan.code', $this->activitySearch)
