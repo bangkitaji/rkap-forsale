@@ -246,15 +246,81 @@
             {{-- Fields for Activity Request --}}
             <div class="mb-3">
               <label for="actWorkPlanId" class="form-label fw-semibold">Pilih Program Kerja Terkait <span class="text-danger">*</span></label>
-              <select id="actWorkPlanId" class="form-select @error('actWorkPlanId') is-invalid @enderror" wire:model.defer="actWorkPlanId">
-                <option value="">-- Pilih Program Kerja --</option>
-                @foreach($approvedWorkPlans as $wpOpt)
-                <option value="{{ $wpOpt->id }}">{{ $wpOpt->code }} — {{ $wpOpt->title }}</option>
-                @endforeach
-              </select>
-              @error('actWorkPlanId')
-              <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              @php
+                $selectedActWp = $actWorkPlanId
+                    ? $approvedWorkPlans->firstWhere('id', $actWorkPlanId)
+                    : null;
+                $selectedActWpLabel = $selectedActWp
+                    ? $selectedActWp->code . ' — ' . $selectedActWp->title
+                    : '';
+              @endphp
+              <div x-data="{
+                  open: false,
+                  search: @js($selectedActWpLabel),
+                  currentLabel: @js($selectedActWpLabel),
+                }"
+                class="position-relative"
+                @click.outside="open = false"
+                x-effect="if (!open && search !== currentLabel) search = currentLabel">
+
+                <div class="input-group">
+                  <input type="text"
+                    id="actWorkPlanId_search"
+                    class="form-control @error('actWorkPlanId') is-invalid @enderror"
+                    placeholder="Cari program kerja..."
+                    x-model="search"
+                    @focus="open = true"
+                    @input="open = true"
+                    autocomplete="off">
+                  @if($actWorkPlanId)
+                  <button type="button" class="btn btn-outline-secondary"
+                    wire:click="$set('actWorkPlanId', null)"
+                    @click="search = ''; currentLabel = ''; open = false"
+                    title="Hapus pilihan">
+                    <i class="bx bx-x"></i>
+                  </button>
+                  @endif
+                </div>
+
+                @error('actWorkPlanId')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+
+                {{-- Hidden select as Livewire binding --}}
+                <select wire:model="actWorkPlanId" id="actWorkPlanId" class="d-none">
+                  <option value=""></option>
+                  @if($actWorkPlanId)
+                    @if($selectedActWp)
+                      <option value="{{ $selectedActWp->id }}" selected>{{ $selectedActWp->code }} — {{ $selectedActWp->title }}</option>
+                    @endif
+                  @endif
+                </select>
+
+                {{-- Dropdown options --}}
+                <div x-show="open" x-cloak
+                  class="position-absolute bg-white border rounded shadow-sm w-100 mt-1"
+                  style="z-index: 1055; max-height: 200px; overflow-y: auto;">
+                  @forelse($approvedWorkPlans as $wpOpt)
+                  <div
+                    class="px-3 py-2 cursor-pointer dropdown-item small {{ $actWorkPlanId == $wpOpt->id ? 'bg-primary text-white' : '' }}"
+                    x-show="search === '' || '{{ strtolower($wpOpt->code . ' ' . $wpOpt->title) }}'.includes(search.toLowerCase())"
+                    @click="
+                      $wire.set('actWorkPlanId', {{ $wpOpt->id }});
+                      search = '{{ addslashes($wpOpt->code . ' — ' . $wpOpt->title) }}';
+                      currentLabel = search;
+                      open = false;
+                    ">
+                    <span class="fw-semibold text-primary">{{ $wpOpt->code }}</span>
+                    <span class="ms-1 text-muted">{{ $wpOpt->title }}</span>
+                  </div>
+                  @empty
+                  <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                  @endforelse
+                  <div class="px-3 py-2 text-muted small border-top">
+                    <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring program kerja.
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="mb-3">
               <label for="actTitle" class="form-label fw-semibold">Nama Kegiatan <span class="text-danger">*</span></label>
