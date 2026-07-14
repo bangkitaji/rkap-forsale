@@ -785,12 +785,12 @@
                         @endif
                       </select>
                       <div x-show="open && !@js($isCoaLockedForKepalaBiro)" x-cloak
-                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
-                        @php $coaRenderCount = 0; @endphp
+                        class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu"
+                        style="z-index: 1055; max-height: 250px; overflow-y: auto;">
                         @foreach ($filteredCoasOrdered as $coa)
                         <div
                           class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
-                          x-show="'{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
+                          x-show="search === '' || '{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
                           @click="
                                                             $wire.call('updateGroupCoa', {{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, {{ $coa->id }});
                                                             currentLabel = '{{ $coa->code }} — {{ $coa->title }}';
@@ -802,12 +802,10 @@
                           <span class="fw-semibold text-primary">{{ $coa->code }}</span>
                           <span class="ms-1">{{ $coa->title }}</span>
                         </div>
-                        @php $coaRenderCount++; @endphp
-                        @if ($coaRenderCount >= 50) @break @endif
                         @endforeach
-                        @if ($coaRenderCount >= 50)
-                        <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring. Maks 50 ditampilkan.</div>
-                        @endif
+                        <div class="px-3 py-2 text-muted small border-top bg-light">
+                          <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring COA.
+                        </div>
                       </div>
                     </div>
                   </td>
