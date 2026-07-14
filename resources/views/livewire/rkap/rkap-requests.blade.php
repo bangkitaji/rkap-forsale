@@ -103,6 +103,11 @@
               <span class="badge bg-label-success">Disetujui</span>
               @else
               <span class="badge bg-label-danger">Ditolak</span>
+              @if($req->rejection_note)
+              <div class="mt-1 small text-danger rkap-ws-normal" style="max-width:220px" title="{{ $req->rejection_note }}">
+                <i class="bx bx-comment-x me-1"></i>{{ Str::limit($req->rejection_note, 80) }}
+              </div>
+              @endif
               @endif
             </td>
             <td>{{ $req->requestedBureau->name ?? '-' }}</td>
@@ -114,7 +119,7 @@
                 <button class="btn btn-xs btn-success" wire:click="openApproveModal('work_plan', {{ $req->id }})">
                   <i class="bx bx-check me-0.5"></i> Setuju
                 </button>
-                <button class="btn btn-xs btn-danger" wire:click="rejectRequest('work_plan', {{ $req->id }})" wire:confirm="Yakin ingin menolak program kerja ini?">
+                <button class="btn btn-xs btn-danger" wire:click="openRejectModal('work_plan', {{ $req->id }})">
                   <i class="bx bx-x me-0.5"></i> Tolak
                 </button>
               </div>
@@ -149,6 +154,11 @@
               <span class="badge bg-label-success">Disetujui</span>
               @else
               <span class="badge bg-label-danger">Ditolak</span>
+              @if($req->rejection_note)
+              <div class="mt-1 small text-danger rkap-ws-normal" style="max-width:220px" title="{{ $req->rejection_note }}">
+                <i class="bx bx-comment-x me-1"></i>{{ Str::limit($req->rejection_note, 80) }}
+              </div>
+              @endif
               @endif
             </td>
             <td>{{ $req->requestedBureau->name ?? '-' }}</td>
@@ -160,7 +170,7 @@
                 <button class="btn btn-xs btn-success" wire:click="openApproveModal('activity', {{ $req->id }})">
                   <i class="bx bx-check me-0.5"></i> Setuju
                 </button>
-                <button class="btn btn-xs btn-danger" wire:click="rejectRequest('activity', {{ $req->id }})" wire:confirm="Yakin ingin menolak kegiatan ini?">
+                <button class="btn btn-xs btn-danger" wire:click="openRejectModal('activity', {{ $req->id }})">
                   <i class="bx bx-x me-0.5"></i> Tolak
                 </button>
               </div>
@@ -305,4 +315,57 @@
     </div>
   </div>
   @endif
+
+  {{-- Rejection Note Modal --}}
+  @if($isRejectModalOpen)
+  <div class="modal fade show rkap-modal-show rkap-z-1080" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header border-bottom bg-danger bg-opacity-10">
+          <h5 class="modal-title text-danger">
+            <i class="bx bx-x-circle me-1"></i>
+            Tolak Usulan {{ $rejectType === 'work_plan' ? 'Program Kerja' : 'Kegiatan' }}
+          </h5>
+          <button type="button" class="btn-close" wire:click="closeRejectModal"></button>
+        </div>
+        <form wire:submit.prevent="confirmReject">
+          <div class="modal-body">
+            <div class="alert alert-warning py-2 px-3 mb-3 small">
+              <i class="bx bx-info-circle me-1"></i>
+              Catatan penolakan akan ditampilkan kepada biro pengusul agar mereka mengetahui alasan penolakan.
+            </div>
+            <div class="mb-3">
+              <label for="rejectionNote" class="form-label fw-semibold">
+                Catatan / Alasan Penolakan <span class="text-danger">*</span>
+              </label>
+              <textarea
+                id="rejectionNote"
+                class="form-control @error('rejectionNote') is-invalid @enderror"
+                wire:model.defer="rejectionNote"
+                rows="4"
+                placeholder="Jelaskan alasan penolakan agar pengusul dapat memahami dan memperbaiki usulannya..."
+                autofocus></textarea>
+              @error('rejectionNote')
+              <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+              <div class="form-text text-muted">Minimal 5 karakter, maksimal 1000 karakter.</div>
+            </div>
+          </div>
+          <div class="modal-footer border-top">
+            <button type="button" class="btn btn-outline-secondary" wire:click="closeRejectModal">Batal</button>
+            <button type="submit" class="btn btn-danger">
+              <span wire:loading.remove wire:target="confirmReject">
+                <i class="bx bx-x me-1"></i>Konfirmasi Penolakan
+              </span>
+              <span wire:loading wire:target="confirmReject">
+                <span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  @endif
+
 </div>

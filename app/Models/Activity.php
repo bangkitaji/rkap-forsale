@@ -12,7 +12,7 @@ class Activity extends Model
 {
     use SoftDeletes, Searchable;
 
-    protected $fillable = ['work_plan_id', 'code', 'title', 'description', 'approval_status', 'requested_by_bureau_id'];
+    protected $fillable = ['work_plan_id', 'code', 'title', 'description', 'approval_status', 'rejection_note', 'requested_by_bureau_id'];
 
     public function workPlan(): BelongsTo
     {

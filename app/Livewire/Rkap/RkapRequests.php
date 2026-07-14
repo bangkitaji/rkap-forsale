@@ -35,6 +35,12 @@ class RkapRequests extends Component
     public ?int $approveId = null;
     public string $approvalCode = '';
 
+    // Rejection Modal State
+    public bool $isRejectModalOpen = false;
+    public string $rejectType = 'work_plan'; // 'work_plan' or 'activity'
+    public ?int $rejectId = null;
+    public string $rejectionNote = '';
+
     protected $queryString = [
         'activeTab' => ['except' => 'work_plan'],
         'search' => ['except' => ''],
@@ -205,21 +211,56 @@ class RkapRequests extends Component
         $this->closeApproveModal();
     }
 
-    public function rejectRequest(string $type, int $id): void
+    public function openRejectModal(string $type, int $id): void
     {
         if (!Auth::user()->can('masterdata.request.approve')) {
             abort(403, 'Unauthorized action.');
         }
 
-        if ($type === 'work_plan') {
-            $wp = WorkPlan::findOrFail($id);
-            $wp->update(['approval_status' => 'rejected']);
-            session()->flash('message', "Usulan Program Kerja '{$wp->title}' ditolak.");
-        } else {
-            $act = Activity::findOrFail($id);
-            $act->update(['approval_status' => 'rejected']);
-            session()->flash('message', "Usulan Kegiatan '{$act->title}' ditolak.");
+        $this->rejectType = $type;
+        $this->rejectId = $id;
+        $this->rejectionNote = '';
+        $this->isRejectModalOpen = true;
+        $this->resetValidation();
+    }
+
+    public function closeRejectModal(): void
+    {
+        $this->isRejectModalOpen = false;
+        $this->rejectId = null;
+        $this->rejectionNote = '';
+    }
+
+    public function confirmReject(): void
+    {
+        if (!Auth::user()->can('masterdata.request.approve')) {
+            abort(403, 'Unauthorized action.');
         }
+
+        $this->validate([
+            'rejectionNote' => 'required|string|min:5|max:1000',
+        ], [
+            'rejectionNote.required' => 'Catatan penolakan wajib diisi agar pengusul mengetahui alasannya.',
+            'rejectionNote.min'      => 'Catatan penolakan minimal 5 karakter.',
+        ]);
+
+        if ($this->rejectType === 'work_plan') {
+            $wp = WorkPlan::findOrFail($this->rejectId);
+            $wp->update([
+                'approval_status' => 'rejected',
+                'rejection_note'  => $this->rejectionNote,
+            ]);
+            session()->flash('message', "Usulan Program Kerja '{$wp->title}' telah ditolak.");
+        } else {
+            $act = Activity::findOrFail($this->rejectId);
+            $act->update([
+                'approval_status' => 'rejected',
+                'rejection_note'  => $this->rejectionNote,
+            ]);
+            session()->flash('message', "Usulan Kegiatan '{$act->title}' telah ditolak.");
+        }
+
+        $this->closeRejectModal();
     }
 
     public function render()
