@@ -56,21 +56,14 @@
                                 @endif
                             </th>
                             <th wire:click="sort('code')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
-                                Code
+                                Activity
                                 @if($sortBy === 'code')
                                 <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
                                 @else
                                 <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th wire:click="sort('title')" class="rkap-cursor-pointer rkap-user-select-none text-nowrap">
-                                Title
-                                @if($sortBy === 'title')
-                                <i class="bx bx-chevron-{{ $sortDir === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                                @else
-                                <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
-                                @endif
-                            </th>
+                            <th>Mapped COAs</th>
                             <th>Description</th>
                             @can('masterdata.activity.manage')
                             <th>Actions</th>
@@ -80,9 +73,31 @@
                     <tbody class="table-border-bottom-0">
                         @forelse($activities as $activity)
                         <tr>
-                            <td>{{ $activity->workPlan ? $activity->workPlan->code . ' - ' . $activity->workPlan->title : '-' }}</td>
-                            <td><strong>{{ $activity->code }}</strong></td>
-                            <td>{{ $activity->title }}</td>
+                            <td>
+                                @if($activity->workPlan)
+                                    <div class="fw-semibold">{{ $activity->workPlan->code }}</div>
+                                    <div class="text-muted small rkap-ws-normal" style="max-width: 200px;">{{ $activity->workPlan->title }}</div>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ $activity->code }}</div>
+                                <div class="text-muted small rkap-ws-normal" style="max-width: 250px;">{{ $activity->title }}</div>
+                            </td>
+                            <td>
+                                @if($activity->coas->isNotEmpty())
+                                    <div class="d-flex flex-wrap gap-1 rkap-ws-normal" style="max-width: 250px;">
+                                        @foreach($activity->coas as $coa)
+                                            <span class="badge bg-label-primary" title="{{ $coa->title }}">
+                                                {{ $coa->code }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
                             <td>{{ Str::limit($activity->description, 50) }}</td>
                             @can('masterdata.activity.manage')
                             <td>

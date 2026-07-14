@@ -212,10 +212,10 @@ class Activities extends Component
             default     => 'activities.code',
         };
 
-        $activities = Activity::with('workPlan')
+        $activities = Activity::with(['workPlan', 'coas'])
             ->leftJoin('work_plans', 'activities.work_plan_id', '=', 'work_plans.id')
             ->select('activities.*')
-            ->search('code|title|workPlan.title|workPlan.code', $this->search)
+            ->search('code|title|workPlan.title|workPlan.code|coas.code|coas.title', $this->search)
             ->orderBy($sortColumn, $this->sortDir)
             ->paginate($this->perPage);
 
