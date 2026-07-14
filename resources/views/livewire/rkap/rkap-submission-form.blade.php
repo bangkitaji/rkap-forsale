@@ -154,7 +154,7 @@
   $hasApproved = collect($wp['activities'])->contains(fn($a) => ($a['approval_status'] ?? 'pending') === 'approved');
   @endphp
 
-  <div class="card mb-4 border-start border-primary border-3" wire:key="wp-card-{{ $wp['_uid'] }}">
+  <div class="card mb-4 border-start border-primary border-3" wire:key="wp-card-{{ $wpIdx }}-{{ $wp['_uid'] }}">
     {{-- ===== Card Header: Program Kerja select ===== --}}
     <div class="card-header border-bottom">
       <div class="d-flex align-items-start gap-3">
@@ -295,7 +295,7 @@
       $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
       @endphp
 
-      <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wp['_uid'] }}-act-card-{{ $actUid }}">
+      <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wpIdx }}-{{ $wp['_uid'] }}-act-card-{{ $actIdx }}-{{ $actUid }}">
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
           <div class="d-flex align-items-center gap-2">
             <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
