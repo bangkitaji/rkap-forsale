@@ -35,6 +35,17 @@ if ($lastPage <= $maxPageButtons) {
         <nav class="d-flex justify-items-center justify-content-between">
             <div class="d-flex justify-content-between flex-fill d-sm-none">
                 <ul class="pagination">
+                    {{-- First Page Link --}}
+                    @if ($paginator->onFirstPage())
+                        <li class="page-item disabled" aria-disabled="true">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                    @else
+                        <li class="page-item">
+                            <button type="button" class="page-link" wire:click="gotoPage(1, '{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled">&laquo;</button>
+                        </li>
+                    @endif
+
                     {{-- Previous Page Link --}}
                     @if ($paginator->onFirstPage())
                         <li class="page-item disabled" aria-disabled="true">
@@ -56,6 +67,17 @@ if ($lastPage <= $maxPageButtons) {
                             <span class="page-link" aria-hidden="true">@lang('pagination.next')</span>
                         </li>
                     @endif
+
+                    {{-- Last Page Link --}}
+                    @if ($paginator->hasMorePages())
+                        <li class="page-item">
+                            <button type="button" class="page-link" wire:click="gotoPage({{ $lastPage }}, '{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled">&raquo;</button>
+                        </li>
+                    @else
+                        <li class="page-item disabled" aria-disabled="true">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                    @endif
                 </ul>
             </div>
 
@@ -74,6 +96,17 @@ if ($lastPage <= $maxPageButtons) {
 
                 <div>
                     <ul class="pagination mb-0">
+                        {{-- First Page Link --}}
+                        @if ($paginator->onFirstPage())
+                            <li class="page-item disabled" aria-disabled="true" aria-label="First">
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <button type="button" class="page-link" wire:click="gotoPage(1, '{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled" aria-label="First">&laquo;</button>
+                            </li>
+                        @endif
+
                         {{-- Previous Page Link --}}
                         @if ($paginator->onFirstPage())
                             <li class="page-item disabled" aria-disabled="true" aria-label="@lang('pagination.previous')">
@@ -102,6 +135,17 @@ if ($lastPage <= $maxPageButtons) {
                         @else
                             <li class="page-item disabled" aria-disabled="true" aria-label="@lang('pagination.next')">
                                 <span class="page-link" aria-hidden="true">&rsaquo;</span>
+                            </li>
+                        @endif
+
+                        {{-- Last Page Link --}}
+                        @if ($paginator->hasMorePages())
+                            <li class="page-item">
+                                <button type="button" class="page-link" wire:click="gotoPage({{ $lastPage }}, '{{ $paginator->getPageName() }}')" x-on:click="{{ $scrollIntoViewJsSnippet }}" wire:loading.attr="disabled" aria-label="Last">&raquo;</button>
+                            </li>
+                        @else
+                            <li class="page-item disabled" aria-disabled="true" aria-label="Last">
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
                             </li>
                         @endif
                     </ul>

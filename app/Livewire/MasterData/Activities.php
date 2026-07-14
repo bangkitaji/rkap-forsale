@@ -7,6 +7,7 @@ use Livewire\WithFileUploads;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\Activity;
 use App\Models\WorkPlan;
+use App\Models\Coa;
 use App\Imports\ActivityImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,8 @@ class Activities extends Component
     use WithCustomPagination, WithFileUploads;
 
     public $search = '';
+    public bool $onlyUnmapped = false;
+
     public $activityId = null;
     public $work_plan_id = null;
     public $code = '';
@@ -33,12 +36,23 @@ class Activities extends Component
     public $importMessage = '';
     public $importStatus = '';
 
+    // ── COA Mapping Modal ──
+    public bool $isCoaMappingOpen = false;
+    public ?int $mappingActivityId = null;
+    public string $coaSearch = '';
+    public array $selectedCoaIds = [];
+
     private function ensureCanManage(): void
     {
         abort_unless(Gate::allows('masterdata.activity.manage'), 403);
     }
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingOnlyUnmapped()
     {
         $this->resetPage();
     }
@@ -73,8 +87,27 @@ class Activities extends Component
     {
         $this->ensureCanManage();
         $this->resetInputFields();
+        $this->code = $this->generateNextCode();
         $this->isEditMode = false;
         $this->isModalOpen = true;
+    }
+
+    /**
+     * Generate the next activity code by finding the highest numeric code and adding 1.
+     * Non-numeric codes (e.g. REQ-ACT-*) are ignored.
+     */
+    private function generateNextCode(): string
+    {
+        $lastCode = Activity::whereRaw('code ~ ?', ['^[0-9]+$'])
+            ->orderByRaw('CAST(code AS BIGINT) DESC')
+            ->value('code');
+
+        if ($lastCode !== null && is_numeric($lastCode)) {
+            return (string) ((int) $lastCode + 1);
+        }
+
+        // Fallback: start from 2000000001 if no numeric code exists yet
+        return '2000000001';
     }
 
     public function edit($id)
@@ -193,6 +226,85 @@ class Activities extends Component
         );
     }
 
+    // ── COA Mapping Modal Methods ──
+
+    public function openCoaMapping(int $activityId): void
+    {
+        $this->ensureCanManage();
+        $this->mappingActivityId = $activityId;
+        $this->coaSearch = '';
+        $this->loadMappingCoas();
+        $this->isCoaMappingOpen = true;
+    }
+
+    public function closeCoaMapping(): void
+    {
+        $this->isCoaMappingOpen = false;
+        $this->mappingActivityId = null;
+        $this->selectedCoaIds = [];
+        $this->coaSearch = '';
+    }
+
+    private function loadMappingCoas(): void
+    {
+        $this->selectedCoaIds = [];
+        if (!$this->mappingActivityId) {
+            return;
+        }
+        $activity = Activity::with('coas')->find($this->mappingActivityId);
+        if ($activity) {
+            $this->selectedCoaIds = $activity->coas
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->all();
+        }
+    }
+
+    public function updatingCoaSearch(): void
+    {
+        // no pagination reset needed; we use in-blade filtering
+    }
+
+    public function selectAllMappingCoas(): void
+    {
+        $this->ensureCanManage();
+        $allIds = Coa::orderBy('code')
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+        $this->selectedCoaIds = array_values(array_unique(
+            array_merge(array_map('intval', $this->selectedCoaIds), $allIds)
+        ));
+    }
+
+    public function deselectAllMappingCoas(): void
+    {
+        $this->ensureCanManage();
+        $this->selectedCoaIds = [];
+    }
+
+    public function saveCoaMapping(): void
+    {
+        $this->ensureCanManage();
+
+        if (!$this->mappingActivityId) {
+            session()->flash('error', 'No activity selected for mapping.');
+            return;
+        }
+
+        $activity = Activity::find($this->mappingActivityId);
+        if (!$activity) {
+            session()->flash('error', 'Activity not found.');
+            return;
+        }
+
+        $coaIds = array_values(array_unique(array_map('intval', $this->selectedCoaIds)));
+        $activity->coas()->sync($coaIds);
+
+        session()->flash('message', 'COA mapping saved successfully.');
+        $this->closeCoaMapping();
+    }
+
     private function resetInputFields()
     {
         $this->activityId = null;
@@ -216,12 +328,19 @@ class Activities extends Component
             ->leftJoin('work_plans', 'activities.work_plan_id', '=', 'work_plans.id')
             ->select('activities.*')
             ->search('code|title|workPlan.title|workPlan.code|coas.code|coas.title', $this->search)
+            ->when($this->onlyUnmapped, fn($q) => $q->doesntHave('coas'))
             ->orderBy($sortColumn, $this->sortDir)
             ->paginate($this->perPage);
 
+        // Load COAs for mapping modal
+        $allCoas = $this->isCoaMappingOpen
+            ? Coa::orderBy('code')->get()
+            : collect();
+
         return view('livewire.master-data.activities', [
             'activities' => $activities,
-            'workPlans'  => WorkPlan::orderBy('code')->get()
+            'workPlans'  => WorkPlan::orderBy('code')->get(),
+            'allCoas'    => $allCoas,
         ])->layout('layouts.contentNavbarLayout');
     }
 }
