@@ -92,7 +92,7 @@ class WorkPlans extends Component
             $this->title = $workPlan->title;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Work Plan not found.');
+            session()->flash('error', __('Work Plan not found.'));
         }
     }
 
@@ -114,7 +114,7 @@ class WorkPlans extends Component
             session()->flash('message', $this->workPlanId ? 'Work Plan updated successfully.' : 'Work Plan created successfully.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the Work Plan.');
+            session()->flash('error', __('An error occurred while saving the Work Plan.'));
         }
     }
 
@@ -123,9 +123,9 @@ class WorkPlans extends Component
         $this->ensureCanManage();
         try {
             WorkPlan::findOrFail($id)->delete();
-            session()->flash('message', 'Work Plan deleted successfully.');
+            session()->flash('message', __('Work Plan deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete Work Plan.');
+            session()->flash('error', __('Unable to delete Work Plan.'));
         }
     }
 

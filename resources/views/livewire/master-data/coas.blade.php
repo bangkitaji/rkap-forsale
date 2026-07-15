@@ -31,7 +31,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search COA...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search COA...') }}">
                     </div>
                     <button wire:click="create()" class="btn btn-primary btn-sm">
                         <i class="bx bx-plus me-1"></i> Add COA
@@ -157,7 +157,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="coa-group" class="form-label">COA Group</label>
+                            <label for="coa-group" class="form-label">{{ __('COA Group') }}</label>
                             <select id="coa-group" class="form-select @error('coaGroupId') is-invalid @enderror" wire:model="coaGroupId">
                                 <option value="">Select Group...</option>
                                 @foreach($coaGroups as $g)
@@ -205,10 +205,10 @@
                 </div>
                 <form wire:submit.prevent="importExcel">
                     <div class="modal-body">
-                        <p class="mb-3">Upload an Excel file to import COAs. <a href="{{ route('download-coa-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
+                        <p class="mb-3">Upload an Excel file to import COAs. <a href="{{ route('download-coa-template') }}" class="btn btn-sm btn-link p-0">{{ __('Download template') }}</a></p>
 
                         <div class="mb-3">
-                            <label for="uploadedFile" class="form-label">Excel File</label>
+                            <label for="uploadedFile" class="form-label">{{ __('Excel File') }}</label>
                             <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
                             @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>

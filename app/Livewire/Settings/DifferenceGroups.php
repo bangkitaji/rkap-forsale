@@ -103,7 +103,7 @@ class DifferenceGroups extends Component
             $this->description = $group->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Group Difference tidak ditemukan.');
+            session()->flash('error', __('Group Difference tidak ditemukan.'));
         }
     }
 
@@ -124,7 +124,7 @@ class DifferenceGroups extends Component
             session()->flash('message', $this->differenceGroupId ? 'Group Difference berhasil diperbarui.' : 'Group Difference berhasil ditambahkan.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan saat menyimpan Group Difference.');
+            session()->flash('error', __('Terjadi kesalahan saat menyimpan Group Difference.'));
         }
     }
 
@@ -135,14 +135,14 @@ class DifferenceGroups extends Component
 
             // Check if there are mapped COAs
             if ($group->coas()->exists()) {
-                session()->flash('error', 'Gagal menghapus. Group Difference ini masih digunakan oleh beberapa COA.');
+                session()->flash('error', __('Gagal menghapus. Group Difference ini masih digunakan oleh beberapa COA.'));
                 return;
             }
 
             $group->delete();
-            session()->flash('message', 'Group Difference berhasil dihapus.');
+            session()->flash('message', __('Group Difference berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus Group Difference.');
+            session()->flash('error', __('Gagal menghapus Group Difference.'));
         }
     }
 
@@ -171,14 +171,14 @@ class DifferenceGroups extends Component
             ]);
             session()->flash('mapping_message', "Pemetaan untuk COA {$coa->code} berhasil diperbarui.");
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal memperbarui pemetaan.');
+            session()->flash('mapping_error', __('Gagal memperbarui pemetaan.'));
         }
     }
 
     public function applyBulkMapping()
     {
         if (empty($this->selectedCoas)) {
-            session()->flash('mapping_error', 'Silakan pilih minimal satu COA.');
+            session()->flash('mapping_error', __('Silakan pilih minimal satu COA.'));
             return;
         }
 
@@ -193,7 +193,7 @@ class DifferenceGroups extends Component
             $this->selectedCoas = [];
             $this->bulkDifferenceGroupId = '';
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal melakukan pemetaan massal.');
+            session()->flash('mapping_error', __('Gagal melakukan pemetaan massal.'));
         }
     }
 

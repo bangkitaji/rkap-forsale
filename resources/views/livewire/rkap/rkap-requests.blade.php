@@ -53,7 +53,7 @@
           <div class="rkap-w-300 w-100">
             <div class="input-group input-group-merge">
               <span class="input-group-text"><i class="bx bx-search"></i></span>
-              <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Cari usulan...">
+              <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Cari usulan...') }}">
             </div>
           </div>
         </div>
@@ -79,10 +79,10 @@
           @if($activeTab === 'work_plan')
           <tr>
             <th>Kode</th>
-            <th>Nama Program Kerja</th>
-            <th>Status</th>
-            <th>Biro Pengusul</th>
-            <th>Tanggal Diusulkan</th>
+            <th>{{ __('Nama Program Kerja') }}</th>
+            <th>{{ __('Status') }}</th>
+            <th>{{ __('Biro Pengusul') }}</th>
+            <th>{{ __('Tanggal Diusulkan') }}</th>
             @if($isApprover)
             <th class="text-center rkap-w-150">Aksi</th>
             @endif
@@ -91,11 +91,11 @@
           <tr>
             <th>Program Kerja</th>
             <th>Kode</th>
-            <th>Nama Kegiatan</th>
-            <th>Deskripsi</th>
-            <th>Status</th>
-            <th>Biro Pengusul</th>
-            <th>Tanggal Diusulkan</th>
+            <th>{{ __('Nama Kegiatan') }}</th>
+            <th>{{ __('Deskripsi') }}</th>
+            <th>{{ __('Status') }}</th>
+            <th>{{ __('Biro Pengusul') }}</th>
+            <th>{{ __('Tanggal Diusulkan') }}</th>
             @if($isApprover)
             <th class="text-center rkap-w-150">Aksi</th>
             @endif
@@ -118,11 +118,11 @@
             <td>{{ $req->title }}</td>
             <td>
               @if($req->approval_status === 'pending')
-              <span class="badge bg-label-warning">Menunggu Persetujuan</span>
+              <span class="badge bg-label-warning">{{ __('Menunggu Persetujuan') }}</span>
               @elseif($req->approval_status === 'approved')
-              <span class="badge bg-label-success">Disetujui</span>
+              <span class="badge bg-label-success">{{ __('Disetujui') }}</span>
               @else
-              <span class="badge bg-label-danger">Ditolak</span>
+              <span class="badge bg-label-danger">{{ __('Ditolak') }}</span>
               @if($req->rejection_note)
               <div class="mt-1 small text-danger rkap-ws-normal" style="max-width:220px" title="{{ $req->rejection_note }}">
                 <i class="bx bx-comment-x me-1"></i>{{ Str::limit($req->rejection_note, 80) }}
@@ -144,7 +144,7 @@
                 </button>
               </div>
               @else
-              <span class="text-muted small">Selesai diproses</span>
+              <span class="text-muted small">{{ __('Selesai') }} diproses</span>
               @endif
             </td>
             @endif
@@ -169,11 +169,11 @@
             <td class="text-wrap rkap-mw-250">{{ $req->description ?: '-' }}</td>
             <td>
               @if($req->approval_status === 'pending')
-              <span class="badge bg-label-warning">Menunggu Persetujuan</span>
+              <span class="badge bg-label-warning">{{ __('Menunggu Persetujuan') }}</span>
               @elseif($req->approval_status === 'approved')
-              <span class="badge bg-label-success">Disetujui</span>
+              <span class="badge bg-label-success">{{ __('Disetujui') }}</span>
               @else
-              <span class="badge bg-label-danger">Ditolak</span>
+              <span class="badge bg-label-danger">{{ __('Ditolak') }}</span>
               @if($req->rejection_note)
               <div class="mt-1 small text-danger rkap-ws-normal" style="max-width:220px" title="{{ $req->rejection_note }}">
                 <i class="bx bx-comment-x me-1"></i>{{ Str::limit($req->rejection_note, 80) }}
@@ -195,7 +195,7 @@
                 </button>
               </div>
               @else
-              <span class="text-muted small">Selesai diproses</span>
+              <span class="text-muted small">{{ __('Selesai') }} diproses</span>
               @endif
             </td>
             @endif
@@ -238,15 +238,15 @@
           <div class="modal-body">
             {{-- Type Selector --}}
             <div class="mb-3">
-              <label class="form-label fw-semibold">Jenis Usulan</label>
+              <label class="form-label fw-semibold">{{ __('Jenis Usulan') }}</label>
               <div class="d-flex gap-3 mt-1">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" value="work_plan" id="typeWorkPlan" wire:model.live="requestType">
-                  <label class="form-check-label" for="typeWorkPlan">Program Kerja Baru</label>
+                  <label class="form-check-label" for="typeWorkPlan">{{ __('Program Kerja Baru') }}</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" value="activity" id="typeActivity" wire:model.live="requestType">
-                  <label class="form-check-label" for="typeActivity">Kegiatan Baru</label>
+                  <label class="form-check-label" for="typeActivity">{{ __('Kegiatan Baru') }}</label>
                 </div>
               </div>
             </div>
@@ -287,7 +287,7 @@
                   <input type="text"
                     id="actWorkPlanId_search"
                     class="form-control @error('actWorkPlanId') is-invalid @enderror"
-                    placeholder="Cari program kerja..."
+                    placeholder="{{ __('Cari program kerja...') }}"
                     x-model="search"
                     @focus="open = true"
                     @input="open = true"
@@ -296,7 +296,7 @@
                   <button type="button" class="btn btn-outline-secondary"
                     wire:click="$set('actWorkPlanId', null)"
                     @click="search = ''; currentLabel = ''; open = false"
-                    title="Hapus pilihan">
+                    title="{{ __('Hapus pilihan') }}">
                     <i class="bx bx-x"></i>
                   </button>
                   @endif
@@ -334,7 +334,7 @@
                     <span class="ms-1 text-muted">{{ $wpOpt->title }}</span>
                   </div>
                   @empty
-                  <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                  <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data program kerja.') }}</div>
                   @endforelse
                   <div class="px-3 py-2 text-muted small border-top">
                     <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring program kerja.
@@ -350,14 +350,14 @@
               @enderror
             </div>
             <div class="mb-3">
-              <label for="actDescription" class="form-label fw-semibold">Deskripsi / Tujuan Kegiatan</label>
-              <textarea id="actDescription" class="form-control" wire:model.defer="actDescription" rows="3" placeholder="Sebutkan tujuan detail kegiatan..."></textarea>
+              <label for="actDescription" class="form-label fw-semibold">{{ __('Deskripsi / Tujuan Kegiatan') }}</label>
+              <textarea id="actDescription" class="form-control" wire:model.defer="actDescription" rows="3" placeholder="{{ __('Sebutkan tujuan detail kegiatan...') }}"></textarea>
             </div>
             @endif
           </div>
           <div class="modal-footer border-top">
-            <button type="button" class="btn btn-outline-secondary" wire:click="closeRequestModal">Batal</button>
-            <button type="submit" class="btn btn-primary">Kirim Usulan</button>
+            <button type="button" class="btn btn-outline-secondary" wire:click="closeRequestModal">{{ __('Batal') }}</button>
+            <button type="submit" class="btn btn-primary">{{ __('Kirim Usulan') }}</button>
           </div>
         </form>
       </div>
@@ -393,8 +393,8 @@
             </div>
           </div>
           <div class="modal-footer border-top">
-            <button type="button" class="btn btn-outline-secondary" wire:click="closeApproveModal">Batal</button>
-            <button type="submit" class="btn btn-success">Setujui & Simpan</button>
+            <button type="button" class="btn btn-outline-secondary" wire:click="closeApproveModal">{{ __('Batal') }}</button>
+            <button type="submit" class="btn btn-success">{{ __('Setujui & Simpan') }}</button>
           </div>
         </form>
       </div>
@@ -438,7 +438,7 @@
             </div>
           </div>
           <div class="modal-footer border-top">
-            <button type="button" class="btn btn-outline-secondary" wire:click="closeRejectModal">Batal</button>
+            <button type="button" class="btn btn-outline-secondary" wire:click="closeRejectModal">{{ __('Batal') }}</button>
             <button type="submit" class="btn btn-danger">
               <span wire:loading.remove wire:target="confirmReject">
                 <i class="bx bx-x me-1"></i>Konfirmasi Penolakan

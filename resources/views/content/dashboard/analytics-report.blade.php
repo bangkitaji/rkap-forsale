@@ -1,17 +1,17 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Laporan - Laba Rugi')
+@section('title', __('Laporan - Laba Rugi'))
 
 @section('content')
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div>
-    <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Laporan Laba Rugi</h4>
+    <h4 class="mb-1"><span class="text-muted fw-light">{{ __('RKAP') }} /</span> {{ __('Laporan Laba Rugi') }}</h4>
     @if ($activePeriod)
-    <p class="text-muted mb-0">Menampilkan Laporan Laba Rugi untuk periode: <strong>{{ $activePeriod->title }}</strong>
+    <p class="text-muted mb-0">{{ __('Menampilkan Laporan Laba Rugi untuk periode:') }} <strong>{{ $activePeriod->title }}</strong>
     </p>
     @else
     <div class="alert alert-warning mt-2 mb-0 py-2">
-      <i class="bx bx-info-circle me-1"></i> Belum ada periode RKAP yang aktif.
+      <i class="bx bx-info-circle me-1"></i> {{ __('Belum ada periode RKAP yang aktif.') }}
     </div>
     @endif
   </div>
@@ -20,7 +20,7 @@
   <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
     <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1 rkap-font-09">
       <i class="bx bx-calendar text-primary fs-4"></i>
-      <span>Pilih Periode RKAP:</span>
+      <span>{{ __('Pilih Periode RKAP:') }}</span>
     </label>
     <form action="{{ route('analytics-report') }}" method="GET" id="periodForm" class="m-0">
       <select name="period_id" id="periodSelect"
@@ -28,7 +28,7 @@
         onchange="this.form.submit()">
         @if ($activePeriod && !$finalizedPeriods->contains('id', $activePeriod->id))
         <option value="" disabled selected>
-          -- Pilih Periode Finalized (Saat ini: {{ $activePeriod->title }}) --
+          -- {{ __('Pilih Periode Finalized') }} ({{ __('Saat ini') }}: {{ $activePeriod->title }}) --
         </option>
         @endif
         @foreach ($finalizedPeriods as $p)
@@ -47,8 +47,8 @@
 <div class="card text-center py-5">
   <div class="card-body">
     <i class="bx bx-lock-alt bx-lg text-warning mb-3"></i>
-    <h5>Akses Dibatasi</h5>
-    <p class="text-muted mb-0">Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Laba Rugi.</p>
+    <h5>{{ __('Akses Dibatasi') }}</h5>
+    <p class="text-muted mb-0">{{ __('Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Laba Rugi.') }}</p>
   </div>
 </div>
 @else
@@ -57,8 +57,8 @@
   <div class="col-12">
     <div class="card">
       <div class="card-header border-bottom py-3">
-        <h5 class="card-title mb-0">Ringkasan Laba Rugi (P&L Summary)</h5>
-        <small class="text-muted">Ikhtisar Pendapatan & Beban Periode ini</small>
+        <h5 class="card-title mb-0">{{ __('Ringkasan Laba Rugi (P&L Summary)') }}</h5>
+        <small class="text-muted">{{ __('Ikhtisar Pendapatan & Beban Periode ini') }}</small>
       </div>
       <div class="card-body pt-3">
         <!-- KPI Cards Row -->
@@ -71,7 +71,7 @@
                   <div class="avatar avatar-sm me-2">
                     <span class="avatar-initial rounded bg-success"><i class="bx bx-trending-up fs-4"></i></span>
                   </div>
-                  <span class="fw-semibold text-success small">Revenue</span>
+                  <span class="fw-semibold text-success small">{{ __('Revenue') }}</span>
                 </div>
                 <h5 class="card-title mb-1 fw-bold text-success">Rp {{ number_format($plSummary['revenue']['budget'] ?? 0, 0, ',', '.') }}</h5>
                 <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['revenue']['realization'] ?? 0, 0, ',', '.') }}</small>
@@ -86,7 +86,7 @@
                   <div class="avatar avatar-sm me-2">
                     <span class="avatar-initial rounded bg-primary"><i class="bx bx-calculator fs-4"></i></span>
                   </div>
-                  <span class="fw-semibold text-primary small">Gross Profit</span>
+                  <span class="fw-semibold text-primary small">{{ __('Gross Profit') }}</span>
                 </div>
                 <h5 class="card-title mb-1 fw-bold text-primary">Rp {{ number_format($plSummary['gross_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
                 <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['gross_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
@@ -101,7 +101,7 @@
                   <div class="avatar avatar-sm me-2">
                     <span class="avatar-initial rounded rkap-bg-primary-solid"><i class="bx bx-bar-chart-alt-2 fs-4"></i></span>
                   </div>
-                  <span class="fw-semibold small rkap-text-primary-solid">EBITDA</span>
+                  <span class="fw-semibold small rkap-text-primary-solid">{{ __('EBITDA') }}</span>
                 </div>
                 <h5 class="card-title mb-1 fw-bold rkap-text-primary-solid">Rp {{ number_format($plSummary['ebitda']['budget'] ?? 0, 0, ',', '.') }}</h5>
                 <small class="text-muted d-block">Real: Rp {{ number_format($plSummary['ebitda']['realization'] ?? 0, 0, ',', '.') }}</small>
@@ -116,7 +116,7 @@
                   <div class="avatar avatar-sm me-2">
                     <span class="avatar-initial rounded bg-white text-success"><i class="bx bx-money fs-4"></i></span>
                   </div>
-                  <span class="fw-semibold text-white small">Net Profit</span>
+                  <span class="fw-semibold text-white small">{{ __('Net Profit') }}</span>
                 </div>
                 <h5 class="card-title mb-1 fw-bold text-white">Rp {{ number_format($plSummary['net_profit']['budget'] ?? 0, 0, ',', '.') }}</h5>
                 <small class="text-white rkap-text-white-80 d-block">Real: Rp {{ number_format($plSummary['net_profit']['realization'] ?? 0, 0, ',', '.') }}</small>
@@ -139,8 +139,8 @@
                     <i class="bx bx-trending-up fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Pendapatan</h6>
-                    <small class="text-muted">Revenue</small>
+                    <h6 class="mb-0 fw-semibold">{{ __('Pendapatan') }}</h6>
+                    <small class="text-muted">{{ __('Revenue') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -156,8 +156,8 @@
                     <i class="bx bx-receipt fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Beban Langsung</h6>
-                    <small class="text-muted">Direct Cost</small>
+                    <h6 class="mb-0 fw-semibold">{{ __('Beban Langsung') }}</h6>
+                    <small class="text-muted">{{ __('Direct Cost') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -173,8 +173,8 @@
                     <i class="bx bx-calculator fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold text-primary">Laba Kotor</h6>
-                    <small class="text-muted">Gross Profit</small>
+                    <h6 class="mb-0 fw-bold text-primary">{{ __('Laba Kotor') }}</h6>
+                    <small class="text-muted">{{ __('Gross Profit') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -190,8 +190,8 @@
                     <i class="bx bx-credit-card fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Beban Tidak Langsung</h6>
-                    <small class="text-muted">Indirect Cost</small>
+                    <h6 class="mb-0 fw-semibold">{{ __('Beban Tidak Langsung') }}</h6>
+                    <small class="text-muted">{{ __('Indirect Cost') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -212,8 +212,8 @@
                     <i class="bx bx-line-chart fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold text-info rkap-text-info-solid">Laba (Rugi) Usaha</h6>
-                    <small class="text-muted">Operating Profit</small>
+                    <h6 class="mb-0 fw-bold text-info rkap-text-info-solid">{{ __('Laba (Rugi) Usaha') }}</h6>
+                    <small class="text-muted">{{ __('Operating Profit') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -229,8 +229,8 @@
                     <i class="bx bx-plus-circle fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Pendapatan Lainnya</h6>
-                    <small class="text-muted">Other Income</small>
+                    <h6 class="mb-0 fw-semibold">{{ __('Pendapatan Lainnya') }}</h6>
+                    <small class="text-muted">{{ __('Other Income') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -246,8 +246,8 @@
                     <i class="bx bx-minus-circle fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-semibold">Beban Lainnya</h6>
-                    <small class="text-muted">Other Expense</small>
+                    <h6 class="mb-0 fw-semibold">{{ __('Beban Lainnya') }}</h6>
+                    <small class="text-muted">{{ __('Other Expense') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -263,8 +263,8 @@
                     <i class="bx bx-money fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold text-success">Laba Bersih</h6>
-                    <small class="text-success opacity-75">Net Profit</small>
+                    <h6 class="mb-0 fw-bold text-success">{{ __('Laba Bersih') }}</h6>
+                    <small class="text-success opacity-75">{{ __('Net Profit') }}</small>
                   </div>
                 </div>
                 <div class="text-end">
@@ -287,20 +287,19 @@
       <div
         class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-          <h5 class="card-title mb-0">Laporan Laba Rugi (Profit & Loss Summary)</h5>
-          <small class="text-muted">Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori
-            P&L</small>
+          <h5 class="card-title mb-0">{{ __('Laporan Laba Rugi (Profit & Loss Summary)') }}</h5>
+          <small class="text-muted">{{ __('Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori P&L') }}</small>
         </div>
       </div>
       <div class="table-responsive text-nowrap">
         <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
           <thead>
             <tr class="table-light">
-              <th>Kategori / Golongan</th>
-              <th class="text-end">Anggaran (Budget)</th>
-              <th class="text-end">Realisasi YTD</th>
-              <th class="text-end">Proyeksi (Outlook)</th>
-              <th class="text-end">Selisih (Variance)</th>
+              <th>{{ __('Kategori / Golongan') }}</th>
+              <th class="text-end">{{ __('Anggaran (Budget)') }}</th>
+              <th class="text-end">{{ __('Realisasi YTD') }}</th>
+              <th class="text-end">{{ __('Proyeksi (Outlook)') }}</th>
+              <th class="text-end">{{ __('Selisih (Variance)') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -363,7 +362,7 @@
             @endphp
             <tr class="fw-semibold bg-lighter">
               <td class="ps-3 text-secondary">
-                Subtotal {{ $group['label'] }}
+                {{ __('Subtotal') }} {{ $group['label'] }}
               </td>
               <td class="text-end font-monospace">Rp {{ number_format($subBudget, 0, ',', '.') }}</td>
               <td class="text-end font-monospace text-success">Rp {{ number_format($subReal, 0, ',', '.') }}
@@ -519,8 +518,8 @@
 <div class="card py-5 text-center">
   <div class="card-body">
     <i class="bx bx-error-circle bx-lg text-warning mb-3"></i>
-    <h5>Belum Ada Data RKAP Aktif</h5>
-    <p class="text-muted">Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.</p>
+    <h5>{{ __('Belum Ada Data RKAP Aktif') }}</h5>
+    <p class="text-muted">{{ __('Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.') }}</p>
   </div>
 </div>
 @endif
@@ -533,7 +532,7 @@
       <div class="modal-header d-flex align-items-center text-white rkap-bg-kcic-red">
         <h5 class="modal-title d-flex align-items-center text-white mb-4 rkap-text-white" id="coaGroupDetailModalLabel">
           <i class="bx bx-detail me-2 fs-4 text-white rkap-text-white"></i>
-          <span id="coaGroupDetailTitle" class="text-white rkap-text-white">Detail COA</span>
+          <span id="coaGroupDetailTitle" class="text-white rkap-text-white">{{ __('Detail COA') }}</span>
         </h5>
         <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal"
           aria-label="Tutup"></button>
@@ -542,31 +541,31 @@
       <div class="modal-body p-0">
         <div id="coaGroupDetailLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0">Memuat data...</p>
+          <p class="text-muted mt-2 mb-0">{{ __('Memuat data...') }}</p>
         </div>
         <div id="coaGroupDetailError" class="alert alert-warning m-3 d-none">
-          <i class="bx bx-error-circle me-1"></i> Gagal memuat data. Silakan coba lagi.
+          <i class="bx bx-error-circle me-1"></i> {{ __('Gagal memuat data. Silakan coba lagi.') }}
         </div>
         <div id="coaGroupDetailTableWrap" class="d-none">
           <table class="table table-hover table-sm table-bordered mb-0 align-middle rkap-font-075">
             <thead class="table-primary">
               <tr>
-                <th class="ps-3 rkap-min-w-220">COA</th>
-                <th class="rkap-min-w-220">Kegiatan</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Anggaran</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Realisasi YTD</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Proyeksi</th>
+                <th class="ps-3 rkap-min-w-220">{{ __('COA') }}</th>
+                <th class="rkap-min-w-220">{{ __('Kegiatan') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Anggaran') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Realisasi YTD') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Proyeksi') }}</th>
               </tr>
             </thead>
             <tbody id="coaGroupDetailTbody"></tbody>
             <tfoot id="coaGroupDetailTfoot" class="table-light fw-semibold"></tfoot>
           </table>
         </div>
-        <p id="coaGroupDetailEmpty" class="text-center text-muted py-4 d-none">Tidak ada data untuk ditampilkan.</p>
+        <p id="coaGroupDetailEmpty" class="text-center text-muted py-4 d-none">{{ __('Tidak ada data untuk ditampilkan.') }}</p>
       </div>
       <hr>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Tutup') }}</button>
       </div>
     </div>
   </div>
@@ -663,7 +662,7 @@
             detailTbody.innerHTML = tbodyHtml;
             detailTfoot.innerHTML = `
                     <tr class="bg-opacity-75">
-                        <td colspan="2" class="ps-3 fw-bold">TOTAL</td>
+                        <td colspan="2" class="ps-3 fw-bold">{{ __('TOTAL') }}</td>
                         <td class="text-end font-monospace fw-bold text-nowrap">${formatRp(totalBudget)}</td>
                         <td class="text-end font-monospace text-success fw-bold text-nowrap">${formatRp(totalReal)}</td>
                         <td class="text-end font-monospace text-warning fw-bold text-nowrap">${formatRp(totalProj)}</td>

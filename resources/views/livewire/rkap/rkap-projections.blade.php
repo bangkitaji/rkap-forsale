@@ -52,7 +52,7 @@
     <div class="alert alert-primary d-flex align-items-center gap-2 mb-4" role="alert">
         <span class="badge bg-primary rounded-pill"><i class="bx bx-info-circle text-white"></i></span>
         <div>
-            Halaman ini digunakan untuk menginput <strong>Proyeksi Realisasi Akhir Tahun</strong> dari masing-masing item anggaran pada periode berjalan (<strong>{{ $activePeriodTitle ?? '-' }}</strong>). Proyeksi ini membantu evaluasi pemenuhan budget dan realisasi.
+            Halaman ini digunakan untuk menginput <strong>{{ __('Proyeksi Realisasi Akhir Tahun') }}</strong> dari masing-masing item anggaran pada periode berjalan (<strong>{{ $activePeriodTitle ?? '-' }}</strong>). Proyeksi ini membantu evaluasi pemenuhan budget dan realisasi.
         </div>
     </div>
 
@@ -65,7 +65,7 @@
             <div class="row g-3">
                 {{-- Directorate Filter --}}
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Direktorat</label>
+                    <label class="form-label fw-semibold">{{ __('Direktorat') }}</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
@@ -91,7 +91,7 @@
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
                                 <input type="text"
                                     class="form-control"
-                                    placeholder="Cari direktorat..."
+                                    placeholder="{{ __('Cari direktorat...') }}"
                                     x-model="search"
                                     @keydown.escape.prevent.stop="open = false"
                                     @click.stop>
@@ -128,7 +128,7 @@
 
                 {{-- Department Filter --}}
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Departemen</label>
+                    <label class="form-label fw-semibold">{{ __('Departemen') }}</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
@@ -154,7 +154,7 @@
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
                                 <input type="text"
                                     class="form-control"
-                                    placeholder="Cari departemen..."
+                                    placeholder="{{ __('Cari departemen...') }}"
                                     x-model="search"
                                     @keydown.escape.prevent.stop="open = false"
                                     @click.stop>
@@ -217,7 +217,7 @@
                                 <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
                                 <input type="text"
                                     class="form-control"
-                                    placeholder="Cari biro..."
+                                    placeholder="{{ __('Cari biro...') }}"
                                     x-model="search"
                                     @keydown.escape.prevent.stop="open = false"
                                     @click.stop>
@@ -260,7 +260,7 @@
     <div class="card py-5 text-center text-muted">
         <div class="card-body">
             <i class="bx bx-calendar-exclamation bx-lg d-block mb-3 text-danger"></i>
-            <h5 class="fw-semibold text-danger">Periode RKAP Tahun Ini Belum Difinalisasi</h5>
+            <h5 class="fw-semibold text-danger">{{ __('Periode RKAP Tahun Ini Belum Difinalisasi') }}</h5>
             <p class="small mb-0">Proyeksi hanya dapat diinput pada periode RKAP tahun berjalan ({{ date('Y') }}) yang memiliki status <strong>Finalized</strong>.</p>
         </div>
     </div>
@@ -268,16 +268,16 @@
     <div class="card py-5 text-center text-muted">
         <div class="card-body">
             <i class="bx bx-pointer bx-lg d-block mb-3 text-secondary"></i>
-            <h5 class="fw-semibold">Silakan pilih Direktorat, Departemen, atau Biro terlebih dahulu</h5>
-            <p class="small mb-0">Pilih salah satu filter di atas untuk memuat item anggaran yang akan diproyeksikan.</p>
+            <h5 class="fw-semibold">{{ __('Silakan pilih Direktorat, Departemen, atau Biro terlebih dahulu') }}</h5>
+            <p class="small mb-0">{{ __('Pilih salah satu filter di atas untuk memuat item anggaran yang akan diproyeksikan.') }}</p>
         </div>
     </div>
     @elseif(!$submissions || $submissions->isEmpty())
     <div class="card py-5 text-center text-muted">
         <div class="card-body">
             <i class="bx bx-info-circle bx-lg d-block mb-3 text-warning"></i>
-            <h5 class="fw-semibold">Tidak ditemukan pengajuan RKAP yang disetujui</h5>
-            <p class="small mb-0">Tidak ada pengajuan RKAP dengan status <strong>Disetujui</strong> untuk filter terpilih pada periode <strong>{{ $activePeriodTitle ?? '-' }}</strong>.</p>
+            <h5 class="fw-semibold">{{ __('Tidak ditemukan pengajuan RKAP yang disetujui') }}</h5>
+            <p class="small mb-0">Tidak ada pengajuan RKAP dengan status <strong>{{ __('Disetujui') }}</strong> untuk filter terpilih pada periode <strong>{{ $activePeriodTitle ?? '-' }}</strong>.</p>
         </div>
     </div>
     @else
@@ -304,11 +304,11 @@
                     <table class="table table-sm table-bordered align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Akun Belanja / COA</th>
+                                <th>{{ __('Akun Belanja / COA') }}</th>
                                 <th>Detail Belanja (Remarks)</th>
-                                <th class="text-center text-nowrap">Volume & Satuan</th>
-                                <th class="text-end text-nowrap">Anggaran RKAP</th>
-                                <th class="text-end text-nowrap">Realisasi YTD</th>
+                                <th class="text-center text-nowrap">{{ __('Volume & Satuan') }}</th>
+                                <th class="text-end text-nowrap">{{ __('Anggaran RKAP') }}</th>
+                                <th class="text-end text-nowrap">{{ __('Realisasi YTD') }}</th>
                                 <th class="text-end text-nowrap">Proyeksi (Total)</th>
                             </tr>
                         </thead>
@@ -377,7 +377,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Input Proyeksi Bulanan</h5>
+                    <h5 class="modal-title">{{ __('Input Proyeksi Bulanan') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 @if($selectedBudgetItemId)
@@ -388,7 +388,7 @@
                     <div class="modal-body">
                         <div class="mb-3 p-2 bg-lighter rounded border d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="text-muted d-block small mb-1 fw-semibold">Detail Item Anggaran</span>
+                                <span class="text-muted d-block small mb-1 fw-semibold">{{ __('Detail Item Anggaran') }}</span>
                                 <span class="fw-bold text-dark fs-6">{{ $selectedItem->account_code }} — {{ $selectedItem->description }}</span>
                                 @if($selectedItem->remarks)
                                 <div class="text-muted small mt-1">Remarks: {{ $selectedItem->remarks }}</div>
@@ -397,7 +397,7 @@
                             <div class="text-end border-start ps-3 rkap-min-w-220">
                                 <span class="text-muted d-block small mb-1 fw-semibold">Rencana Anggaran (Total)</span>
                                 <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
-                                <span class="text-muted d-block small mt-2 mb-1 fw-semibold">Akumulasi Proyeksi</span>
+                                <span class="text-muted d-block small mt-2 mb-1 fw-semibold">{{ __('Akumulasi Proyeksi') }}</span>
                                 @php
                                 $totalEditingProj = 0.00;
                                 if ($inputMode === 'yearly') {
@@ -436,7 +436,7 @@
 
                         {{-- Input Method Toggle Selector --}}
                         <div class="mb-3">
-                            <label class="form-label fw-semibold d-block">Metode Input Proyeksi</label>
+                            <label class="form-label fw-semibold d-block">{{ __('Metode Input Proyeksi') }}</label>
                             <!-- <div class="btn-group w-100" role="group">
                                         <input type="radio" class="btn-check" name="inputMode" id="inputModeMonthly" value="monthly" wire:model.live="inputMode" @disabled($modeLocked)>
                                         <label class="btn btn-outline-primary" for="inputModeMonthly">
@@ -458,7 +458,7 @@
 
                         @if($inputMode === 'yearly')
                         <div class="mb-3 p-3 bg-light rounded border">
-                            <label class="form-label fw-bold text-dark fs-6">Proyeksi Tahunan</label>
+                            <label class="form-label fw-bold text-dark fs-6">{{ __('Proyeksi Tahunan') }}</label>
                             @php
                             $period = $selectedItem->workPlan->submission->period;
                             $hasClosedMonths = false;
@@ -510,7 +510,7 @@
                                             @input="onInput"
                                             @blur="onBlur"
                                             @disabled($hasClosedMonths)
-                                            placeholder="Masukkan total proyeksi pertahun...">
+                                            placeholder="{{ __('Masukkan total proyeksi pertahun...') }}">
                                     </div>
                                 </div>
                                 @error('yearlyProjection')
@@ -532,10 +532,10 @@
                             <table class="table table-sm table-bordered align-middle mb-0">
                                 <thead class="table-light sticky-top rkap-z-10">
                                     <tr>
-                                        <th class="rkap-w-20p">Bulan</th>
-                                        <th class="text-end rkap-w-25p">Rencana Anggaran</th>
-                                        <th class="text-end rkap-w-25p">Realisasi</th>
-                                        <th class="text-end rkap-w-30p">Proyeksi</th>
+                                        <th class="rkap-w-20p">{{ __('Bulan') }}</th>
+                                        <th class="text-end rkap-w-25p">{{ __('Rencana Anggaran') }}</th>
+                                        <th class="text-end rkap-w-25p">{{ __('Realisasi') }}</th>
+                                        <th class="text-end rkap-w-30p">{{ __('Proyeksi') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -638,12 +638,12 @@
                         @endif
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Batal') }}</button>
                         <button type="submit"
                             class="btn btn-primary d-flex align-items-center gap-1"
                             @disabled($isOverBudget)
                             @if($isOverBudget) title="Total proyeksi melebihi total anggaran RKAP" @endif>
-                            <i class="bx bx-save"></i> Simpan Proyeksi
+                            <i class="bx bx-save"></i> {{ __('Simpan Proyeksi') }}
                         </button>
                     </div>
                 </form>

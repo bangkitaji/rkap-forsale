@@ -39,7 +39,7 @@ class Login extends Component
         }
 
         RateLimiter::hit($throttleKey, 60);
-        $this->addError('email', 'The provided credentials do not match our records.');
+        $this->addError('email', __('The provided credentials do not match our records.'));
     }
 
     public function render()

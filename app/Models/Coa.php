@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class Coa extends Model
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'title', 'description', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'difference_group_id', 'cf_type'];
+    protected $fillable = ['code', 'title', 'title_en', 'description', 'description_en', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'difference_group_id', 'cf_type'];
 
     public function coaGroup(): BelongsTo
     {

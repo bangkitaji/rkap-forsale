@@ -24,7 +24,7 @@
             </select>
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text"><i class="bx bx-search"></i></span>
-                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search users...">
+                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search users...') }}">
             </div>
             <button wire:click="create()" class="btn btn-primary btn-sm">
                 <i class="bx bx-plus me-1"></i> Add User
@@ -53,10 +53,10 @@
                         <span class="badge bg-label-info">Biro</span>
                         {{ $user->bureau->name }}
                         @elseif($user->department)
-                        <span class="badge bg-label-warning">Departemen</span>
+                        <span class="badge bg-label-warning">{{ __('Departemen') }}</span>
                         {{ $user->department->name }}
                         @elseif($user->directorate)
-                        <span class="badge bg-label-success">Direktorat</span>
+                        <span class="badge bg-label-success">{{ __('Direktorat') }}</span>
                         {{ $user->directorate->name }}
                         @else
                         <span class="text-muted">-</span>
@@ -124,8 +124,8 @@
                             <select class="form-select mb-2" wire:model.live="organization_type">
                                 <option value="">-- Pilih Tipe Organisasi --</option>
                                 <option value="bureau">Biro</option>
-                                <option value="department">Departemen</option>
-                                <option value="directorate">Direktorat</option>
+                                <option value="department">{{ __('Departemen') }}</option>
+                                <option value="directorate">{{ __('Direktorat') }}</option>
                             </select>
 
                             @if($organization_type === 'bureau')
@@ -156,8 +156,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="position" class="form-label">Jabatan / Posisi</label>
-                            <input type="text" id="position" class="form-control @error('position') is-invalid @enderror" wire:model="position" placeholder="contoh: Manager, Staff">
+                            <label for="position" class="form-label">{{ __('Jabatan / Posisi') }}</label>
+                            <input type="text" id="position" class="form-control @error('position') is-invalid @enderror" wire:model="position" placeholder="{{ __('contoh: Manager, Staff') }}">
                             @error('position') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 

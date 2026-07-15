@@ -1,8 +1,8 @@
 <div class="container-xxl flex-grow-1 container-p-y">
   <div class="d-flex justify-content-between align-items-center py-2 mb-4">
-    <h4 class="mb-0"><span class="text-muted fw-light">RKAP / <a href="{{ route('rkap-projections') }}" class="text-muted">Proyeksi</a> /</span> Upload Massal Proyeksi</h4>
+    <h4 class="mb-0"><span class="text-muted fw-light">RKAP / <a href="{{ route('rkap-projections') }}" class="text-muted">{{ __('Proyeksi') }}</a> /</span> Upload Massal Proyeksi</h4>
     <a href="{{ route('rkap-projections') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
-      <i class="bx bx-arrow-back"></i> Kembali ke Proyeksi
+      <i class="bx bx-arrow-back"></i> {{ __('Kembali') }} ke Proyeksi
     </a>
   </div>
 
@@ -16,7 +16,7 @@
         <div class="card-body">
           <p class="text-muted mb-4">
             Upload file Excel (.xlsx, .xls) atau CSV untuk melakukan pembaruan proyeksi anggaran untuk seluruh bulan (Januari s.d. Desember) secara massal.
-            Hanya <strong>Administrator</strong> dan <strong>Verifikator</strong> yang memiliki akses untuk melakukan upload ini.
+            Hanya <strong>Administrator</strong> dan <strong>{{ __('Verifikator') }}</strong> yang memiliki akses untuk melakukan upload ini.
           </p>
 
           <div class="row">
@@ -129,9 +129,9 @@
                   <table class="table table-sm table-bordered mb-0 bg-white rkap-font-078">
                     <thead class="table-dark sticky-top">
                       <tr>
-                        <th>Kolom</th>
-                        <th class="text-center">Wajib</th>
-                        <th>Keterangan</th>
+                        <th>{{ __('Kolom') }}</th>
+                        <th class="text-center">{{ __('Wajib') }}</th>
+                        <th>{{ __('Keterangan') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -153,7 +153,7 @@
                       </tr>
                       <tr>
                         <td><code>bureaus_name</code> s.d. <code>amount_of_rkap</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Kolom referensi visual. Otomatis diabaikan oleh sistem saat import data dijalankan.</td>
                       </tr>
                     </tbody>

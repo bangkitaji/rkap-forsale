@@ -54,7 +54,7 @@ class PermissionsTab extends Component
             $this->name = $permission->name;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Permission not found.');
+            session()->flash('error', __('Permission not found.'));
         }
     }
 
@@ -77,7 +77,7 @@ class PermissionsTab extends Component
 
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the permission.');
+            session()->flash('error', __('An error occurred while saving the permission.'));
         }
     }
 
@@ -89,9 +89,9 @@ class PermissionsTab extends Component
             // Clear Spatie permission cache
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-            session()->flash('message', 'Permission deleted successfully.');
+            session()->flash('message', __('Permission deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete permission.');
+            session()->flash('error', __('Unable to delete permission.'));
         }
     }
 

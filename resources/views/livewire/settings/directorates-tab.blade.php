@@ -13,7 +13,7 @@
     @endif
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0">Direktorat</h5>
+        <h5 class="mb-0">{{ __('Direktorat') }}</h5>
         <div class="d-flex gap-2">
             <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                 <option value="10">10</option>
@@ -23,10 +23,10 @@
             </select>
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text"><i class="bx bx-search"></i></span>
-                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search directorates...">
+                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search directorates...') }}">
             </div>
             <button wire:click="create()" class="btn btn-primary btn-sm">
-                <i class="bx bx-plus me-1"></i> Tambah Direktorat
+                <i class="bx bx-plus me-1"></i> {{ __('Tambah Direktorat') }}
             </button>
         </div>
     </div>
@@ -36,10 +36,10 @@
             <thead>
                 <tr>
                     <th>Kode</th>
-                    <th>Nama Direktorat</th>
-                    <th>Departemen</th>
+                    <th>{{ __('Nama Direktorat') }}</th>
+                    <th>{{ __('Departemen') }}</th>
                     <th>Users</th>
-                    <th>Status</th>
+                    <th>{{ __('Status') }}</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -52,9 +52,9 @@
                     <td>{{ $directorate->users_count }}</td>
                     <td>
                         @if($directorate->is_active)
-                        <span class="badge bg-label-success">Aktif</span>
+                        <span class="badge bg-label-success">{{ __('Aktif') }}</span>
                         @else
-                        <span class="badge bg-label-danger">Non-Aktif</span>
+                        <span class="badge bg-label-danger">{{ __('Non-Aktif') }}</span>
                         @endif
                     </td>
                     <td>
@@ -93,7 +93,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bx bx-building me-2"></i>
-                        {{ $isEditMode ? 'Edit Direktorat' : 'Tambah Direktorat' }}
+                        {{ $isEditMode ? __('Edit Direktorat') : __('Tambah Direktorat') }}
                     </h5>
                     <button type="button" class="btn-close" wire:click="closeModal()"></button>
                 </div>
@@ -109,26 +109,26 @@
                             <div class="col-md-8 mb-3">
                                 <label for="dir-name" class="form-label">Nama Direktorat <span class="text-danger">*</span></label>
                                 <input type="text" id="dir-name" class="form-control @error('name') is-invalid @enderror"
-                                    wire:model="name" placeholder="Nama direktorat" autofocus>
+                                    wire:model="name" placeholder="{{ __('Nama direktorat') }}" autofocus>
                                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="dir-desc" class="form-label">Deskripsi</label>
+                            <label for="dir-desc" class="form-label">{{ __('Deskripsi') }}</label>
                             <textarea id="dir-desc" class="form-control @error('description') is-invalid @enderror"
-                                wire:model="description" rows="3" placeholder="Deskripsi singkat direktorat..."></textarea>
+                                wire:model="description" rows="3" placeholder="{{ __('Deskripsi singkat direktorat...') }}"></textarea>
                             @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="dir-active" wire:model="is_active">
-                            <label class="form-check-label" for="dir-active">Aktif</label>
+                            <label class="form-check-label" for="dir-active">{{ __('Aktif') }}</label>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">Batal</button>
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">{{ __('Batal') }}</button>
                         <button type="submit" class="btn btn-primary">
-                            <span wire:loading.remove><i class="bx bx-save me-1"></i> Simpan</span>
-                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...</span>
+                            <span wire:loading.remove><i class="bx bx-save me-1"></i> {{ __('Simpan') }}</span>
+                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> {{ __('Menyimpan...') }}</span>
                         </button>
                     </div>
                 </form>

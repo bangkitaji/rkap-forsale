@@ -13,7 +13,7 @@ class RkapPeriodClosingManagement extends Component
     public function mount(): void
     {
         if (! auth()->user()?->can('rkap.closing.manage')) {
-            abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
+            abort(403, __('Anda tidak memiliki akses untuk halaman ini.'));
         }
 
         $this->closingDay = (int) Setting::get('rkap_closing_day', 10);
@@ -31,7 +31,7 @@ class RkapPeriodClosingManagement extends Component
 
         Setting::set('rkap_closing_day', $this->closingDay);
 
-        session()->flash('message', 'Setting closing periode berhasil disimpan.');
+        session()->flash('message', __('Setting closing periode berhasil disimpan.'));
     }
 
     private function getMonthName(int $month): string

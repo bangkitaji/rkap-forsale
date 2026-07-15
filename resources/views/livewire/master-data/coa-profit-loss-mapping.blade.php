@@ -40,7 +40,7 @@
                         </div>
                         <h4 class="ms-1 mb-0">{{ $stats['total'] }}</h4>
                     </div>
-                    <p class="mb-0 text-muted small">Total Akun COA</p>
+                    <p class="mb-0 text-muted small">{{ __('Total Akun COA') }}</p>
                 </div>
             </div>
         </div>
@@ -95,14 +95,14 @@
             <!-- Filters & Actions Header -->
             <div class="row g-3 mb-4 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small text-muted">Cari COA</label>
+                    <label class="form-label small text-muted">{{ __('Cari COA') }}</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Cari kode atau judul COA...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Cari kode atau judul COA...') }}">
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small text-muted">Filter COA Group</label>
+                    <label class="form-label small text-muted">{{ __('Filter COA Group') }}</label>
                     <select class="form-select form-select-sm" wire:model.live="filterCoaGroup">
                         <option value="">Semua Group</option>
                         @foreach($coaGroups as $g)
@@ -112,12 +112,12 @@
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <div class="w-100">
-                        <label class="form-label small text-muted">Filter Kategori Profit & Loss</label>
+                        <label class="form-label small text-muted">{{ __('Filter Kategori Profit & Loss') }}</label>
                         <select class="form-select form-select-sm"
                             wire:key="filter-pl-group"
                             wire:model.live="filterProfitLossGroup">
                             <option value="">Semua Status / Kategori</option>
-                            <option value="unmapped">Belum Dipetakan</option>
+                            <option value="unmapped">{{ __('Belum Dipetakan') }}</option>
                             <option value="mapped">Sudah Dipetakan (Semua)</option>
                             @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                             <optgroup label="{{ $groupName }}">
@@ -138,7 +138,7 @@
                 </div>
                 <div class="col-md-3 text-end d-flex justify-content-end gap-2">
                     <div class="d-flex align-items-center gap-1">
-                        <span class="text-muted small me-1">Baris:</span>
+                        <span class="text-muted small me-1">{{ __('Baris:') }}</span>
                         <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                             <option value="10">10</option>
                             <option value="25">25</option>
@@ -170,7 +170,7 @@
                         </optgroup>
                         @endforeach
                     </select>
-                    <button class="btn btn-sm btn-outline-secondary" wire:click="$set('selectedCoas', []); $set('selectAll', false);">Batal</button>
+                    <button class="btn btn-sm btn-outline-secondary" wire:click="$set('selectedCoas', []); $set('selectAll', false);">{{ __('Batal') }}</button>
                 </div>
             </div>
             @endif
@@ -199,9 +199,9 @@
                                 <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th class="rkap-w-15p">COA Group</th>
-                            <th class="rkap-w-20p">Kategori P&L Saat Ini</th>
-                            <th class="rkap-w-20p">Ubah Pemetaan Profit & Loss</th>
+                            <th class="rkap-w-15p">{{ __('COA Group') }}</th>
+                            <th class="rkap-w-20p">{{ __('Kategori P&L Saat Ini') }}</th>
+                            <th class="rkap-w-20p">{{ __('Ubah Pemetaan Profit & Loss') }}</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -216,7 +216,7 @@
                                 @if($coa->coaGroup)
                                 <span class="badge bg-label-info fw-semibold">{{ $coa->coaGroup->name }}</span>
                                 @else
-                                <span class="badge bg-label-secondary text-muted">Belum Dipetakan</span>
+                                <span class="badge bg-label-secondary text-muted">{{ __('Belum Dipetakan') }}</span>
                                 @endif
                             </td>
                             <td>
@@ -225,7 +225,7 @@
                                     {{ $coa->coaCategory->label }}
                                 </span>
                                 @else
-                                <span class="badge bg-label-secondary text-muted rkap-color-secondary-muted">Belum Dipetakan</span>
+                                <span class="badge bg-label-secondary text-muted rkap-color-secondary-muted">{{ __('Belum Dipetakan') }}</span>
                                 @endif
                             </td>
                             <td>

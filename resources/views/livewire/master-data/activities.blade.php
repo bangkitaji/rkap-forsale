@@ -30,7 +30,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search activities...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search activities...') }}">
                     </div>
                     {{-- Filter: Unmapped --}}
                     <div class="form-check form-switch mb-0 d-flex align-items-center gap-1">
@@ -55,7 +55,7 @@
             @if($onlyUnmapped)
             <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center gap-2 small">
                 <i class="bx bx-filter-alt flex-shrink-0"></i>
-                Menampilkan activity yang <strong class="ms-1">belum memiliki mapping COA</strong>.
+                Menampilkan activity yang <strong class="ms-1">{{ __('belum memiliki mapping COA') }}</strong>.
                 <button wire:click="$set('onlyUnmapped', false)" class="btn btn-xs btn-link p-0 ms-2 text-warning">
                     Tampilkan semua
                 </button>
@@ -82,7 +82,7 @@
                                 <i class="bx bx-sort ms-1 text-muted opacity-50"></i>
                                 @endif
                             </th>
-                            <th>Mapped COAs</th>
+                            <th>{{ __('Mapped COAs') }}</th>
                             <th>Description</th>
                             @can('masterdata.activity.manage')
                             <th>Actions</th>
@@ -139,7 +139,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ auth()->user()?->can('masterdata.activity.manage') ? 5 : 4 }}" class="text-center">No activities found.</td>
+                            <td colspan="{{ auth()->user()?->can('masterdata.activity.manage') ? 5 : 4 }}" class="text-center">{{ __('No activities found.') }}</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -186,7 +186,7 @@
                                     <input type="text"
                                         id="work_plan_id_search"
                                         class="form-control @error('work_plan_id') is-invalid @enderror"
-                                        placeholder="Cari program kerja..."
+                                        placeholder="{{ __('Cari program kerja...') }}"
                                         x-model="search"
                                         @focus="open = true"
                                         @input="open = true"
@@ -195,7 +195,7 @@
                                     <button type="button" class="btn btn-outline-secondary"
                                         wire:click="$set('work_plan_id', null)"
                                         @click="search = ''; currentLabel = ''; open = false"
-                                        title="Hapus pilihan">
+                                        title="{{ __('Hapus pilihan') }}">
                                         <i class="bx bx-x"></i>
                                     </button>
                                     @endif
@@ -231,7 +231,7 @@
                                         <span class="ms-1 text-muted">{{ $wp->title }}</span>
                                     </div>
                                     @empty
-                                    <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                                    <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data program kerja.') }}</div>
                                     @endforelse
                                     <div class="px-3 py-2 text-muted small border-top">
                                         <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring program kerja.
@@ -316,7 +316,7 @@
                             </span>
                             <input type="text" class="form-control border-start-0 ps-0"
                                 wire:model.live.debounce.200ms="coaSearch"
-                                placeholder="Cari COA (kode / judul)..."
+                                placeholder="{{ __('Cari COA (kode / judul)...') }}"
                                 autocomplete="off">
                             @if(!empty($coaSearch))
                             <button class="btn btn-outline-secondary border" wire:click="$set('coaSearch','')" type="button">
@@ -412,13 +412,13 @@
 
                 <div class="modal-footer d-flex justify-content-between">
                     <span class="text-muted small" x-show="isDirty">
-                        <i class="bx bx-error-circle text-warning me-1"></i>Ada perubahan yang belum disimpan.
+                        <i class="bx bx-error-circle text-warning me-1"></i>{{ __('Ada perubahan yang belum disimpan.') }}
                     </span>
                     <div class="ms-auto d-flex gap-2">
-                        <button type="button" class="btn btn-label-secondary" wire:click="closeCoaMapping()">Batal</button>
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeCoaMapping()">{{ __('Batal') }}</button>
                         <button type="button" class="btn btn-primary" wire:click="saveCoaMapping" @click="isDirty = false">
                             <span wire:loading.remove wire:target="saveCoaMapping">
-                                <i class="bx bx-save me-1"></i>Simpan Mapping
+                                <i class="bx bx-save me-1"></i>{{ __('Simpan Mapping') }}
                             </span>
                             <span wire:loading wire:target="saveCoaMapping">
                                 <span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...
@@ -437,15 +437,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Import Activities from Excel</h5>
+                    <h5 class="modal-title">{{ __('Import Activities from Excel') }}</h5>
                     <button type="button" class="btn-close" wire:click="closeUploadModal()"></button>
                 </div>
                 <form wire:submit.prevent="importExcel">
                     <div class="modal-body">
-                        <p class="mb-3">Upload an Excel file to import activities. <a href="{{ route('download-activity-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
+                        <p class="mb-3">Upload an Excel file to import activities. <a href="{{ route('download-activity-template') }}" class="btn btn-sm btn-link p-0">{{ __('Download template') }}</a></p>
 
                         <div class="mb-3">
-                            <label for="uploadedFile" class="form-label">Excel File</label>
+                            <label for="uploadedFile" class="form-label">{{ __('Excel File') }}</label>
                             <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
                             @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>

@@ -32,7 +32,7 @@ class RkapProjectionUpload extends Component
     {
         if (! auth()->user()?->can('rkap.projection.input') ||
             (! auth()->user()->hasRole('admin') && ! auth()->user()->hasRole('verifikator'))) {
-            abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
+            abort(403, __('Anda tidak memiliki akses untuk halaman ini.'));
         }
     }
 

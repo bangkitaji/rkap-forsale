@@ -40,6 +40,32 @@ use Illuminate\Support\Facades\Route;
             <a class="github-button" href="{{config('variables.repository')}}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star themeselection/sneat-html-laravel-admin-template-free on GitHub">Star</a>
         </li> -->
 
+        <!-- Language Dropdown -->
+        <li class="nav-item dropdown me-3">
+            <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center" href="javascript:void(0);" data-bs-toggle="dropdown">
+                @if(app()->getLocale() == 'en')
+                    <span class="fs-4 me-1">🇬🇧</span><span class="d-none d-md-inline-block text-body">English</span>
+                @else
+                    <span class="fs-4 me-1">🇮🇩</span><span class="d-none d-md-inline-block text-body">Bahasa Indonesia</span>
+                @endif
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li>
+                    <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'id' ? 'active' : '' }}" href="{{ route('lang.switch', 'id') }}">
+                        <span class="fs-4 me-2">🇮🇩</span>
+                        <span>Bahasa Indonesia</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'en' ? 'active' : '' }}" href="{{ route('lang.switch', 'en') }}">
+                        <span class="fs-4 me-2">🇬🇧</span>
+                        <span>English</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <!--/ Language Dropdown -->
+
         <!-- User -->
         <li class="nav-item navbar-dropdown dropdown-user dropdown">
             <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">

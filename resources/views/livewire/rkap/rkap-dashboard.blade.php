@@ -17,7 +17,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Total Pengajuan</span>
+                            <span>{{ __('Total Pengajuan') }}</span>
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 me-2">{{ $stats['total'] }}</h4>
                             </div>
@@ -35,7 +35,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Menunggu Review</span>
+                            <span>{{ __('Menunggu Review') }}</span>
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 me-2">{{ $stats['pending'] }}</h4>
                             </div>
@@ -272,10 +272,10 @@
                             <thead>
                                 <tr>
                                     <th>Kode</th>
-                                    <th>Nama Departemen</th>
+                                    <th>{{ __('Nama Departemen') }}</th>
                                     <th>Presentasi Pengajuan</th>
                                     <th>Status Pengajuan</th>
-                                    <th class="text-end">Total Anggaran</th>
+                                    <th class="text-end">{{ __('Total Anggaran') }}</th>
                                     <th class="text-start">Aksi</th>
                                 </tr>
                             </thead>
@@ -342,10 +342,10 @@
                             <thead>
                                 <tr>
                                     <th>Biro / Departemen</th>
-                                    <th class="text-center">Versi</th>
+                                    <th class="text-center">{{ __('Versi') }}</th>
                                     <th>Diajukan Oleh</th>
-                                    <th class="text-end">Total Anggaran</th>
-                                    <th>Status</th>
+                                    <th class="text-end">{{ __('Total Anggaran') }}</th>
+                                    <th>{{ __('Status') }}</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -386,10 +386,10 @@
                             <thead>
                                 <tr>
                                     <th>Biro / Departemen</th>
-                                    <th class="text-center">Versi</th>
+                                    <th class="text-center">{{ __('Versi') }}</th>
                                     <th>Diajukan Oleh</th>
-                                    <th class="text-end">Total Anggaran</th>
-                                    <th>Status</th>
+                                    <th class="text-end">{{ __('Total Anggaran') }}</th>
+                                    <th>{{ __('Status') }}</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -430,10 +430,10 @@
                             <thead>
                                 <tr>
                                     <th>Biro / Departemen</th>
-                                    <th class="text-center">Versi</th>
+                                    <th class="text-center">{{ __('Versi') }}</th>
                                     <th>Diajukan Oleh</th>
-                                    <th class="text-end">Total Anggaran</th>
-                                    <th>Status</th>
+                                    <th class="text-end">{{ __('Total Anggaran') }}</th>
+                                    <th>{{ __('Status') }}</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -479,7 +479,7 @@
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>Direktorat</th>
+                                <th>{{ __('Direktorat') }}</th>
                                 <th class="text-end">Total Anggaran (Rp)</th>
                                 <th>Proporsi</th>
                             </tr>

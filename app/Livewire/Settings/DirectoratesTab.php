@@ -77,16 +77,16 @@ class DirectoratesTab extends Component
     {
         $directorate = Directorate::findOrFail($id);
         $directorate->update(['is_active' => !$directorate->is_active]);
-        session()->flash('message', 'Status direktorat diperbarui.');
+        session()->flash('message', __('Status direktorat diperbarui.'));
     }
 
     public function delete(int $id): void
     {
         try {
             Directorate::findOrFail($id)->delete();
-            session()->flash('message', 'Direktorat berhasil dihapus.');
+            session()->flash('message', __('Direktorat berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus direktorat. Pastikan tidak ada data terkait.');
+            session()->flash('error', __('Gagal menghapus direktorat. Pastikan tidak ada data terkait.'));
         }
     }
 

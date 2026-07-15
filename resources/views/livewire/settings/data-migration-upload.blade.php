@@ -43,7 +43,7 @@
 
           @if (!empty($errorsList))
           <div class="alert alert-danger">
-            <h6 class="alert-heading mb-2">Validasi gagal</h6>
+            <h6 class="alert-heading mb-2">{{ __('Validasi gagal') }}</h6>
             <ul class="mb-0 ps-3">
               @foreach ($errorsList as $err)
               <li>{{ $err }}</li>
@@ -54,7 +54,7 @@
 
           @if ($imported)
           <div class="alert alert-success">
-            <h6 class="alert-heading mb-2">Import berhasil</h6>
+            <h6 class="alert-heading mb-2">{{ __('Import berhasil') }}</h6>
             <ul class="mb-0 ps-3">
               <li>Submissions: {{ $importSummary['submissions'] ?? 0 }}</li>
               <li>Work Plans: {{ $importSummary['work_plans'] ?? 0 }}</li>
@@ -66,7 +66,7 @@
           @endif
 
           <div class="border rounded p-3 bg-lighter">
-            <p class="mb-2 fw-semibold">Catatan format kolom minimum:</p>
+            <p class="mb-2 fw-semibold">{{ __('Catatan format kolom minimum:') }}</p>
             <code>submission_key, title, bureau_code, created_by, work_plan_key, work_plan_code, budget_item_key, coa_code, bi_quantity, unit_price, m1..m12, co1..co12</code>
             <p class="text-muted mt-2 mb-0"><small>Kolom opsional: status, current_version, notes, activity_code, wp_description, output_target, wp_unit, wp_quantity, sort_order, bi_unit, remarks</small></p>
           </div>

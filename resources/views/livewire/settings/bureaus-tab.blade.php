@@ -23,10 +23,10 @@
             </select>
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text"><i class="bx bx-search"></i></span>
-                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search bureaus...">
+                <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search bureaus...') }}">
             </div>
             <button wire:click="create()" class="btn btn-primary btn-sm">
-                <i class="bx bx-plus me-1"></i> Tambah Biro
+                <i class="bx bx-plus me-1"></i> {{ __('Tambah Biro') }}
             </button>
         </div>
     </div>
@@ -36,11 +36,11 @@
             <thead>
                 <tr>
                     <th>Kode</th>
-                    <th>Nama Biro</th>
-                    <th>Departemen</th>
-                    <th>Direktorat</th>
+                    <th>{{ __('Nama Biro') }}</th>
+                    <th>{{ __('Departemen') }}</th>
+                    <th>{{ __('Direktorat') }}</th>
                     <th>Users</th>
-                    <th>Status</th>
+                    <th>{{ __('Status') }}</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -54,9 +54,9 @@
                     <td>{{ $bureau->users_count }}</td>
                     <td>
                         @if($bureau->is_active)
-                        <span class="badge bg-label-success">Aktif</span>
+                        <span class="badge bg-label-success">{{ __('Aktif') }}</span>
                         @else
-                        <span class="badge bg-label-danger">Non-Aktif</span>
+                        <span class="badge bg-label-danger">{{ __('Non-Aktif') }}</span>
                         @endif
                     </td>
                     <td>
@@ -92,7 +92,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bx bx-folder me-2"></i>
-                        {{ $isEditMode ? 'Edit Biro' : 'Tambah Biro' }}
+                        {{ $isEditMode ? __('Edit Biro') : __('Tambah Biro') }}
                     </h5>
                     <button type="button" class="btn-close" wire:click="closeModal()"></button>
                 </div>
@@ -118,24 +118,24 @@
                             <div class="col-md-8 mb-3">
                                 <label for="bro-name" class="form-label">Nama Biro <span class="text-danger">*</span></label>
                                 <input type="text" id="bro-name" class="form-control @error('name') is-invalid @enderror"
-                                    wire:model="name" placeholder="Nama biro" autofocus>
+                                    wire:model="name" placeholder="{{ __('Nama biro') }}" autofocus>
                                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="bro-desc" class="form-label">Deskripsi</label>
-                            <textarea id="bro-desc" class="form-control" wire:model="description" rows="2" placeholder="Deskripsi singkat..."></textarea>
+                            <label for="bro-desc" class="form-label">{{ __('Deskripsi') }}</label>
+                            <textarea id="bro-desc" class="form-control" wire:model="description" rows="2" placeholder="{{ __('Deskripsi singkat...') }}"></textarea>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="bro-active" wire:model="is_active">
-                            <label class="form-check-label" for="bro-active">Aktif</label>
+                            <label class="form-check-label" for="bro-active">{{ __('Aktif') }}</label>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">Batal</button>
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">{{ __('Batal') }}</button>
                         <button type="submit" class="btn btn-primary">
-                            <span wire:loading.remove><i class="bx bx-save me-1"></i> Simpan</span>
-                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...</span>
+                            <span wire:loading.remove><i class="bx bx-save me-1"></i> {{ __('Simpan') }}</span>
+                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> {{ __('Menyimpan...') }}</span>
                         </button>
                     </div>
                 </form>

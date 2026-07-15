@@ -25,16 +25,16 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-sm-6">
-              <label class="text-muted small">Biro Pengaju</label>
+              <label class="text-muted small">{{ __('Biro Pengaju') }}</label>
               <div class="fw-semibold">{{ $submission->bureau->name ?? '-' }}</div>
               <div class="text-muted small">{{ $submission->bureau->department->directorate->name ?? '-' }}</div>
             </div>
             <div class="col-sm-3">
-              <label class="text-muted small">Periode</label>
+              <label class="text-muted small">{{ __('Periode') }}</label>
               <div class="fw-semibold">{{ $submission->period->title ?? '-' }}</div>
             </div>
             <div class="col-sm-3">
-              <label class="text-muted small">Total Anggaran</label>
+              <label class="text-muted small">{{ __('Total Anggaran') }}</label>
               <div class="fw-bold text-primary fs-5 has-tooltip">
                 Rp {{ number_format($submission->total_budget, 0, ',', '.') }}
                 <span class="custom-tooltip-content tooltip-align-right">
@@ -45,30 +45,30 @@
                   $prevProjection = $prevData['total_projection'] ?? 0;
                   @endphp
                   @if ($prevTotal > 0)
-                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                       <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevTotal, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                       <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevRealization, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                       <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProjection, 0, ',', '.') }}
                       </div>
                     </div>
                   </div>
                   @else
-                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                   @endif
                 </span>
               </div>
@@ -76,7 +76,7 @@
           </div>
           @if ($submission->notes)
           <hr class="my-3">
-          <label class="text-muted small">Catatan Pengajuan</label>
+          <label class="text-muted small">{{ __('Catatan Pengajuan') }}</label>
           <p class="mb-0">{{ $submission->notes }}</p>
           @endif
         </div>
@@ -85,8 +85,8 @@
       <!-- Riwayat Persetujuan -->
       <div class="card mb-4">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
-          <small class="text-muted">Kronologi persetujuan dari kiri ke kanan</small>
+          <h5 class="mb-0"><i class="bx bx-history me-2"></i>{{ __('Riwayat Persetujuan') }}</h5>
+          <small class="text-muted">{{ __('Kronologi persetujuan dari kiri ke kanan') }}</small>
         </div>
         <div class="card-body py-2 timeline-steps-container">
           <div class="timeline-steps-wrapper">
@@ -226,7 +226,7 @@
       </div>
 
       <!-- Work Plans -->
-      <h5 class="mb-3">Rincian Program Kerja</h5>
+      <h5 class="mb-3">{{ __('Rincian Program Kerja') }}</h5>
       @php
       $groupedWorkPlans = $submission->workPlans->groupBy('work_plan_id');
       @endphp
@@ -251,7 +251,7 @@
               <div class="fw-semibold text-dark fs-5 mt-1">{{ $programCode }} — {{ $programName }}</div>
             </div>
             <div class="text-end">
-              <span class="text-muted small d-block">Subtotal Program</span>
+              <span class="text-muted small d-block">{{ __('Subtotal Program') }}</span>
               <strong class="text-primary fs-5 has-tooltip">
                 Rp {{ number_format($wpGroupSubtotal, 0, ',', '.') }}
                 <span class="custom-tooltip-content tooltip-align-right">
@@ -263,30 +263,30 @@
                   $prevPeriod = $prevData['period'] ?? '-';
                   @endphp
                   @if ($prevProgramData)
-                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                       <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                       <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                       <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
                   </div>
                   @else
-                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                   @endif
                 </span>
               </strong>
@@ -311,13 +311,13 @@
                     Kegiatan {{ $actIdx + 1 }}
                     @if (($wp->approval_status ?? 'pending') === 'approved')
                     <span class="badge bg-label-success ms-2 rkap-font-07 rkap-p-02-04"><i
-                        class="bx bx-check-circle me-1"></i>Disetujui</span>
+                        class="bx bx-check-circle me-1"></i>{{ __('Disetujui') }}</span>
                     @elseif(($wp->approval_status ?? 'pending') === 'rejected')
                     <span class="badge bg-label-danger ms-2 rkap-font-07 rkap-p-02-04"><i
-                        class="bx bx-x-circle me-1"></i>Revisi</span>
+                        class="bx bx-x-circle me-1"></i>{{ __('Revisi') }}</span>
                     @else
                     <span class="badge bg-label-secondary ms-2 rkap-font-07 rkap-p-02-04"><i
-                        class="bx bx-time-five me-1"></i>Pending</span>
+                        class="bx bx-time-five me-1"></i>{{ __('Pending') }}</span>
                     @endif
                     @if ($wp->is_past_period_payment)
                     <span class="badge bg-warning text-dark ms-1 rkap-font-07 rkap-p-02-04">
@@ -337,7 +337,7 @@
                 </div>
               </div>
               <div class="text-end">
-                <span class="text-muted small d-block">Subtotal Kegiatan</span>
+                <span class="text-muted small d-block">{{ __('Subtotal Kegiatan') }}</span>
                 <strong class="text-dark has-tooltip">
                   Rp {{ number_format($wpSubtotal, 0, ',', '.') }}
                   <span class="custom-tooltip-content tooltip-align-right">
@@ -356,26 +356,26 @@
                       Sebelumnya ({{ $prevPeriod }})</div>
                     <div class="row text-center">
                       <div class="col-4 border-end">
-                        <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                        <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                         <div class="fw-bold text-white rkap-font-075">Rp
                           {{ number_format($prevActivityData['budget'], 0, ',', '.') }}
                         </div>
                       </div>
                       <div class="col-4 border-end">
-                        <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                        <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                         <div class="fw-bold text-white text-success rkap-font-075">Rp
                           {{ number_format($prevActivityData['realization'], 0, ',', '.') }}
                         </div>
                       </div>
                       <div class="col-4">
-                        <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                        <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                         <div class="fw-bold text-white text-warning rkap-font-075">Rp
                           {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}
                         </div>
                       </div>
                     </div>
                     @else
-                    <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                    <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                     @endif
                   </span>
                 </strong>
@@ -388,7 +388,7 @@
               <span class="badge bg-danger text-white me-3 p-1 mt-0.5"><i
                   class="bx bx-error-circle fs-5"></i></span>
               <div>
-                <h6 class="alert-heading mb-1 fw-bold text-danger">Catatan Revisi dari Reviewer:</h6>
+                <h6 class="alert-heading mb-1 fw-bold text-danger">{{ __('Catatan Revisi dari Reviewer:') }}</h6>
                 <span class="text-dark">{{ $wp->revision_notes }}</span>
               </div>
             </div>
@@ -396,25 +396,25 @@
 
             @if ($wp->description)
             <div class="mb-3">
-              <label class="text-muted small d-block">Deskripsi / Tujuan</label>
+              <label class="text-muted small d-block">{{ __('Deskripsi / Tujuan') }}</label>
               <p class="mb-0 text-dark rkap-ws-pre-line">{{ $wp->description }}</p>
             </div>
             @endif
 
             <div class="row g-2 mb-3 small">
               <div class="col-auto">
-                <span class="text-muted">Target Output:</span> <span
+                <span class="text-muted">{{ __('Target Output:') }}</span> <span
                   class="fw-medium">{{ $wp->output_target ?? '-' }}</span>
               </div>
               <div class="col-auto ms-3">
-                <span class="text-muted">Volume:</span> <span class="fw-medium">{{ $wp->quantity }}
+                <span class="text-muted">{{ __('Volume:') }}</span> <span class="fw-medium">{{ $wp->quantity }}
                   {{ $wp->unit }}</span>
               </div>
             </div>
 
             @if ($wp->activityFiles && $wp->activityFiles->isNotEmpty())
             <div class="mb-3" wire:key="act-view-files-{{ $wp->id }}">
-              <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>File Referensi:</label>
+              <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>{{ __('File Referensi:') }}</label>
               <div class="d-flex flex-wrap gap-2">
                 @foreach ($wp->activityFiles as $file)
                 @php
@@ -441,7 +441,7 @@
                       </div>
                       <div class="modal-footer">
                         <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('Tutup') }}</button>
                       </div>
                     </div>
                   </div>
@@ -460,11 +460,11 @@
               <table class="table table-sm table-striped table-hover mb-0">
                 <thead>
                   <tr>
-                    <th>Uraian & Detail Belanja</th>
+                    <th>{{ __('Uraian & Detail Belanja') }}</th>
                     <th class="text-center w-10p">Vol</th>
                     <th class="w-12p">Sat</th>
-                    <th class="text-end w-14p">Harga Satuan</th>
-                    <th class="text-end w-14p">Total</th>
+                    <th class="text-end w-14p">{{ __('Harga Satuan') }}</th>
+                    <th class="text-end w-14p">{{ __('Total') }}</th>
                     <th class="text-center w-8p">Aksi</th>
                   </tr>
                 </thead>
@@ -514,19 +514,19 @@
                                 Periode Sebelumnya ({{ $prevPeriod }})</div>
                               <div class="row text-center">
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                                  <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                                   <div class="fw-bold text-white rkap-font-075">Rp
                                     {{ number_format($prevCoaData['budget'], 0, ',', '.') }}
                                   </div>
                                 </div>
                                 <div class="col-4 border-end">
-                                  <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                                  <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                                   <div class="fw-bold text-white text-success rkap-font-075">Rp
                                     {{ number_format($prevCoaData['realization'], 0, ',', '.') }}
                                   </div>
                                 </div>
                                 <div class="col-4">
-                                  <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                                  <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                                   <div class="fw-bold text-white text-warning rkap-font-075">Rp
                                     {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}
                                   </div>
@@ -614,7 +614,7 @@
                                   <div class="card-body py-3 px-4">
                                     <div class="row g-3 small">
                                       <div class="col-md-auto border-end text-nowrap">
-                                        <span class="text-muted d-block mb-1">Kode Akun</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Kode Akun') }}</span>
                                         <span
                                           class="fw-semibold text-dark fs-6">{{ $bi->account_code ?? '-' }}</span>
                                       </div>
@@ -628,7 +628,7 @@
                                         @endif
                                       </div>
                                       <div class="col-md-auto border-end text-nowrap">
-                                        <span class="text-muted d-block mb-1">Volume</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Volume') }}</span>
                                         <span class="fw-semibold text-dark fs-6">
                                           @if ($bi->unit_2)
                                           {{ $bi->quantity }} {{ $bi->unit }} x {{ $bi->quantity_2 }}
@@ -639,7 +639,7 @@
                                         </span>
                                       </div>
                                       <div class="col-md-auto text-nowrap">
-                                        <span class="text-muted d-block mb-1">Total Anggaran</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Total Anggaran') }}</span>
                                         <span class="fw-bold text-primary fs-6">Rp
                                           {{ number_format($bi->total_price, 0, ',', '.') }}</span>
                                       </div>
@@ -665,14 +665,14 @@
                                 @if (!$hasAnyValue)
                                 <div class="text-center text-muted py-4">
                                   <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                  <span class="small">Tidak ada data alokasi anggaran</span>
+                                  <span class="small">{{ __('Tidak ada data alokasi anggaran') }}</span>
                                 </div>
                                 @else
                                 <div class="border rounded-2 table-responsive mb-2">
                                   <table class="table table-sm table-bordered align-middle mb-0 rkap-mw-750">
                                     <thead class="table-primary">
                                       <tr>
-                                        <th class="text-center rkap-w-90">Bulan</th>
+                                        <th class="text-center rkap-w-90">{{ __('Bulan') }}</th>
                                         <th class="text-end">
                                           Distribusi Penganggaran (Rp)
                                           <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $bi->coa?->coaGroup?->name ?: '-' }})</div>
@@ -726,7 +726,7 @@
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary"
-                                  data-bs-dismiss="modal">Tutup</button>
+                                  data-bs-dismiss="modal">{{ __('Tutup') }}</button>
                               </div>
                             </div>
                           </div>

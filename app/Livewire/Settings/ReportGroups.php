@@ -120,7 +120,7 @@ class ReportGroups extends Component
             $this->description = $group->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Report Group tidak ditemukan.');
+            session()->flash('error', __('Report Group tidak ditemukan.'));
         }
     }
 
@@ -142,7 +142,7 @@ class ReportGroups extends Component
             session()->flash('message', $this->reportGroupId ? 'Report Group berhasil diperbarui.' : 'Report Group berhasil ditambahkan.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan saat menyimpan Report Group.');
+            session()->flash('error', __('Terjadi kesalahan saat menyimpan Report Group.'));
         }
     }
 
@@ -153,14 +153,14 @@ class ReportGroups extends Component
 
             // Check if there are mapped COA Groups
             if ($group->coaGroups()->exists()) {
-                session()->flash('error', 'Gagal menghapus. Report Group ini masih digunakan oleh beberapa COA Group.');
+                session()->flash('error', __('Gagal menghapus. Report Group ini masih digunakan oleh beberapa COA Group.'));
                 return;
             }
 
             $group->delete();
-            session()->flash('message', 'Report Group berhasil dihapus.');
+            session()->flash('message', __('Report Group berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus Report Group.');
+            session()->flash('error', __('Gagal menghapus Report Group.'));
         }
     }
 
@@ -190,14 +190,14 @@ class ReportGroups extends Component
             ]);
             session()->flash('mapping_message', "Pemetaan untuk COA Group {$coaGroup->name} berhasil diperbarui.");
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal memperbarui pemetaan.');
+            session()->flash('mapping_error', __('Gagal memperbarui pemetaan.'));
         }
     }
 
     public function applyBulkMapping()
     {
         if (empty($this->selectedCoaGroups)) {
-            session()->flash('mapping_error', 'Silakan pilih minimal satu COA Group.');
+            session()->flash('mapping_error', __('Silakan pilih minimal satu COA Group.'));
             return;
         }
 
@@ -212,7 +212,7 @@ class ReportGroups extends Component
             $this->selectedCoaGroups = [];
             $this->bulkReportGroupId = '';
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal melakukan pemetaan massal.');
+            session()->flash('mapping_error', __('Gagal melakukan pemetaan massal.'));
         }
     }
 
@@ -248,14 +248,14 @@ class ReportGroups extends Component
             ]);
             session()->flash('mapping_message', "Pemetaan untuk Cashflow Group {$cashflowGroup->name} berhasil diperbarui.");
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal memperbarui pemetaan Cashflow.');
+            session()->flash('mapping_error', __('Gagal memperbarui pemetaan Cashflow.'));
         }
     }
 
     public function applyBulkCashflowMapping()
     {
         if (empty($this->selectedCashflowGroups)) {
-            session()->flash('mapping_error', 'Silakan pilih minimal satu Cashflow Group.');
+            session()->flash('mapping_error', __('Silakan pilih minimal satu Cashflow Group.'));
             return;
         }
 
@@ -270,7 +270,7 @@ class ReportGroups extends Component
             $this->selectedCashflowGroups = [];
             $this->bulkCashflowReportGroupId = '';
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal melakukan pemetaan massal Cashflow.');
+            session()->flash('mapping_error', __('Gagal melakukan pemetaan massal Cashflow.'));
         }
     }
 

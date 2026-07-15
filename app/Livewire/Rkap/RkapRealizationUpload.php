@@ -40,7 +40,7 @@ class RkapRealizationUpload extends Component
     public function mount(): void
     {
         if (! auth()->user()?->can('rkap.realization.upload')) {
-            abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
+            abort(403, __('Anda tidak memiliki akses untuk halaman ini.'));
         }
     }
 
@@ -429,7 +429,7 @@ class RkapRealizationUpload extends Component
     public function deleteRealization(int $id): void
     {
         if (! auth()->user()?->can('rkap.realization.upload')) {
-            session()->flash('error', 'Anda tidak memiliki akses untuk menghapus data ini.');
+            session()->flash('error', __('Anda tidak memiliki akses untuk menghapus data ini.'));
             return;
         }
 
@@ -437,18 +437,18 @@ class RkapRealizationUpload extends Component
         if ($realization) {
             $period = RkapPeriod::find($realization->rkap_period_id);
             if ($period && $period->year !== (int) date('Y')) {
-                session()->flash('error', 'Realisasi hanya dapat dihapus untuk periode RKAP tahun berjalan.');
+                session()->flash('error', __('Realisasi hanya dapat dihapus untuk periode RKAP tahun berjalan.'));
                 return;
             }
             if ($period && $period->isMonthClosed($realization->month)) {
                 $closingDate = $period->getClosingDateForMonth($realization->month);
                 $closingDateStr = $closingDate ? $closingDate->format('d M Y') : '';
-                session()->flash('error', 'Realisasi untuk bulan ' . $this->getMonthName($realization->month) . ' tidak dapat dihapus karena periode pengisian realisasi telah ditutup (' . $closingDateStr . ').');
+                session()->flash('error', __('Realisasi untuk bulan ') . $this->getMonthName($realization->month) . ' tidak dapat dihapus karena periode pengisian realisasi telah ditutup (' . $closingDateStr . ').');
                 return;
             }
             $realization->delete();
             AnalyticsCacheService::flushPeriod($realization->rkap_period_id);
-            session()->flash('message', 'Data realisasi berhasil dihapus.');
+            session()->flash('message', __('Data realisasi berhasil dihapus.'));
         }
     }
 

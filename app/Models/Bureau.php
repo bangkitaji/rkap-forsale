@@ -6,15 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class Bureau extends Model
 {
-    use Searchable;
+    use Searchable, Translatable;
 
     protected $fillable = [
         'department_id',
         'code',
         'name',
+        'name_en',
         'description',
         'is_active',
     ];

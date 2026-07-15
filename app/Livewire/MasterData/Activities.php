@@ -125,7 +125,7 @@ class Activities extends Component
             $this->description = $activity->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Activity not found.');
+            session()->flash('error', __('Activity not found.'));
         }
     }
 
@@ -149,7 +149,7 @@ class Activities extends Component
             session()->flash('message', $this->activityId ? 'Activity updated successfully.' : 'Activity created successfully.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the Activity.');
+            session()->flash('error', __('An error occurred while saving the Activity.'));
         }
     }
 
@@ -158,9 +158,9 @@ class Activities extends Component
         $this->ensureCanManage();
         try {
             Activity::findOrFail($id)->delete();
-            session()->flash('message', 'Activity deleted successfully.');
+            session()->flash('message', __('Activity deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete Activity.');
+            session()->flash('error', __('Unable to delete Activity.'));
         }
     }
 
@@ -289,20 +289,20 @@ class Activities extends Component
         $this->ensureCanManage();
 
         if (!$this->mappingActivityId) {
-            session()->flash('error', 'No activity selected for mapping.');
+            session()->flash('error', __('No activity selected for mapping.'));
             return;
         }
 
         $activity = Activity::find($this->mappingActivityId);
         if (!$activity) {
-            session()->flash('error', 'Activity not found.');
+            session()->flash('error', __('Activity not found.'));
             return;
         }
 
         $coaIds = array_values(array_unique(array_map('intval', $this->selectedCoaIds)));
         $activity->coas()->sync($coaIds);
 
-        session()->flash('message', 'COA mapping saved successfully.');
+        session()->flash('message', __('COA mapping saved successfully.'));
         $this->closeCoaMapping();
     }
 

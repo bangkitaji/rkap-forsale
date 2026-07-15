@@ -50,7 +50,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="Search Cashflow Group...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="search" placeholder="{{ __('Search Cashflow Group...') }}">
                     </div>
                     <button wire:click="create()" class="btn btn-primary btn-sm">
                         <i class="bx bx-plus me-1"></i> Add Cashflow Group
@@ -160,7 +160,7 @@
             @endif
 
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                <h5 class="mb-0">Pemetaan COA ke Cashflow Group</h5>
+                <h5 class="mb-0">{{ __('Pemetaan COA ke Cashflow Group') }}</h5>
                 <div class="d-flex flex-wrap gap-2">
                     <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                         <option value="15">15</option>
@@ -177,7 +177,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchMapping" placeholder="Search COA...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchMapping" placeholder="{{ __('Search COA...') }}">
                     </div>
                 </div>
             </div>
@@ -210,8 +210,8 @@
                             </th>
                             <th>COA Code</th>
                             <th>COA Title</th>
-                            <th>COA Group</th>
-                            <th>Current Cashflow Group Mapping</th>
+                            <th>{{ __('COA Group') }}</th>
+                            <th>{{ __('Current Cashflow Group Mapping') }}</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">

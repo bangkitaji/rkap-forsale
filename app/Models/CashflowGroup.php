@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class CashflowGroup extends Model
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'name', 'description', 'report_group_id'];
+    protected $fillable = ['code', 'name', 'name_en', 'description', 'report_group_id'];
 
     protected $searchable = ['code', 'name'];
 

@@ -1,6 +1,6 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Dashboard - Analytics')
+@section('title', __('Dashboard - Analytics'))
 
 @section('vendor-style')
 @vite('resources/assets/vendor/libs/apex-charts/apex-charts.scss')
@@ -13,13 +13,13 @@
 @section('content')
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div>
-    <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Analytics</h4>
+    <h4 class="mb-1"><span class="text-muted fw-light">{{ __('RKAP') }} /</span> {{ __('Analytics') }}</h4>
     @if ($activePeriod)
-    <p class="text-muted mb-0">Menampilkan visualisasi data untuk periode: <strong>{{ $activePeriod->title }}</strong>
+    <p class="text-muted mb-0">{{ __('Menampilkan visualisasi data untuk periode:') }} <strong>{{ $activePeriod->title }}</strong>
     </p>
     @else
     <div class="alert alert-warning mt-2 mb-0 py-2">
-      <i class="bx bx-info-circle me-1"></i> Belum ada periode RKAP yang aktif.
+      <i class="bx bx-info-circle me-1"></i> {{ __('Belum ada periode RKAP yang aktif.') }}
     </div>
     @endif
   </div>
@@ -28,7 +28,7 @@
   <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
     <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1 rkap-font-09">
       <i class="bx bx-calendar text-primary fs-4"></i>
-      <span>Pilih Periode RKAP:</span>
+      <span>{{ __('Pilih Periode RKAP:') }}</span>
     </label>
     <form action="{{ route('dashboard-analytics') }}" method="GET" id="periodForm" class="m-0">
       <select name="period_id" id="periodSelect"
@@ -36,7 +36,7 @@
         onchange="this.form.submit()">
         @if ($activePeriod && !$finalizedPeriods->contains('id', $activePeriod->id))
         <option value="" disabled selected>
-          -- Pilih Periode Finalized (Saat ini: {{ $activePeriod->title }}) --
+          -- {{ __('Pilih Periode Finalized') }} ({{ __('Saat ini') }}: {{ $activePeriod->title }}) --
         </option>
         @endif
         @foreach ($finalizedPeriods as $p)
@@ -57,7 +57,7 @@
   <div class="avatar avatar-sm bg-label-success rounded-circle d-flex align-items-center justify-content-center rkap-w-28 rkap-h-28">
     <i class="bx bx-trending-up fs-5 text-success"></i>
   </div>
-  <h5 class="mb-0 fw-semibold text-dark">Anggaran Pendapatan</h5>
+  <h5 class="mb-0 fw-semibold text-dark">{{ __('Anggaran Pendapatan') }}</h5>
 </div>
 <div class="row g-4 mb-4">
   <!-- Card 1: Total Anggaran Pendapatan -->
@@ -65,11 +65,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Total Pendapatan</span>
+          <span class="fw-semibold text-muted">{{ __('Total Pendapatan') }}</span>
           <span class="badge bg-label-primary rounded p-2"><i class="bx bx-wallet fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold">Rp {{ number_format($income_stats['total_budget'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Pagu Rencana Kerja (RKAP)</p>
+        <p class="mb-0 text-muted small">{{ __('Pagu Rencana Kerja (RKAP)') }}</p>
       </div>
     </div>
   </div>
@@ -78,11 +78,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Realisasi (YTD)</span>
+          <span class="fw-semibold text-muted">{{ __('Realisasi (YTD)') }}</span>
           <span class="badge bg-label-success rounded p-2"><i class="bx bx-check-circle fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-success">Rp {{ number_format($income_stats['total_realization'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Penyerapan: <strong>{{ $income_stats['absorption_rate'] }}%</strong></p>
+        <p class="mb-0 text-muted small">{{ __('Penyerapan:') }} <strong>{{ $income_stats['absorption_rate'] }}%</strong></p>
       </div>
     </div>
   </div>
@@ -91,11 +91,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Proyeksi Akhir Tahun</span>
+          <span class="fw-semibold text-muted">{{ __('Proyeksi Akhir Tahun') }}</span>
           <span class="badge bg-label-warning rounded p-2"><i class="bx bx-calculator fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-warning">Rp {{ number_format($income_stats['total_projection'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Outlook Rate: <strong>{{ $income_stats['outlook_rate'] }}%</strong></p>
+        <p class="mb-0 text-muted small">{{ __('Outlook Rate:') }} <strong>{{ $income_stats['outlook_rate'] }}%</strong></p>
       </div>
     </div>
   </div>
@@ -108,14 +108,14 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Selisih Target</span>
+          <span class="fw-semibold text-muted">{{ __('Selisih Target') }}</span>
           <span class="badge bg-label-{{ $isIncomeShort ? 'danger' : 'success' }} rounded p-2"><i
               class="bx bx-line-chart fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-{{ $isIncomeShort ? 'danger' : 'success' }}">Rp
           {{ number_format(abs($income_variance), 0, ',', '.') }}
         </h4>
-        <p class="mb-0 text-muted small">{{ $isIncomeShort ? 'Kurang dari Target' : 'Melampaui Target' }}</p>
+        <p class="mb-0 text-muted small">{{ $isIncomeShort ? __('Kurang dari Target') : __('Melampaui Target') }}</p>
       </div>
     </div>
 </div>
@@ -126,7 +126,7 @@
   <div class="avatar avatar-sm bg-label-danger rounded-circle d-flex align-items-center justify-content-center rkap-w-28 rkap-h-28">
     <i class="bx bx-trending-down fs-5 text-danger"></i>
   </div>
-  <h5 class="mb-0 fw-semibold text-dark">Anggaran Beban</h5>
+  <h5 class="mb-0 fw-semibold text-dark">{{ __('Anggaran Beban') }}</h5>
 </div>
 <div class="row g-4 mb-4">
   <!-- Card 1: Total Anggaran Beban -->
@@ -134,11 +134,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Total Beban</span>
+          <span class="fw-semibold text-muted">{{ __('Total Beban') }}</span>
           <span class="badge bg-label-primary rounded p-2"><i class="bx bx-wallet fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold">Rp {{ number_format($expense_stats['total_budget'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Pagu Rencana Kerja (RKAP)</p>
+        <p class="mb-0 text-muted small">{{ __('Pagu Rencana Kerja (RKAP)') }}</p>
       </div>
     </div>
   </div>
@@ -147,11 +147,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Realisasi (YTD)</span>
+          <span class="fw-semibold text-muted">{{ __('Realisasi (YTD)') }}</span>
           <span class="badge bg-label-danger rounded p-2"><i class="bx bx-receipt fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-danger">Rp {{ number_format($expense_stats['total_realization'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Penyerapan: <strong>{{ $expense_stats['absorption_rate'] }}%</strong></p>
+        <p class="mb-0 text-muted small">{{ __('Penyerapan:') }} <strong>{{ $expense_stats['absorption_rate'] }}%</strong></p>
       </div>
     </div>
   </div>
@@ -160,11 +160,11 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Proyeksi Akhir Tahun</span>
+          <span class="fw-semibold text-muted">{{ __('Proyeksi Akhir Tahun') }}</span>
           <span class="badge bg-label-warning rounded p-2"><i class="bx bx-calculator fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-warning">Rp {{ number_format($expense_stats['total_projection'], 0, ',', '.') }}</h4>
-        <p class="mb-0 text-muted small">Outlook Rate: <strong>{{ $expense_stats['outlook_rate'] }}%</strong></p>
+        <p class="mb-0 text-muted small">{{ __('Outlook Rate:') }} <strong>{{ $expense_stats['outlook_rate'] }}%</strong></p>
       </div>
     </div>
   </div>
@@ -177,14 +177,14 @@
     <div class="card h-100 shadow-none border">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="fw-semibold text-muted">Sisa Pagu / Efisiensi</span>
+          <span class="fw-semibold text-muted">{{ __('Sisa Pagu / Efisiensi') }}</span>
           <span class="badge bg-label-{{ $isExpenseOver ? 'danger' : 'success' }} rounded p-2"><i
               class="bx bx-pie-chart-alt fs-4"></i></span>
         </div>
         <h4 class="mb-1 fw-bold text-{{ $isExpenseOver ? 'danger' : 'success' }}">Rp
           {{ number_format(abs($expense_variance), 0, ',', '.') }}
         </h4>
-        <p class="mb-0 text-muted small">{{ $isExpenseOver ? 'Melebihi Anggaran' : 'Sisa Alokasi Pagu' }}</p>
+        <p class="mb-0 text-muted small">{{ $isExpenseOver ? __('Melebihi Anggaran') : __('Sisa Alokasi Pagu') }}</p>
       </div>
     </div>
 </div>
@@ -195,9 +195,8 @@
   <div class="col-12">
     <div class="card h-100">
       <div class="card-header border-bottom py-3">
-        <h5 class="card-title mb-0">Komparasi RKAP Antar Tahun</h5>
-        <small class="text-muted">Perbandingan Anggaran, Realisasi YTD, dan Proyeksi Akhir Tahun untuk Pemasukan dan Pengeluaran (Tahun Lalu, Tahun
-          Berjalan, dan Tahun Depan)</small>
+        <h5 class="card-title mb-0">{{ __('Komparasi RKAP Antar Tahun') }}</h5>
+        <small class="text-muted">{{ __('Perbandingan Anggaran, Realisasi YTD, dan Proyeksi Akhir Tahun untuk Pemasukan dan Pengeluaran (Tahun Lalu, Tahun Berjalan, dan Tahun Depan)') }}</small>
       </div>
       <div class="card-body pt-3">
         <div id="annualComparisonChart" class="rkap-mh-350"></div>
@@ -212,8 +211,8 @@
   <div class="col-xl-8 col-lg-7 col-12">
     <div class="card h-100">
       <div class="card-header border-bottom py-3">
-        <h5 class="card-title mb-0">Tren Kumulatif Realisasi & Proyeksi</h5>
-        <small class="text-muted">Analisis Pacing Bulanan (Januari - Desember)</small>
+        <h5 class="card-title mb-0">{{ __('Tren Kumulatif Realisasi & Proyeksi') }}</h5>
+        <small class="text-muted">{{ __('Analisis Pacing Bulanan (Januari - Desember)') }}</small>
       </div>
       <div class="card-body pt-3">
         <div id="burnUpChart" class="rkap-mh-330"></div>
@@ -224,8 +223,8 @@
   <div class="col-xl-4 col-lg-5 col-12">
     <div class="card h-100">
       <div class="card-header border-bottom py-3">
-        <h5 class="card-title mb-0">Rasio Penyerapan</h5>
-        <small class="text-muted">Realisasi YTD vs. Proyeksi Akhir Tahun</small>
+        <h5 class="card-title mb-0">{{ __('Rasio Penyerapan') }}</h5>
+        <small class="text-muted">{{ __('Realisasi YTD vs. Proyeksi Akhir Tahun') }}</small>
       </div>
       <div class="card-body d-flex flex-column align-items-center justify-content-center pt-3">
         <div id="utilizationGauge"></div>
@@ -241,26 +240,26 @@
     <div class="card h-100">
       <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-          <h5 class="card-title mb-0">Penyerapan Anggaran</h5>
-          <small class="text-muted">Komparasi Penyerapan per Unit Kerja</small>
+          <h5 class="card-title mb-0">{{ __('Penyerapan Anggaran') }}</h5>
+          <small class="text-muted">{{ __('Komparasi Penyerapan per Unit Kerja') }}</small>
         </div>
         <div class="btn-group" role="group" aria-label="Comparative data options">
           @if (auth()->user()->isKepalaDepartemen())
           <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment" checked
             autocomplete="off">
-          <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+          <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">{{ __('Departemen') }}</label>
 
           <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupBureau"
             autocomplete="off">
-          <label class="btn btn-outline-primary btn-sm px-3" for="groupBureau">Biro</label>
+          <label class="btn btn-outline-primary btn-sm px-3" for="groupBureau">{{ __('Biro') }}</label>
           @else
           <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDirectorate" checked
             autocomplete="off">
-          <label class="btn btn-outline-primary btn-sm px-3" for="groupDirectorate">Direktorat</label>
+          <label class="btn btn-outline-primary btn-sm px-3" for="groupDirectorate">{{ __('Direktorat') }}</label>
 
           <input type="radio" class="btn-check" name="btnComparativeGroup" id="groupDepartment"
             autocomplete="off">
-          <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">Departemen</label>
+          <label class="btn btn-outline-primary btn-sm px-3" for="groupDepartment">{{ __('Departemen') }}</label>
           @endif
         </div>
       </div>
@@ -277,8 +276,8 @@
 <div class="card py-5 text-center">
   <div class="card-body">
     <i class="bx bx-error-circle bx-lg text-warning mb-3"></i>
-    <h5>Belum Ada Data RKAP Aktif</h5>
-    <p class="text-muted">Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.</p>
+    <h5>{{ __('Belum Ada Data RKAP Aktif') }}</h5>
+    <p class="text-muted">{{ __('Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.') }}</p>
   </div>
 </div>
 @endif
@@ -293,17 +292,17 @@
     // 1. Burn-Up Chart Setup
     const burnUpChartOptions = {
       series: [{
-          name: 'Pagu Anggaran',
+          name: @js(__('Pagu Anggaran')),
           type: 'line',
           data: @json($cumulativeBudget)
         },
         {
-          name: 'Realisasi Kumulatif',
+          name: @js(__('Realisasi Kumulatif')),
           type: 'area',
           data: @json($cumulativeRealization)
         },
         {
-          name: 'Proyeksi Kumulatif',
+          name: @js(__('Proyeksi Kumulatif')),
           type: 'line',
           data: @json($cumulativeProjection)
         }
@@ -396,7 +395,7 @@
             },
             total: {
               show: true,
-              label: 'Realisasi YTD',
+              label: @js(__('Realisasi YTD')),
               formatter: function(w) {
                 return @json($stats['absorption_rate']) + '%';
               }
@@ -405,7 +404,7 @@
         }
       },
       colors: ['#71dd37', '#ffab00'],
-      labels: ['Penyerapan YTD', 'Outlook Akhir Tahun'],
+      labels: [@js(__('Penyerapan YTD')), @js(__('Outlook Akhir Tahun'))],
       legend: {
         show: true,
         position: 'bottom',
@@ -454,15 +453,15 @@
 
       return {
         series: [{
-            name: 'Anggaran',
+            name: @js(__('Anggaran')),
             data: budgets
           },
           {
-            name: 'Realisasi YTD',
+            name: @js(__('Realisasi YTD')),
             data: realizations
           },
           {
-            name: 'Proyeksi Akhir Tahun',
+            name: @js(__('Proyeksi Akhir Tahun')),
             data: projections
           }
         ],
@@ -578,27 +577,27 @@
     // 4. Annual Comparison Chart Setup
     const annualComparisonChartOptions = {
       series: [{
-          name: 'Anggaran Pemasukan',
+          name: @js(__('Anggaran Pemasukan')),
           data: @json(array_column($comparisonData, 'income_budget'))
         },
         {
-          name: 'Realisasi Pemasukan YTD',
+          name: @js(__('Realisasi Pemasukan YTD')),
           data: @json(array_column($comparisonData, 'income_realization'))
         },
         {
-          name: 'Proyeksi Pemasukan',
+          name: @js(__('Proyeksi Pemasukan')),
           data: @json(array_column($comparisonData, 'income_projection'))
         },
         {
-          name: 'Anggaran Pengeluaran',
+          name: @js(__('Anggaran Pengeluaran')),
           data: @json(array_column($comparisonData, 'expense_budget'))
         },
         {
-          name: 'Realisasi Pengeluaran YTD',
+          name: @js(__('Realisasi Pengeluaran YTD')),
           data: @json(array_column($comparisonData, 'expense_realization'))
         },
         {
-          name: 'Proyeksi Pengeluaran',
+          name: @js(__('Proyeksi Pengeluaran')),
           data: @json(array_column($comparisonData, 'expense_projection'))
         }
       ],

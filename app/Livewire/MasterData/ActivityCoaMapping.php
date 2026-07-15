@@ -77,13 +77,13 @@ class ActivityCoaMapping extends Component
     public function save(): void
     {
         if (empty($this->activityId)) {
-            session()->flash('error', 'Please select an Activity.');
+            session()->flash('error', __('Please select an Activity.'));
             return;
         }
 
         $activity = Activity::find($this->activityId);
         if (!$activity) {
-            session()->flash('error', 'Selected Activity not found.');
+            session()->flash('error', __('Selected Activity not found.'));
             return;
         }
 
@@ -92,7 +92,7 @@ class ActivityCoaMapping extends Component
         // If nothing selected, sync([]) will detach all.
         $activity->coas()->sync($coaIds);
 
-        session()->flash('message', 'Activity ↔ COA mapping saved successfully.');
+        session()->flash('message', __('Activity ↔ COA mapping saved successfully.'));
     }
 
     public function selectAll(): void

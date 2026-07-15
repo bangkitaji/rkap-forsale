@@ -44,7 +44,7 @@
             @endif
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0">Daftar Report Group</h5>
+                <h5 class="mb-0">{{ __('Daftar Report Group') }}</h5>
                 <div class="d-flex gap-2">
                     <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                         <option value="10">10</option>
@@ -177,7 +177,7 @@
             @endif
 
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                <h5 class="mb-0">Pemetaan COA Group ke Report Group</h5>
+                <h5 class="mb-0">{{ __('Pemetaan COA Group ke Report Group') }}</h5>
                 <div class="d-flex flex-wrap gap-2">
                     <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                         <option value="15">15</option>
@@ -193,7 +193,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchMapping" placeholder="Search COA Group...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchMapping" placeholder="{{ __('Search COA Group...') }}">
                     </div>
                 </div>
             </div>
@@ -226,7 +226,7 @@
                             </th>
                             <th>COA Group Code</th>
                             <th>COA Group Name</th>
-                            <th>Current Report Group Mapping</th>
+                            <th>{{ __('Current Report Group Mapping') }}</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -282,7 +282,7 @@
             @endif
 
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                <h5 class="mb-0">Pemetaan Cashflow Group ke Report Group</h5>
+                <h5 class="mb-0">{{ __('Pemetaan Cashflow Group ke Report Group') }}</h5>
                 <div class="d-flex flex-wrap gap-2">
                     <select class="form-select form-select-sm w-auto" wire:model.live="perPage">
                         <option value="15">15</option>
@@ -298,7 +298,7 @@
                     </select>
                     <div class="input-group input-group-sm w-auto">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchCashflow" placeholder="Search Cashflow Group...">
+                        <input type="text" class="form-control" wire:model.live.debounce.300ms="searchCashflow" placeholder="{{ __('Search Cashflow Group...') }}">
                     </div>
                 </div>
             </div>
@@ -331,7 +331,7 @@
                             </th>
                             <th>Cashflow Group Code</th>
                             <th>Cashflow Group Name</th>
-                            <th>Current Report Group Mapping</th>
+                            <th>{{ __('Current Report Group Mapping') }}</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">

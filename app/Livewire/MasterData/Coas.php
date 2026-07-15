@@ -86,7 +86,7 @@ class Coas extends Component
             $this->cfType = $coa->cf_type ?? '';
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'COA not found.');
+            session()->flash('error', __('COA not found.'));
         }
     }
 
@@ -109,7 +109,7 @@ class Coas extends Component
             session()->flash('message', $this->coaId ? 'COA updated successfully.' : 'COA created successfully.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the COA.');
+            session()->flash('error', __('An error occurred while saving the COA.'));
         }
     }
 
@@ -117,9 +117,9 @@ class Coas extends Component
     {
         try {
             Coa::findOrFail($id)->delete();
-            session()->flash('message', 'COA deleted successfully.');
+            session()->flash('message', __('COA deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete COA.');
+            session()->flash('error', __('Unable to delete COA.'));
         }
     }
 

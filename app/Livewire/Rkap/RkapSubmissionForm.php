@@ -84,7 +84,7 @@ class RkapSubmissionForm extends Component
 
             // Authorization: ensure current user can edit this submission
             if (!$this->submission->canBeEditedBy($user)) {
-                abort(403, 'Anda tidak memiliki akses untuk mengedit pengajuan ini.');
+                abort(403, __('Anda tidak memiliki akses untuk mengedit pengajuan ini.'));
             }
 
             // Eager-load relations; scope realizations to this period explicitly
@@ -99,14 +99,14 @@ class RkapSubmissionForm extends Component
             $this->loadWorkPlans();
         } elseif ($periodId) {
             if (!$user->bureau_id) {
-                abort(403, 'Anda harus terasosiasi dengan Biro untuk membuat pengajuan.');
+                abort(403, __('Anda harus terasosiasi dengan Biro untuk membuat pengajuan.'));
             }
 
             $exists = RkapSubmission::where('rkap_period_id', $periodId)
                 ->where('bureau_id', $user->bureau_id)
                 ->exists();
             if ($exists) {
-                session()->flash('error', 'Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
+                session()->flash('error', __('Biro Anda sudah membuat pengajuan RKAP untuk periode ini.'));
                 $this->redirectRoute('rkap-submissions');
                 return;
             }
@@ -690,7 +690,7 @@ class RkapSubmissionForm extends Component
 
         $this->referenceFile = null;
         $this->dispatch('close-upload-modal');
-        $this->dispatch('form-saved', message: 'File referensi berhasil diupload.');
+        $this->dispatch('form-saved', message: __('File referensi berhasil diupload.'));
     }
 
     public function deleteUploadedFile(int $wpIdx, int $actIdx, int $fileIdx): void
@@ -928,8 +928,8 @@ class RkapSubmissionForm extends Component
         $this->validateBudgetItemsCoaMapping();
         $this->validatePastPeriodPayments();
         $this->saveSubmission('draft');
-        session()->flash('message', 'Draf RKAP berhasil disimpan.');
-        $this->dispatch('form-saved', message: 'Draf RKAP berhasil disimpan.');
+        session()->flash('message', __('Draf RKAP berhasil disimpan.'));
+        $this->dispatch('form-saved', message: __('Draf RKAP berhasil disimpan.'));
     }
 
     public function submitForReview(): void
@@ -956,7 +956,7 @@ class RkapSubmissionForm extends Component
             $submission->submit();
         }
 
-        session()->flash('message', 'RKAP berhasil diajukan untuk peninjauan (review).');
+        session()->flash('message', __('RKAP berhasil diajukan untuk peninjauan (review).'));
         $this->redirectRoute('rkap-submissions');
     }
 
