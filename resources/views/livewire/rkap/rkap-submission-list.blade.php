@@ -297,15 +297,19 @@
                     class="badge bg-label-success">{{ ucfirst($period->status) }}</span></div>
               </div>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
               <button wire:click="selectPeriod({{ $period->id }})"
                 class="btn btn-sm btn-primary flex-grow-1">
-                <i class="bx bx-plus me-1"></i> Input Baru
+                <i class="bx bx-plus me-1"></i> {{ __('Input Baru') }}
               </button>
+              <a href="{{ route('rkap-submissions-bulk-upload', ['periodId' => $period->id]) }}"
+                class="btn btn-sm btn-outline-success flex-grow-1">
+                <i class="bx bx-upload me-1"></i> {{ __('Upload Massal') }}
+              </a>
               @if (count($previousSubmissions) > 0)
               <button wire:click="openDuplicateModal({{ $period->id }})"
                 class="btn btn-sm btn-outline-primary flex-grow-1">
-                <i class="bx bx-copy me-1"></i> Duplikasi
+                <i class="bx bx-copy me-1"></i> {{ __('Duplikasi') }}
               </button>
               @endif
             </div>
