@@ -68,13 +68,13 @@ class RkapBulkUpload extends Component
         $this->periodId = $periodId;
         $this->period = RkapPeriod::findOrFail($periodId);
 
-        // Check if bureau already has a submission for this period
-        $exists = RkapSubmission::where('rkap_period_id', $periodId)
+        // Check if bureau already has a submission for this period and it is not in draft status
+        $submission = RkapSubmission::where('rkap_period_id', $periodId)
             ->where('bureau_id', $user->bureau_id)
-            ->exists();
+            ->first();
 
-        if ($exists) {
-            session()->flash('error', __('Biro Anda sudah membuat pengajuan RKAP untuk periode ini.'));
+        if ($submission && $submission->status !== 'draft') {
+            session()->flash('error', __('Biro Anda sudah membuat pengajuan RKAP untuk periode ini dan statusnya bukan Draft.'));
             $this->redirectRoute('rkap-submissions');
         }
     }
@@ -116,13 +116,28 @@ class RkapBulkUpload extends Component
         $worksheet = $spreadsheet->getSheet(0); // First sheet = "Data Pengajuan"
         $data = $worksheet->toArray(null, true, true, true);
 
-        if (count($data) < 2) {
+        if (count($data) < 5) {
             $this->importErrors[] = __('File Excel kosong atau tidak memiliki data.');
             return [];
         }
 
-        // Get headers from first row
-        $headerRow = $data[1] ?? [];
+        // Validate metadata rows (Biro ID & Periode RKAP)
+        $fileBureauId = $data[1]['B'] ?? null;
+        $filePeriodId = $data[2]['B'] ?? null;
+        $user = Auth::user();
+
+        if (empty($fileBureauId) || (int) $fileBureauId !== (int) $user->bureau_id) {
+            $this->importErrors[] = __('File Excel ini dibuat untuk Biro lain atau tidak memiliki ID Biro yang valid.');
+            return [];
+        }
+
+        if (empty($filePeriodId) || (int) $filePeriodId !== (int) $this->periodId) {
+            $this->importErrors[] = __('File Excel ini dibuat untuk Periode RKAP lain atau tidak memiliki ID Periode yang valid.');
+            return [];
+        }
+
+        // Get headers from 4th row
+        $headerRow = $data[4] ?? [];
         $headers = array_map(fn($h) => strtolower(trim((string) $h)), array_values($headerRow));
 
         // Validate headers
@@ -161,15 +176,12 @@ class RkapBulkUpload extends Component
             }
         }
 
-        // Parse data rows (skip header + hint row)
+        // Parse data rows starting from row 6 (index 5 of rowKeys)
         $rows = [];
         $rowKeys = array_keys($data);
-        for ($i = 2; $i < count($rowKeys); $i++) {
+        for ($i = 5; $i < count($rowKeys); $i++) {
             $rowNum = $rowKeys[$i];
             $rowData = $data[$rowNum] ?? [];
-
-            // Skip if hint row (row 2) or empty row
-            if ($i === 1) continue; // Skip hint row
 
             $row = [];
             foreach (self::ALL_COLUMNS as $col) {
@@ -325,12 +337,13 @@ class RkapBulkUpload extends Component
 
         $user = Auth::user();
 
-        // Double-check no existing submission
-        $exists = RkapSubmission::where('rkap_period_id', $this->periodId)
+        // Get existing draft submission if it exists
+        $submission = RkapSubmission::where('rkap_period_id', $this->periodId)
             ->where('bureau_id', $user->bureau_id)
-            ->exists();
-        if ($exists) {
-            $this->importErrors[] = __('Biro Anda sudah membuat pengajuan RKAP untuk periode ini.');
+            ->first();
+
+        if ($submission && $submission->status !== 'draft') {
+            $this->importErrors[] = __('Biro Anda sudah membuat pengajuan RKAP untuk periode ini dan statusnya bukan Draft.');
             return;
         }
 
@@ -347,17 +360,24 @@ class RkapBulkUpload extends Component
         }
 
         try {
-            DB::transaction(function () use ($user, $workPlans, $activities, $coas, $grouped) {
-                // Create submission
-                $submission = RkapSubmission::create([
-                    'rkap_period_id' => $this->periodId,
-                    'bureau_id'      => $user->bureau_id,
-                    'created_by'     => $user->id,
-                    'status'         => 'draft',
-                    'notes'          => __('Dibuat melalui upload massal Excel'),
-                ]);
+            DB::transaction(function () use ($user, $workPlans, $activities, $coas, $grouped, $submission) {
+                if (!$submission) {
+                    // Create submission
+                    $submission = RkapSubmission::create([
+                        'rkap_period_id' => $this->periodId,
+                        'bureau_id'      => $user->bureau_id,
+                        'created_by'     => $user->id,
+                        'status'         => 'draft',
+                        'notes'          => __('Dibuat melalui upload massal Excel'),
+                    ]);
+                } else {
+                    $submission->update([
+                        'notes' => trim(($submission->notes ?? '') . "\n" . __('Tambahan dari upload massal Excel pada :time', ['time' => now()->toDateTimeString()])),
+                    ]);
+                }
 
-                $sortOrder = 0;
+                $sortOrder = RkapWorkPlan::where('rkap_submission_id', $submission->id)->max('sort_order') ?? -1;
+                $sortOrder++;
 
                 foreach ($grouped as $key => $rows) {
                     $firstRow = $rows[0];
@@ -369,19 +389,27 @@ class RkapBulkUpload extends Component
                         continue;
                     }
 
-                    // Create RkapWorkPlan
-                    $rkapWorkPlan = RkapWorkPlan::create([
-                        'rkap_submission_id' => $submission->id,
-                        'work_plan_id'       => $wp->id,
-                        'activity_id'        => $act->id,
-                        'program_name'       => $act->title,
-                        'program_code'       => $act->code,
-                        'description'        => null,
-                        'output_target'      => null,
-                        'unit'               => null,
-                        'quantity'            => 1,
-                        'sort_order'         => $sortOrder++,
-                    ]);
+                    // Find if RkapWorkPlan already exists under this submission
+                    $rkapWorkPlan = RkapWorkPlan::where('rkap_submission_id', $submission->id)
+                        ->where('work_plan_id', $wp->id)
+                        ->where('activity_id', $act->id)
+                        ->first();
+
+                    if (!$rkapWorkPlan) {
+                        // Create RkapWorkPlan
+                        $rkapWorkPlan = RkapWorkPlan::create([
+                            'rkap_submission_id' => $submission->id,
+                            'work_plan_id'       => $wp->id,
+                            'activity_id'        => $act->id,
+                            'program_name'       => $act->title,
+                            'program_code'       => $act->code,
+                            'description'        => null,
+                            'output_target'      => null,
+                            'unit'               => null,
+                            'quantity'            => 1,
+                            'sort_order'         => $sortOrder++,
+                        ]);
+                    }
 
                     // Create budget items for each row in this group
                     foreach ($rows as $row) {

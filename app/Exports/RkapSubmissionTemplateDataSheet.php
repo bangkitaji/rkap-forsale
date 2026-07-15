@@ -24,6 +24,15 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
  */
 class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvents, ShouldAutoSize
 {
+    protected ?int $periodId;
+    protected ?int $bureauId;
+
+    public function __construct(?int $periodId = null, ?int $bureauId = null)
+    {
+        $this->periodId = $periodId;
+        $this->bureauId = $bureauId;
+    }
+
     public function title(): string
     {
         return 'Data Pengajuan';
@@ -31,6 +40,16 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
 
     public function array(): array
     {
+        $row1 = ['bureau_id', $this->bureauId];
+        $row2 = ['rkap_period_id', $this->periodId];
+        $row3 = [];
+
+        for ($i = 2; $i < 36; $i++) {
+            $row1[] = '';
+            $row2[] = '';
+            $row3[] = '';
+        }
+
         $headers = [
             'work_plan_code',
             'work_plan_name',
@@ -111,7 +130,7 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
             $sampleRow[] = 0;
         }
 
-        return [$headers, $hints, $sampleRow];
+        return [$row1, $row2, $row3, $headers, $hints, $sampleRow];
     }
 
     public function registerEvents(): array
@@ -122,8 +141,20 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                 $lastCol = 'AJ'; // Column AJ = co12 (36th column)
                 $totalCols = 36;
 
-                // Header row styling
-                $headerRange = "A1:{$lastCol}1";
+                // Style metadata rows
+                $sheet->getStyle('A1:B2')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['argb' => 'FF595959'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFF2F2F2'],
+                    ],
+                ]);
+
+                // Header row styling (row 4)
+                $headerRange = "A4:{$lastCol}4";
                 $sheet->getStyle($headerRange)->applyFromArray([
                     'font' => [
                         'bold' => true,
@@ -140,8 +171,8 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                     ],
                 ]);
 
-                // Hint row styling (row 2)
-                $hintRange = "A2:{$lastCol}2";
+                // Hint row styling (row 5)
+                $hintRange = "A5:{$lastCol}5";
                 $sheet->getStyle($hintRange)->applyFromArray([
                     'font' => [
                         'italic' => true,
@@ -154,8 +185,8 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                     ],
                 ]);
 
-                // Sample row styling (row 3)
-                $sampleRange = "A3:{$lastCol}3";
+                // Sample row styling (row 6)
+                $sampleRange = "A6:{$lastCol}6";
                 $sheet->getStyle($sampleRange)->applyFromArray([
                     'font' => [
                         'color' => ['argb' => 'FF4472C4'],
@@ -167,7 +198,7 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                 ]);
 
                 // Add border to data area
-                $dataRange = "A1:{$lastCol}3";
+                $dataRange = "A4:{$lastCol}6";
                 $sheet->getStyle($dataRange)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
@@ -180,7 +211,7 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                 // Color code monthly columns (M–X = col 13–24) with light green
                 $mStart = 'M';
                 $mEnd = 'X';
-                $sheet->getStyle("{$mStart}1:{$mEnd}1")->applyFromArray([
+                $sheet->getStyle("{$mStart}4:{$mEnd}4")->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['argb' => 'FF548235'],
@@ -190,7 +221,7 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                 // Color code cash out columns (Y–AJ = col 25–36) with light orange
                 $coStart = 'Y';
                 $coEnd = 'AJ';
-                $sheet->getStyle("{$coStart}1:{$coEnd}1")->applyFromArray([
+                $sheet->getStyle("{$coStart}4:{$coEnd}4")->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['argb' => 'FFBF8F00'],
@@ -200,19 +231,19 @@ class RkapSubmissionTemplateDataSheet implements FromArray, WithTitle, WithEvent
                 // Number format for currency columns
                 $currencyCols = ['K']; // unit_price
                 foreach ($currencyCols as $col) {
-                    $sheet->getStyle("{$col}3:{$col}1000")->getNumberFormat()
+                    $sheet->getStyle("{$col}6:{$col}1000")->getNumberFormat()
                         ->setFormatCode('#,##0');
                 }
 
                 // Number format for monthly and cash out columns
                 for ($c = 13; $c <= 36; $c++) {
                     $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
-                    $sheet->getStyle("{$colLetter}3:{$colLetter}1000")->getNumberFormat()
+                    $sheet->getStyle("{$colLetter}6:{$colLetter}1000")->getNumberFormat()
                         ->setFormatCode('#,##0');
                 }
 
-                // Freeze header rows
-                $sheet->freezePane('A3');
+                // Freeze header rows (freeze pane under row 5, so headers A4 and A5 are always frozen)
+                $sheet->freezePane('A6');
 
                 // Set specific column widths for the reference columns
                 $sheet->getColumnDimension('A')->setWidth(18); // work_plan_code

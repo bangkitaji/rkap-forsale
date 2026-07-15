@@ -15,10 +15,19 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
  */
 class RkapSubmissionTemplateExport implements WithMultipleSheets
 {
+    protected ?int $periodId;
+    protected ?int $bureauId;
+
+    public function __construct(?int $periodId = null, ?int $bureauId = null)
+    {
+        $this->periodId = $periodId;
+        $this->bureauId = $bureauId;
+    }
+
     public function sheets(): array
     {
         return [
-            'Data Pengajuan' => new RkapSubmissionTemplateDataSheet(),
+            'Data Pengajuan' => new RkapSubmissionTemplateDataSheet($this->periodId, $this->bureauId),
             'Referensi'      => new RkapSubmissionTemplateReferenceSheet(),
             'Petunjuk'       => new RkapSubmissionTemplateInstructionSheet(),
         ];

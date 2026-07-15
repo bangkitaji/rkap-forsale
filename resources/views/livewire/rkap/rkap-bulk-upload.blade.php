@@ -53,7 +53,7 @@
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0"><i class="bx bx-upload me-2 text-primary"></i>{{ __('Upload File Excel') }}</h5>
-      <a href="{{ route('rkap-submission-template-download') }}" class="btn btn-sm btn-outline-primary">
+      <a href="{{ route('rkap-submission-template-download', ['period_id' => $periodId]) }}" class="btn btn-sm btn-outline-primary">
         <i class="bx bx-download me-1"></i> {{ __('Download Template') }}
       </a>
     </div>

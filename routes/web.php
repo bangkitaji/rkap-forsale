@@ -78,9 +78,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
     Route::get('/submissions/bulk-upload/{periodId}', \App\Livewire\Rkap\RkapBulkUpload::class)->name('rkap-submissions-bulk-upload');
     Route::get('/submission-template/download', function () {
+      $periodId = request('period_id') ? (int) request('period_id') : null;
+      $bureauId = auth()->user()?->bureau_id;
       $filename = 'template_upload_rkap_' . now()->format('YmdHis') . '.xlsx';
       return \Maatwebsite\Excel\Facades\Excel::download(
-        new \App\Exports\RkapSubmissionTemplateExport(),
+        new \App\Exports\RkapSubmissionTemplateExport($periodId, $bureauId),
         $filename
       );
     })->name('rkap-submission-template-download');
