@@ -236,10 +236,13 @@ class RkapSubmissionList extends Component
 
         $submittedPeriodIds = [];
         $previousSubmissions = [];
+        $bureauSubmissions = collect();
         if ($user->bureau_id) {
-            $submittedPeriodIds = RkapSubmission::where('bureau_id', $user->bureau_id)
-                ->pluck('rkap_period_id')
-                ->toArray();
+            $bureauSubmissions = RkapSubmission::where('bureau_id', $user->bureau_id)
+                ->get()
+                ->keyBy('rkap_period_id');
+
+            $submittedPeriodIds = $bureauSubmissions->keys()->toArray();
 
             $previousSubmissions = RkapSubmission::with('period')
                 ->where('bureau_id', $user->bureau_id)
@@ -253,6 +256,7 @@ class RkapSubmissionList extends Component
             'activePeriods'       => $activePeriods,
             'stats'               => $stats,
             'submittedPeriodIds'  => $submittedPeriodIds,
+            'bureauSubmissions'   => $bureauSubmissions,
             'previousSubmissions' => $previousSubmissions,
             'prevDataMap'         => $prevDataMap,
         ])->layout('layouts.contentNavbarLayout');

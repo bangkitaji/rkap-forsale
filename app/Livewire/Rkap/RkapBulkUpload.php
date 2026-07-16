@@ -221,7 +221,7 @@ class RkapBulkUpload extends Component
             ->get();
         $activityMap = $activities->keyBy('code');
 
-        $coas = Coa::all()->keyBy('code');
+        $coas = Coa::with('coaCategory')->get()->keyBy('code');
 
         foreach ($rows as $idx => $row) {
             $rowNum = $row['_row_number'] ?? ($idx + 3);
@@ -316,7 +316,9 @@ class RkapBulkUpload extends Component
                 $this->importErrors[] = "{$prefix}: " . __('Total rencana kas keluar harus lebih besar dari 0.');
             }
 
-            if ($cashOutTotal - $totalItem > 0.01) {
+            $isRevenue = $coa && $coa->isRevenue();
+
+            if (!$isRevenue && ($cashOutTotal - $totalItem > 0.01)) {
                 $this->importErrors[] = "{$prefix}: " . __('Total rencana kas keluar (Rp :cashout) melebihi total item (Rp :total).', [
                     'cashout' => number_format($cashOutTotal, 0, ',', '.'),
                     'total'   => number_format($totalItem, 0, ',', '.'),
