@@ -30,7 +30,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary w-100">
-              <i class="bx bx-save me-1"></i> Simpan Pengaturan
+              <i class="bx bx-save me-1"></i> {{ __('Simpan Pengaturan') }}
             </button>
           </form>
         </div>
@@ -46,7 +46,7 @@
               <tr>
                 <th>Bulan Realisasi</th>
                 <th>Batas Pengisian</th>
-                <th class="text-center">Status</th>
+                <th class="text-center">{{ __('Status') }}</th>
               </tr>
             </thead>
             <tbody>

@@ -99,7 +99,7 @@ class UsersTab extends Component
 
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'User not found.');
+            session()->flash('error', __('User not found.'));
         }
     }
 
@@ -149,7 +149,7 @@ class UsersTab extends Component
 
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the user.');
+            session()->flash('error', __('An error occurred while saving the user.'));
         }
     }
 
@@ -166,9 +166,9 @@ class UsersTab extends Component
                 'performed_by' => auth()->id(),
             ]);
 
-            session()->flash('message', 'User deleted successfully.');
+            session()->flash('message', __('User deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete user.');
+            session()->flash('error', __('Unable to delete user.'));
         }
     }
 

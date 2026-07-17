@@ -110,15 +110,15 @@ class Analytics extends Controller
       'projection' => 0.0,
     ];
     $plSummary = [
-      'revenue' => array_merge($defaultSummaryItem, ['label' => 'Total Pendapatan']),
-      'direct_cost' => array_merge($defaultSummaryItem, ['label' => 'Total Beban Langsung']),
-      'gross_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba Kotor (Gross Profit)']),
-      'indirect_cost' => array_merge($defaultSummaryItem, ['label' => 'Total Beban Tidak Langsung']),
-      'operating_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba (Rugi) Usaha']),
-      'other_income' => array_merge($defaultSummaryItem, ['label' => 'Pendapatan Lain-lain (Other Income)']),
-      'other_expense' => array_merge($defaultSummaryItem, ['label' => 'Beban Lain-lain (Other Expense)']),
-      'net_profit' => array_merge($defaultSummaryItem, ['label' => 'Laba Bersih (Net Profit)']),
-      'ebitda' => array_merge($defaultSummaryItem, ['label' => 'EBITDA']),
+      'revenue' => array_merge($defaultSummaryItem, ['label' => __('Total Pendapatan')]),
+      'direct_cost' => array_merge($defaultSummaryItem, ['label' => __('Total Beban Langsung')]),
+      'gross_profit' => array_merge($defaultSummaryItem, ['label' => __('Laba Kotor (Gross Profit)')]),
+      'indirect_cost' => array_merge($defaultSummaryItem, ['label' => __('Total Beban Tidak Langsung')]),
+      'operating_profit' => array_merge($defaultSummaryItem, ['label' => __('Laba (Rugi) Usaha')]),
+      'other_income' => array_merge($defaultSummaryItem, ['label' => __('Pendapatan Lain-lain (Other Income)')]),
+      'other_expense' => array_merge($defaultSummaryItem, ['label' => __('Beban Lain-lain (Other Expense)')]),
+      'net_profit' => array_merge($defaultSummaryItem, ['label' => __('Laba Bersih (Net Profit)')]),
+      'ebitda' => array_merge($defaultSummaryItem, ['label' => __('EBITDA')]),
     ];
     $unmappedGroup = null;
 
@@ -877,55 +877,55 @@ class Analytics extends Controller
 
       $plSummary = [
         'revenue' => [
-          'label' => 'Total Pendapatan',
+          'label' => __('Total Pendapatan'),
           'budget' => $revenueBudget,
           'realization' => $revenueReal,
           'projection' => $revenueProj,
         ],
         'direct_cost' => [
-          'label' => 'Total Beban Langsung',
+          'label' => __('Total Beban Langsung'),
           'budget' => $directCostBudget,
           'realization' => $directCostReal,
           'projection' => $directCostProj,
         ],
         'gross_profit' => [
-          'label' => 'Laba Kotor (Gross Profit)',
+          'label' => __('Laba Kotor (Gross Profit)'),
           'budget' => $grossProfitBudget,
           'realization' => $grossProfitReal,
           'projection' => $grossProfitProj,
         ],
         'indirect_cost' => [
-          'label' => 'Total Beban Tidak Langsung',
+          'label' => __('Total Beban Tidak Langsung'),
           'budget' => $indirectCostBudget,
           'realization' => $indirectCostReal,
           'projection' => $indirectCostProj,
         ],
         'operating_profit' => [
-          'label' => 'Laba (Rugi) Usaha',
+          'label' => __('Laba (Rugi) Usaha'),
           'budget' => $operatingProfitBudget,
           'realization' => $operatingProfitReal,
           'projection' => $operatingProfitProj,
         ],
         'other_income' => [
-          'label' => 'Pendapatan Lain-lain (Other Income)',
+          'label' => __('Pendapatan Lain-lain (Other Income)'),
           'budget' => $otherBudget,
           'realization' => $otherReal,
           'projection' => $otherProj,
         ],
         'other_expense' => [
-          'label' => 'Beban Lain-lain (Other Expense)',
+          'label' => __('Beban Lain-lain (Other Expense)'),
           'budget' => $otherBudgetExpenses,
           'realization' => $otherRealExpenses,
           'projection' => $otherProjExpenses,
         ],
         'net_profit' => [
-          'label' => 'Laba Bersih (Net Profit)',
+          'label' => __('Laba Bersih (Net Profit)'),
           'budget' => $netProfitBudget,
           'realization' => $netProfitReal,
           'projection' => $netProfitProj,
         ],
         'ebitda' => [
-          'label' => 'EBITDA',
+          'label' => __('EBITDA'),
           'budget' => $ebitdaBudget,
           'realization' => $ebitdaReal,
           'projection' => $ebitdaProj,
@@ -1195,7 +1195,7 @@ class Analytics extends Controller
     }
 
     if ($user->isKepalaBiro()) {
-      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     $finalizedPeriods = RkapPeriod::whereIn('status', ['finalized', 'open'])
@@ -1356,7 +1356,7 @@ class Analytics extends Controller
     }
 
     if ($user->isKepalaBiro()) {
-      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     // Get all versions
@@ -1439,7 +1439,7 @@ class Analytics extends Controller
     }
 
     if ($user->isKepalaBiro()) {
-      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     $cashflowGroupId = (int) $request->query('cashflow_group_id');
@@ -1512,7 +1512,7 @@ class Analytics extends Controller
     }
 
     if ($user->isKepalaBiro()) {
-      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     $data = $this->getAnalyticsData($request);
@@ -1586,7 +1586,7 @@ class Analytics extends Controller
     }
 
     if ($user->isKepalaBiro()) {
-      abort(403, 'Anda tidak memiliki akses untuk melihat laporan ini.');
+      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     $differenceGroupId = (int) $request->query('difference_group_id');

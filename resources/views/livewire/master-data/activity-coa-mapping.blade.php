@@ -33,7 +33,7 @@
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
           <i class="bx bx-task text-primary fs-5"></i>
-          <strong class="fs-6">Pilih Kegiatan</strong>
+          <strong class="fs-6">{{ __('Pilih Kegiatan') }}</strong>
         </div>
         <div class="card-body p-3">
 
@@ -46,7 +46,7 @@
               type="text"
               class="form-control border-start-0 ps-0"
               wire:model.live.debounce.300ms="activitySearch"
-              placeholder="Cari kegiatan..."
+              placeholder="{{ __('Cari kegiatan...') }}"
               autocomplete="off">
             @if(!empty($activitySearch))
             <button class="btn btn-outline-secondary border" wire:click="$set('activitySearch', '')" type="button">
@@ -106,7 +106,7 @@
             @empty
             <div class="text-center text-muted py-4">
               <i class="bx bx-search-alt bx-lg d-block mb-2 opacity-50"></i>
-              <small>Tidak ada kegiatan ditemukan.</small>
+              <small>{{ __('Tidak ada kegiatan ditemukan.') }}</small>
             </div>
             @endforelse
           </div>
@@ -126,7 +126,7 @@
           <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-2">
               <i class="bx bx-link-alt text-primary fs-5"></i>
-              <strong class="fs-6">Pemetaan COA</strong>
+              <strong class="fs-6">{{ __('Pemetaan COA') }}</strong>
               @if($activityId)
               <span class="badge bg-primary rounded-pill">{{ count($selectedCoaIds) }} dipilih</span>
               @endif
@@ -149,7 +149,7 @@
                 @click="isDirty = false"
                 class="btn btn-primary btn-sm">
                 <span wire:loading.remove wire:target="save">
-                  <i class="bx bx-save me-1"></i> Simpan Mapping
+                  <i class="bx bx-save me-1"></i> {{ __('Simpan Mapping') }}
                 </span>
                 <span wire:loading wire:target="save">
                   <span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...
@@ -165,8 +165,8 @@
           {{-- Empty state --}}
           <div class="text-center py-5 text-muted">
             <i class="bx bx-left-arrow-alt bx-lg d-block mb-3 opacity-40"></i>
-            <p class="mb-1 fw-semibold">Pilih kegiatan terlebih dahulu</p>
-            <small>Klik salah satu kegiatan di panel kiri untuk mulai mengatur pemetaan COA.</small>
+            <p class="mb-1 fw-semibold">{{ __('Pilih kegiatan terlebih dahulu') }}</p>
+            <small>{{ __('Klik salah satu kegiatan di panel kiri untuk mulai mengatur pemetaan COA.') }}</small>
           </div>
           @else
 
@@ -179,7 +179,7 @@
               type="text"
               class="form-control border-start-0 ps-0"
               wire:model.live.debounce.300ms="coaSearch"
-              placeholder="Cari COA (kode / judul / deskripsi)...">
+              placeholder="{{ __('Cari COA (kode / judul / deskripsi)...') }}">
             @if(!empty($coaSearch))
             <button class="btn btn-outline-secondary border" wire:click="$set('coaSearch', '')" type="button">
               <i class="bx bx-x"></i>
@@ -266,7 +266,7 @@
           @if($mappedCoas->isEmpty() && $coas->isEmpty())
           <div class="text-center text-muted py-4">
             <i class="bx bx-search-alt bx-lg d-block mb-2 opacity-50"></i>
-            <small>Tidak ada COA ditemukan.</small>
+            <small>{{ __('Tidak ada COA ditemukan.') }}</small>
           </div>
           @endif
 
@@ -286,11 +286,11 @@
           x-transition:enter-start="opacity-0 translate-y-2"
           x-transition:enter-end="opacity-100 translate-y-0">
           <span class="text-warning small">
-            <i class="bx bx-error-circle me-1"></i> Ada perubahan yang belum disimpan.
+            <i class="bx bx-error-circle me-1"></i> {{ __('Ada perubahan yang belum disimpan.') }}
           </span>
           <button wire:click="save" @click="isDirty = false" class="btn btn-primary btn-sm">
             <span wire:loading.remove wire:target="save">
-              <i class="bx bx-save me-1"></i> Simpan Sekarang
+              <i class="bx bx-save me-1"></i> {{ __('Simpan Sekarang') }}
             </span>
             <span wire:loading wire:target="save">
               <span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...
@@ -324,7 +324,7 @@
               </a>
             </p>
             <div class="mb-3">
-              <label for="uploadedFile" class="form-label">File Excel</label>
+              <label for="uploadedFile" class="form-label">{{ __('File Excel') }}</label>
               <input type="file" id="uploadedFile"
                 class="form-control @error('uploadedFile') is-invalid @enderror"
                 wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
@@ -337,7 +337,7 @@
             @endif
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">Batal</button>
+            <button type="button" class="btn btn-label-secondary" wire:click="closeUploadModal()">{{ __('Batal') }}</button>
             <button type="submit" class="btn btn-primary" @if($uploadedFile===null) disabled @endif>
               <i class="bx bx-upload me-1"></i> Import
             </button>

@@ -46,7 +46,7 @@ class RkapVersionHistory extends Component
 
         $previous = $this->submission->versions->firstWhere('version_number', $this->selectedVersionNumber - 1);
         if (!$previous) {
-            session()->flash('info', 'Tidak ada versi sebelumnya untuk dibandingkan.');
+            session()->flash('info', __('Tidak ada versi sebelumnya untuk dibandingkan.'));
             return;
         }
 

@@ -74,7 +74,7 @@ class RkapSubmissionCompilation extends Component
             !$user->can('rkap.compilation.dir') &&
             !$user->can('rkap.compilation.all')
         ) {
-            session()->flash('error', 'Anda tidak memiliki akses untuk mengekspor kompilasi.');
+            session()->flash('error', __('Anda tidak memiliki akses untuk mengekspor kompilasi.'));
             return null;
         }
 
@@ -83,7 +83,7 @@ class RkapSubmissionCompilation extends Component
             ->get();
 
         if ($submissions->isEmpty()) {
-            session()->flash('error', 'Tidak ada data kompilasi untuk diekspor.');
+            session()->flash('error', __('Tidak ada data kompilasi untuk diekspor.'));
             return null;
         }
 

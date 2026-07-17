@@ -55,8 +55,8 @@
                             Budgeting
                         </div> -->
                     </div>
-                    <h2 class="login-card__heading text-center">Selamat datang!</h2>
-                    <p class="login-card__sub text-center">Silakan masuk ke akun Anda untuk melanjutkan.</p>
+                    <h2 class="login-card__heading text-center">{{ __('Selamat datang!') }}</h2>
+                    <p class="login-card__sub text-center">{{ __('Silakan masuk ke akun Anda untuk melanjutkan.') }}</p>
 
                     <div class="login-divider"></div>
 
@@ -72,7 +72,7 @@
 
                         {{-- Email --}}
                         <div class="form-group-rkap">
-                            <label for="email">Alamat Email</label>
+                            <label for="email">{{ __('Alamat Email') }}</label>
                             <div class="input-wrapper">
                                 <span class="input-icon">
                                     <i class="bx bx-envelope"></i>
@@ -82,7 +82,7 @@
                                     id="email"
                                     wire:model="email"
                                     class="form-input-rkap @error('email') is-error @enderror"
-                                    placeholder="nama@kcic.co.id"
+                                    placeholder="{{ __('nama@kcic.co.id') }}"
                                     autofocus
                                     autocomplete="email" />
                             </div>

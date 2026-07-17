@@ -143,10 +143,10 @@
                 </div>
                 <form wire:submit.prevent="importExcel">
                     <div class="modal-body">
-                        <p class="mb-3">Upload an Excel file to import work plans. <a href="{{ route('download-workplan-template') }}" class="btn btn-sm btn-link p-0">Download template</a></p>
+                        <p class="mb-3">Upload an Excel file to import work plans. <a href="{{ route('download-workplan-template') }}" class="btn btn-sm btn-link p-0">{{ __('Download template') }}</a></p>
 
                         <div class="mb-3">
-                            <label for="uploadedFile" class="form-label">Excel File</label>
+                            <label for="uploadedFile" class="form-label">{{ __('Excel File') }}</label>
                             <input type="file" id="uploadedFile" class="form-control @error('uploadedFile') is-invalid @enderror" wire:model="uploadedFile" accept=".xlsx,.xls,.csv">
                             @error('uploadedFile') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>

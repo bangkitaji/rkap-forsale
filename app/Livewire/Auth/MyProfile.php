@@ -62,7 +62,7 @@ class MyProfile extends Component
             'email' => $this->email,
         ]);
 
-        session()->flash('message_profile', 'Profil berhasil diperbarui.');
+        session()->flash('message_profile', __('Profil berhasil diperbarui.'));
     }
 
     public function savePassword()
@@ -75,7 +75,7 @@ class MyProfile extends Component
         ]);
 
         if (!Hash::check($this->current_password, $user->password)) {
-            $this->addError('current_password', 'Password saat ini tidak cocok.');
+            $this->addError('current_password', __('Password saat ini tidak cocok.'));
             return;
         }
 
@@ -86,7 +86,7 @@ class MyProfile extends Component
 
         $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
 
-        session()->flash('message_security', 'Password berhasil diperbarui.');
+        session()->flash('message_security', __('Password berhasil diperbarui.'));
     }
 
     public function render()

@@ -1,18 +1,18 @@
 @extends('layouts/contentNavbarLayout')
 
-@section('title', 'Laporan - Cash Flow')
+@section('title', __('Laporan - Cash Flow'))
 
 @section('content')
 
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div>
-    <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Laporan Cash Flow</h4>
+    <h4 class="mb-1"><span class="text-muted fw-light">{{ __('RKAP') }} /</span> {{ __('Laporan Cash Flow') }}</h4>
     @if ($activePeriod)
-    <p class="text-muted mb-0">Menampilkan Laporan Cash Flow untuk periode: <strong>{{ $activePeriod->title }}</strong>
+    <p class="text-muted mb-0">{{ __('Menampilkan Laporan Cash Flow untuk periode:') }} <strong>{{ $activePeriod->title }}</strong>
     </p>
     @else
     <div class="alert alert-warning mt-2 mb-0 py-2">
-      <i class="bx bx-info-circle me-1"></i> Belum ada periode RKAP yang aktif.
+      <i class="bx bx-info-circle me-1"></i> {{ __('Belum ada periode RKAP yang aktif.') }}
     </div>
     @endif
   </div>
@@ -21,7 +21,7 @@
   <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
     <label for="periodSelect" class="text-muted fw-semibold mb-0 text-nowrap d-flex align-items-center gap-1 rkap-font-09">
       <i class="bx bx-calendar text-primary fs-4"></i>
-      <span>Pilih Periode RKAP:</span>
+      <span>{{ __('Pilih Periode RKAP:') }}</span>
     </label>
     <form action="{{ route('analytics-cashflow') }}" method="GET" id="periodForm" class="m-0">
       <select name="period_id" id="periodSelect"
@@ -29,7 +29,7 @@
         onchange="this.form.submit()">
         @if ($activePeriod && !$finalizedPeriods->contains('id', $activePeriod->id))
         <option value="" disabled selected>
-          -- Pilih Periode Finalized (Saat ini: {{ $activePeriod->title }}) --
+          -- {{ __('Pilih Periode Finalized') }} ({{ __('Saat ini') }}: {{ $activePeriod->title }}) --
         </option>
         @endif
         @foreach ($finalizedPeriods as $p)
@@ -48,8 +48,8 @@
 <div class="card text-center py-5">
   <div class="card-body">
     <i class="bx bx-lock-alt bx-lg text-warning mb-3"></i>
-    <h5>Akses Dibatasi</h5>
-    <p class="text-muted mb-0">Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Cash Flow.</p>
+    <h5>{{ __('Akses Dibatasi') }}</h5>
+    <p class="text-muted mb-0">{{ __('Kepala Departemen tidak memiliki hak akses untuk melihat Laporan Cash Flow.') }}</p>
   </div>
 </div>
 @else
@@ -58,8 +58,8 @@
   <div class="col-12">
     <div class="card">
       <div class="card-header border-bottom py-3">
-        <h5 class="card-title mb-0">Ringkasan Cash Flow (Arus Kas)</h5>
-        <small class="text-muted">Ikhtisar Penerimaan & Pengeluaran Kas Periode ini</small>
+        <h5 class="card-title mb-0">{{ __('Ringkasan Cash Flow (Arus Kas)') }}</h5>
+        <small class="text-muted">{{ __('Ikhtisar Penerimaan & Pengeluaran Kas Periode ini') }}</small>
       </div>
       <div class="card-body pt-3">
         <div class="row g-4">
@@ -71,8 +71,8 @@
                   <i class="bx bx-trending-up fs-4"></i>
                 </div>
                 <div>
-                  <h6 class="mb-0 fw-semibold">Penerimaan Kas (Inflow)</h6>
-                  <small class="text-muted">Total Cash In</small>
+                  <h6 class="mb-0 fw-semibold">{{ __('Penerimaan Kas (Inflow)') }}</h6>
+                  <small class="text-muted">{{ __('Total Cash In') }}</small>
                 </div>
               </div>
               <div class="text-end">
@@ -90,8 +90,8 @@
                   <i class="bx bx-trending-down fs-4"></i>
                 </div>
                 <div>
-                  <h6 class="mb-0 fw-semibold">Pengeluaran Kas (Outflow)</h6>
-                  <small class="text-muted">Total Cash Out</small>
+                  <h6 class="mb-0 fw-semibold">{{ __('Pengeluaran Kas (Outflow)') }}</h6>
+                  <small class="text-muted">{{ __('Total Cash Out') }}</small>
                 </div>
               </div>
               <div class="text-end">
@@ -112,8 +112,8 @@
                   <i class="bx bx-wallet fs-4"></i>
                 </div>
                 <div>
-                  <h6 class="mb-0 fw-bold text-{{ $isNetPositive ? 'primary' : 'warning' }}">Sisa Kas (Net Cash Flow)</h6>
-                  <small class="text-muted">Net Cash Flow</small>
+                  <h6 class="mb-0 fw-bold text-{{ $isNetPositive ? 'primary' : 'warning' }}">{{ __('Sisa Kas (Net Cash Flow)') }}</h6>
+                  <small class="text-muted">{{ __('Net Cash Flow') }}</small>
                 </div>
               </div>
               <div class="text-end">
@@ -132,26 +132,26 @@
     <div class="card h-100">
       <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-          <h5 class="card-title mb-0">Rincian Laporan Cash Flow (Arus Kas)</h5>
-          <small class="text-muted">Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori Cash Flow</small>
+          <h5 class="card-title mb-0">{{ __('Rincian Laporan Cash Flow (Arus Kas)') }}</h5>
+          <small class="text-muted">{{ __('Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori Cash Flow') }}</small>
         </div>
       </div>
       <div class="table-responsive text-nowrap">
         <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
           <thead>
             <tr class="table-light">
-              <th>Kategori / Golongan Cash Flow</th>
-              <th class="text-end">Anggaran (Budget)</th>
-              <th class="text-end">Realisasi YTD</th>
-              <th class="text-end">Proyeksi (Outlook)</th>
-              <th class="text-end">Selisih (Variance)</th>
+              <th>{{ __('Kategori / Golongan Cash Flow') }}</th>
+              <th class="text-end">{{ __('Anggaran (Budget)') }}</th>
+              <th class="text-end">{{ __('Realisasi YTD') }}</th>
+              <th class="text-end">{{ __('Proyeksi (Outlook)') }}</th>
+              <th class="text-end">{{ __('Selisih (Variance)') }}</th>
             </tr>
           </thead>
           <tbody>
             <!-- Group Header 1: Penerimaan Kas -->
             <tr class="table-light fw-bold text-uppercase rkap-ls-05">
               <td colspan="5">
-                <i class="bx bx-plus-circle me-2 text-success"></i>Arus Kas Masuk (Penerimaan Kas)
+                <i class="bx bx-plus-circle me-2 text-success"></i>{{ __('Arus Kas Masuk (Penerimaan Kas)') }}
               </td>
             </tr>
 
@@ -197,7 +197,7 @@
             @endphp
             <tr class="fw-semibold bg-lighter">
               <td class="ps-3 text-secondary">
-                Subtotal Arus Kas Masuk
+                {{ __('Subtotal Arus Kas Masuk') }}
               </td>
               <td class="text-end font-monospace">Rp {{ number_format($inflowBudget, 0, ',', '.') }}</td>
               <td class="text-end font-monospace text-success">Rp {{ number_format($inflowReal, 0, ',', '.') }}</td>
@@ -216,7 +216,7 @@
             <!-- Group Header 2: Pengeluaran Kas -->
             <tr class="table-light fw-bold text-uppercase rkap-ls-05">
               <td colspan="5">
-                <i class="bx bx-minus-circle me-2 text-danger"></i>Arus Kas Keluar (Pengeluaran Kas)
+                <i class="bx bx-minus-circle me-2 text-danger"></i>{{ __('Arus Kas Keluar (Pengeluaran Kas)') }}
               </td>
             </tr>
 
@@ -262,7 +262,7 @@
             @endphp
             <tr class="fw-semibold bg-lighter">
               <td class="ps-3 text-secondary">
-                Subtotal Arus Kas Keluar
+                {{ __('Subtotal Arus Kas Keluar') }}
               </td>
               <td class="text-end font-monospace">Rp {{ number_format($outflowBudget, 0, ',', '.') }}</td>
               <td class="text-end font-monospace text-success">Rp {{ number_format($outflowReal, 0, ',', '.') }}</td>
@@ -313,8 +313,8 @@
 <div class="card py-5 text-center">
   <div class="card-body">
     <i class="bx bx-error-circle bx-lg text-warning mb-3"></i>
-    <h5>Belum Ada Data RKAP Aktif</h5>
-    <p class="text-muted">Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.</p>
+    <h5>{{ __('Belum Ada Data RKAP Aktif') }}</h5>
+    <p class="text-muted">{{ __('Sistem tidak menemukan periode RKAP yang aktif untuk divisualisasikan.') }}</p>
   </div>
 </div>
 @endif
@@ -327,7 +327,7 @@
       <div class="modal-header d-flex align-items-center text-white rkap-bg-kcic-red">
         <h5 class="modal-title d-flex align-items-center text-white mb-4 rkap-text-white" id="cashflowGroupDetailModalLabel">
           <i class="bx bx-detail me-2 fs-4 text-white rkap-text-white"></i>
-          <span id="cashflowGroupDetailTitle" class="text-white rkap-text-white">Detail Cash Flow</span>
+          <span id="cashflowGroupDetailTitle" class="text-white rkap-text-white">{{ __('Detail Cash Flow') }}</span>
         </h5>
         <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal"
           aria-label="Tutup"></button>
@@ -336,31 +336,31 @@
       <div class="modal-body p-0">
         <div id="cashflowGroupDetailLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0">Memuat data...</p>
+          <p class="text-muted mt-2 mb-0">{{ __('Memuat data...') }}</p>
         </div>
         <div id="cashflowGroupDetailError" class="alert alert-warning m-3 d-none">
-          <i class="bx bx-error-circle me-1"></i> Gagal memuat data. Silakan coba lagi.
+          <i class="bx bx-error-circle me-1"></i> {{ __('Gagal memuat data. Silakan coba lagi.') }}
         </div>
         <div id="cashflowGroupDetailTableWrap" class="d-none">
           <table class="table table-hover table-sm table-bordered mb-0 align-middle rkap-font-075">
             <thead class="table-primary">
               <tr>
-                <th class="ps-3 rkap-min-w-220">COA</th>
-                <th class="rkap-min-w-220">Kegiatan</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Anggaran</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Realisasi YTD</th>
-                <th class="text-end text-nowrap rkap-min-w-140">Proyeksi</th>
+                <th class="ps-3 rkap-min-w-220">{{ __('COA') }}</th>
+                <th class="rkap-min-w-220">{{ __('Kegiatan') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Anggaran') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Realisasi YTD') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Proyeksi') }}</th>
               </tr>
             </thead>
             <tbody id="cashflowGroupDetailTbody"></tbody>
             <tfoot id="cashflowGroupDetailTfoot" class="table-light fw-semibold"></tfoot>
           </table>
         </div>
-        <p id="cashflowGroupDetailEmpty" class="text-center text-muted py-4 d-none">Tidak ada data untuk ditampilkan.</p>
+        <p id="cashflowGroupDetailEmpty" class="text-center text-muted py-4 d-none">{{ __('Tidak ada data untuk ditampilkan.') }}</p>
       </div>
       <hr>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Tutup') }}</button>
       </div>
     </div>
   </div>
@@ -457,7 +457,7 @@
             detailTbody.innerHTML = tbodyHtml;
             detailTfoot.innerHTML = `
                     <tr class="bg-opacity-75">
-                        <td colspan="2" class="ps-3 fw-bold">TOTAL</td>
+                        <td colspan="2" class="ps-3 fw-bold">{{ __('TOTAL') }}</td>
                         <td class="text-end font-monospace fw-bold text-nowrap">${formatRp(totalBudget)}</td>
                         <td class="text-end font-monospace text-success fw-bold text-nowrap">${formatRp(totalReal)}</td>
                         <td class="text-end font-monospace text-warning fw-bold text-nowrap">${formatRp(totalProj)}</td>

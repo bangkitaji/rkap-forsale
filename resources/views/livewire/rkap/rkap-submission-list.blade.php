@@ -45,7 +45,7 @@
           </div>
           <div>
             <div class="fw-bold fs-4">{{ $stats['total'] }}</div>
-            <div class="text-muted small">Total Pengajuan</div>
+            <div class="text-muted small">{{ __('Total Pengajuan') }}</div>
           </div>
         </div>
       </div>
@@ -58,7 +58,7 @@
           </div>
           <div>
             <div class="fw-bold fs-4">{{ $stats['pending'] }}</div>
-            <div class="text-muted small">Menunggu Review</div>
+            <div class="text-muted small">{{ __('Menunggu Review') }}</div>
           </div>
         </div>
       </div>
@@ -71,7 +71,7 @@
           </div>
           <div>
             <div class="fw-bold fs-4">{{ $stats['revision'] }}</div>
-            <div class="text-muted small">Perlu Revisi</div>
+            <div class="text-muted small">{{ __('Perlu Revisi') }}</div>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
           </div>
           <div>
             <div class="fw-bold fs-4">{{ $stats['approved'] }}</div>
-            <div class="text-muted small">Disetujui</div>
+            <div class="text-muted small">{{ __('Disetujui') }}</div>
           </div>
         </div>
       </div>
@@ -106,7 +106,7 @@
         <div class="col-md-4">
           <div class="input-group">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" class="form-control" placeholder="Cari biro (nama/kode) atau periode..."
+            <input type="text" class="form-control" placeholder="{{ __('Cari biro (nama/kode) atau periode...') }}"
               wire:model.live.debounce.300ms="search">
           </div>
         </div>
@@ -146,9 +146,9 @@
           <tr>
             <th>Biro</th>
             <th>Periode (Versi)</th>
-            <th class="text-end">Total Anggaran</th>
-            <th class="text-center">Status</th>
-            <th class="text-center">Diperbarui</th>
+            <th class="text-end">{{ __('Total Anggaran') }}</th>
+            <th class="text-center">{{ __('Status') }}</th>
+            <th class="text-center">{{ __('Diperbarui') }}</th>
             <th class="text-center">Aksi</th>
           </tr>
         </thead>
@@ -174,31 +174,31 @@
                   @php
                   $prev = $prevDataMap[$submission->id];
                   @endphp
-                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                     ({{ $prev['period_title'] }})
                   </div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                       <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prev['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                       <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prev['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                       <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prev['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
                   </div>
                   @else
-                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                   @endif
                 </span>
               </span>
@@ -269,7 +269,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bx bx-calendar-plus me-2"></i>Pilih Periode RKAP</h5>
+          <h5 class="modal-title"><i class="bx bx-calendar-plus me-2"></i>{{ __('Pilih Periode RKAP') }}</h5>
           <button type="button" class="btn-close" wire:click="closePeriodSelector"></button>
         </div>
         <div class="modal-body">
@@ -285,7 +285,7 @@
               <div>
                 <strong>{{ $period->title }}</strong>
                 <div class="small text-muted">{{ $period->year }} &bull; <span
-                    class="badge bg-label-danger">Sudah Diinput</span></div>
+                    class="badge bg-label-danger">{{ __('Sudah Diinput') }}</span></div>
               </div>
               <i class="bx bx-check-double text-success"></i>
             </div>
@@ -341,12 +341,12 @@
           <div class="text-center text-muted py-4">
             <i class="bx bx-calendar-x bx-lg d-block mb-2"></i>
             Tidak ada periode aktif.<br>
-            <small>Hubungi admin untuk mengaktifkan periode RKAP.</small>
+            <small>{{ __('Hubungi admin untuk mengaktifkan periode RKAP.') }}</small>
           </div>
           @endforelse
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-label-secondary" wire:click="closePeriodSelector">Batal</button>
+          <button type="button" class="btn btn-label-secondary" wire:click="closePeriodSelector">{{ __('Batal') }}</button>
         </div>
       </div>
     </div>
@@ -360,14 +360,14 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bx bx-copy me-2"></i>Duplikasi Pengajuan RKAP</h5>
+          <h5 class="modal-title"><i class="bx bx-copy me-2"></i>{{ __('Duplikasi Pengajuan RKAP') }}</h5>
           <button type="button" class="btn-close" wire:click="closeDuplicateModal"></button>
         </div>
         <div class="modal-body">
-          <p class="text-muted small">Pilih pengajuan sebelumnya yang ingin diduplikasi ke periode baru.</p>
+          <p class="text-muted small">{{ __('Pilih pengajuan sebelumnya yang ingin diduplikasi ke periode baru.') }}</p>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Pilih Pengajuan Sumber</label>
+            <label class="form-label fw-semibold">{{ __('Pilih Pengajuan Sumber') }}</label>
             <select class="form-select" wire:model.live="selectedSourceSubmissionId">
               <option value="">-- Pilih Pengajuan Sumber --</option>
               @foreach ($previousSubmissions as $prev)
@@ -385,7 +385,7 @@
           @endphp
           @if ($selectedSource)
           <div class="alert alert-info py-2 px-3 small mb-0">
-            <div class="fw-semibold">Detail Pengajuan Sumber:</div>
+            <div class="fw-semibold">{{ __('Detail Pengajuan Sumber:') }}</div>
             <ul class="mb-0 ps-3 mt-1">
               <li>Versi: v{{ $selectedSource->current_version }}</li>
               <li>Total Rencana Kerja: {{ $selectedSource->workPlans()->count() }}</li>
@@ -396,7 +396,7 @@
           @endif
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-label-secondary" wire:click="closeDuplicateModal">Batal</button>
+          <button type="button" class="btn btn-label-secondary" wire:click="closeDuplicateModal">{{ __('Batal') }}</button>
           <button type="button" class="btn btn-primary" wire:click="duplicateSubmission"
             @if (!$selectedSourceSubmissionId) disabled @endif>
             <i class="bx bx-copy me-1"></i> Mulai Duplikasi

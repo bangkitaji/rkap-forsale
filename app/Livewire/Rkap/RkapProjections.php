@@ -49,7 +49,7 @@ class RkapProjections extends Component
         $user = Auth::user();
 
         if (!$user || !$user->can('rkap.projection.view')) {
-            abort(403, 'Anda tidak memiliki akses untuk halaman ini.');
+            abort(403, __('Anda tidak memiliki akses untuk halaman ini.'));
         }
 
         // 1. Resolve period for current year with status = finalized
@@ -202,7 +202,7 @@ class RkapProjections extends Component
     public function selectBudgetItem(int $id): void
     {
         if (!Auth::user()->can('rkap.projection.input')) {
-            abort(403, 'Anda tidak memiliki akses untuk mengedit proyeksi.');
+            abort(403, __('Anda tidak memiliki akses untuk mengedit proyeksi.'));
         }
 
         $this->selectedBudgetItemId = $id;
@@ -265,7 +265,7 @@ class RkapProjections extends Component
         }
 
         if ($value !== '' && $value !== null && !is_numeric($value)) {
-            $this->addError('yearlyProjection', 'Nilai proyeksi tahunan harus berupa angka.');
+            $this->addError('yearlyProjection', __('Nilai proyeksi tahunan harus berupa angka.'));
             return;
         } else {
             $this->resetErrorBag('yearlyProjection');
@@ -349,7 +349,7 @@ class RkapProjections extends Component
         $user = Auth::user();
 
         if (!$user || !$user->can('rkap.projection.input')) {
-            session()->flash('error', 'Anda tidak memiliki akses untuk menyimpan proyeksi.');
+            session()->flash('error', __('Anda tidak memiliki akses untuk menyimpan proyeksi.'));
             return;
         }
 
@@ -360,7 +360,7 @@ class RkapProjections extends Component
             ->first();
 
         if (!$validPeriod || $this->activePeriodId !== $validPeriod->id) {
-            session()->flash('error', 'Proyeksi hanya dapat diinput untuk periode RKAP tahun ini (' . $currentYear . ') dengan status Finalized.');
+            session()->flash('error', __('Proyeksi hanya dapat diinput untuk periode RKAP tahun ini (') . $currentYear . ') dengan status Finalized.');
             return;
         }
 
@@ -383,7 +383,7 @@ class RkapProjections extends Component
                 $existingYearly = (float)$selectedItem->projection;
                 $yearlyVal = $this->yearlyProjection !== '' && $this->yearlyProjection !== null ? (float)$this->yearlyProjection : 0.00;
                 if (abs($yearlyVal - $existingYearly) > 0.01) {
-                    $this->addError('yearlyProjection', 'Tidak dapat mengubah proyeksi tahunan karena terdapat bulan pada periode ini yang telah ditutup.');
+                    $this->addError('yearlyProjection', __('Tidak dapat mengubah proyeksi tahunan karena terdapat bulan pada periode ini yang telah ditutup.'));
                     return;
                 }
             }
@@ -487,7 +487,7 @@ class RkapProjections extends Component
         if ($this->activePeriodId) {
             AnalyticsCacheService::flushPeriod($this->activePeriodId);
         }
-        session()->flash('message', 'Proyeksi RKAP berhasil disimpan.');
+        session()->flash('message', __('Proyeksi RKAP berhasil disimpan.'));
         $this->dispatch('projections-saved');
     }
 

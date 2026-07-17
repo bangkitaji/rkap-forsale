@@ -83,9 +83,9 @@ class BureausTab extends Component
     {
         try {
             Bureau::findOrFail($id)->delete();
-            session()->flash('message', 'Biro berhasil dihapus.');
+            session()->flash('message', __('Biro berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus biro. Pastikan tidak ada data terkait.');
+            session()->flash('error', __('Gagal menghapus biro. Pastikan tidak ada data terkait.'));
         }
     }
 

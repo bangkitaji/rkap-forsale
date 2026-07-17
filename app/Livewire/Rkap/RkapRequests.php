@@ -110,7 +110,7 @@ class RkapRequests extends Component
                 'requested_by_bureau_id' => $user->bureau_id,
             ]);
 
-            session()->flash('message', 'Usulan Program Kerja berhasil diajukan.');
+            session()->flash('message', __('Usulan Program Kerja berhasil diajukan.'));
         } else {
             $this->validate([
                 'actWorkPlanId' => 'required|integer|exists:work_plans,id',
@@ -130,7 +130,7 @@ class RkapRequests extends Component
                 'requested_by_bureau_id' => $user->bureau_id,
             ]);
 
-            session()->flash('message', 'Usulan Kegiatan berhasil diajukan.');
+            session()->flash('message', __('Usulan Kegiatan berhasil diajukan.'));
         }
 
         $this->closeRequestModal();
@@ -139,7 +139,7 @@ class RkapRequests extends Component
     public function openApproveModal(string $type, int $id): void
     {
         if (!Auth::user()->can('masterdata.request.approve')) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('Unauthorized action.'));
         }
 
         $this->approveType = $type;
@@ -174,7 +174,7 @@ class RkapRequests extends Component
     public function confirmApprove(): void
     {
         if (!Auth::user()->can('masterdata.request.approve')) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('Unauthorized action.'));
         }
 
         if ($this->approveType === 'work_plan') {
@@ -223,7 +223,7 @@ class RkapRequests extends Component
     public function openRejectModal(string $type, int $id): void
     {
         if (!Auth::user()->can('masterdata.request.approve')) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('Unauthorized action.'));
         }
 
         $this->rejectType = $type;
@@ -243,7 +243,7 @@ class RkapRequests extends Component
     public function confirmReject(): void
     {
         if (!Auth::user()->can('masterdata.request.approve')) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('Unauthorized action.'));
         }
 
         $this->validate([

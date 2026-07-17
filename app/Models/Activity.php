@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class Activity extends Model
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['work_plan_id', 'code', 'title', 'description', 'approval_status', 'rejection_note', 'requested_by_bureau_id'];
+    protected $fillable = ['work_plan_id', 'code', 'title', 'title_en', 'description', 'description_en', 'approval_status', 'rejection_note', 'requested_by_bureau_id'];
 
     public function workPlan(): BelongsTo
     {

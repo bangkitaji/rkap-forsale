@@ -1,16 +1,16 @@
 <div x-data="{ isDirty: false, isSubmitting: false, showToast: false, toastMessage: '', toastType: 'success' }" @input="isDirty = true" @change="isDirty = true"
-  @form-saved.window="toastMessage = $event.detail.message || 'Draf RKAP berhasil disimpan.'; toastType = 'success'; showToast = true; isDirty = false; setTimeout(() => showToast = false, 5000)"
-  @work-plan-duplicate-rejected.window="toastMessage = 'Program Kerja ini sudah dipilih pada kartu lain. Silakan pilih Program Kerja yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
-  @activity-duplicate-rejected.window="toastMessage = 'Kegiatan ini sudah dipilih di baris lain dalam Program Kerja yang sama. Silakan pilih kegiatan yang berbeda.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
-  @coa-change-locked.window="toastMessage = 'COA yang sudah termapping tidak dapat diubah oleh Kepala Biro.'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
-  @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = 'Ada perubahan yang belum disimpan.'; return 'Ada perubahan yang belum disimpan.'; }">
+  @form-saved.window="toastMessage = $event.detail.message || '{{ __('Draf RKAP berhasil disimpan.') }}'; toastType = 'success'; showToast = true; isDirty = false; setTimeout(() => showToast = false, 5000)"
+  @work-plan-duplicate-rejected.window="toastMessage = '{{ __('Program Kerja ini sudah dipilih pada kartu lain. Silakan pilih Program Kerja yang berbeda.') }}'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
+  @activity-duplicate-rejected.window="toastMessage = '{{ __('Kegiatan ini sudah dipilih di baris lain dalam Program Kerja yang sama. Silakan pilih kegiatan yang berbeda.') }}'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
+  @coa-change-locked.window="toastMessage = '{{ __('COA yang sudah termapping tidak dapat diubah oleh Kepala Biro.') }}'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
+  @beforeunload.window="if(isDirty && !isSubmitting) { $event.returnValue = '{{ __('Ada perubahan yang belum disimpan.') }}'; return '{{ __('Ada perubahan yang belum disimpan.') }}'; }">
   <div class="py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0">
         <span class="text-muted fw-light">RKAP /
-          <a href="{{ route('rkap-submissions') }}" class="text-muted text-decoration-none">Pengajuan</a> /
+          <a href="{{ route('rkap-submissions') }}" class="text-muted text-decoration-none">{{ __('Pengajuan') }}</a> /
         </span>
-        {{ $submissionId ? 'Edit RKAP' : 'Buat RKAP' }}
+        {{ $submissionId ? __('Edit RKAP') : __('Buat RKAP') }}
       </h4>
       <div class="text-muted small">
         <i class="bx bx-calendar me-1"></i> {{ $period->title ?? '' }}
@@ -35,7 +35,7 @@
       x-cloak>
       <div class="toast-header text-white" :class="'bg-' + toastType">
         <i class="bx me-2 text-white" :class="toastType === 'success' ? 'bx-check-circle' : 'bx-info-circle'"></i>
-        <div class="me-auto fw-semibold">Berhasil</div>
+        <div class="me-auto fw-semibold">{{ __('Berhasil') }}</div>
         <button type="button" class="btn-close btn-close-white" @click="showToast = false" aria-label="Close"></button>
       </div>
       <div class="toast-body" x-text="toastMessage"></div>
@@ -60,7 +60,7 @@
       x-cloak>
       <div class="toast-header bg-danger text-white">
         <i class="bx bx-x-circle me-2 text-white"></i>
-        <div class="me-auto fw-semibold">Gagal Menyimpan</div>
+        <div class="me-auto fw-semibold">{{ __('Gagal Menyimpan') }}</div>
         <button type="button" class="btn-close btn-close-white" @click="show = false" aria-label="Close"></button>
       </div>
       <div class="toast-body">
@@ -91,9 +91,9 @@
     <div class="d-flex align-items-center gap-3 px-4 py-3 bg-danger text-white">
       <i class="bx bx-x-circle fs-2 flex-shrink-0"></i>
       <div>
-        <h5 class="mb-0 fw-bold">Pengajuan Dikembalikan untuk Perbaikan</h5>
+        <h5 class="mb-0 fw-bold">{{ __('Pengajuan Dikembalikan untuk Perbaikan') }}</h5>
         <div class="small opacity-90 mt-1">
-          Dikembalikan oleh <strong>{{ $revisionByName }}</strong>
+          {{ __('Dikembalikan oleh') }} <strong>{{ $revisionByName }}</strong>
           @if ($revisionAt) pada {{ $revisionAt }} @endif
         </div>
       </div>
@@ -101,7 +101,7 @@
     <div class="px-4 py-3">
       @if ($revisionReason)
       <div class="mb-3">
-        <div class="fw-semibold text-danger mb-1"><i class="bx bx-comment-error me-1"></i>Alasan Pengembalian:</div>
+        <div class="fw-semibold text-danger mb-1"><i class="bx bx-comment-error me-1"></i>{{ __('Alasan Pengembalian:') }}</div>
         <p class="mb-0 text-dark rkap-preline">{{ $revisionReason }}</p>
       </div>
       @endif
@@ -129,7 +129,7 @@
   <div class="card mb-4 bg-primary text-white">
     <div class="card-body d-flex justify-content-between align-items-center">
       <div>
-        <div class="small opacity-75">Total Anggaran Keseluruhan</div>
+        <div class="small opacity-75">{{ __('Total Anggaran Keseluruhan') }}</div>
         <div class="fs-3 fw-bold">Rp {{ number_format($this->grandTotal, 0, ',', '.') }}</div>
       </div>
       <i class="bx bx-money bx-lg opacity-50"></i>
@@ -139,10 +139,10 @@
 
   {{-- Notes --}}
   <div class="card mb-4">
-    <div class="card-header"><strong>Catatan Umum</strong></div>
+    <div class="card-header"><strong>{{ __('Catatan Umum') }}</strong></div>
     <div class="card-body">
       <textarea class="form-control" wire:model="notes" rows="2"
-        placeholder="Catatan atau keterangan umum untuk pengajuan ini..."></textarea>
+        placeholder="{{ __('Catatan atau keterangan umum untuk pengajuan ini...') }}"></textarea>
     </div>
   </div>
 
@@ -175,13 +175,13 @@
             <div class="input-group">
               <input type="text"
                 class="form-control @error('workPlans.' . $wpIdx . '.work_plan_id') is-invalid @enderror"
-                placeholder="Cari program kerja..." x-model="search" @focus="open = true" @click.outside="open = false"
+                placeholder="{{ __('Cari program kerja...') }}" x-model="search" @focus="open = true" @click.outside="open = false"
                 @input="open = true" autocomplete="off" id="wp-search-{{ $wpIdx }}"
                 @disabled($hasApproved)>
               @if ($wp['work_plan_id'] && !$hasApproved)
               <button type="button" class="btn btn-outline-secondary"
                 wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)" @click="search = ''"
-                title="Hapus pilihan">
+                title="{{ __('Hapus pilihan') }}">
                 <i class="bx bx-x"></i>
               </button>
               @endif
@@ -217,9 +217,9 @@
                 <span class="ms-1">{{ $wpo->title }}</span>
               </div>
               @empty
-              <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+              <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data program kerja.') }}</div>
               @endforelse
-              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring program kerja.</div>
+              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk menyaring program kerja.') }}</div>
             </div>
           </div>
         </div>
@@ -235,7 +235,7 @@
           }
           }
           @endphp
-          <span class="text-muted small fw-semibold mb-1">Subtotal Program</span>
+          <span class="text-muted small fw-semibold mb-1">{{ __('Subtotal Program') }}</span>
           <span class="text-muted small fw-bold text-primary fs-6 has-tooltip">
             Rp {{ number_format($wpSubtotal, 0, ',', '.') }}
             <span class="custom-tooltip-content tooltip-align-right">
@@ -248,37 +248,37 @@
               $prevPeriod = $prevData['period'] ?? '-';
               @endphp
               @if ($prevProgramData)
-              <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+              <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                 ({{ $prevPeriod }})</div>
               <div class="row text-center">
                 <div class="col-4 border-end">
-                  <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                  <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Anggaran') }}</div>
                   <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                   </div>
                 </div>
                 <div class="col-4 border-end">
-                  <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                  <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Realisasi') }}</div>
                   <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                   </div>
                 </div>
                 <div class="col-4">
-                  <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                  <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Proyeksi') }}</div>
                   <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                     {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                   </div>
                 </div>
               </div>
               @else
-              <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+              <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
               @endif
             </span>
           </span>
           @if (count($workPlans) > 1 && !$hasApproved)
           <button type="button" wire:click="removeWorkPlan({{ $wpIdx }})"
-            class="btn btn-sm btn-outline-danger" title="Hapus program kerja">
-            <i class="bx bx-trash me-1"></i> Hapus Program
+            class="btn btn-sm btn-outline-danger" title="{{ __('Hapus program kerja') }}">
+            <i class="bx bx-trash me-1"></i> {{ __('Hapus Program') }}
           </button>
           @endif
         </div>
@@ -301,15 +301,15 @@
             <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
             <h6 class="mb-0 fw-bold">Kegiatan {{ $actIdx + 1 }}</h6>
             @if ($isApproved)
-            <span class="badge bg-label-success ms-2"><i class="bx bx-check-circle me-1"></i>Disetujui</span>
+            <span class="badge bg-label-success ms-2"><i class="bx bx-check-circle me-1"></i>{{ __('Disetujui') }}</span>
             @elseif ($isRejected)
-            <span class="badge bg-label-danger ms-2"><i class="bx bx-x-circle me-1"></i>Revisi</span>
+            <span class="badge bg-label-danger ms-2"><i class="bx bx-x-circle me-1"></i>{{ __('Revisi') }}</span>
             @endif
           </div>
           @if (count($wp['activities']) > 1 && !$isApproved)
           <button type="button" wire:click="removeActivity({{ $wpIdx }}, {{ $actIdx }})"
-            class="btn btn-xs btn-outline-danger" title="Hapus Kegiatan">
-            <i class="bx bx-trash me-1"></i> Hapus Kegiatan
+            class="btn btn-xs btn-outline-danger" title="{{ __('Hapus Kegiatan') }}">
+            <i class="bx bx-trash me-1"></i> {{ __('Hapus Kegiatan') }}
           </button>
           @endif
         </div>
@@ -317,7 +317,7 @@
         <div class="row g-3 mb-3">
           {{-- Nama Kegiatan selection --}}
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">Nama Kegiatan</label>
+            <label class="form-label small fw-semibold">{{ __('Nama Kegiatan') }}</label>
             @php
             $activities = $this->getActivitiesForIndex($wpIdx, $actIdx);
             @endphp
@@ -330,13 +330,13 @@
               <div class="input-group">
                 <input type="text"
                   class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.activity_id') is-invalid @enderror"
-                  placeholder="Cari kegiatan..." x-model="search" @focus="open = true" @input="open = true"
+                  placeholder="{{ __('Cari kegiatan...') }}" x-model="search" @focus="open = true" @input="open = true"
                   autocomplete="off" id="act-search-{{ $wpIdx }}-{{ $actIdx }}"
                   @disabled($isApproved)>
                 @if ($act['activity_id'] && !$isApproved)
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                   wire:click="$set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id', null)"
-                  @click="search = ''" title="Hapus pilihan">
+                  @click="search = ''" title="{{ __('Hapus pilihan') }}">
                   <i class="bx bx-x"></i>
                 </button>
                 @endif
@@ -374,10 +374,10 @@
                   </div>
                 </div>
                 @empty
-                <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
+                <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data kegiatan.') }}</div>
                 @endforelse
                 <div class="px-3 py-2 text-muted small border-top bg-light">
-                  <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring kegiatan.
+                  <i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk menyaring kegiatan.') }}
                 </div>
               </div>
             </div>
@@ -390,7 +390,7 @@
                   id="ppp-{{ $wpIdx }}-{{ $actIdx }}"
                   @disabled($isApproved)>
                 <label class="form-check-label small fw-semibold text-warning" for="ppp-{{ $wpIdx }}-{{ $actIdx }}">
-                  <i class="bx bx-calendar-exclamation me-1"></i> Periode Anggaran Lalu
+                  <i class="bx bx-calendar-exclamation me-1"></i> {{ __('Periode Anggaran Lalu') }}
                 </label>
               </div>
             </div>
@@ -433,7 +433,7 @@
                 <button type="button" class="btn btn-xs btn-outline-primary"
                   wire:click="openUploadModal({{ $wpIdx }}, {{ $actIdx }})"
                   @disabled($isApproved)>
-                  <i class="bx bx-upload me-1"></i> Upload File Referensi
+                  <i class="bx bx-upload me-1"></i> {{ __('Upload File Referensi') }}
                 </button>
               </div>
 
@@ -457,7 +457,7 @@
                     </a>
                     @endif
                     @else
-                    <span class="text-truncate text-muted" title="Belum disimpan">{{ $file['original_name'] }} (baru)</span>
+                    <span class="text-truncate text-muted" title="{{ __('Belum disimpan') }}">{{ $file['original_name'] }} (baru)</span>
                     @endif
                     <span class="text-muted flex-shrink-0 small">({{ number_format(($file['file_size'] ?? 0) / 1024, 1) }} KB)</span>
                   </div>
@@ -466,7 +466,7 @@
                     @if (!$isApproved)
                     <button type="button" class="btn btn-link text-danger p-0 m-0 border-0 rkap-no-text-decoration"
                       wire:click="deleteUploadedFile({{ $wpIdx }}, {{ $actIdx }}, {{ $fileIdx }})"
-                      wire:confirm="Hapus file ini?">
+                      wire:confirm="{{ __('Hapus file ini?') }}">
                       <i class="bx bx-trash rkap-font-1"></i>
                     </button>
                     @endif
@@ -491,7 +491,7 @@
                       </div>
                       <div class="modal-footer">
                         <a href="{{ route('rkap-files.download', $file['id']) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('Tutup') }}</button>
                       </div>
                     </div>
                   </div>
@@ -512,7 +512,7 @@
             $actSubtotal += ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
             }
             @endphp
-            <span class="text-muted small fw-semibold mb-1">Subtotal Kegiatan</span>
+            <span class="text-muted small fw-semibold mb-1">{{ __('Subtotal Kegiatan') }}</span>
             <span class="text-muted small fw-bold text-primary fs-6 has-tooltip">
               Rp {{ number_format($actSubtotal, 0, ',', '.') }}
               <span class="custom-tooltip-content tooltip-align-right">
@@ -527,31 +527,31 @@
                 $prevPeriod = $prevData['period'] ?? '-';
                 @endphp
                 @if ($prevActivityData)
-                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                   ({{ $prevPeriod }})
                 </div>
                 <div class="row text-center">
                   <div class="col-4 border-end">
-                    <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                    <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Anggaran') }}</div>
                     <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['budget'], 0, ',', '.') }}
                     </div>
                   </div>
                   <div class="col-4 border-end">
-                    <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                    <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Realisasi') }}</div>
                     <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['realization'], 0, ',', '.') }}
                     </div>
                   </div>
                   <div class="col-4">
-                    <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                    <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Proyeksi') }}</div>
                     <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                       {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}
                     </div>
                   </div>
                 </div>
                 @else
-                <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                 @endif
               </span>
             </span>
@@ -561,28 +561,28 @@
         {{-- Activity Details Grid --}}
         <div class="row g-3 mb-3">
           <div class="col-md-12">
-            <label class="form-label small fw-semibold">Deskripsi / Tujuan</label>
+            <label class="form-label small fw-semibold">{{ __('Deskripsi / Tujuan') }}</label>
             <textarea class="form-control form-control-sm"
               wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.description" rows="2"
-              placeholder="Deskripsi kegiatan..." @disabled($isApproved)></textarea>
+              placeholder="{{ __('Deskripsi kegiatan...') }}" @disabled($isApproved)></textarea>
           </div>
           <div class="col-md-6">
-            <label class="form-label small fw-semibold">Target Output</label>
+            <label class="form-label small fw-semibold">{{ __('Target Output') }}</label>
             <input type="text" class="form-control form-control-sm"
               wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.output_target"
-              placeholder="Misal: 1 sistem, 100 user" @disabled($isApproved)>
+              placeholder="{{ __('Misal: 1 sistem, 100 user') }}" @disabled($isApproved)>
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-semibold">Volume</label>
+            <label class="form-label small fw-semibold">{{ __('Volume') }}</label>
             <input type="number" class="form-control form-control-sm"
               wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.quantity" min="1"
               @disabled($isApproved)>
           </div>
           <div class="col-md-3">
-            <label class="form-label small fw-semibold">Satuan</label>
+            <label class="form-label small fw-semibold">{{ __('Satuan') }}</label>
             <input type="text" class="form-control form-control-sm"
               wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.unit" list="satuan-options"
-              placeholder="Paket, Unit, ..." autocomplete="off" @disabled($isApproved)>
+              placeholder="{{ __('Paket, Unit, ...') }}" autocomplete="off" @disabled($isApproved)>
           </div>
         </div>
 
@@ -591,7 +591,7 @@
           role="alert">
           <span class="badge bg-danger text-white me-3 p-1 mt-0.5"><i class="bx bx-error-circle fs-5"></i></span>
           <div>
-            <h6 class="alert-heading mb-1 fw-bold text-danger">Catatan Revisi dari Reviewer:</h6>
+            <h6 class="alert-heading mb-1 fw-bold text-danger">{{ __('Catatan Revisi dari Reviewer:') }}</h6>
             <span class="text-dark">{{ $act['revision_notes'] }}</span>
           </div>
         </div>
@@ -611,15 +611,15 @@
             <table class="table table-sm table-bordered align-middle mb-2">
               <thead class="table-primary text-white fw-semibold">
                 <tr>
-                  <th class="text-center align-middle rkap-w-30p">Uraian & Detail Belanja <span
+                  <th class="text-center align-middle rkap-w-30p">{{ __('Uraian & Detail Belanja') }} <span
                       class="text-warning">*</span></th>
-                  <th class="text-center align-middle rkap-w-10p">Vol <span class="text-warning">*</span>
+                  <th class="text-center align-middle rkap-w-10p">{{ __('Vol') }} <span class="text-warning">*</span>
                   </th>
                   <th class="text-center align-middle rkap-w-8p">Satuan</th>
                   <th class="text-center align-middle rkap-w-180">Harga Satuan (Rp) <span
                       class="text-warning">*</span></th>
-                  <th class="text-center align-middle rkap-w-160">Total (Rp)</th>
-                  <th class="text-center align-middle rkap-w-120">Detail</th>
+                  <th class="text-center align-middle rkap-w-160">{{ __('Total (Rp)') }}</th>
+                  <th class="text-center align-middle rkap-w-120">{{ __('Detail') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -703,7 +703,7 @@
                       <div class="input-group input-group-sm">
                         <input type="text"
                           class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $firstIdx . '.coa_id') is-invalid @enderror"
-                          placeholder="Cari akun/belanja..." x-model="search"
+                          placeholder="{{ __('Cari akun/belanja...') }}" x-model="search"
                           @focus="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }"
                           @input="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }" autocomplete="off"
                           @disabled($isApproved || $isCoaLockedForKepalaBiro)>
@@ -711,7 +711,7 @@
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                           wire:click="updateGroupCoa({{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, null)"
                           @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
-                          title="Hapus pilihan">
+                          title="{{ __('Hapus pilihan') }}">
                           <i class="bx bx-x"></i>
                         </button>
                         @endif
@@ -719,7 +719,7 @@
                         <button type="button"
                           wire:click="removeGroup({{ $wpIdx }}, {{ $actIdx }}, {{ $indicesJson }})"
                           @click="isDirty = true" class="btn btn-sm btn-outline-danger"
-                          title="Hapus grup akun belanja">
+                          title="{{ __('Hapus grup akun belanja') }}">
                           <i class="bx bx-trash"></i>
                         </button>
                         @endif
@@ -744,19 +744,19 @@
                               Periode Sebelumnya ({{ $prevPeriod }})</div>
                             <div class="row text-center">
                               <div class="col-4 border-end">
-                                <div class="text-white-50 small rkap-tooltip-stat-label">Anggaran</div>
+                                <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Anggaran') }}</div>
                                 <div class="fw-bold text-white rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['budget'], 0, ',', '.') }}
                                 </div>
                               </div>
                               <div class="col-4 border-end">
-                                <div class="text-white-50 small rkap-tooltip-stat-label">Realisasi</div>
+                                <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Realisasi') }}</div>
                                 <div class="fw-bold text-white text-success rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['realization'] ?? 0, 0, ',', '.') }}
                                 </div>
                               </div>
                               <div class="col-4">
-                                <div class="text-white-50 small rkap-tooltip-stat-label">Proyeksi</div>
+                                <div class="text-white-50 small rkap-tooltip-stat-label">{{ __('Proyeksi') }}</div>
                                 <div class="fw-bold text-white text-warning rkap-tooltip-stat-value">Rp
                                   {{ number_format($prevCoaData['projection'] ?? 0, 0, ',', '.') }}
                                 </div>
@@ -833,7 +833,7 @@
                   <td class="border-top-0">
                     <input type="text" class="form-control form-control-sm"
                       wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
-                      placeholder="Detail Belanja / Ket..." @disabled($isApproved)>
+                      placeholder="{{ __('Detail Belanja / Ket...') }}" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0 rkap-min-w-120">
                     {{-- Vol 1 --}}
@@ -914,7 +914,7 @@
                       <button type="button"
                         wire:click="removeBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-danger"
-                        title="Hapus detail rincian ini">
+                        title="{{ __('Hapus detail rincian ini') }}">
                         <i class="bx bx-trash"></i>
                       </button>
                       @endif
@@ -923,7 +923,7 @@
                       <button type="button"
                         wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-success"
-                        title="Tambah detail rincian untuk akun ini">
+                        title="{{ __('Tambah detail rincian untuk akun ini') }}">
                         <i class="bx bx-plus"></i>
                       </button>
                       @endif
@@ -1003,7 +1003,7 @@
                 class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom flex-shrink-0">
                 <div class="d-flex align-items-center gap-2">
                   <i class="bx bx-detail text-primary fs-5"></i>
-                  <h6 class="mb-0 fw-bold">Detail Pengajuan</h6>
+                  <h6 class="mb-0 fw-bold">{{ __('Detail Pengajuan') }}</h6>
                   <span class="badge bg-label-secondary rounded-pill small">Item {{ $biIdx + 1 }}</span>
                 </div>
                 <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
@@ -1014,7 +1014,7 @@
               {{-- Modal Body --}}
               <div class="px-4 py-3 rkap-modal-body-scroll">
                 <div class="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-4">
-                  <span class="small fw-semibold">Total Item</span>
+                  <span class="small fw-semibold">{{ __('Total Item') }}</span>
                   <span class="fw-bold fs-6">Rp {{ number_format($biTotal, 0, ',', '.') }}</span>
                 </div>
                 {{-- Distribusi Beban --}}
@@ -1022,7 +1022,7 @@
                   <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="d-flex align-items-center gap-2">
                       <i class="bx bx-calendar text-primary"></i>
-                      <span class="fw-semibold text-primary small">Distribusi Bulanan</span>
+                      <span class="fw-semibold text-primary small">{{ __('Distribusi Bulanan') }}</span>
                       @if (!empty($selectedMonths))
                       <span class="badge bg-label-primary rounded-pill">{{ count($selectedMonths) }}
                         bulan</span>
@@ -1032,7 +1032,7 @@
                       @if ($biTotal > 0)
                       @if (abs($monthlyRemainder) < 0.01 && !empty($selectedMonths))
                         <span class="badge bg-success rounded-pill small"><i
-                          class="bx bx-check me-1"></i>Lengkap</span>
+                          class="bx bx-check me-1"></i>{{ __('Lengkap') }}</span>
                         @elseif($monthlyRemainder < 0)
                           <span class="badge bg-danger rounded-pill small">Lebih Rp
                           {{ number_format(abs($monthlyRemainder), 0, ',', '.') }}</span>
@@ -1044,7 +1044,7 @@
                     </div>
                   </div>
                   <div class="d-flex align-items-center mb-1">
-                    <label class="form-label small text-muted mb-0">Pilih Bulan Distribusi Penganggaran:</label>
+                    <label class="form-label small text-muted mb-0">{{ __('Pilih Bulan Distribusi Penganggaran:') }}</label>
                   </div>
                   <div class="d-flex flex-wrap gap-1 mb-2">
                     @foreach ($monthLabels as $monthNum => $monthLabel)
@@ -1082,7 +1082,7 @@
                   <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="d-flex align-items-center gap-2">
                       <i class="bx bx-wallet text-primary"></i>
-                      <span class="fw-semibold text-primary small">Rencana Pendanaan</span>
+                      <span class="fw-semibold text-primary small">{{ __('Rencana Pendanaan') }}</span>
                       @if (!empty($selectedCashOutMonths))
                       <span class="badge bg-label-primary rounded-pill">{{ count($selectedCashOutMonths) }}
                         bulan</span>
@@ -1092,7 +1092,7 @@
                       @if ($biTotal > 0)
                       @if (abs($cashOutRemainder) < 0.01 && !empty($selectedCashOutMonths))
                         <span class="badge bg-success rounded-pill small"><i
-                          class="bx bx-check me-1"></i>Lengkap</span>
+                          class="bx bx-check me-1"></i>{{ __('Lengkap') }}</span>
                         @elseif($cashOutRemainder < 0)
                           <span class="badge bg-danger rounded-pill small">Lebih Rp
                           {{ number_format(abs($cashOutRemainder), 0, ',', '.') }}</span>
@@ -1104,7 +1104,7 @@
                     </div>
                   </div>
                   <div class="d-flex align-items-center mb-1">
-                    <label class="form-label small text-muted mb-0">Pilih Bulan Pendanaan:</label>
+                    <label class="form-label small text-muted mb-0">{{ __('Pilih Bulan Pendanaan:') }}</label>
                   </div>
                   <div class="d-flex flex-wrap gap-1 mb-2">
                     @foreach ($monthLabels as $monthNum => $monthLabel)
@@ -1143,7 +1143,7 @@
                   <table class="table table-sm table-bordered mb-0 rkap-summary-table">
                     <thead class="table-primary">
                       <tr>
-                        <th class="text-center rkap-w-80">Bulan</th>
+                        <th class="text-center rkap-w-80">{{ __('Bulan') }}</th>
                         <th class="text-end">
                           Distribusi Penganggaran (Rp)
                           <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['coa_group_name'] ?: '-' }})</div>
@@ -1275,7 +1275,7 @@
                       $sisaSelisih = $monthlyRemainder - $cashOutRemainder;
                       @endphp
                       <tr>
-                        <th class="text-center small">Total</th>
+                        <th class="text-center small">{{ __('Total') }}</th>
                         <th
                           class="text-end small {{ abs($monthlyRemainder) < 0.01 ? 'text-success' : ($monthlyRemainder < 0 ? 'text-danger' : 'text-warning') }}">
                           Rp {{ number_format($monthlyAllocated, 0, ',', '.') }}
@@ -1307,15 +1307,15 @@
                 </div>
                 @else
                 <div class="text-center text-muted small py-3 border rounded-2">
-                  <i class="bx bx-info-circle me-1"></i>Belum ada bulan yang dipilih. Pilih bulan di atas untuk
-                  memulai distribusi.
+                  <i class="bx bx-info-circle me-1"></i>{{ __('Belum ada bulan yang dipilih. Pilih bulan di atas untuk') }}
+                  {{ __('memulai distribusi.') }}
                 </div>
                 @endif
               </div>
               {{-- Modal Footer --}}
               <div class="px-4 py-3 border-top d-flex justify-content-end flex-shrink-0">
                 <button type="button" class="btn btn-primary" @click="closeModal()">
-                  <i class="bx bx-check me-1"></i>Selesai
+                  <i class="bx bx-check me-1"></i>{{ __('Selesai') }}
                 </button>
               </div>
             </div>
@@ -1325,7 +1325,7 @@
           @if (!$isApproved)
           <button type="button" wire:click="addBudgetItem({{ $wpIdx }}, {{ $actIdx }})"
             class="btn btn-sm btn-label-secondary mt-2">
-            <i class="bx bx-plus me-1"></i> Tambah Item Belanja
+            <i class="bx bx-plus me-1"></i> {{ __('Tambah Item Belanja') }}
           </button>
           @endif
 
@@ -1334,8 +1334,8 @@
         <div class="alert alert-info d-flex align-items-center mb-0 mt-3">
           <i class="bx bx-info-circle me-2 fs-4"></i>
           <div>
-            Silakan pilih <strong>Program Kerja</strong> dan <strong>Nama Kegiatan</strong> terlebih dahulu untuk
-            mengisi detail anggaran belanja.
+            {{ __('Silakan pilih Program Kerja dan Nama Kegiatan terlebih dahulu untuk') }}
+            {{ __('mengisi detail anggaran belanja.') }}
           </div>
         </div>
         @endif
@@ -1349,14 +1349,14 @@
       <div class="text-center my-2">
         <button type="button" wire:click="addActivity({{ $wpIdx }})"
           class="btn btn-sm btn-outline-primary">
-          <i class="bx bx-plus me-1"></i> Tambah Kegiatan Lain dalam Program Ini
+          <i class="bx bx-plus me-1"></i> {{ __('Tambah Kegiatan Lain dalam Program Ini') }}
         </button>
       </div>
       @else
       <div class="text-center my-2">
         <span class="text-muted small">
           <i class="bx bx-info-circle me-1"></i>
-          Semua kegiatan dalam Program Kerja ini sudah digunakan, tidak dapat menambah kegiatan lain.
+          {{ __('Semua kegiatan dalam Program Kerja ini sudah digunakan, tidak dapat menambah kegiatan lain.') }}
         </span>
       </div>
       @endif
@@ -1367,7 +1367,7 @@
 
   <div class="d-flex gap-2 mb-4">
     <button type="button" wire:click="addWorkPlan()" class="btn btn-label-primary">
-      <i class="bx bx-plus me-1"></i> Tambah Program Kerja
+      <i class="bx bx-plus me-1"></i> {{ __('Tambah Program Kerja') }}
     </button>
   </div>
 
@@ -1375,21 +1375,21 @@
   <div class="card">
     <div class="card-body d-flex justify-content-between align-items-center">
       <a href="{{ route('rkap-submissions') }}" class="btn btn-label-secondary">
-        <i class="bx bx-arrow-back me-1"></i> Kembali
+        <i class="bx bx-arrow-back me-1"></i> {{ __('Kembali') }}
       </a>
       <div class="d-flex gap-2">
         <button wire:click="saveDraft()" @click="isSubmitting = true" wire:loading.attr="disabled"
           class="btn btn-label-primary">
-          <span wire:loading.remove wire:target="saveDraft"><i class="bx bx-save me-1"></i> Simpan Draft</span>
+          <span wire:loading.remove wire:target="saveDraft"><i class="bx bx-save me-1"></i> {{ __('Simpan Draft') }}</span>
           <span wire:loading wire:target="saveDraft"><span class="spinner-border spinner-border-sm me-1"></span>
-            Menyimpan...</span>
+            {{ __('Menyimpan...') }}</span>
         </button>
         <button wire:click="submitForReview()" @click="isSubmitting = true" wire:loading.attr="disabled"
-          wire:confirm="Yakin mengajukan RKAP ini untuk review? Pastikan data sudah lengkap." class="btn btn-primary">
-          <span wire:loading.remove wire:target="submitForReview"><i class="bx bx-send me-1"></i> Ajukan untuk
-            Review</span>
+          wire:confirm="{{ __('Yakin mengajukan RKAP ini untuk review? Pastikan data sudah lengkap.') }}" class="btn btn-primary">
+          <span wire:loading.remove wire:target="submitForReview"><i class="bx bx-send me-1"></i> {{ __('Ajukan untuk') }}
+            {{ __('Review') }}</span>
           <span wire:loading wire:target="submitForReview"><span class="spinner-border spinner-border-sm me-1"></span>
-            Mengajukan...</span>
+            {{ __('Mengajukan...') }}</span>
         </button>
       </div>
     </div>
@@ -1407,28 +1407,28 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bx bx-upload me-2 text-primary"></i>Upload File Referensi</h5>
+          <h5 class="modal-title"><i class="bx bx-upload me-2 text-primary"></i>{{ __('Upload File Referensi') }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body text-start">
           <form wire:submit.prevent="handleFileUpload">
             <div class="mb-3">
-              <label class="form-label fw-semibold">Pilih File</label>
+              <label class="form-label fw-semibold">{{ __('Pilih File') }}</label>
               <input type="file" class="form-control @error('referenceFile') is-invalid @enderror" wire:model="referenceFile">
               @error('referenceFile')
               <div class="invalid-feedback d-block">{{ $message }}</div>
               @enderror
               <div class="form-text text-muted small mt-1">
-                Tipe file yang diperbolehkan: Word (doc, docx), Excel (xls, xlsx), PDF, Zip, dan Gambar. Maksimal ukuran 2 MB.
+                {{ __('Tipe file yang diperbolehkan: Word (doc, docx), Excel (xls, xlsx), PDF, Zip, dan Gambar. Maksimal ukuran 2 MB.') }}
               </div>
               <div wire:loading wire:target="referenceFile" class="text-info mt-2 small">
-                <i class="bx bx-loader-alt bx-spin me-1"></i> Mengunggah ke penyimpanan sementara...
+                <i class="bx bx-loader-alt bx-spin me-1"></i> {{ __('Mengunggah ke penyimpanan sementara...') }}
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Batal') }}</button>
           <button type="button" class="btn btn-primary" wire:click="handleFileUpload" wire:loading.attr="disabled" wire:target="referenceFile" @disabled(!$referenceFile)>
             Upload
           </button>

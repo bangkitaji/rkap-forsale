@@ -103,7 +103,7 @@ class CashflowGroups extends Component
             $this->description = $group->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Group Cashflow tidak ditemukan.');
+            session()->flash('error', __('Group Cashflow tidak ditemukan.'));
         }
     }
 
@@ -124,7 +124,7 @@ class CashflowGroups extends Component
             session()->flash('message', $this->cashflowGroupId ? 'Group Cashflow berhasil diperbarui.' : 'Group Cashflow berhasil ditambahkan.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan saat menyimpan Group Cashflow.');
+            session()->flash('error', __('Terjadi kesalahan saat menyimpan Group Cashflow.'));
         }
     }
 
@@ -135,14 +135,14 @@ class CashflowGroups extends Component
 
             // Check if there are mapped COAs
             if ($group->coas()->exists()) {
-                session()->flash('error', 'Gagal menghapus. Group Cashflow ini masih digunakan oleh beberapa COA.');
+                session()->flash('error', __('Gagal menghapus. Group Cashflow ini masih digunakan oleh beberapa COA.'));
                 return;
             }
 
             $group->delete();
-            session()->flash('message', 'Group Cashflow berhasil dihapus.');
+            session()->flash('message', __('Group Cashflow berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus Group Cashflow.');
+            session()->flash('error', __('Gagal menghapus Group Cashflow.'));
         }
     }
 
@@ -171,14 +171,14 @@ class CashflowGroups extends Component
             ]);
             session()->flash('mapping_message', "Pemetaan untuk COA {$coa->code} berhasil diperbarui.");
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal memperbarui pemetaan.');
+            session()->flash('mapping_error', __('Gagal memperbarui pemetaan.'));
         }
     }
 
     public function applyBulkMapping()
     {
         if (empty($this->selectedCoas)) {
-            session()->flash('mapping_error', 'Silakan pilih minimal satu COA.');
+            session()->flash('mapping_error', __('Silakan pilih minimal satu COA.'));
             return;
         }
 
@@ -193,7 +193,7 @@ class CashflowGroups extends Component
             $this->selectedCoas = [];
             $this->bulkCashflowGroupId = '';
         } catch (\Exception $e) {
-            session()->flash('mapping_error', 'Gagal melakukan pemetaan massal.');
+            session()->flash('mapping_error', __('Gagal melakukan pemetaan massal.'));
         }
     }
 

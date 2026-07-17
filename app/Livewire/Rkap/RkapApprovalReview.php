@@ -58,7 +58,7 @@ class RkapApprovalReview extends Component
             ($user->directorate_id && $user->directorate_id === $this->submission->bureau->department->directorate_id);
 
         if (!$isAuthorized) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat pengajuan ini.');
+            abort(403, __('Anda tidak memiliki akses untuk melihat pengajuan ini.'));
         }
 
         foreach ($this->submission->workPlans as $wp) {
@@ -97,7 +97,7 @@ class RkapApprovalReview extends Component
         // 1. the approver can only approve the rkap submission if all activities are approved
         foreach ($this->submission->workPlans as $wp) {
             if (($this->activityStatuses[$wp->id] ?? 'pending') !== 'approved') {
-                session()->flash('error', 'Gagal menyetujui: Semua kegiatan harus disetujui terlebih dahulu.');
+                session()->flash('error', __('Gagal menyetujui: Semua kegiatan harus disetujui terlebih dahulu.'));
                 return;
             }
         }
@@ -105,7 +105,7 @@ class RkapApprovalReview extends Component
         if (($user->isPresidentDirector() || $user->isDirekturFinance()) && $this->submission->status === 'pdir_review') {
             $status = $this->presidentApprovalStatus;
             if (!$status['is_ready']) {
-                session()->flash('error', 'Gagal menyetujui: Belum semua departemen menyelesaikan pengajuan RKAP yang terverifikasi.');
+                session()->flash('error', __('Gagal menyetujui: Belum semua departemen menyelesaikan pengajuan RKAP yang terverifikasi.'));
                 return;
             }
         }
@@ -133,7 +133,7 @@ class RkapApprovalReview extends Component
 
         $this->reviewComments = '';
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'RKAP berhasil disetujui.');
+        session()->flash('message', __('RKAP berhasil disetujui.'));
     }
 
     public function requestRevision(): void
@@ -147,7 +147,7 @@ class RkapApprovalReview extends Component
                 $hasRejected = true;
                 $notes = trim($this->activityRevisionNotes[$wp->id] ?? '');
                 if (empty($notes)) {
-                    session()->flash('error', 'Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.');
+                    session()->flash('error', __('Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.'));
                     $this->dispatch('focus-activity-revision-note', id: $wp->id);
                     return;
                 }
@@ -155,7 +155,7 @@ class RkapApprovalReview extends Component
         }
 
         if (!$hasRejected) {
-            session()->flash('error', 'Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.');
+            session()->flash('error', __('Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.'));
             return;
         }
 
@@ -193,7 +193,7 @@ class RkapApprovalReview extends Component
         $this->revisionReason = '';
         $this->showRevisionForm = false;
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'RKAP berhasil ditolak dan dikembalikan untuk revisi.');
+        session()->flash('message', __('RKAP berhasil ditolak dan dikembalikan untuk revisi.'));
     }
 
     public function openRevisionForm(): void
@@ -214,13 +214,13 @@ class RkapApprovalReview extends Component
         }
 
         if ($missingNotesWpId !== null) {
-            session()->flash('error', 'Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.');
+            session()->flash('error', __('Gagal meminta revisi: Catatan revisi wajib diisi untuk semua kegiatan yang ditolak.'));
             $this->dispatch('focus-activity-revision-note', id: $missingNotesWpId);
             return;
         }
 
         if (!$hasRejected) {
-            session()->flash('error', 'Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.');
+            session()->flash('error', __('Gagal meminta revisi: Minimal harus ada satu kegiatan yang ditolak.'));
             return;
         }
 
@@ -1002,7 +1002,7 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk masuk ke mode edit.');
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk masuk ke mode edit.'));
             return;
         }
 
@@ -1040,7 +1040,7 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk menyimpan perubahan.');
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk menyimpan perubahan.'));
             return;
         }
 
@@ -1068,7 +1068,7 @@ class RkapApprovalReview extends Component
                 ->where('activity_id', $this->selectedActivityId)
                 ->exists();
             if ($exists) {
-                $this->addError('selectedActivityId', 'Kegiatan ini sudah ada dalam pengajuan RKAP.');
+                $this->addError('selectedActivityId', __('Kegiatan ini sudah ada dalam pengajuan RKAP.'));
                 return;
             }
         }
@@ -1158,7 +1158,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.coa.differenceGroup'
         ]);
 
-        session()->flash('message', 'Perubahan berhasil disimpan.');
+        session()->flash('message', __('Perubahan berhasil disimpan.'));
     }
 
 
@@ -1167,7 +1167,7 @@ class RkapApprovalReview extends Component
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk menghapus kegiatan.');
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk menghapus kegiatan.'));
             return;
         }
 
@@ -1195,14 +1195,14 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.coa.differenceGroup'
         ]);
 
-        session()->flash('message', 'Program/Kegiatan berhasil dihapus.');
+        session()->flash('message', __('Program/Kegiatan berhasil dihapus.'));
     }
 
     public function deleteBudgetItem(int $id): void
     {
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
-            session()->flash('error', 'Anda tidak memiliki wewenang untuk menghapus item anggaran.');
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk menghapus item anggaran.'));
             return;
         }
 
@@ -1227,7 +1227,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.coa.differenceGroup'
         ]);
 
-        session()->flash('message', 'Detail item anggaran berhasil dihapus.');
+        session()->flash('message', __('Detail item anggaran berhasil dihapus.'));
     }
 
     public function render()

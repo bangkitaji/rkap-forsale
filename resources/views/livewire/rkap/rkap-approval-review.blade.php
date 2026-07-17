@@ -52,7 +52,7 @@
       </span>
       @if (!empty($this->presidentApprovalStatus['pending_departments']))
       <div class="mt-2 small text-muted">
-        <strong>Departemen yang belum terverifikasi:</strong>
+        <strong>{{ __('Departemen yang belum terverifikasi:') }}</strong>
         <span
           class="text-danger fw-bold">{{ implode(', ', $this->presidentApprovalStatus['pending_departments']) }}</span>
       </div>
@@ -69,16 +69,16 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-sm-6">
-              <label class="text-muted small">Biro Pengaju</label>
+              <label class="text-muted small">{{ __('Biro Pengaju') }}</label>
               <div class="fw-semibold">{{ $submission->bureau->name ?? '-' }}</div>
               <div class="text-muted small">{{ $submission->bureau->department->directorate->name ?? '-' }}</div>
             </div>
             <div class="col-sm-3">
-              <label class="text-muted small">Periode</label>
+              <label class="text-muted small">{{ __('Periode') }}</label>
               <div class="fw-semibold">{{ $submission->period->title ?? '-' }}</div>
             </div>
             <div class="col-sm-3">
-              <label class="text-muted small">Total Anggaran Ajuan</label>
+              <label class="text-muted small">{{ __('Total Anggaran Ajuan') }}</label>
               <div class="fw-bold text-primary fs-5 has-tooltip">Rp
                 {{ number_format($submission->total_budget, 0, ',', '.') }}
                 <span class="custom-tooltip-content tooltip-align-right">
@@ -89,30 +89,30 @@
                   $prevProjection = $prevData['total_projection'] ?? 0;
                   @endphp
                   @if ($prevTotal > 0)
-                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                     ({{ $prevPeriod }})</div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                       <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevTotal, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                       <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevRealization, 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                       <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProjection, 0, ',', '.') }}
                       </div>
                     </div>
                   </div>
                   @else
-                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                   @endif
                 </span>
               </div>
@@ -145,7 +145,7 @@
           </div>
           @if ($submission->notes)
           <hr class="my-3">
-          <label class="text-muted small">Catatan Pengajuan</label>
+          <label class="text-muted small">{{ __('Catatan Pengajuan') }}</label>
           <p class="mb-0">{{ $submission->notes }}</p>
           @endif
         </div>
@@ -154,8 +154,8 @@
       <!-- Riwayat Persetujuan -->
       <div class="card mb-4">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="bx bx-history me-2"></i>Riwayat Persetujuan</h5>
-          <small class="text-muted">Kronologi persetujuan dari kiri ke kanan</small>
+          <h5 class="mb-0"><i class="bx bx-history me-2"></i>{{ __('Riwayat Persetujuan') }}</h5>
+          <small class="text-muted">{{ __('Kronologi persetujuan dari kiri ke kanan') }}</small>
         </div>
         <div class="card-body py-2 timeline-steps-container">
           <div class="timeline-steps-wrapper">
@@ -314,7 +314,7 @@
             </div>
             <div class="col-6">
               <button class="btn btn-primary w-100 py-2" type="button" wire:key="btn-submit-edit" wire:click="saveEditMode" wire:loading.attr="disabled">
-                Simpan Perubahan
+                {{ __('Simpan Perubahan') }}
               </button>
             </div>
           </div>
@@ -331,7 +331,7 @@
           </div>
           <div class="d-flex gap-2" wire:key="revision-action-buttons">
             <button class="btn btn-label-secondary w-50" wire:key="btn-cancel-revision"
-              wire:click="$set('showRevisionForm', false)">Batal</button>
+              wire:click="$set('showRevisionForm', false)">{{ __('Batal') }}</button>
             <button class="btn btn-danger w-50" wire:key="btn-submit-revision" wire:click="requestRevision"
               wire:confirm="Yakin ingin menolak dan meminta revisi RKAP ini?" wire:loading.attr="disabled">Kirim
               Permintaan</button>
@@ -504,7 +504,7 @@
                       <table class="table table-sm table-hover table-striped mb-0 rkap-font-08">
                         <thead>
                           <tr>
-                            <th class="w-20p">Kode Akun</th>
+                            <th class="w-20p">{{ __('Kode Akun') }}</th>
                             <th class="w-50p">Judul Akun (COA)</th>
                             <th class="text-end w-15p">Anggaran Ajuan</th>
                             <th class="text-end w-15p">Selisih (Δ)</th>
@@ -610,7 +610,7 @@
                       <table class="table table-sm table-hover table-striped mb-0 rkap-font-08">
                         <thead>
                           <tr>
-                            <th class="w-20p">Kode Akun</th>
+                            <th class="w-20p">{{ __('Kode Akun') }}</th>
                             <th class="w-50p">Judul Akun (COA)</th>
                             <th class="text-end w-15p">Anggaran Ajuan</th>
                             <th class="text-end w-15p">Selisih (Δ)</th>
@@ -659,12 +659,12 @@
       @else
       <!-- Work Plans -->
       <hr class="my-4">
-      <h5 class="mb-4"><i class="bx bx-list-check me-2 text-primary"></i>Rincian Program Kerja</h5>
+      <h5 class="mb-4"><i class="bx bx-list-check me-2 text-primary"></i>{{ __('Rincian Program Kerja') }}</h5>
 
       @if ($isEditMode)
       <div class="card mb-4 border border-primary shadow-sm animate__animated animate__fadeIn" wire:key="add-activity-inline-card">
         <div class="card-header bg-label-primary py-3 d-flex justify-content-between align-items-center">
-          <h5 class="card-title mb-0 fw-bold text-primary"><i class="bx bx-plus-circle me-2"></i>Tambah Program Kegiatan</h5>
+          <h5 class="card-title mb-0 fw-bold text-primary"><i class="bx bx-plus-circle me-2"></i>{{ __('Tambah Program Kegiatan') }}</h5>
           <span class="badge bg-primary">Inline Edit Mode</span>
         </div>
         <div class="card-body mt-3">
@@ -679,12 +679,12 @@
               <div class="input-group">
                 <input type="text"
                   class="form-control @error('selectedWorkPlanId') is-invalid @enderror"
-                  placeholder="Cari program kerja..." x-model="search" @focus="open = true" @click.outside="open = false"
+                  placeholder="{{ __('Cari program kerja...') }}" x-model="search" @focus="open = true" @click.outside="open = false"
                   @input="open = true" autocomplete="off" id="wp-search-verifier">
                 @if ($selectedWorkPlanId)
                 <button type="button" class="btn btn-outline-secondary"
                   wire:click="$set('selectedWorkPlanId', null)" @click="search = ''"
-                  title="Hapus pilihan">
+                  title="{{ __('Hapus pilihan') }}">
                   <i class="bx bx-x"></i>
                 </button>
                 @endif
@@ -716,7 +716,7 @@
                   <span class="ms-1">{{ $wp->title }}</span>
                 </div>
                 @empty
-                <div class="px-3 py-2 text-muted small">Tidak ada data program kerja.</div>
+                <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data program kerja.') }}</div>
                 @endforelse
               </div>
             </div>
@@ -733,13 +733,13 @@
               <div class="input-group">
                 <input type="text"
                   class="form-control @error('selectedActivityId') is-invalid @enderror"
-                  placeholder="Cari kegiatan..." x-model="search" @focus="open = true" @click.outside="open = false"
+                  placeholder="{{ __('Cari kegiatan...') }}" x-model="search" @focus="open = true" @click.outside="open = false"
                   @input="open = true" autocomplete="off" id="act-search-verifier"
                   @disabled(empty($selectedWorkPlanId))>
                 @if ($selectedActivityId)
                 <button type="button" class="btn btn-outline-secondary"
                   wire:click="$set('selectedActivityId', null)" @click="search = ''"
-                  title="Hapus pilihan">
+                  title="{{ __('Hapus pilihan') }}">
                   <i class="bx bx-x"></i>
                 </button>
                 @endif
@@ -773,7 +773,7 @@
                   </div>
                 </div>
                 @empty
-                <div class="px-3 py-2 text-muted small">Tidak ada data kegiatan.</div>
+                <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data kegiatan.') }}</div>
                 @endforelse
               </div>
             </div>
@@ -783,25 +783,25 @@
           {{-- Activity Details Grid (same layout as submission form) --}}
           <div class="row g-3 mb-3">
             <div class="col-md-12">
-              <label class="form-label small fw-semibold">Deskripsi / Tujuan</label>
+              <label class="form-label small fw-semibold">{{ __('Deskripsi / Tujuan') }}</label>
               <textarea class="form-control form-control-sm @error('activityDescription') is-invalid @enderror"
                 wire:model="activityDescription" rows="2"
-                placeholder="Deskripsi kegiatan..."></textarea>
+                placeholder="{{ __('Deskripsi kegiatan...') }}"></textarea>
               @error('activityDescription')
               <div class="invalid-feedback">{{ $message }}</div>
               @enderror
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Target Output</label>
+              <label class="form-label small fw-semibold">{{ __('Target Output') }}</label>
               <input type="text" class="form-control form-control-sm @error('activityOutputTarget') is-invalid @enderror"
                 wire:model="activityOutputTarget"
-                placeholder="Misal: 1 sistem, 100 user">
+                placeholder="{{ __('Misal: 1 sistem, 100 user') }}">
               @error('activityOutputTarget')
               <div class="invalid-feedback">{{ $message }}</div>
               @enderror
             </div>
             <div class="col-md-3">
-              <label class="form-label small fw-semibold">Volume</label>
+              <label class="form-label small fw-semibold">{{ __('Volume') }}</label>
               <input type="number" class="form-control form-control-sm @error('activityQuantity') is-invalid @enderror"
                 wire:model="activityQuantity" min="1">
               @error('activityQuantity')
@@ -809,10 +809,10 @@
               @enderror
             </div>
             <div class="col-md-3">
-              <label class="form-label small fw-semibold">Satuan</label>
+              <label class="form-label small fw-semibold">{{ __('Satuan') }}</label>
               <input type="text" class="form-control form-control-sm @error('activityUnit') is-invalid @enderror"
                 wire:model="activityUnit" list="satuan-options-verifier"
-                placeholder="Paket, Unit, ..." autocomplete="off">
+                placeholder="{{ __('Paket, Unit, ...') }}" autocomplete="off">
               @error('activityUnit')
               <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -829,11 +829,11 @@
               <table class="table table-sm table-bordered align-middle mb-2">
                 <thead class="table-primary text-white fw-semibold">
                   <tr>
-                    <th class="text-center align-middle w-30p">Uraian & Detail Belanja <span class="text-warning">*</span></th>
-                    <th class="text-center align-middle w-10p">Vol <span class="text-warning">*</span></th>
+                    <th class="text-center align-middle w-30p">{{ __('Uraian & Detail Belanja') }} <span class="text-warning">*</span></th>
+                    <th class="text-center align-middle w-10p">{{ __('Vol') }} <span class="text-warning">*</span></th>
                     <th class="text-center align-middle w-8p">Satuan</th>
                     <th class="text-center align-middle rkap-col-180">Harga Satuan (Rp) <span class="text-warning">*</span></th>
-                    <th class="text-center align-middle rkap-col-160">Total (Rp)</th>
+                    <th class="text-center align-middle rkap-col-160">{{ __('Total (Rp)') }}</th>
                     <th class="text-center align-middle rkap-w-80">Aksi</th>
                   </tr>
                 </thead>
@@ -908,14 +908,14 @@
                         <div class="input-group input-group-sm">
                           <input type="text"
                             class="form-control form-control-sm @error('newActivityBudgetItems.' . $firstIdx . '.coa_id') is-invalid @enderror"
-                            placeholder="Cari akun/belanja..." x-model="search"
+                            placeholder="{{ __('Cari akun/belanja...') }}" x-model="search"
                             @focus="open = true; $dispatch('coa-dropdown-open-new')"
                             @input="open = true; $dispatch('coa-dropdown-open-new')" autocomplete="off">
                           @if ($firstBi['coa_id'])
                           <button type="button" class="btn btn-sm btn-outline-secondary"
                             wire:click="updateNewGroupCoa({{ $firstIdx }}, null)"
                             @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close-new');"
-                            title="Hapus pilihan">
+                            title="{{ __('Hapus pilihan') }}">
                             <i class="bx bx-x"></i>
                           </button>
                           @endif
@@ -923,7 +923,7 @@
                           <button type="button"
                             wire:click="removeNewGroup({{ $indicesJson }})"
                             class="btn btn-sm btn-outline-danger"
-                            title="Hapus grup akun belanja">
+                            title="{{ __('Hapus grup akun belanja') }}">
                             <i class="bx bx-trash"></i>
                           </button>
                           @endif
@@ -975,7 +975,7 @@
                     <td class="border-top-0">
                       <input type="text" class="form-control form-control-sm"
                         wire:model="newActivityBudgetItems.{{ $biIdx }}.remarks"
-                        placeholder="Detail Belanja / Ket...">
+                        placeholder="{{ __('Detail Belanja / Ket...') }}">
                     </td>
                     <td class="border-top-0 rkap-rp-input">
                       {{-- Vol 1 --}}
@@ -1047,7 +1047,7 @@
                         <button type="button"
                           wire:click="removeNewBudgetItem({{ $biIdx }})"
                           class="btn btn-sm btn-icon btn-outline-danger"
-                          title="Hapus detail rincian ini">
+                          title="{{ __('Hapus detail rincian ini') }}">
                           <i class="bx bx-trash"></i>
                         </button>
                         @endif
@@ -1056,7 +1056,7 @@
                         <button type="button"
                           wire:click="duplicateNewBudgetItem({{ $biIdx }})"
                           class="btn btn-sm btn-icon btn-outline-success"
-                          title="Tambah detail rincian untuk akun ini">
+                          title="{{ __('Tambah detail rincian untuk akun ini') }}">
                           <i class="bx bx-plus"></i>
                         </button>
                         @endif
@@ -1071,7 +1071,7 @@
 
             <button type="button" wire:click="addNewBudgetItem"
               class="btn btn-sm btn-label-secondary mt-2">
-              <i class="bx bx-plus me-1"></i> Tambah Item Belanja
+              <i class="bx bx-plus me-1"></i> {{ __('Tambah Item Belanja') }}
             </button>
 
           </div>
@@ -1079,8 +1079,8 @@
           <div class="alert alert-info d-flex align-items-center mb-0 mt-3">
             <i class="bx bx-info-circle me-2 fs-4"></i>
             <div>
-              Silakan pilih <strong>Program Kerja</strong> dan <strong>Nama Kegiatan</strong> terlebih dahulu untuk
-              mengisi detail anggaran belanja.
+              {{ __('Silakan pilih Program Kerja dan Nama Kegiatan terlebih dahulu untuk') }}
+              {{ __('mengisi detail anggaran belanja.') }}
             </div>
           </div>
           @endif
@@ -1124,7 +1124,7 @@
               </div>
             </div>
             <div class="text-end">
-              <span class="text-muted small d-block">Subtotal Program</span>
+              <span class="text-muted small d-block">{{ __('Subtotal Program') }}</span>
               <strong class="text-primary fs-5 has-tooltip @if ($isProgramVirtual) text-danger @endif">
                 Rp {{ number_format($wpGroupSubtotal, 0, ',', '.') }}
                 <span class="custom-tooltip-content tooltip-align-right">
@@ -1136,31 +1136,31 @@
                   $prevPeriod = $prevData['period'] ?? '-';
                   @endphp
                   @if ($prevProgramData)
-                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya
+                  <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }}
                     ({{ $prevPeriod }})
                   </div>
                   <div class="row text-center">
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                       <div class="fw-bold text-white rkap-font-075">Rp
                         {{ number_format($prevProgramData['budget'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4 border-end">
-                      <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                       <div class="fw-bold text-white text-success rkap-font-075">Rp
                         {{ number_format($prevProgramData['realization'], 0, ',', '.') }}
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                      <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                       <div class="fw-bold text-white text-warning rkap-font-075">Rp
                         {{ number_format($prevProgramData['projection'] ?? 0, 0, ',', '.') }}
                       </div>
                     </div>
                   </div>
                   @else
-                  <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                  <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                   @endif
                 </span>
               </strong>
@@ -1243,17 +1243,17 @@
                 @else
                 @if ($currStatus === 'approved')
                 <span class="badge bg-label-success fs-6"><i
-                    class="bx bx-check-circle me-1"></i>Disetujui</span>
+                    class="bx bx-check-circle me-1"></i>{{ __('Disetujui') }}</span>
                 @elseif($currStatus === 'rejected')
-                <span class="badge bg-label-danger fs-6"><i class="bx bx-x-circle me-1"></i>Revisi</span>
+                <span class="badge bg-label-danger fs-6"><i class="bx bx-x-circle me-1"></i>{{ __('Revisi') }}</span>
                 @else
                 <span class="badge bg-label-secondary fs-6"><i
-                    class="bx bx-time-five me-1"></i>Pending</span>
+                    class="bx bx-time-five me-1"></i>{{ __('Pending') }}</span>
                 @endif
                 @endif
                 @endif
                 <div class="text-end">
-                  <span class="text-muted small d-block">Subtotal Kegiatan</span>
+                  <span class="text-muted small d-block">{{ __('Subtotal Kegiatan') }}</span>
                   <strong
                     class="has-tooltip @if ($isWpVirtual) text-danger @else text-dark @endif">
                     Rp {{ number_format($actSubtotal, 0, ',', '.') }}
@@ -1273,26 +1273,26 @@
                         Sebelumnya ({{ $prevPeriod }})</div>
                       <div class="row text-center">
                         <div class="col-4 border-end">
-                          <div class="text-white-50 small rkap-font-065">Anggaran</div>
+                          <div class="text-white-50 small rkap-font-065">{{ __('Anggaran') }}</div>
                           <div class="fw-bold text-white rkap-font-075">Rp
                             {{ number_format($prevActivityData['budget'], 0, ',', '.') }}
                           </div>
                         </div>
                         <div class="col-4 border-end">
-                          <div class="text-white-50 small rkap-font-065">Realisasi</div>
+                          <div class="text-white-50 small rkap-font-065">{{ __('Realisasi') }}</div>
                           <div class="fw-bold text-white text-success rkap-font-075">Rp
                             {{ number_format($prevActivityData['realization'], 0, ',', '.') }}
                           </div>
                         </div>
                         <div class="col-4">
-                          <div class="text-white-50 small rkap-font-065">Proyeksi</div>
+                          <div class="text-white-50 small rkap-font-065">{{ __('Proyeksi') }}</div>
                           <div class="fw-bold text-white text-warning rkap-font-075">Rp
                             {{ number_format($prevActivityData['projection'] ?? 0, 0, ',', '.') }}
                           </div>
                         </div>
                       </div>
                       @else
-                      <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                      <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                       @endif
                     </span>
                   </strong>
@@ -1302,7 +1302,7 @@
 
             @if ($wp['description'])
             <div class="mb-3">
-              <label class="text-muted small d-block">Deskripsi / Tujuan</label>
+              <label class="text-muted small d-block">{{ __('Deskripsi / Tujuan') }}</label>
               <p class="mb-0 text-dark @if ($isWpVirtual) text-danger @endif rkap-preline">{{ $wp['description'] }}</p>
             </div>
             @endif
@@ -1379,11 +1379,11 @@
 
             <div class="row g-2 mb-3 small">
               <div class="col-auto">
-                <span class="text-muted">Target Output:</span> <span
+                <span class="text-muted">{{ __('Target Output:') }}</span> <span
                   class="fw-medium @if ($isWpVirtual) text-danger @else text-dark @endif">{{ $wp['output_target'] ?? '-' }}</span>
               </div>
               <div class="col-auto ms-3">
-                <span class="text-muted">Volume:</span> <span
+                <span class="text-muted">{{ __('Volume:') }}</span> <span
                   class="fw-medium @if ($isWpVirtual) text-danger @else text-dark @endif">{{ $wp['quantity'] }}
                   {{ $wp['unit'] }}</span>
               </div>
@@ -1391,7 +1391,7 @@
 
             @if ($wp['model'] && $wp['model']->activityFiles && $wp['model']->activityFiles->isNotEmpty())
             <div class="mb-3" wire:key="act-view-files-approval-{{ $wp['model']->id }}">
-              <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>File Referensi:</label>
+              <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>{{ __('File Referensi:') }}</label>
               <div class="d-flex flex-wrap gap-2">
                 @foreach ($wp['model']->activityFiles as $file)
                 @php
@@ -1418,7 +1418,7 @@
                       </div>
                       <div class="modal-footer">
                         <a href="{{ route('rkap-files.download', $file->id) }}" class="btn btn-primary btn-sm"><i class="bx bx-download me-1"></i> Download</a>
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('Tutup') }}</button>
                       </div>
                     </div>
                   </div>
@@ -1460,11 +1460,11 @@
               <table class="table table-sm table-striped table-hover mb-0">
                 <thead>
                   <tr>
-                    <th>Uraian & Detail Belanja</th>
+                    <th>{{ __('Uraian & Detail Belanja') }}</th>
                     <th class="text-center rkap-w-10p">Vol</th>
                     <th class="rkap-w-12p">Satuan</th>
-                    <th class="text-end rkap-w-14p">Harga Satuan</th>
-                    <th class="text-end rkap-w-16p">Total</th>
+                    <th class="text-end rkap-w-14p">{{ __('Harga Satuan') }}</th>
+                    <th class="text-end rkap-w-16p">{{ __('Total') }}</th>
                     <th class="text-center rkap-w-8p">Aksi</th>
                   </tr>
                 </thead>
@@ -1718,7 +1718,7 @@
                         Rp {{ number_format($bi['total_price'], 0, ',', '.') }}
                         <span class="custom-tooltip-content tooltip-align-right rkap-w-280 fw-normal">
                           @if ($prevItemBudget !== null)
-                          <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">RKAP Periode Sebelumnya ({{ $prevPeriod }})</div>
+                          <div class="fw-semibold text-center border-bottom pb-1 mb-2 text-white">{{ __('RKAP Periode Sebelumnya') }} ({{ $prevPeriod }})</div>
                           <div class="row text-center rkap-mw-250">
                             <div class="col-6 border-end">
                               <div class="text-white-50 small rkap-font-065">Anggaran Sblm</div>
@@ -1738,7 +1738,7 @@
                             </div>
                           </div>
                           @else
-                          <div class="text-center text-white-50 py-1">Tidak ada data di periode sebelumnya</div>
+                          <div class="text-center text-white-50 py-1">{{ __('Tidak ada data di periode sebelumnya') }}</div>
                           @endif
                         </span>
                       </div>
@@ -1783,7 +1783,7 @@
                                   <div class="card-body py-3 px-4">
                                     <div class="row g-3 small">
                                       <div class="col-md-auto border-end text-nowrap">
-                                        <span class="text-muted d-block mb-1">Kode Akun</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Kode Akun') }}</span>
                                         <span
                                           class="fw-semibold text-dark fs-6">{{ $bi['account_code'] ?? '-' }}</span>
                                       </div>
@@ -1798,7 +1798,7 @@
                                         @endif
                                       </div>
                                       <div class="col-md-auto border-end text-nowrap">
-                                        <span class="text-muted d-block mb-1">Volume</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Volume') }}</span>
                                         <span class="fw-semibold text-dark fs-6">
                                           @if (!$isBiVirtual && $bi['model'] && $bi['model']->unit_2)
                                           {{ $bi['quantity'] }} {{ $bi['unit'] }} x
@@ -1809,7 +1809,7 @@
                                         </span>
                                       </div>
                                       <div class="col-md-auto text-nowrap">
-                                        <span class="text-muted d-block mb-1">Total Anggaran</span>
+                                        <span class="text-muted d-block mb-1">{{ __('Total Anggaran') }}</span>
                                         <span class="fw-bold text-primary fs-6">Rp
                                           {{ number_format($bi['total_price'], 0, ',', '.') }}</span>
                                       </div>
@@ -1835,14 +1835,14 @@
                                 @if (!$hasAnyValue)
                                 <div class="text-center text-muted py-4">
                                   <i class="bx bx-info-circle fs-3 mb-2 d-block"></i>
-                                  <span class="small">Tidak ada data alokasi anggaran</span>
+                                  <span class="small">{{ __('Tidak ada data alokasi anggaran') }}</span>
                                 </div>
                                 @else
                                 <div class="border rounded-2 table-responsive mb-2">
                                   <table class="table table-sm table-bordered align-middle mb-0 rkap-min-w-750">
                                     <thead class="table-primary">
                                       <tr>
-                                        <th class="text-center rkap-w-90">Bulan</th>
+                                        <th class="text-center rkap-w-90">{{ __('Bulan') }}</th>
                                         <th class="text-end">
                                           Distribusi Penganggaran (Rp)
                                           <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->coaGroup?->name ?: '-' }})</div>
@@ -1896,7 +1896,7 @@
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary"
-                                  data-bs-dismiss="modal">Tutup</button>
+                                  data-bs-dismiss="modal">{{ __('Tutup') }}</button>
                               </div>
                             </div>
                           </div>

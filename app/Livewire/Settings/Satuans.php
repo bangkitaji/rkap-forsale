@@ -56,7 +56,7 @@ class Satuans extends Component
             $this->description = $satuan->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Satuan tidak ditemukan.');
+            session()->flash('error', __('Satuan tidak ditemukan.'));
         }
     }
 
@@ -76,7 +76,7 @@ class Satuans extends Component
             session()->flash('message', $this->satuanId ? 'Satuan berhasil diperbarui.' : 'Satuan berhasil ditambahkan.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan saat menyimpan Satuan.');
+            session()->flash('error', __('Terjadi kesalahan saat menyimpan Satuan.'));
         }
     }
 
@@ -84,9 +84,9 @@ class Satuans extends Component
     {
         try {
             Satuan::findOrFail($id)->delete();
-            session()->flash('message', 'Satuan berhasil dihapus.');
+            session()->flash('message', __('Satuan berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus Satuan.');
+            session()->flash('error', __('Gagal menghapus Satuan.'));
         }
     }
 

@@ -6,7 +6,7 @@
         <div class="card-body">
           <p class="text-muted mb-3">
             Upload file Excel (.xlsx, .xls) atau CSV untuk memperbarui data realisasi anggaran per item per bulan.
-            Hanya <strong>Verifikator</strong> yang dapat melakukan upload ini.
+            Hanya <strong>{{ __('Verifikator') }}</strong> yang dapat melakukan upload ini.
           </p>
 
           {{-- Row for side-by-side layout --}}
@@ -56,13 +56,13 @@
               <div class="alert alert-info mb-4 shadow-none border-1" role="alert">
                 <div class="d-flex align-items-center gap-2 mb-2">
                   <i class="bx bx-download fs-5 text-info"></i>
-                  <strong class="text-info">Download Template</strong>
+                  <strong class="text-info">{{ __('Download Template') }}</strong>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                   <a href="{{ route('rkap-realization-template-download', ['period_id' => $periodId, 'month' => $month]) }}"
                     class="btn btn-sm btn-success d-inline-flex align-items-center gap-1">
                     <i class="bx bx-file"></i>
-                    Excel (.xlsx) <span class="badge bg-white text-success ms-1 rkap-font-065">Direkomendasikan</span>
+                    Excel (.xlsx) <span class="badge bg-white text-success ms-1 rkap-font-065">{{ __('Direkomendasikan') }}</span>
                   </a>
                   <a href="{{ route('rkap-realization-template-download-csv', ['period_id' => $periodId, 'month' => $month]) }}"
                     class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
@@ -107,7 +107,7 @@
               {{-- Validation errors --}}
               @if (!empty($errorsList))
               <div class="alert alert-danger shadow-none border-1">
-                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>Validasi gagal</h6>
+                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>{{ __('Validasi gagal') }}</h6>
                 <ul class="mb-0 ps-3 small">
                   @foreach ($errorsList as $err)
                   <li>{{ $err }}</li>
@@ -119,7 +119,7 @@
               {{-- Success summary --}}
               @if ($imported)
               <div class="alert alert-success shadow-none border-1">
-                <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>Import berhasil</h6>
+                <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>{{ __('Import berhasil') }}</h6>
                 <p class="mb-2 small">Realisasi RKAP untuk bulan <strong>{{ $importedMonthName }}</strong> berhasil diunggah.</p>
                 <ul class="mb-0 ps-3 small">
                   <li>Baris baru: <strong>{{ $importSummary['created'] ?? 0 }}</strong></li>
@@ -131,14 +131,14 @@
 
               @if (session()->has('error'))
               <div class="alert alert-danger shadow-none border-1">
-                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>Kesalahan</h6>
+                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>{{ __('Kesalahan') }}</h6>
                 <p class="mb-0 small">{{ session('error') }}</p>
               </div>
               @endif
 
               @if (session()->has('message'))
               <div class="alert alert-success shadow-none border-1">
-                <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>Berhasil</h6>
+                <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>{{ __('Berhasil') }}</h6>
                 <p class="mb-0 small">{{ session('message') }}</p>
               </div>
               @endif
@@ -149,15 +149,15 @@
               <div class="border rounded p-3 bg-lighter rkap-border-dashed-muted">
                 <p class="mb-2 fw-semibold d-flex align-items-center gap-1">
                   <i class="bx bx-info-circle text-primary fs-5"></i>
-                  <span>Format Kolom File Import:</span>
+                  <span>{{ __('Format Kolom File Import:') }}</span>
                 </p>
                 <div class="table-responsive rkap-timeline-scroll">
                   <table class="table table-sm table-bordered mb-0 rkap-font-078">
                     <thead class="table-dark sticky-top">
                       <tr>
-                        <th>Kolom</th>
-                        <th class="text-center">Wajib</th>
-                        <th>Keterangan</th>
+                        <th>{{ __('Kolom') }}</th>
+                        <th class="text-center">{{ __('Wajib') }}</th>
+                        <th>{{ __('Keterangan') }}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -168,57 +168,57 @@
                       </tr>
                       <tr>
                         <td><code>bureaus_name</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Nama biro (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>workplan_code</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Kode program kerja (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>workplan_name</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Nama program kerja (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>activity_code</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Kode kegiatan (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>activity_name</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Nama kegiatan (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>coa_code</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Kode COA SAP (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>coa_desc</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Deskripsi COA (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>budget_item_desc</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Deskripsi budget item / remarks (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>amount_of_rkap</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Total anggaran RKAP (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>sum_of_uploaded_realization</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Tidak</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Tidak') }}</span></td>
                         <td>Total realisasi terunggah sebelumnya (diabaikan)</td>
                       </tr>
                       <tr>
                         <td><code>notes</code></td>
-                        <td class="text-center"><span class="badge bg-secondary">Opsional</span></td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ __('Opsional') }}</span></td>
                         <td>Catatan (diabaikan, hanya untuk referensi)</td>
                       </tr>
                       <tr>
@@ -245,14 +245,14 @@
       @if($periodId && $this->departmentAccumulations->isNotEmpty())
       <div class="card mt-4">
         <div class="card-header py-3">
-          <h5 class="mb-0">Ringkasan Akumulasi Realisasi per Departemen</h5>
-          <small class="text-muted">Klik nama departemen untuk memfilter rincian realisasi di bawah ini</small>
+          <h5 class="mb-0">{{ __('Ringkasan Akumulasi Realisasi per Departemen') }}</h5>
+          <small class="text-muted">{{ __('Klik nama departemen untuk memfilter rincian realisasi di bawah ini') }}</small>
         </div>
         <div class="table-responsive text-nowrap">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
-                <th>Departemen</th>
+                <th>{{ __('Departemen') }}</th>
                 <th class="text-end rkap-mw-250">Total Realisasi (Rp)</th>
               </tr>
             </thead>
@@ -280,7 +280,7 @@
       <div class="card mt-4">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div class="d-flex align-items-center gap-2">
-            <h5 class="mb-0">Daftar Realisasi Terunggah</h5>
+            <h5 class="mb-0">{{ __('Daftar Realisasi Terunggah') }}</h5>
             @if($filterDepartmentId)
             @php
             $filteredDept = \App\Models\Department::find($filterDepartmentId);
@@ -317,7 +317,7 @@
             {{-- Search box --}}
             <div class="input-group input-group-merge input-group-sm rkap-mw-250">
               <span class="input-group-text"><i class="bx bx-search"></i></span>
-              <input type="text" class="form-control" placeholder="Cari COA atau Biro..." wire:model.live.debounce.300ms="search">
+              <input type="text" class="form-control" placeholder="{{ __('Cari COA atau Biro...') }}" wire:model.live.debounce.300ms="search">
             </div>
           </div>
           @endif
@@ -326,14 +326,14 @@
           @if(!$periodId)
           <div class="py-5 text-center text-muted">
             <i class="bx bx-pointer bx-lg d-block mb-3 text-secondary"></i>
-            <h6 class="fw-semibold">Silakan pilih Periode RKAP di atas</h6>
-            <p class="small mb-0">Pilih periode untuk memuat daftar data realisasi terunggah.</p>
+            <h6 class="fw-semibold">{{ __('Silakan pilih Periode RKAP di atas') }}</h6>
+            <p class="small mb-0">{{ __('Pilih periode untuk memuat daftar data realisasi terunggah.') }}</p>
           </div>
           @elseif($realizations->isEmpty())
           <div class="py-5 text-center text-muted">
             <i class="bx bx-info-circle bx-lg d-block mb-3 text-warning"></i>
-            <h6 class="fw-semibold">Tidak ada data realisasi terunggah</h6>
-            <p class="small mb-0">Tidak ditemukan data realisasi untuk filter terpilih pada periode ini.</p>
+            <h6 class="fw-semibold">{{ __('Tidak ada data realisasi terunggah') }}</h6>
+            <p class="small mb-0">{{ __('Tidak ditemukan data realisasi untuk filter terpilih pada periode ini.') }}</p>
           </div>
           @else
           <div class="table-responsive text-nowrap">
@@ -341,11 +341,11 @@
               <thead>
                 <tr>
                   <th>Biro</th>
-                  <th>Akun Belanja / COA</th>
-                  <th>Detail Belanja</th>
-                  <th class="text-center">Bulan</th>
+                  <th>{{ __('Akun Belanja / COA') }}</th>
+                  <th>{{ __('Detail Belanja') }}</th>
+                  <th class="text-center">{{ __('Bulan') }}</th>
                   <th class="text-end">Jumlah Realisasi (Rp)</th>
-                  <th>Pengunggah</th>
+                  <th>{{ __('Pengunggah') }}</th>
                   <th class="text-center">Aksi</th>
                 </tr>
               </thead>

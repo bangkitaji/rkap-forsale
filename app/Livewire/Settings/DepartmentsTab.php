@@ -86,9 +86,9 @@ class DepartmentsTab extends Component
     {
         try {
             Department::findOrFail($id)->delete();
-            session()->flash('message', 'Departemen berhasil dihapus.');
+            session()->flash('message', __('Departemen berhasil dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus departemen. Pastikan tidak ada data terkait.');
+            session()->flash('error', __('Gagal menghapus departemen. Pastikan tidak ada data terkait.'));
         }
     }
 

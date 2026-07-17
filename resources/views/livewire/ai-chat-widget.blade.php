@@ -12,7 +12,7 @@
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
             <div class="d-flex align-items-center">
                 <i class="bx bx-bot fs-4 me-2"></i>
-                <h6 class="mb-0 text-white">RKAP AI Assistant</h6>
+                <h6 class="mb-0 text-white">{{ __('RKAP AI Assistant') }}</h6>
             </div>
             <div>
                 <button wire:click="clearChat" class="btn btn-sm btn-link text-white p-0 me-2" title="Clear Chat">
@@ -29,7 +29,7 @@
             @if(count($messages) === 0)
             <div class="text-center text-muted mt-5">
                 <i class="bx bx-chat fs-1 mb-2"></i>
-                <p>Hello! I'm your RKAP AI Assistant.<br>How can I help you today?</p>
+                <p>Hello! I'm your RKAP AI Assistant.<br>{{ __('How can I help you today?') }}</p>
             </div>
             @endif
 
@@ -49,13 +49,13 @@
             <div wire:loading wire:target="sendMessage" class="mb-3 d-flex justify-content-start">
                 <div class="p-2 rounded bg-white border">
                     <div class="spinner-grow spinner-grow-sm text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{{ __('Loading...') }}</span>
                     </div>
                     <div class="spinner-grow spinner-grow-sm text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{{ __('Loading...') }}</span>
                     </div>
                     <div class="spinner-grow spinner-grow-sm text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">{{ __('Loading...') }}</span>
                     </div>
                 </div>
             </div>
@@ -65,7 +65,7 @@
         <div class="card-footer bg-white border-top p-2">
             <form wire:submit.prevent="sendMessage">
                 <div class="input-group">
-                    <input type="text" wire:model.defer="newMessage" class="form-control border-0 shadow-none" placeholder="Ask something..." autocomplete="off">
+                    <input type="text" wire:model.defer="newMessage" class="form-control border-0 shadow-none" placeholder="{{ __('Ask something...') }}" autocomplete="off">
                     <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="sendMessage">
                         <i class="bx bx-send"></i>
                     </button>

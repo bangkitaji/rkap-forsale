@@ -68,7 +68,7 @@
                                     <input class="form-control bg-light" type="text" value="{{ $bureau_name }}" readonly />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-muted">Job Position</label>
+                                    <label class="form-label text-muted">{{ __('Job Position') }}</label>
                                     <input class="form-control bg-light" type="text" value="{{ $position }}" readonly />
                                 </div>
                                 <div class="col-md-6">
@@ -79,7 +79,7 @@
                                 </div>
                             </div>
                             <div class="mt-4">
-                                <button type="submit" class="btn btn-primary me-2">Save Profile Changes</button>
+                                <button type="submit" class="btn btn-primary me-2">{{ __('Save Profile Changes') }}</button>
                             </div>
                         </form>
                     </div>
@@ -109,7 +109,7 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label" for="current_password">Current Password</label>
+                                        <label class="form-label" for="current_password">{{ __('Current Password') }}</label>
                                         <input type="password" id="current_password" wire:model="current_password" class="form-control @error('current_password') is-invalid @enderror" placeholder="••••••••" />
                                         @error('current_password')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -117,7 +117,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label" for="new_password">New Password</label>
+                                        <label class="form-label" for="new_password">{{ __('New Password') }}</label>
                                         <input type="password" id="new_password" wire:model="new_password" class="form-control @error('new_password') is-invalid @enderror" placeholder="••••••••" />
                                         @error('new_password')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -125,11 +125,11 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label" for="new_password_confirmation">Confirm New Password</label>
+                                        <label class="form-label" for="new_password_confirmation">{{ __('Confirm New Password') }}</label>
                                         <input type="password" id="new_password_confirmation" wire:model="new_password_confirmation" class="form-control" placeholder="••••••••" />
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100">Save Password</button>
+                                    <button type="submit" class="btn btn-primary w-100">{{ __('Save Password') }}</button>
                                 </div>
                             </div>
                         </form>

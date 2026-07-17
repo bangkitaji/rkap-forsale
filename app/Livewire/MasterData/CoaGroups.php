@@ -90,7 +90,7 @@ class CoaGroups extends Component
             $this->groupDescription = $group->description;
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'COA Group not found.');
+            session()->flash('error', __('COA Group not found.'));
         }
     }
 
@@ -120,7 +120,7 @@ class CoaGroups extends Component
             session()->flash('message', $this->groupId ? 'COA Group updated successfully.' : 'COA Group created successfully.');
             $this->closeModal();
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the COA Group.');
+            session()->flash('error', __('An error occurred while saving the COA Group.'));
         }
     }
 
@@ -128,9 +128,9 @@ class CoaGroups extends Component
     {
         try {
             CoaGroup::findOrFail($id)->delete();
-            session()->flash('message', 'COA Group deleted successfully.');
+            session()->flash('message', __('COA Group deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete COA Group.');
+            session()->flash('error', __('Unable to delete COA Group.'));
         }
     }
 
@@ -171,12 +171,12 @@ class CoaGroups extends Component
     public function mapSelected(): void
     {
         if (empty($this->selectedCoas)) {
-            session()->flash('error', 'Please select at least one COA.');
+            session()->flash('error', __('Please select at least one COA.'));
             return;
         }
 
         if (empty($this->targetGroupId)) {
-            session()->flash('error', 'Please select a target COA Group.');
+            session()->flash('error', __('Please select a target COA Group.'));
             return;
         }
 
@@ -184,28 +184,28 @@ class CoaGroups extends Component
             $group = CoaGroup::findOrFail($this->targetGroupId);
             Coa::whereIn('id', $this->selectedCoas)->update(['coa_group_id' => $group->id]);
 
-            session()->flash('message', 'Selected COAs mapped to group "' . $group->name . '" successfully.');
+            session()->flash('message', __('Selected COAs mapped to group "') . $group->name . '" successfully.');
             $this->selectedCoas = [];
             $this->targetGroupId = '';
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to map selected COAs.');
+            session()->flash('error', __('Failed to map selected COAs.'));
         }
     }
 
     public function unmapSelected(): void
     {
         if (empty($this->selectedCoas)) {
-            session()->flash('error', 'Please select at least one COA.');
+            session()->flash('error', __('Please select at least one COA.'));
             return;
         }
 
         try {
             Coa::whereIn('id', $this->selectedCoas)->update(['coa_group_id' => null]);
 
-            session()->flash('message', 'Selected COA mappings removed successfully.');
+            session()->flash('message', __('Selected COA mappings removed successfully.'));
             $this->selectedCoas = [];
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to remove COA mappings.');
+            session()->flash('error', __('Failed to remove COA mappings.'));
         }
     }
 

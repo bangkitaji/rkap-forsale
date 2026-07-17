@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class ReportGroup extends Model
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'type', 'name', 'description'];
+    protected $fillable = ['code', 'type', 'name', 'name_en', 'description'];
 
     protected $searchable = ['code', 'name', 'type'];
 

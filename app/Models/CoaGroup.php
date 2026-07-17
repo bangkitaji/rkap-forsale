@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Traits\Searchable;
+use App\Models\Traits\Translatable;
 
 class CoaGroup extends Model
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'name', 'description', 'report_group_id'];
+    protected $fillable = ['code', 'name', 'name_en', 'description', 'report_group_id'];
 
     public function coas(): HasMany
     {

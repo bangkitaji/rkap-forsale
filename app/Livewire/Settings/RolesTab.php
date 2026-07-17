@@ -58,7 +58,7 @@ class RolesTab extends Component
             $this->rolePermissions = $role->permissions->pluck('name')->toArray();
             $this->isModalOpen = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Role not found.');
+            session()->flash('error', __('Role not found.'));
         }
     }
 
@@ -81,7 +81,7 @@ class RolesTab extends Component
 
             session()->flash('message', $this->roleId ? 'Role updated successfully.' : 'Role created successfully.');
         } catch (\Exception $e) {
-            session()->flash('error', 'An error occurred while saving the role.');
+            session()->flash('error', __('An error occurred while saving the role.'));
         }
 
         $this->closeModal();
@@ -92,9 +92,9 @@ class RolesTab extends Component
         try {
             Role::findOrFail($id)->delete();
             Artisan::call('permission:cache-reset');
-            session()->flash('message', 'Role deleted successfully.');
+            session()->flash('message', __('Role deleted successfully.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Unable to delete role.');
+            session()->flash('error', __('Unable to delete role.'));
         }
     }
 

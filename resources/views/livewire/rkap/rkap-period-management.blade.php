@@ -121,12 +121,12 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Deskripsi</label>
+                            <label class="form-label">{{ __('Deskripsi') }}</label>
                             <textarea class="form-control" wire:model="description" rows="2"></textarea>
                         </div>
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Status</label>
+                                <label class="form-label">{{ __('Status') }}</label>
                                 <select class="form-select" wire:model="status">
                                     <option value="draft">Draft</option>
                                     <option value="open">Open</option>
@@ -147,10 +147,10 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">Batal</button>
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeModal()">{{ __('Batal') }}</button>
                         <button type="submit" class="btn btn-primary">
-                            <span wire:loading.remove><i class="bx bx-save me-1"></i> Simpan</span>
-                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...</span>
+                            <span wire:loading.remove><i class="bx bx-save me-1"></i> {{ __('Simpan') }}</span>
+                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> {{ __('Menyimpan...') }}</span>
                         </button>
                     </div>
                 </form>

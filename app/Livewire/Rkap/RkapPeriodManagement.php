@@ -79,28 +79,28 @@ class RkapPeriodManagement extends Component
     public function openPeriod(int $id): void
     {
         RkapPeriod::findOrFail($id)->update(['status' => 'open']);
-        session()->flash('message', 'Periode RKAP dibuka. Biro dapat mulai mengajukan RKAP.');
+        session()->flash('message', __('Periode RKAP dibuka. Biro dapat mulai mengajukan RKAP.'));
     }
 
     public function closePeriod(int $id): void
     {
         RkapPeriod::findOrFail($id)->update(['status' => 'closed']);
-        session()->flash('message', 'Periode RKAP ditutup.');
+        session()->flash('message', __('Periode RKAP ditutup.'));
     }
 
     public function finalizePeriod(int $id): void
     {
         RkapPeriod::findOrFail($id)->update(['status' => 'finalized']);
-        session()->flash('message', 'Periode RKAP difinalisasi.');
+        session()->flash('message', __('Periode RKAP difinalisasi.'));
     }
 
     public function delete(int $id): void
     {
         try {
             RkapPeriod::findOrFail($id)->delete();
-            session()->flash('message', 'Periode RKAP dihapus.');
+            session()->flash('message', __('Periode RKAP dihapus.'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Gagal menghapus. Periode ini sudah memiliki pengajuan.');
+            session()->flash('error', __('Gagal menghapus. Periode ini sudah memiliki pengajuan.'));
         }
     }
 

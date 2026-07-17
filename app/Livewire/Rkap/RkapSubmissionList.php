@@ -59,38 +59,38 @@ class RkapSubmissionList extends Component
     {
         $user = Auth::user();
         if (!$user || !$user->bureau_id) {
-            session()->flash('error', 'Anda harus terasosiasi dengan Biro untuk menduplikasi pengajuan.');
+            session()->flash('error', __('Anda harus terasosiasi dengan Biro untuk menduplikasi pengajuan.'));
             $this->closeDuplicateModal();
             return;
         }
 
         if (!$this->selectedDestinationPeriodId) {
-            session()->flash('error', 'Periode tujuan belum dipilih.');
+            session()->flash('error', __('Periode tujuan belum dipilih.'));
             $this->closeDuplicateModal();
             return;
         }
 
         if (!$this->selectedSourceSubmissionId) {
-            session()->flash('error', 'Silakan pilih pengajuan sumber yang ingin diduplikasi.');
+            session()->flash('error', __('Silakan pilih pengajuan sumber yang ingin diduplikasi.'));
             return;
         }
 
         $destinationPeriod = RkapPeriod::findOrFail($this->selectedDestinationPeriodId);
         if (!$destinationPeriod->isOpen()) {
-            session()->flash('error', 'Periode tujuan harus berstatus Open.');
+            session()->flash('error', __('Periode tujuan harus berstatus Open.'));
             $this->closeDuplicateModal();
             return;
         }
 
         $sourceSubmission = RkapSubmission::findOrFail($this->selectedSourceSubmissionId);
         if ($sourceSubmission->bureau_id !== $user->bureau_id) {
-            session()->flash('error', 'Anda hanya dapat menduplikasi pengajuan milik Biro Anda.');
+            session()->flash('error', __('Anda hanya dapat menduplikasi pengajuan milik Biro Anda.'));
             $this->closeDuplicateModal();
             return;
         }
 
         if ($sourceSubmission->rkap_period_id === $destinationPeriod->id) {
-            session()->flash('error', 'Tidak dapat menduplikasi ke periode yang sama.');
+            session()->flash('error', __('Tidak dapat menduplikasi ke periode yang sama.'));
             return;
         }
 
@@ -98,7 +98,7 @@ class RkapSubmissionList extends Component
             ->where('bureau_id', $user->bureau_id)
             ->exists();
         if ($alreadyExists) {
-            session()->flash('error', 'Biro Anda sudah memiliki pengajuan untuk periode tersebut.');
+            session()->flash('error', __('Biro Anda sudah memiliki pengajuan untuk periode tersebut.'));
             $this->closeDuplicateModal();
             return;
         }
@@ -158,7 +158,7 @@ class RkapSubmissionList extends Component
 
             $newSubmission->calculateTotalBudget();
 
-            session()->flash('message', 'Pengajuan berhasil diduplikasi ke periode baru.');
+            session()->flash('message', __('Pengajuan berhasil diduplikasi ke periode baru.'));
             $this->redirectRoute('rkap-submissions-edit', ['id' => $newSubmission->id]);
         });
     }
@@ -181,7 +181,7 @@ class RkapSubmissionList extends Component
         $submission = $query->first();
 
         if (!$submission) {
-            session()->flash('error', 'Pengajuan tidak ditemukan atau Anda tidak memiliki akses.');
+            session()->flash('error', __('Pengajuan tidak ditemukan atau Anda tidak memiliki akses.'));
             return null;
         }
 

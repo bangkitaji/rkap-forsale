@@ -61,7 +61,7 @@ class RkapReview extends Component
 
         $this->reviewComments = '';
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'RKAP berhasil disetujui.');
+        session()->flash('message', __('RKAP berhasil disetujui.'));
     }
 
     public function requestRevision(): void
@@ -84,7 +84,7 @@ class RkapReview extends Component
         $this->revisionReason = '';
         $this->showRevisionForm = false;
         $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
-        session()->flash('message', 'RKAP berhasil ditolak dan dikembalikan untuk revisi.');
+        session()->flash('message', __('RKAP berhasil ditolak dan dikembalikan untuk revisi.'));
     }
 
     public function addComment(): void
