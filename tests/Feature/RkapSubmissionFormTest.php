@@ -821,6 +821,73 @@ class RkapSubmissionFormTest extends TestCase
             'total_price' => 37500.00,
         ]);
     }
+
+    public function test_revenue_coa_cash_out_can_exceed_budget_on_submission_form(): void
+    {
+        $this->actingAs($this->user);
+
+        // 1. Create a revenue COA and map it to a new activity
+        $revenueCoa = Coa::create([
+            'code' => '410102',
+            'title' => 'Pendapatan Tiket Cadangan',
+        ]);
+        
+        $activityWithSingleCoa = Activity::create([
+            'work_plan_id' => $this->workPlan->id,
+            'code' => 'ACT003',
+            'title' => 'Activity with Single COA',
+        ]);
+        $activityWithSingleCoa->coas()->attach($revenueCoa->id);
+
+        // 2. Test component
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $activityWithSingleCoa->id)
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 2)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 5000); // total 10000
+
+        // Distribute monthly budget (must equal total item: 10000)
+        $component->call('toggleMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.monthly_distribution.1', 10000);
+
+        // Distribute cash out: exceeding total budget (allocated 15000)
+        $component->call('toggleCashOutMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.cash_out_distribution.1', 15000);
+
+        // Try to submit for review, should not throw error for cash out exceeding budget
+        $component->call('submitForReview')
+            ->assertHasNoErrors();
+    }
+
+    public function test_expense_coa_cash_out_exceed_budget_fails_on_submission_form(): void
+    {
+        $this->actingAs($this->user);
+
+        $activityWithOnlyCoa1 = Activity::create([
+            'work_plan_id' => $this->workPlan->id,
+            'code' => 'ACT004',
+            'title' => 'Activity with Only Coa1',
+        ]);
+        $activityWithOnlyCoa1->coas()->attach($this->coa1->id);
+
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $activityWithOnlyCoa1->id)
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 2)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 5000); // total 10000
+
+        // Distribute monthly budget
+        $component->call('toggleMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.monthly_distribution.1', 10000);
+
+        // Distribute cash out: exceeding total budget (allocated 15000)
+        $component->call('toggleCashOutMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.cash_out_distribution.1', 15000);
+
+        // Try to submit for review, should fail validation for cash out
+        $component->call('submitForReview')
+            ->assertHasErrors(['workPlans.0.activities.0.budget_items.0.cash_out']);
+    }
 }
 
 

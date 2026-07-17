@@ -1108,6 +1108,18 @@ class RkapSubmissionForm extends Component
 
     private function validateCashOutPlan(): void
     {
+        $coaIds = [];
+        foreach ($this->workPlans as $wpData) {
+            foreach ($wpData['activities'] ?? [] as $actData) {
+                foreach ($actData['budget_items'] ?? [] as $biData) {
+                    if (!empty($biData['coa_id'])) {
+                        $coaIds[] = (int) $biData['coa_id'];
+                    }
+                }
+            }
+        }
+        $coas = Coa::with('coaCategory')->whereIn('id', array_unique($coaIds))->get()->keyBy('id');
+
         foreach ($this->workPlans as $wpIdx => $wpData) {
             foreach ($wpData['activities'] as $actIdx => $actData) {
                 foreach ($actData['budget_items'] as $biIdx => $biData) {
@@ -1128,12 +1140,18 @@ class RkapSubmissionForm extends Component
                     }
 
                     if ($allocated - $total > 0.01) {
-                        $diff = $allocated - $total;
-                        $diffFormatted = number_format($diff, 0, ',', '.');
+                        $coaId = $biData['coa_id'] ?? null;
+                        $coa = $coaId ? $coas->get($coaId) : null;
+                        $isRevenue = $coa ? $coa->isRevenue() : false;
 
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.cash_out" => "Total rencana kas keluar tidak boleh melebihi total item (Rp " . number_format($total, 0, ',', '.') . "). Saat ini lebih Rp {$diffFormatted}.",
-                        ]);
+                        if (!$isRevenue) {
+                            $diff = $allocated - $total;
+                            $diffFormatted = number_format($diff, 0, ',', '.');
+
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.cash_out" => "Total rencana kas keluar tidak boleh melebihi total item (Rp " . number_format($total, 0, ',', '.') . "). Saat ini lebih Rp {$diffFormatted}.",
+                            ]);
+                        }
                     }
 
                     if ($allocated <= 0) {
