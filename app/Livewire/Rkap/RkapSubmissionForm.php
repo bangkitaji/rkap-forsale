@@ -912,9 +912,9 @@ class RkapSubmissionForm extends Component
             'workPlans.*.activities.*.quantity' => 'required|integer|min:1',
             'workPlans.*.activities.*.budget_items' => 'required|array|min:1',
             'workPlans.*.activities.*.budget_items.*.coa_id' => 'required|integer|exists:coas,id',
-            'workPlans.*.activities.*.budget_items.*.quantity' => 'required|integer|min:1',
+            'workPlans.*.activities.*.budget_items.*.quantity' => 'required|numeric|gt:0',
             'workPlans.*.activities.*.budget_items.*.unit_2' => 'nullable|string',
-            'workPlans.*.activities.*.budget_items.*.quantity_2' => 'nullable|integer|min:1',
+            'workPlans.*.activities.*.budget_items.*.quantity_2' => 'nullable|numeric|gt:0',
             'workPlans.*.activities.*.budget_items.*.unit_price' => 'required|numeric|min:0',
         ];
     }
@@ -1286,7 +1286,7 @@ class RkapSubmissionForm extends Component
                                 'unit' => $biData['unit'] ?: null,
                                 'quantity' => $biData['quantity'],
                                 'unit_2' => $biData['unit_2'] ?: null,
-                                'quantity_2' => $biData['quantity_2'] !== null && $biData['quantity_2'] !== '' ? (int) $biData['quantity_2'] : null,
+                                'quantity_2' => $biData['quantity_2'] !== null && $biData['quantity_2'] !== '' ? (float) $biData['quantity_2'] : null,
                                 'unit_price' => $biData['unit_price'],
                                 'remarks' => $biData['remarks'] ?: null,
                             ]

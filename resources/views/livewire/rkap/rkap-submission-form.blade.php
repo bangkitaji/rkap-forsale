@@ -837,16 +837,16 @@
                   </td>
                   <td class="border-top-0 rkap-min-w-120">
                     {{-- Vol 1 --}}
-                    <input type="number"
+                    <input type="number" step="any"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity"
-                      min="1" placeholder="Vol 1" @disabled($isApproved)>
+                      min="0.0001" placeholder="Vol 1" @disabled($isApproved)>
 
                     {{-- Vol 2 --}}
-                    <input type="number"
+                    <input type="number" step="any"
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity_2') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity_2"
-                      min="1" placeholder="Vol 2" @disabled($isApproved)>
+                      min="0.0001" placeholder="Vol 2" @disabled($isApproved)>
                   </td>
                   <td class="border-top-0 rkap-min-w-120 rkap-position-relative">
                     {{-- Satuan 1 --}}

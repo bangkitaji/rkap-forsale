@@ -979,16 +979,16 @@
                     </td>
                     <td class="border-top-0 rkap-rp-input">
                       {{-- Vol 1 --}}
-                      <input type="number"
+                      <input type="number" step="any"
                         class="form-control form-control-sm mb-2 @error('newActivityBudgetItems.' . $biIdx . '.quantity') is-invalid @enderror"
                         wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.quantity"
-                        min="1" placeholder="Vol 1">
+                        min="0.0001" placeholder="Vol 1">
 
                       {{-- Vol 2 --}}
-                      <input type="number"
+                      <input type="number" step="any"
                         class="form-control form-control-sm @error('newActivityBudgetItems.' . $biIdx . '.quantity_2') is-invalid @enderror"
                         wire:model.live.debounce.500ms="newActivityBudgetItems.{{ $biIdx }}.quantity_2"
-                        min="1" placeholder="Vol 2">
+                        min="0.0001" placeholder="Vol 2">
                     </td>
                     <td class="border-top-0 rkap-position-relative rkap-rp-input">
                       {{-- Satuan 1 --}}

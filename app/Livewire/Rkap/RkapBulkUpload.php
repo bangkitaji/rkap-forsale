@@ -268,9 +268,9 @@ class RkapBulkUpload extends Component
             }
 
             // Quantity
-            $qty = (int) ($row['quantity'] ?: 0);
-            if ($qty < 1) {
-                $this->importErrors[] = "{$prefix}: " . __('quantity harus minimal 1.');
+            $qty = (float) ($row['quantity'] ?: 0);
+            if ($qty <= 0) {
+                $this->importErrors[] = "{$prefix}: " . __('quantity harus lebih besar dari 0.');
             }
 
             // Unit price
@@ -280,7 +280,10 @@ class RkapBulkUpload extends Component
             }
 
             // Calculate total
-            $qty2 = !empty($row['unit_2']) ? max(1, (int) ($row['quantity_2'] ?: 1)) : 1;
+            $qty2 = !empty($row['unit_2']) ? (float) ($row['quantity_2'] ?: 1) : 1;
+            if (!empty($row['unit_2']) && $qty2 <= 0) {
+                $this->importErrors[] = "{$prefix}: " . __('quantity_2 harus lebih besar dari 0 jika unit_2 diisi.');
+            }
             $totalItem = $qty * $qty2 * $unitPrice;
 
             // Monthly distribution validation
@@ -418,8 +421,8 @@ class RkapBulkUpload extends Component
                         $coa = $coas->get($row['coa_code']);
                         if (!$coa) continue;
 
-                        $qty = max(1, (int) ($row['quantity'] ?: 1));
-                        $qty2 = !empty($row['unit_2']) ? max(1, (int) ($row['quantity_2'] ?: 1)) : null;
+                        $qty = (float) ($row['quantity'] ?: 1);
+                        $qty2 = !empty($row['unit_2']) ? (float) ($row['quantity_2'] ?: 1) : null;
                         $unitPrice = (float) ($row['unit_price'] ?: 0);
 
                         $budgetItem = RkapBudgetItem::create([
@@ -505,8 +508,8 @@ class RkapBulkUpload extends Component
                 ];
             }
 
-            $qty = max(1, (int) ($row['quantity'] ?: 1));
-            $qty2 = !empty($row['unit_2']) ? max(1, (int) ($row['quantity_2'] ?: 1)) : 1;
+            $qty = (float) ($row['quantity'] ?: 1);
+            $qty2 = !empty($row['unit_2']) ? (float) ($row['quantity_2'] ?: 1) : 1;
             $unitPrice = (float) ($row['unit_price'] ?: 0);
             $total = $qty * $qty2 * $unitPrice;
 

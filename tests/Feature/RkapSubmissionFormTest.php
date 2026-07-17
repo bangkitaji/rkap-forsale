@@ -782,6 +782,45 @@ class RkapSubmissionFormTest extends TestCase
             ->call('saveDraft')
             ->assertHasErrors(['workPlans.0.activities.0.budget_items.0.coa_id']);
     }
+
+    public function test_decimal_quantities_support(): void
+    {
+        $this->actingAs($this->user);
+
+        // Instantiate component and set up a budget item
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            // Set decimal quantity Vol 1 = 1.5, Vol 2 = 2.5, unit_price = 10000
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 1.5)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 10000)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_2', 'Box')
+            ->set('workPlans.0.activities.0.budget_items.0.quantity_2', 2.5);
+
+        // Grand total should be 1.5 * 2.5 * 10000 = 37500
+        $this->assertEquals(37500, $component->get('grandTotal'));
+
+        // Distribute evenly over 2 months
+        $component->call('toggleMonth', 0, 0, 0, 1) // Jan
+            ->call('toggleMonth', 0, 0, 0, 2) // Feb
+            ->call('distributeEvenly', 0, 0, 0);
+
+        $distribution = $component->get('workPlans.0.activities.0.budget_items.0.monthly_distribution');
+        $this->assertEquals(18750, $distribution[1]);
+        $this->assertEquals(18750, $distribution[2]);
+
+        // Save draft and make sure no errors
+        $component->call('saveDraft')
+            ->assertHasNoErrors();
+
+        // Check database contents to ensure they are stored correctly as decimals
+        $this->assertDatabaseHas('rkap_budget_items', [
+            'account_code' => $this->coa1->code,
+            'quantity' => 1.5,
+            'quantity_2' => 2.5,
+            'total_price' => 37500.00,
+        ]);
+    }
 }
 
 

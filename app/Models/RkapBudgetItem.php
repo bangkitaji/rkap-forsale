@@ -25,8 +25,8 @@ class RkapBudgetItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'quantity_2' => 'integer',
+            'quantity' => 'float',
+            'quantity_2' => 'float',
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
             'projection' => 'decimal:2',

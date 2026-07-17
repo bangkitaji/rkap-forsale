@@ -1056,7 +1056,8 @@ class RkapApprovalReview extends Component
                 'activityOutputTarget' => 'nullable|string',
                 'newActivityBudgetItems' => 'required|array|min:1',
                 'newActivityBudgetItems.*.coa_id' => 'required|exists:coas,id',
-                'newActivityBudgetItems.*.quantity' => 'required|integer|min:1',
+                'newActivityBudgetItems.*.quantity' => 'required|numeric|gt:0',
+                'newActivityBudgetItems.*.quantity_2' => 'nullable|numeric|gt:0',
                 'newActivityBudgetItems.*.unit' => 'required|string',
                 'newActivityBudgetItems.*.unit_price' => 'required|numeric|min:0',
                 'newActivityBudgetItems.*.remarks' => 'nullable|string',
@@ -1105,7 +1106,7 @@ class RkapApprovalReview extends Component
                     $coaId = $biData['coa_id'];
                     $coa = \App\Models\Coa::findOrFail($coaId);
                     $unitPrice = (float) $biData['unit_price'];
-                    $quantity = (int) $biData['quantity'];
+                    $quantity = (float) $biData['quantity'];
                     $qty2 = !empty($biData['unit_2']) ? (float) ($biData['quantity_2'] ?? 1) : 1;
                     $totalPrice = $quantity * $qty2 * $unitPrice;
 
@@ -1116,7 +1117,7 @@ class RkapApprovalReview extends Component
                         'unit' => $biData['unit'],
                         'quantity' => $quantity,
                         'unit_2' => $biData['unit_2'] ?: null,
-                        'quantity_2' => !empty($biData['unit_2']) ? ($biData['quantity_2'] ?? null) : null,
+                        'quantity_2' => (!empty($biData['unit_2']) && $biData['quantity_2'] !== null && $biData['quantity_2'] !== '') ? (float) $biData['quantity_2'] : null,
                         'unit_price' => $unitPrice,
                         'total_price' => $totalPrice,
                         'remarks' => $biData['remarks'] ?: null,

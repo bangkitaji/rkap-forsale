@@ -233,8 +233,8 @@ class DataMigrationUpload extends Component
       $unitPrice = (float) ($row['unit_price'] ?? 0);
       $total = $qty * $unitPrice;
 
-      if ($qty < 1) {
-        $this->errorsList[] = "Baris {$rowNo}: bi_quantity minimal 1.";
+      if ($qty <= 0) {
+        $this->errorsList[] = "Baris {$rowNo}: bi_quantity harus lebih besar dari 0.";
       }
 
       if ($unitPrice < 0) {
@@ -365,7 +365,7 @@ class DataMigrationUpload extends Component
               'account_code' => $coa?->code,
               'description' => $coa?->title ?? '',
               'unit' => ($row['bi_unit'] ?? null) ?: null,
-              'quantity' => (int) $row['bi_quantity'],
+              'quantity' => (float) $row['bi_quantity'],
               'unit_price' => (float) $row['unit_price'],
               'remarks' => ($row['remarks'] ?? null) ?: null,
             ]);
@@ -382,7 +382,7 @@ class DataMigrationUpload extends Component
           $oldUnitPrice = $budgetItem->unit_price;
           $oldTotal = $oldQty * $oldUnitPrice;
 
-          $rowQty = (int) $row['bi_quantity'];
+          $rowQty = (float) $row['bi_quantity'];
           $rowUnitPrice = (float) $row['unit_price'];
           $rowTotal = $rowQty * $rowUnitPrice;
 
