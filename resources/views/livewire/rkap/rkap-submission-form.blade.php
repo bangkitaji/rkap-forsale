@@ -288,10 +288,12 @@
     {{-- ===== Card Body: Activities List ===== --}}
     <div class="card-body bg-light-gray p-3">
       @foreach ($wp['activities'] as $actIdx => $act)
-      @php
+       @php
       $selectedActivity = $act['activity_id'] ? ($activitiesMap[$act['activity_id']] ?? null) : null;
       $actUid = $act['_uid'] ?? ('act_idx_' . $actIdx);
-      $isApproved = ($act['approval_status'] ?? 'pending') === 'approved';
+      $isApprovedRaw = ($act['approval_status'] ?? 'pending') === 'approved';
+      $isTransferLocked = (bool) ($act['is_transfer_locked'] ?? false);
+      $isApproved = $isApprovedRaw || $isTransferLocked;
       $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
       @endphp
 
@@ -300,10 +302,13 @@
           <div class="d-flex align-items-center gap-2">
             <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
             <h6 class="mb-0 fw-bold">Kegiatan {{ $actIdx + 1 }}</h6>
-            @if ($isApproved)
+            @if ($isApprovedRaw)
             <span class="badge bg-label-success ms-2"><i class="bx bx-check-circle me-1"></i>{{ __('Disetujui') }}</span>
             @elseif ($isRejected)
             <span class="badge bg-label-danger ms-2"><i class="bx bx-x-circle me-1"></i>{{ __('Revisi') }}</span>
+            @endif
+            @if ($isTransferLocked)
+            <span class="badge bg-label-warning ms-2"><i class="bx bx-transfer me-1"></i>{{ __('Proses Transfer') }}</span>
             @endif
           </div>
           @if (count($wp['activities']) > 1 && !$isApproved)

@@ -1198,6 +1198,11 @@
                       @if ($wp['model']->pastPeriod) — {{ $wp['model']->pastPeriod->year }}@endif
                     </span>
                     @endif
+                    @if ($wp['model'] && $wp['model']->transferred_from)
+                    <span class="badge bg-info text-white ms-1 rkap-font-06">
+                      <i class="bx bx-transfer me-1"></i>{{ __('Ditransfer dari') }} {{ $wp['model']->transferred_from->name }}
+                    </span>
+                    @endif
                   </div>
                   <span
                     class="@if ($isWpVirtual) text-danger @else text-muted @endif small d-block text-truncate">{{ $activityCode }}

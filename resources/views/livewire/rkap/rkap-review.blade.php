@@ -325,6 +325,11 @@
                       @if ($wp->pastPeriod) — {{ $wp->pastPeriod->year }}@endif
                     </span>
                     @endif
+                    @if ($wp->transferred_from)
+                    <span class="badge bg-info text-white ms-1 rkap-font-07 rkap-p-02-04">
+                      <i class="bx bx-transfer me-1"></i>{{ __('Ditransfer dari') }} {{ $wp->transferred_from->name }}
+                    </span>
+                    @endif
                   </h6>
                   <span class="text-muted small">{{ $activityCode }} — {{ $activityTitle }}</span>
                   @if ($wp->is_past_period_payment && $wp->pastPeriod)

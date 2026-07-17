@@ -535,8 +535,8 @@ class RkapProjectionTest extends TestCase
             $component->assertSet('editingProjections.' . $futureMonth, 45000);
         }
 
-        // Assert current month (no realization seeded) equals auto allocated remaining budget (3500)
-        $component->assertSet('editingProjections.' . $currentMonth, 3500);
+        // Assert current month (no realization seeded) equals monthly plan amount (50000)
+        $component->assertSet('editingProjections.' . $currentMonth, 50000);
     }
 
     public function test_save_projection_enforces_realization_for_past_and_filled_months(): void

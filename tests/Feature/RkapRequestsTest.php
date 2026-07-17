@@ -178,7 +178,9 @@ class RkapRequestsTest extends TestCase
         $this->actingAs($this->verifikatorUser);
 
         Livewire::test(RkapRequests::class)
-            ->call('rejectRequest', 'work_plan', $wp->id);
+            ->call('openRejectModal', 'work_plan', $wp->id)
+            ->set('rejectionNote', 'Rejection reason notes')
+            ->call('confirmReject');
 
         $this->assertEquals('rejected', $wp->fresh()->approval_status);
     }
@@ -199,7 +201,7 @@ class RkapRequestsTest extends TestCase
             ->assertStatus(403);
 
         Livewire::test(RkapRequests::class)
-            ->call('rejectRequest', 'work_plan', $wp->id)
+            ->call('openRejectModal', 'work_plan', $wp->id)
             ->assertStatus(403);
     }
 

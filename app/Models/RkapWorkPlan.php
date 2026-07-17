@@ -74,6 +74,26 @@ class RkapWorkPlan extends Model
         return (float) $this->budgetItems->sum('total_price');
     }
 
+    public function getTransferredFromAttribute(): ?Bureau
+    {
+        $item = \App\Models\BudgetTransferItem::where('rkap_work_plan_id', $this->id)
+            ->whereHas('transfer', function ($query) {
+                $query->where('status', \App\Enums\BudgetTransferStatus::Approved->value);
+            })
+            ->with('transfer.sourceBureau')
+            ->first();
+
+        return $item ? $item->transfer->sourceBureau : null;
+    }
+
+    public function isLockedForTransfer(): bool
+    {
+        return \App\Models\BudgetTransferItem::where('rkap_work_plan_id', $this->id)
+            ->whereHas('transfer', function ($query) {
+                $query->where('status', \App\Enums\BudgetTransferStatus::Pending->value);
+            })->exists();
+    }
+
     protected static function booted(): void
     {
         static::saving(function (RkapWorkPlan $rkapWorkPlan) {

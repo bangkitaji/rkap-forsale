@@ -90,6 +90,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');
     Route::get('/submissions/{id}/approval-review', \App\Livewire\Rkap\RkapApprovalReview::class)->name('rkap-submissions-approval-review');
     Route::get('/submissions/{id}/versions', \App\Livewire\Rkap\RkapVersionHistory::class)->name('rkap-submissions-versions');
+    Route::get('/budget-transfers', \App\Livewire\Rkap\BudgetTransferList::class)
+      ->middleware('permission:rkap.transfer.view')
+      ->name('rkap-budget-transfers');
+    Route::get('/budget-transfers/create', \App\Livewire\Rkap\BudgetTransferCreate::class)
+      ->middleware('permission:rkap.transfer.create')
+      ->name('rkap-budget-transfers-create');
+    Route::get('/budget-transfers/{id}/review', \App\Livewire\Rkap\BudgetTransferReview::class)
+      ->middleware('permission:rkap.transfer.review')
+      ->name('rkap-budget-transfers-review');
     Route::get('/files/{fileId}/download', [App\Http\Controllers\RkapFileController::class, 'download'])->name('rkap-files.download');
     Route::get('/files/{fileId}/view', [App\Http\Controllers\RkapFileController::class, 'view'])->name('rkap-files.view');
     Route::get('/compilation', \App\Livewire\Rkap\RkapSubmissionCompilation::class)

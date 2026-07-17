@@ -54,7 +54,10 @@
         "rkap-submissions-compilation",
         "rkap-projections",
         "rkap-projection-upload",
-        "rkap-realization-upload"
+        "rkap-realization-upload",
+        "rkap-budget-transfers",
+        "rkap-budget-transfers-create",
+        "rkap-budget-transfers-review"
       ],
       "permission": "rkap.show",
       "submenu": [
@@ -95,6 +98,17 @@
           "name": "Kompilasi",
           "slug": "rkap-submissions-compilation",
           "permission": "rkap.compilation.dept"
+        },
+        {
+          "url": "rkap/budget-transfers",
+          "icon": "menu-icon icon-base bx bx-transfer",
+          "name": "Transfer Budget",
+          "slug": [
+            "rkap-budget-transfers",
+            "rkap-budget-transfers-create",
+            "rkap-budget-transfers-review"
+          ],
+          "permission": "rkap.transfer.view"
         }
       ]
     },

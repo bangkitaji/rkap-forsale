@@ -547,6 +547,7 @@ class RkapSubmissionForm extends Component
                     'id'              => $wp->id,
                     '_uid'            => 'act_' . $wp->id,
                     'activity_id'     => $wp->activity_id,
+                    'is_transfer_locked' => $wp->isLockedForTransfer(),
                     'description'     => $wp->description ?? '',
                     'output_target'   => $wp->output_target ?? '',
                     'unit'            => $wp->unit ?? '',
@@ -627,8 +628,32 @@ class RkapSubmissionForm extends Component
         ];
     }
 
+    private function isActivityLocked(int $wpIndex, int $actIndex): bool
+    {
+        $activity = $this->workPlans[$wpIndex]['activities'][$actIndex] ?? null;
+        if ($activity && !empty($activity['id'])) {
+            $wp = RkapWorkPlan::find($activity['id']);
+            if ($wp && $wp->isLockedForTransfer()) {
+                session()->flash('error', __('Program kerja/kegiatan ini sedang dalam proses transfer dan tidak dapat diubah.'));
+                $this->dispatch('form-saved', message: __('Program kerja/kegiatan ini sedang dalam proses transfer dan tidak dapat diubah.'));
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function removeWorkPlan(int $index): void
     {
+        foreach ($this->workPlans[$index]['activities'] as $act) {
+            if (!empty($act['id'])) {
+                $wp = RkapWorkPlan::find($act['id']);
+                if ($wp && $wp->isLockedForTransfer()) {
+                    session()->flash('error', __('Beberapa kegiatan dalam program kerja ini sedang dalam proses transfer dan tidak dapat diubah.'));
+                    $this->dispatch('form-saved', message: __('Beberapa kegiatan dalam program kerja ini sedang dalam proses transfer dan tidak dapat diubah.'));
+                    return;
+                }
+            }
+        }
         unset($this->workPlans[$index]);
         $this->workPlans = array_values($this->workPlans);
     }
@@ -647,6 +672,9 @@ class RkapSubmissionForm extends Component
 
     public function removeActivity(int $wpIndex, int $actIndex): void
     {
+        if ($this->isActivityLocked($wpIndex, $actIndex)) {
+            return;
+        }
         unset($this->workPlans[$wpIndex]['activities'][$actIndex]);
         $this->workPlans[$wpIndex]['activities'] = array_values($this->workPlans[$wpIndex]['activities']);
 
@@ -657,6 +685,9 @@ class RkapSubmissionForm extends Component
 
     public function openUploadModal(int $wpIdx, int $actIdx): void
     {
+        if ($this->isActivityLocked($wpIdx, $actIdx)) {
+            return;
+        }
         $this->uploadWpIdx = $wpIdx;
         $this->uploadActIdx = $actIdx;
         $this->referenceFile = null;
@@ -672,6 +703,10 @@ class RkapSubmissionForm extends Component
 
         $wpIdx = $this->uploadWpIdx;
         $actIdx = $this->uploadActIdx;
+
+        if ($this->isActivityLocked($wpIdx, $actIdx)) {
+            return;
+        }
 
         $originalName = $this->referenceFile->getClientOriginalName();
         $extension = strtolower($this->referenceFile->getClientOriginalExtension());
@@ -695,6 +730,9 @@ class RkapSubmissionForm extends Component
 
     public function deleteUploadedFile(int $wpIdx, int $actIdx, int $fileIdx): void
     {
+        if ($this->isActivityLocked($wpIdx, $actIdx)) {
+            return;
+        }
         $file = $this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'][$fileIdx] ?? null;
         if ($file) {
             if (!isset($file['id'])) {
@@ -709,17 +747,26 @@ class RkapSubmissionForm extends Component
 
     public function addBudgetItem(int $wpIndex, int $actIndex): void
     {
+        if ($this->isActivityLocked($wpIndex, $actIndex)) {
+            return;
+        }
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][] = $this->emptyBudgetItem();
     }
 
     public function removeBudgetItem(int $wpIndex, int $actIndex, int $biIndex): void
     {
+        if ($this->isActivityLocked($wpIndex, $actIndex)) {
+            return;
+        }
         unset($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]);
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'] = array_values($this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items']);
     }
 
     public function duplicateBudgetItem(int $wpIndex, int $actIndex, int $biIndex): void
     {
+        if ($this->isActivityLocked($wpIndex, $actIndex)) {
+            return;
+        }
         $sourceItem = $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex];
 
         $newItem = array_merge($this->emptyBudgetItem(), [
@@ -1223,6 +1270,13 @@ class RkapSubmissionForm extends Component
                     }
                 }
             }
+            // Delete items not present in the form state, checking if they are locked for transfer first
+            $toDelete = $submission->workPlans()->whereNotIn('id', $existingWpIds)->where('approval_status', '!=', 'approved')->get();
+            foreach ($toDelete as $wpToDelete) {
+                if ($wpToDelete->isLockedForTransfer()) {
+                    throw new \Exception("Program kerja/kegiatan '{$wpToDelete->program_name}' sedang dalam proses transfer dan tidak dapat dihapus.");
+                }
+            }
             $submission->workPlans()->whereNotIn('id', $existingWpIds)->where('approval_status', '!=', 'approved')->delete();
 
             $sortIdx = 0;
@@ -1232,9 +1286,14 @@ class RkapSubmissionForm extends Component
                 foreach ($wpGroup['activities'] as $actData) {
                     if (!empty($actData['id'])) {
                         $dbWp = $rkapWorkPlansMap->get($actData['id']);
-                        if ($dbWp && $dbWp->approval_status === 'approved') {
-                            $sortIdx++;
-                            continue;
+                        if ($dbWp) {
+                            if ($dbWp->isLockedForTransfer()) {
+                                throw new \Exception("Program kerja/kegiatan '{$dbWp->program_name}' sedang dalam proses transfer dan tidak dapat diubah.");
+                            }
+                            if ($dbWp->approval_status === 'approved') {
+                                $sortIdx++;
+                                continue;
+                            }
                         }
                     }
 
