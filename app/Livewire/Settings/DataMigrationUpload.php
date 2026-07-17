@@ -55,7 +55,7 @@ class DataMigrationUpload extends Component
   {
     // Prevent timeouts and memory exhaustion during large file migrations
     @set_time_limit(0);
-    @ini_set('memory_limit', '512M');
+    @ini_set('memory_limit', '1024M');
 
     $this->resetState();
 
@@ -124,7 +124,9 @@ class DataMigrationUpload extends Component
   private function parseExcel(string $filePath): array
   {
     try {
-      $spreadsheet = IOFactory::load($filePath);
+      $reader = IOFactory::createReaderForFile($filePath);
+      $reader->setReadDataOnly(true);
+      $spreadsheet = $reader->load($filePath);
       $worksheet = $spreadsheet->getActiveSheet();
       $rows = $worksheet->toArray(null, true, true, false);
 
@@ -233,8 +235,8 @@ class DataMigrationUpload extends Component
       $unitPrice = (float) ($row['unit_price'] ?? 0);
       $total = $qty * $unitPrice;
 
-      if ($qty < 1) {
-        $this->errorsList[] = "Baris {$rowNo}: bi_quantity minimal 1.";
+      if ($qty <= 0) {
+        $this->errorsList[] = "Baris {$rowNo}: bi_quantity harus lebih besar dari 0.";
       }
 
       if ($unitPrice < 0) {
@@ -365,7 +367,7 @@ class DataMigrationUpload extends Component
               'account_code' => $coa?->code,
               'description' => $coa?->title ?? '',
               'unit' => ($row['bi_unit'] ?? null) ?: null,
-              'quantity' => (int) $row['bi_quantity'],
+              'quantity' => (float) $row['bi_quantity'],
               'unit_price' => (float) $row['unit_price'],
               'remarks' => ($row['remarks'] ?? null) ?: null,
             ]);
@@ -382,7 +384,7 @@ class DataMigrationUpload extends Component
           $oldUnitPrice = $budgetItem->unit_price;
           $oldTotal = $oldQty * $oldUnitPrice;
 
-          $rowQty = (int) $row['bi_quantity'];
+          $rowQty = (float) $row['bi_quantity'];
           $rowUnitPrice = (float) $row['unit_price'];
           $rowTotal = $rowQty * $rowUnitPrice;
 

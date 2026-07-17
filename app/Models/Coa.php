@@ -41,4 +41,23 @@ class Coa extends Model
     {
         return $this->belongsToMany(Activity::class, 'activity_coa', 'coa_id', 'activity_id');
     }
+
+    /**
+     * Check if this COA is a revenue (pendapatan) account.
+     */
+    public function isRevenue(): bool
+    {
+        if ($this->relationLoaded('coaCategory') && $this->coaCategory) {
+            return $this->coaCategory->group === 'Revenue' || $this->coaCategory->key === 'non_operating_revenue';
+        }
+
+        // Fallback check in case relation isn't loaded or category is null
+        $category = $this->coaCategory()->first();
+        if ($category) {
+            return $category->group === 'Revenue' || $category->key === 'non_operating_revenue';
+        }
+
+        // Fallback to code prefix rules
+        return str_starts_with($this->code, '4') || str_starts_with($this->code, '71');
+    }
 }

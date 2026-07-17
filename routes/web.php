@@ -76,6 +76,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/submissions', \App\Livewire\Rkap\RkapSubmissionList::class)->name('rkap-submissions');
     Route::get('/requests', \App\Livewire\Rkap\RkapRequests::class)->name('rkap-requests');
     Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
+    Route::get('/submissions/bulk-upload/{periodId}', \App\Livewire\Rkap\RkapBulkUpload::class)->name('rkap-submissions-bulk-upload');
+    Route::get('/submission-template/download', function () {
+      $periodId = request('period_id') ? (int) request('period_id') : null;
+      $bureauId = auth()->user()?->bureau_id;
+      $filename = 'template_upload_rkap_' . now()->format('YmdHis') . '.xlsx';
+      return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\RkapSubmissionTemplateExport($periodId, $bureauId),
+        $filename
+      );
+    })->name('rkap-submission-template-download');
     Route::get('/submissions/{id}/edit', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-edit');
     Route::get('/submissions/{id}/review', \App\Livewire\Rkap\RkapReview::class)->name('rkap-submissions-review');
     Route::get('/submissions/{id}/approval-review', \App\Livewire\Rkap\RkapApprovalReview::class)->name('rkap-submissions-approval-review');

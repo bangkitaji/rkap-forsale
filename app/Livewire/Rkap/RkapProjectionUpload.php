@@ -65,6 +65,9 @@ class RkapProjectionUpload extends Component
 
     public function uploadAndImport(): void
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
         $this->resetState(keepPeriod: true);
 
         $this->validate([
@@ -135,7 +138,9 @@ class RkapProjectionUpload extends Component
     private function parseExcel(string $filePath): array
     {
         try {
-            $spreadsheet = IOFactory::load($filePath);
+            $reader = IOFactory::createReaderForFile($filePath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filePath);
             $worksheet   = $spreadsheet->getActiveSheet();
             $rows        = $worksheet->toArray(null, true, true, false);
 
