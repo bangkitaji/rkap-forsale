@@ -84,6 +84,9 @@ class RkapBulkUpload extends Component
      */
     public function uploadAndParse(): void
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
         $this->validate([
             'file' => 'required|file|mimes:xlsx,xls|max:2048',
         ], [
@@ -112,7 +115,9 @@ class RkapBulkUpload extends Component
      */
     private function parseExcel(string $filePath): array
     {
-        $spreadsheet = IOFactory::load($filePath);
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($filePath);
         $worksheet = $spreadsheet->getSheet(0); // First sheet = "Data Pengajuan"
         $data = $worksheet->toArray(null, true, true, true);
 
@@ -335,6 +340,9 @@ class RkapBulkUpload extends Component
      */
     public function saveAsDraft(): void
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
         if (empty($this->parsedRows)) {
             $this->importErrors[] = __('Tidak ada data untuk disimpan.');
             return;

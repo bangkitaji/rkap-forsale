@@ -55,7 +55,7 @@ class DataMigrationUpload extends Component
   {
     // Prevent timeouts and memory exhaustion during large file migrations
     @set_time_limit(0);
-    @ini_set('memory_limit', '512M');
+    @ini_set('memory_limit', '1024M');
 
     $this->resetState();
 
@@ -124,7 +124,9 @@ class DataMigrationUpload extends Component
   private function parseExcel(string $filePath): array
   {
     try {
-      $spreadsheet = IOFactory::load($filePath);
+      $reader = IOFactory::createReaderForFile($filePath);
+      $reader->setReadDataOnly(true);
+      $spreadsheet = $reader->load($filePath);
       $worksheet = $spreadsheet->getActiveSheet();
       $rows = $worksheet->toArray(null, true, true, false);
 
