@@ -592,5 +592,12 @@
     "Tidak ada rincian akun COA untuk periode ini.": "No COA account details for this period.",
     "Tidak ada akun COA yang cocok dengan pencarian / filter.": "No COA accounts match the search / filter.",
     "Tingkat Penyerapan": "Absorption Rate",
-    "Akun COA": "COA Account"
+    "Akun COA": "COA Account",
+    "Laporan Laba Rugi (Profit & Loss Statement)": "Profit & Loss Statement",
+    "Ringkasan Kumulatif": "Cumulative Summary",
+    "Rincian Bulanan": "Monthly Detail",
+    "Pilih Tipe Data:": "Select Data Type:",
+    "Anggaran (Budget)": "Budget",
+    "Realisasi (Realization)": "Realization",
+    "Proyeksi (Outlook)": "Projection (Outlook)"
 }

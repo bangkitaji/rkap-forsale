@@ -284,232 +284,398 @@
 <div class="row mt-4">
   <div class="col-12">
     <div class="card h-100">
-      <div
-        class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-          <h5 class="card-title mb-0">{{ __('Laporan Laba Rugi (Profit & Loss Summary)') }}</h5>
+          <h5 class="card-title mb-0">{{ __('Laporan Laba Rugi (Profit & Loss Statement)') }}</h5>
           <small class="text-muted">{{ __('Akumulasi anggaran, realisasi, dan proyeksi berdasarkan pemetaan kategori P&L') }}</small>
         </div>
+        <div>
+          <div class="btn-group" role="group" aria-label="View mode toggle">
+            <button type="button" class="btn btn-outline-primary btn-sm active" id="btnCumulativeView" onclick="switchPLViewMode('cumulative')">
+              <i class="bx bx-list-ul me-1"></i>{{ __('Ringkasan Kumulatif') }}
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btnMonthlyView" onclick="switchPLViewMode('monthly')">
+              <i class="bx bx-calendar-event me-1"></i>{{ __('Rincian Bulanan') }}
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="table-responsive text-nowrap">
-        <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
-          <thead>
-            <tr class="table-light">
-              <th>{{ __('Kategori / Golongan') }}</th>
-              <th class="text-end">{{ __('Anggaran (Budget)') }}</th>
-              <th class="text-end">{{ __('Realisasi YTD') }}</th>
-              <th class="text-end">{{ __('Proyeksi (Outlook)') }}</th>
-              <th class="text-end">{{ __('Selisih (Variance)') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach ($plGroups as $groupKey => $group)
-            <!-- Group Header (Bold, Uppercase) -->
-            <tr class="table-light fw-bold text-uppercase rkap-ls-05">
-              <td colspan="5">
-                <i class="bx bx-folder me-2 text-primary"></i>{{ $group['label'] }}
-              </td>
-            </tr>
 
-            <!-- Group Items -->
-            @foreach ($group['items'] as $item)
-            @php
-            $itemBudget = $item['budget'];
-            $itemReal = $item['realization'];
-            $itemProj = $item['projection'];
+      {{-- Cumulative View Container --}}
+      <div id="cumulativeViewWrap">
+        <div class="table-responsive text-nowrap">
+          <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
+            <thead>
+              <tr class="table-light">
+                <th>{{ __('Kategori / Golongan') }}</th>
+                <th class="text-end">{{ __('Anggaran (Budget)') }}</th>
+                <th class="text-end">{{ __('Realisasi YTD') }}</th>
+                <th class="text-end">{{ __('Proyeksi (Outlook)') }}</th>
+                <th class="text-end">{{ __('Selisih (Variance)') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach ($plGroups as $groupKey => $group)
+              <!-- Group Header (Bold, Uppercase) -->
+              <tr class="table-light fw-bold text-uppercase rkap-ls-05">
+                <td colspan="5">
+                  <i class="bx bx-folder me-2 text-primary"></i>{{ $group['label'] }}
+                </td>
+              </tr>
 
-            $isExpense =
-            $groupKey === 'Direct Cost' ||
-            $groupKey === 'Indirect Cost' ||
-            in_array($item['key'], ['7000', '7001', '7001A', '7002', '7002A', '7004', '7005']);
-            $itemVariance = $isExpense ? $itemBudget - $itemProj : $itemProj - $itemBudget;
-            @endphp
-            <tr>
-              <td class="ps-4">
-                <i class="bx bxs-circle text-{{ $item['color'] }} me-2 rkap-font-05 rkap-v-align-middle"></i>
-                <a href="#" class="coa-group-link text-decoration-none fw-medium"
-                  data-coa-group-id="{{ $item['id'] }}" data-coa-group-name="{{ $item['label'] }}"
-                  data-period-id="{{ $activePeriod->id }}">
-                  {{ $item['label'] }}
-                  <i class="bx bx-info-circle ms-1 text-muted rkap-font-068"></i>
-                </a>
-              </td>
-              <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">
-                @if ($itemVariance > 0)
-                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($itemVariance, 0, ',', '.') }}</span>
-                @elseif($itemVariance < 0)
-                  <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($itemVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
-            @endforeach
+              <!-- Group Items -->
+              @foreach ($group['items'] as $item)
+              @php
+              $itemBudget = $item['budget'];
+              $itemReal = $item['realization'];
+              $itemProj = $item['projection'];
 
-            <!-- Group Subtotal Row -->
-            @php
-            $subBudget = $group['budget_subtotal'];
-            $subReal = $group['realization_subtotal'];
-            $subProj = $group['projection_subtotal'];
+              $isExpense =
+              $groupKey === 'Direct Cost' ||
+              $groupKey === 'Indirect Cost' ||
+              in_array($item['key'], ['7000', '7001', '7001A', '7002', '7002A', '7004', '7005']);
+              $itemVariance = $isExpense ? $itemBudget - $itemProj : $itemProj - $itemBudget;
+              @endphp
+              <tr>
+                <td class="ps-4">
+                  <i class="bx bxs-circle text-{{ $item['color'] }} me-2 rkap-font-05 rkap-v-align-middle"></i>
+                  <a href="#" class="coa-group-link text-decoration-none fw-medium"
+                    data-coa-group-id="{{ $item['id'] }}" data-coa-group-name="{{ $item['label'] }}"
+                    data-period-id="{{ $activePeriod->id }}">
+                    {{ $item['label'] }}
+                    <i class="bx bx-info-circle ms-1 text-muted rkap-font-068"></i>
+                  </a>
+                </td>
+                <td class="text-end font-monospace">Rp {{ number_format($itemBudget, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($itemReal, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($itemProj, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">
+                  @if ($itemVariance > 0)
+                  <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($itemVariance, 0, ',', '.') }}</span>
+                  @elseif($itemVariance < 0)
+                    <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($itemVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
+              @endforeach
 
-            $isGroupExpense = $groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost';
-            $subVariance = $isGroupExpense ? $subBudget - $subProj : $subProj - $subBudget;
-            @endphp
-            <tr class="fw-semibold bg-lighter">
-              <td class="ps-3 text-secondary">
-                {{ __('Subtotal') }} {{ $group['label'] }}
-              </td>
-              <td class="text-end font-monospace">Rp {{ number_format($subBudget, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace text-success">Rp {{ number_format($subReal, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace text-warning">Rp {{ number_format($subProj, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace">
-                @if ($subVariance > 0)
-                <span class="text-success fw-semibold"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($subVariance, 0, ',', '.') }}</span>
-                @elseif($subVariance < 0)
-                  <span class="text-danger fw-semibold"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($subVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
+              <!-- Group Subtotal Row -->
+              @php
+              $subBudget = $group['budget_subtotal'];
+              $subReal = $group['realization_subtotal'];
+              $subProj = $group['projection_subtotal'];
 
-            <!-- Insert intermediate P&L summary rows if applicable -->
-            @if ($groupKey === 'Direct Cost')
-            @php
-            $gp = $plSummary['gross_profit'];
-            $gpBudget = $gp['budget'];
-            $gpReal = $gp['realization'];
-            $gpProj = $gp['projection'];
-            $gpVariance = $gpProj - $gpBudget;
-            @endphp
-            <tr class="table-primary fw-bold">
-              <td class="text-primary">
-                <i class="bx bx-calculator me-2"></i>{{ $gp['label'] }}
-              </td>
-              <td class="text-end font-monospace">Rp {{ number_format($gpBudget, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($gpReal, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($gpProj, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">
-                @if ($gpVariance > 0)
-                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($gpVariance, 0, ',', '.') }}</span>
-                @elseif($gpVariance < 0)
-                  <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($gpVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
-            @elseif ($groupKey === 'Indirect Cost')
-            @php
-            $op = $plSummary['operating_profit'];
-            $opBudget = $op['budget'];
-            $opReal = $op['realization'];
-            $opProj = $op['projection'];
-            $opVariance = $opProj - $opBudget;
-            @endphp
-            <tr class="table-info fw-bold">
-              <td class="text-info rkap-color-info">
-                <i class="bx bx-trending-up me-2"></i>{{ $op['label'] }}
-              </td>
-              <td class="text-end font-monospace">Rp {{ number_format($opBudget, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($opReal, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">Rp {{ number_format($opProj, 0, ',', '.') }}</td>
-              <td class="text-end font-monospace">
-                @if ($opVariance > 0)
-                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($opVariance, 0, ',', '.') }}</span>
-                @elseif($opVariance < 0)
-                  <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($opVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
-            @endif
-            @endforeach
+              $isGroupExpense = $groupKey === 'Direct Cost' || $groupKey === 'Indirect Cost';
+              $subVariance = $isGroupExpense ? $subBudget - $subProj : $subProj - $subBudget;
+              @endphp
+              <tr class="fw-semibold bg-lighter">
+                <td class="ps-3 text-secondary">
+                  {{ __('Subtotal') }} {{ $group['label'] }}
+                </td>
+                <td class="text-end font-monospace">Rp {{ number_format($subBudget, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace text-success">Rp {{ number_format($subReal, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace text-warning">Rp {{ number_format($subProj, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace">
+                  @if ($subVariance > 0)
+                  <span class="text-success fw-semibold"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($subVariance, 0, ',', '.') }}</span>
+                  @elseif($subVariance < 0)
+                    <span class="text-danger fw-semibold"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($subVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
 
-            <!-- Final Net Profit Summary Row -->
-            @php
-            $np = $plSummary['net_profit'];
-            $npBudget = $np['budget'];
-            $npReal = $np['realization'];
-            $npProj = $np['projection'];
-            $npVariance = $npProj - $npBudget;
-            @endphp
-            <tr class="table-success fw-bold border-top border-2">
-              <td class="text-success rkap-font-11">
-                <i class="bx bx-money me-2"></i>{{ $np['label'] }}
-              </td>
-              <td class="text-end font-monospace rkap-font-11">Rp
-                {{ number_format($npBudget, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-11">Rp
-                {{ number_format($npReal, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-11">Rp
-                {{ number_format($npProj, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-11">
-                @if ($npVariance > 0)
-                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($npVariance, 0, ',', '.') }}</span>
-                @elseif($npVariance < 0)
-                  <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($npVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
+              <!-- Insert intermediate P&L summary rows if applicable -->
+              @if ($groupKey === 'Direct Cost')
+              @php
+              $gp = $plSummary['gross_profit'];
+              $gpBudget = $gp['budget'];
+              $gpReal = $gp['realization'];
+              $gpProj = $gp['projection'];
+              $gpVariance = $gpProj - $gpBudget;
+              @endphp
+              <tr class="table-primary fw-bold">
+                <td class="text-primary">
+                  <i class="bx bx-calculator me-2"></i>{{ $gp['label'] }}
+                </td>
+                <td class="text-end font-monospace">Rp {{ number_format($gpBudget, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($gpReal, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($gpProj, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">
+                  @if ($gpVariance > 0)
+                  <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($gpVariance, 0, ',', '.') }}</span>
+                  @elseif($gpVariance < 0)
+                    <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($gpVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
+              @elseif ($groupKey === 'Indirect Cost')
+              @php
+              $op = $plSummary['operating_profit'];
+              $opBudget = $op['budget'];
+              $opReal = $op['realization'];
+              $opProj = $op['projection'];
+              $opVariance = $opProj - $opBudget;
+              @endphp
+              <tr class="table-info fw-bold">
+                <td class="text-info rkap-color-info">
+                  <i class="bx bx-trending-up me-2"></i>{{ $op['label'] }}
+                </td>
+                <td class="text-end font-monospace">Rp {{ number_format($opBudget, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($opReal, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">Rp {{ number_format($opProj, 0, ',', '.') }}</td>
+                <td class="text-end font-monospace">
+                  @if ($opVariance > 0)
+                  <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($opVariance, 0, ',', '.') }}</span>
+                  @elseif($opVariance < 0)
+                    <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($opVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
+              @endif
+              @endforeach
 
-            <!-- EBITDA Summary Row -->
-            @php
-            $eb = $plSummary['ebitda'];
-            $ebBudget = $eb['budget'];
-            $ebReal = $eb['realization'];
-            $ebProj = $eb['projection'];
-            $ebVariance = $ebProj - $ebBudget;
-            @endphp
-            <tr class="fw-bold border-top rkap-bg-primary-lighter">
-              <td class="rkap-text-primary-solid rkap-font-105 rkap-border-dashed-primary">
-                <i class="bx bx-bar-chart-alt-2 me-2"></i>{{ $eb['label'] }}
-              </td>
-              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
-                {{ number_format($ebBudget, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
-                {{ number_format($ebReal, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
-                {{ number_format($ebProj, 0, ',', '.') }}
-              </td>
-              <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">
-                @if ($ebVariance > 0)
-                <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
-                  {{ number_format($ebVariance, 0, ',', '.') }}</span>
-                @elseif($ebVariance < 0)
-                  <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
-                  {{ number_format(abs($ebVariance), 0, ',', '.') }})</span>
-                  @else
-                  <span class="text-muted">-</span>
-                  @endif
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              <!-- Final Net Profit Summary Row -->
+              @php
+              $np = $plSummary['net_profit'];
+              $npBudget = $np['budget'];
+              $npReal = $np['realization'];
+              $npProj = $np['projection'];
+              $npVariance = $npProj - $npBudget;
+              @endphp
+              <tr class="table-success fw-bold border-top border-2">
+                <td class="text-success rkap-font-11">
+                  <i class="bx bx-money me-2"></i>{{ $np['label'] }}
+                </td>
+                <td class="text-end font-monospace rkap-font-11">Rp
+                  {{ number_format($npBudget, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-11">Rp
+                  {{ number_format($npReal, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-11">Rp
+                  {{ number_format($npProj, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-11">
+                  @if ($npVariance > 0)
+                  <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($npVariance, 0, ',', '.') }}</span>
+                  @elseif($npVariance < 0)
+                    <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($npVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
+
+              <!-- EBITDA Summary Row -->
+              @php
+              $eb = $plSummary['ebitda'];
+              $ebBudget = $eb['budget'];
+              $ebReal = $eb['realization'];
+              $ebProj = $eb['projection'];
+              $ebVariance = $ebProj - $ebBudget;
+              @endphp
+              <tr class="fw-bold border-top rkap-bg-primary-lighter">
+                <td class="rkap-text-primary-solid rkap-font-105 rkap-border-dashed-primary">
+                  <i class="bx bx-bar-chart-alt-2 me-2"></i>{{ $eb['label'] }}
+                </td>
+                <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
+                  {{ number_format($ebBudget, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
+                  {{ number_format($ebReal, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">Rp
+                  {{ number_format($ebProj, 0, ',', '.') }}
+                </td>
+                <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary">
+                  @if ($ebVariance > 0)
+                  <span class="text-success"><i class="bx bx-chevron-up me-1"></i>Rp
+                    {{ number_format($ebVariance, 0, ',', '.') }}</span>
+                  @elseif($ebVariance < 0)
+                    <span class="text-danger"><i class="bx bx-chevron-down me-1"></i>(Rp
+                    {{ number_format(abs($ebVariance), 0, ',', '.') }})</span>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {{-- Monthly View Container --}}
+      <div id="monthlyViewWrap" class="d-none">
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-label-warning border-bottom gap-2 flex-wrap mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small fw-semibold">{{ __('Pilih Tipe Data:') }}</span>
+            <div class="btn-group" role="group" aria-label="Monthly data type selector">
+              <button type="button" class="btn btn-outline-warning btn-sm active" id="btnMonthlyBudget" onclick="switchMonthlyDataType('budget')">
+                {{ __('Anggaran (Budget)') }}
+              </button>
+              <button type="button" class="btn btn-outline-warning btn-sm" id="btnMonthlyRealization" onclick="switchMonthlyDataType('realization')">
+                {{ __('Realisasi (Realization)') }}
+              </button>
+              <button type="button" class="btn btn-outline-warning btn-sm" id="btnMonthlyProjection" onclick="switchMonthlyDataType('projection')">
+                {{ __('Proyeksi (Outlook)') }}
+              </button>
+            </div>
+          </div>
+          <div class="text-muted small">
+            <i class="bx bx-info-circle me-1"></i>{{ __('Menampilkan rincian nominal per bulan dari Januari hingga Desember') }}
+          </div>
+        </div>
+
+        @foreach (['budget', 'realization', 'projection'] as $type)
+        @php
+        $tableId = 'tableMonthly' . ucfirst($type);
+        $tableClass = ($type === 'budget') ? '' : 'd-none';
+        @endphp
+        <div class="table-responsive text-nowrap {{ $tableClass }}" id="{{ $tableId }}">
+          <table class="table table-hover table-striped-columns mb-0 align-middle table-pn-report">
+            <thead>
+              <tr class="table-light">
+                <th>{{ __('Kategori / Golongan') }}</th>
+                @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'] as $mLabel)
+                <th class="text-end">{{ __($mLabel) }}</th>
+                @endforeach
+                <th class="text-end">{{ __('Total') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach ($plGroupsMonthly as $groupKey => $group)
+              <!-- Group Header -->
+              <tr class="table-light fw-bold text-uppercase rkap-ls-05">
+                <td colspan="14">
+                  <i class="bx bx-folder me-2 text-primary"></i>{{ $group['label'] }}
+                </td>
+              </tr>
+
+              <!-- Group Items -->
+              @foreach ($group['items'] as $item)
+              @php
+              $itemValues = $item[$type];
+              $rowTotal = array_sum($itemValues);
+              @endphp
+              <tr>
+                <td class="ps-4">
+                  <i class="bx bxs-circle text-{{ $item['color'] ?? 'secondary' }} me-2 rkap-font-05 rkap-v-align-middle"></i>
+                  <a href="#" class="coa-group-link text-decoration-none fw-medium"
+                    data-coa-group-id="{{ $item['id'] }}" data-coa-group-name="{{ $item['label'] }}"
+                    data-period-id="{{ $activePeriod->id }}">
+                    {{ $item['label'] }}
+                    <i class="bx bx-info-circle ms-1 text-muted rkap-font-068"></i>
+                  </a>
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($itemValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace fw-bold text-nowrap">Rp {{ number_format($rowTotal, 0, ',', '.') }}</td>
+              </tr>
+              @endforeach
+
+              <!-- Group Subtotal Row -->
+              @php
+              $subValues = $group[$type . '_subtotal'];
+              $subTotal = array_sum($subValues);
+              @endphp
+              <tr class="fw-semibold bg-lighter">
+                <td class="ps-3 text-secondary">
+                  {{ __('Subtotal') }} {{ $group['label'] }}
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($subValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace fw-bold text-primary text-nowrap">Rp {{ number_format($subTotal, 0, ',', '.') }}</td>
+              </tr>
+
+              <!-- Insert intermediate P&L summary rows if applicable -->
+              @if ($groupKey === 'Direct Cost')
+              @php
+              $gpValues = $plSummaryMonthly['gross_profit'][$type];
+              $gpTotal = array_sum($gpValues);
+              @endphp
+              <tr class="table-primary fw-bold">
+                <td class="text-primary">
+                  <i class="bx bx-calculator me-2"></i>{{ $plSummaryMonthly['gross_profit']['label'] }}
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($gpValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($gpTotal, 0, ',', '.') }}</td>
+              </tr>
+              @elseif ($groupKey === 'Indirect Cost')
+              @php
+              $opValues = $plSummaryMonthly['operating_profit'][$type];
+              $opTotal = array_sum($opValues);
+              @endphp
+              <tr class="table-info fw-bold">
+                <td class="text-info rkap-color-info">
+                  <i class="bx bx-trending-up me-2"></i>{{ $plSummaryMonthly['operating_profit']['label'] }}
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($opValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace text-nowrap">Rp {{ number_format($opTotal, 0, ',', '.') }}</td>
+              </tr>
+              @endif
+              @endforeach
+
+              <!-- Final Net Profit Summary Row -->
+              @php
+              $npValues = $plSummaryMonthly['net_profit'][$type];
+              $npTotal = array_sum($npValues);
+              @endphp
+              <tr class="table-success fw-bold border-top border-2">
+                <td class="text-success rkap-font-11">
+                  <i class="bx bx-money me-2"></i>{{ $plSummaryMonthly['net_profit']['label'] }}
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace rkap-font-11 text-nowrap">Rp {{ number_format($npValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace rkap-font-11 text-nowrap">Rp {{ number_format($npTotal, 0, ',', '.') }}</td>
+              </tr>
+
+              <!-- EBITDA Summary Row -->
+              @php
+              $ebValues = $plSummaryMonthly['ebitda'][$type];
+              $ebTotal = array_sum($ebValues);
+              @endphp
+              <tr class="fw-bold border-top rkap-bg-primary-lighter">
+                <td class="rkap-text-primary-solid rkap-font-105 rkap-border-dashed-primary">
+                  <i class="bx bx-bar-chart-alt-2 me-2"></i>{{ $plSummaryMonthly['ebitda']['label'] }}
+                </td>
+                @for ($m = 1; $m <= 12; $m++)
+                  <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary text-nowrap">Rp {{ number_format($ebValues[$m] ?? 0, 0, ',', '.') }}</td>
+                  @endfor
+                  <td class="text-end font-monospace rkap-font-105 rkap-border-dashed-primary text-nowrap">Rp {{ number_format($ebTotal, 0, ',', '.') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        @endforeach
+      </div>
+
     </div>
   </div>
 </div>
@@ -575,6 +741,54 @@
 @section('page-script')
 @if ($activePeriod)
 <script>
+  window.switchPLViewMode = function(mode) {
+    const cumBtn = document.getElementById('btnCumulativeView');
+    const monBtn = document.getElementById('btnMonthlyView');
+    const cumWrap = document.getElementById('cumulativeViewWrap');
+    const monWrap = document.getElementById('monthlyViewWrap');
+
+    if (mode === 'cumulative') {
+      cumBtn.classList.add('active');
+      monBtn.classList.remove('active');
+      cumWrap.classList.remove('d-none');
+      monWrap.classList.add('d-none');
+    } else {
+      cumBtn.classList.remove('active');
+      monBtn.classList.add('active');
+      cumWrap.classList.add('d-none');
+      monWrap.classList.remove('d-none');
+    }
+  };
+
+  window.switchMonthlyDataType = function(type) {
+    const btnBudget = document.getElementById('btnMonthlyBudget');
+    const btnReal = document.getElementById('btnMonthlyRealization');
+    const btnProj = document.getElementById('btnMonthlyProjection');
+
+    const tblBudget = document.getElementById('tableMonthlyBudget');
+    const tblReal = document.getElementById('tableMonthlyRealization');
+    const tblProj = document.getElementById('tableMonthlyProjection');
+
+    btnBudget.classList.remove('active');
+    btnReal.classList.remove('active');
+    btnProj.classList.remove('active');
+
+    tblBudget.classList.add('d-none');
+    tblReal.classList.add('d-none');
+    tblProj.classList.add('d-none');
+
+    if (type === 'budget') {
+      btnBudget.classList.add('active');
+      tblBudget.classList.remove('d-none');
+    } else if (type === 'realization') {
+      btnReal.classList.add('active');
+      tblReal.classList.remove('d-none');
+    } else if (type === 'projection') {
+      btnProj.classList.add('active');
+      tblProj.classList.remove('d-none');
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     // COA Group Detail Modal
     const coaDetailModal = new bootstrap.Modal(document.getElementById('coaGroupDetailModal'));

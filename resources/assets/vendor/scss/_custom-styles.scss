@@ -56,7 +56,7 @@
 .btn-outline-primary {
   color: #960b10ff !important;
   border-color: #960b10ff !important;
-  &:hover {
+  &:hover, &:focus, &:active, &.active {
     background-color: #960b10ff !important;
     color: #fff !important;
   }

@@ -756,6 +756,356 @@ class Analytics extends Controller
       $cgRealizations = $aggregateCgData($cgRealizationsRaw);
       $cgProjections = $aggregateCgData($cgProjectionsRaw);
 
+      // --- 6.1. Monthly Calculations for P&L ---
+      $cgBudgetsMonthlyRaw = DB::table('rkap_budget_item_monthlies')
+        ->join('rkap_budget_items', 'rkap_budget_item_monthlies.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_monthlies.month, SUM(rkap_budget_item_monthlies.amount) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_monthlies.month')
+        ->get();
+
+      $cgRealizationsMonthlyRaw = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_realizations.month, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_realizations.month')
+        ->get();
+
+      $cgProjectionsMonthlyRaw = DB::table('rkap_budget_item_projections')
+        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_projections.month, SUM(rkap_budget_item_projections.amount) as total')
+        ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_projections.month')
+        ->get();
+
+      $aggregateMonthlyCgData = function ($rawItems) {
+        $aggregated = [];
+        foreach ($rawItems as $item) {
+          $cgId = $item->coa_group_id;
+          $cgCode = $item->coa_group_code;
+          $coaCode = $item->coa_code;
+          $month = (int) $item->month;
+          $amount = (float) $item->total;
+
+          if (!isset($aggregated[$cgId])) {
+            $aggregated[$cgId] = array_fill(1, 12, 0.0);
+          }
+
+          $isOtherGroup = in_array($cgCode, ['7000', '7001', '7001A', '7002', '7002A', '7003', '7004', '7005']);
+
+          if ($isOtherGroup) {
+            if ($cgCode === '7005') {
+              if (str_starts_with($coaCode, '71')) {
+                $aggregated[$cgId][$month] -= $amount;
+              } elseif (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+                $aggregated[$cgId][$month] += $amount;
+              }
+            } else {
+              $aggregated[$cgId][$month] += $amount;
+            }
+          } else {
+            $aggregated[$cgId][$month] += $amount;
+          }
+        }
+        return $aggregated;
+      };
+
+      $cgBudgetsMonthly = $aggregateMonthlyCgData($cgBudgetsMonthlyRaw);
+      $cgRealizationsMonthly = $aggregateMonthlyCgData($cgRealizationsMonthlyRaw);
+      $cgProjectionsMonthly = $aggregateMonthlyCgData($cgProjectionsMonthlyRaw);
+
+      $yearlyItemsMonthly = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
+        ->where('rkap_budget_items.projection', '>', 0)
+        ->whereNotExists(function ($query) {
+          $query->select(DB::raw(1))
+            ->from('rkap_budget_item_projections')
+            ->whereRaw('rkap_budget_item_projections.rkap_budget_item_id = rkap_budget_items.id');
+        })
+        ->select(
+          'rkap_budget_items.id',
+          'rkap_budget_items.projection',
+          'coa_groups.id as coa_group_id',
+          'coa_groups.code as coa_group_code',
+          'coas.code as coa_code'
+        )
+        ->get();
+
+      $yearlyItemIdsMonthly = $yearlyItemsMonthly->pluck('id')->toArray();
+      $monthlyPlans = [];
+      if (!empty($yearlyItemIdsMonthly)) {
+        $monthlyPlans = DB::table('rkap_budget_item_monthlies')
+          ->whereIn('rkap_budget_item_id', $yearlyItemIdsMonthly)
+          ->select('rkap_budget_item_id', 'month', 'amount')
+          ->get()
+          ->groupBy('rkap_budget_item_id');
+      }
+
+      foreach ($yearlyItemsMonthly as $item) {
+        $itemId = $item->id;
+        $cgId = $item->coa_group_id;
+        $cgCode = $item->coa_group_code;
+        $coaCode = $item->coa_code;
+        $projectionAmount = (float) $item->projection;
+
+        $itemPlans = isset($monthlyPlans[$itemId]) ? $monthlyPlans[$itemId] : collect();
+        $totalPlanAmount = $itemPlans->sum('amount');
+
+        if (!isset($cgProjectionsMonthly[$cgId])) {
+          $cgProjectionsMonthly[$cgId] = array_fill(1, 12, 0.0);
+        }
+
+        $is7005 = ($cgCode === '7005');
+
+        if ($totalPlanAmount > 0) {
+          foreach ($itemPlans as $plan) {
+            $m = (int) $plan->month;
+            $alloc = $projectionAmount * ((float) $plan->amount / $totalPlanAmount);
+            if ($is7005) {
+              if (str_starts_with($coaCode, '71')) {
+                $cgProjectionsMonthly[$cgId][$m] -= $alloc;
+              } elseif (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+                $cgProjectionsMonthly[$cgId][$m] += $alloc;
+              }
+            } else {
+              $cgProjectionsMonthly[$cgId][$m] += $alloc;
+            }
+          }
+        } else {
+          for ($m = 1; $m <= 12; $m++) {
+            $alloc = $projectionAmount / 12;
+            if ($is7005) {
+              if (str_starts_with($coaCode, '71')) {
+                $cgProjectionsMonthly[$cgId][$m] -= $alloc;
+              } elseif (str_starts_with($coaCode, '76') || str_starts_with($coaCode, '79')) {
+                $cgProjectionsMonthly[$cgId][$m] += $alloc;
+              }
+            } else {
+              $cgProjectionsMonthly[$cgId][$m] += $alloc;
+            }
+          }
+        }
+      }
+
+      // Build plGroupsMonthly structure from report_groups
+      $plGroupsMonthly = [];
+      $colorPalette = ['primary', 'info', 'success', 'warning', 'danger', 'secondary', 'dark'];
+      $deprAmortCodes = ['5006', '6005'];
+      $rentCode = '6001';
+
+      foreach ($plReportGroups as $rg) {
+        $itemsMonthly = [];
+        $budgetSubtotalMonthly = array_fill(1, 12, 0.0);
+        $realizationSubtotalMonthly = array_fill(1, 12, 0.0);
+        $projectionSubtotalMonthly = array_fill(1, 12, 0.0);
+
+        foreach ($rg->coaGroups as $idx => $cg) {
+          $budget = $cgBudgetsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
+          $realization = $cgRealizationsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
+          $projection = $cgProjectionsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
+
+          for ($m = 1; $m <= 12; $m++) {
+            if ($rg->code === 'PL0004') {
+              $isExpenseGroup = in_array($cg->code, ['7000', '7001', '7001A', '7002', '7002A', '7004']);
+              $budgetSubtotalMonthly[$m] += $isExpenseGroup ? -$budget[$m] : $budget[$m];
+              $realizationSubtotalMonthly[$m] += $isExpenseGroup ? -$realization[$m] : $realization[$m];
+              $projectionSubtotalMonthly[$m] += $isExpenseGroup ? -$projection[$m] : $projection[$m];
+            } else {
+              $budgetSubtotalMonthly[$m] += $budget[$m];
+              $realizationSubtotalMonthly[$m] += $realization[$m];
+              $projectionSubtotalMonthly[$m] += $projection[$m];
+            }
+          }
+
+          $itemsMonthly[] = [
+            'id' => $cg->id,
+            'key' => $cg->code,
+            'label' => $cg->name,
+            'color' => $colorPalette[$idx % count($colorPalette)],
+            'budget' => $budget,
+            'realization' => $realization,
+            'projection' => $projection,
+          ];
+        }
+
+        $plGroupsMonthly[$rg->name] = [
+          'label' => $rg->name,
+          'items' => $itemsMonthly,
+          'budget_subtotal' => $budgetSubtotalMonthly,
+          'realization_subtotal' => $realizationSubtotalMonthly,
+          'projection_subtotal' => $projectionSubtotalMonthly,
+        ];
+      }
+
+      $revenueBudgetMonthly = $plGroupsMonthly['Revenue']['budget_subtotal'] ?? array_fill(1, 12, 0.0);
+      $revenueRealMonthly = $plGroupsMonthly['Revenue']['realization_subtotal'] ?? array_fill(1, 12, 0.0);
+      $revenueProjMonthly = $plGroupsMonthly['Revenue']['projection_subtotal'] ?? array_fill(1, 12, 0.0);
+
+      $directCostBudgetMonthly = $plGroupsMonthly['Direct Cost']['budget_subtotal'] ?? array_fill(1, 12, 0.0);
+      $directCostRealMonthly = $plGroupsMonthly['Direct Cost']['realization_subtotal'] ?? array_fill(1, 12, 0.0);
+      $directCostProjMonthly = $plGroupsMonthly['Direct Cost']['projection_subtotal'] ?? array_fill(1, 12, 0.0);
+
+      $indirectCostBudgetMonthly = $plGroupsMonthly['Indirect Cost']['budget_subtotal'] ?? array_fill(1, 12, 0.0);
+      $indirectCostRealMonthly = $plGroupsMonthly['Indirect Cost']['realization_subtotal'] ?? array_fill(1, 12, 0.0);
+      $indirectCostProjMonthly = $plGroupsMonthly['Indirect Cost']['projection_subtotal'] ?? array_fill(1, 12, 0.0);
+
+      $otherBudgetMonthly = $plGroupsMonthly['Other Income']['budget_subtotal'] ?? array_fill(1, 12, 0.0);
+      $otherBudgetExpensesMonthly = $plGroupsMonthly['Other Expense']['budget_subtotal'] ?? array_fill(1, 12, 0.0);
+      $otherRealMonthly = $plGroupsMonthly['Other Income']['realization_subtotal'] ?? array_fill(1, 12, 0.0);
+      $otherRealExpensesMonthly = $plGroupsMonthly['Other Expense']['realization_subtotal'] ?? array_fill(1, 12, 0.0);
+      $otherProjMonthly = $plGroupsMonthly['Other Income']['projection_subtotal'] ?? array_fill(1, 12, 0.0);
+      $otherProjExpensesMonthly = $plGroupsMonthly['Other Expense']['projection_subtotal'] ?? array_fill(1, 12, 0.0);
+
+      $deprAmortBudgetMonthly = array_fill(1, 12, 0.0);
+      $deprAmortRealMonthly = array_fill(1, 12, 0.0);
+      $deprAmortProjMonthly = array_fill(1, 12, 0.0);
+      $rentBudgetMonthly = array_fill(1, 12, 0.0);
+      $rentRealMonthly = array_fill(1, 12, 0.0);
+      $rentProjMonthly = array_fill(1, 12, 0.0);
+
+      foreach (['Direct Cost', 'Indirect Cost'] as $groupName) {
+        if (isset($plGroupsMonthly[$groupName]['items'])) {
+          foreach ($plGroupsMonthly[$groupName]['items'] as $item) {
+            if (in_array($item['key'], $deprAmortCodes)) {
+              for ($m = 1; $m <= 12; $m++) {
+                $deprAmortBudgetMonthly[$m] += $item['budget'][$m];
+                $deprAmortRealMonthly[$m] += $item['realization'][$m];
+                $deprAmortProjMonthly[$m] += $item['projection'][$m];
+              }
+            }
+            if ($item['key'] === $rentCode) {
+              for ($m = 1; $m <= 12; $m++) {
+                $rentBudgetMonthly[$m] += $item['budget'][$m];
+                $rentRealMonthly[$m] += $item['realization'][$m];
+                $rentProjMonthly[$m] += $item['projection'][$m];
+              }
+            }
+          }
+        }
+      }
+
+      $grossProfitBudgetMonthly = array_fill(1, 12, 0.0);
+      $grossProfitRealMonthly = array_fill(1, 12, 0.0);
+      $grossProfitProjMonthly = array_fill(1, 12, 0.0);
+      $operatingProfitBudgetMonthly = array_fill(1, 12, 0.0);
+      $operatingProfitRealMonthly = array_fill(1, 12, 0.0);
+      $operatingProfitProjMonthly = array_fill(1, 12, 0.0);
+      $netProfitBudgetMonthly = array_fill(1, 12, 0.0);
+      $netProfitRealMonthly = array_fill(1, 12, 0.0);
+      $netProfitProjMonthly = array_fill(1, 12, 0.0);
+      $ebitdaBudgetMonthly = array_fill(1, 12, 0.0);
+      $ebitdaRealMonthly = array_fill(1, 12, 0.0);
+      $ebitdaProjMonthly = array_fill(1, 12, 0.0);
+
+      $rentNetFactor = 0.180398820557498;
+
+      for ($m = 1; $m <= 12; $m++) {
+        $grossProfitBudgetMonthly[$m] = $revenueBudgetMonthly[$m] - $directCostBudgetMonthly[$m];
+        $grossProfitRealMonthly[$m] = $revenueRealMonthly[$m] - $directCostRealMonthly[$m];
+        $grossProfitProjMonthly[$m] = $revenueProjMonthly[$m] - $directCostProjMonthly[$m];
+
+        $operatingProfitBudgetMonthly[$m] = $grossProfitBudgetMonthly[$m] - $indirectCostBudgetMonthly[$m];
+        $operatingProfitRealMonthly[$m] = $grossProfitRealMonthly[$m] - $indirectCostRealMonthly[$m];
+        $operatingProfitProjMonthly[$m] = $grossProfitProjMonthly[$m] - $indirectCostProjMonthly[$m];
+
+        $ebitdaBudgetMonthly[$m] = $operatingProfitBudgetMonthly[$m] + $deprAmortBudgetMonthly[$m] + ($rentBudgetMonthly[$m] - ($rentBudgetMonthly[$m] * $rentNetFactor));
+        $ebitdaRealMonthly[$m] = $operatingProfitRealMonthly[$m] + $deprAmortRealMonthly[$m] + ($rentRealMonthly[$m] * $rentNetFactor);
+        $ebitdaProjMonthly[$m] = $operatingProfitProjMonthly[$m] + $deprAmortProjMonthly[$m] + ($rentProjMonthly[$m] * $rentNetFactor);
+
+        $netProfitBudgetMonthly[$m] = $operatingProfitBudgetMonthly[$m] + $otherBudgetMonthly[$m] - $otherBudgetExpensesMonthly[$m];
+        $netProfitRealMonthly[$m] = $operatingProfitRealMonthly[$m] + $otherRealMonthly[$m] - $otherRealExpensesMonthly[$m];
+        $netProfitProjMonthly[$m] = $operatingProfitProjMonthly[$m] + $otherProjMonthly[$m] - $otherProjExpensesMonthly[$m];
+      }
+
+      $plSummaryMonthly = [
+        'revenue' => [
+          'label' => __('Total Pendapatan'),
+          'budget' => $revenueBudgetMonthly,
+          'realization' => $revenueRealMonthly,
+          'projection' => $revenueProjMonthly,
+        ],
+        'direct_cost' => [
+          'label' => __('Total Beban Langsung'),
+          'budget' => $directCostBudgetMonthly,
+          'realization' => $directCostRealMonthly,
+          'projection' => $directCostProjMonthly,
+        ],
+        'gross_profit' => [
+          'label' => __('Laba Kotor (Gross Profit)'),
+          'budget' => $grossProfitBudgetMonthly,
+          'realization' => $grossProfitRealMonthly,
+          'projection' => $grossProfitProjMonthly,
+        ],
+        'indirect_cost' => [
+          'label' => __('Total Beban Tidak Langsung'),
+          'budget' => $indirectCostBudgetMonthly,
+          'realization' => $indirectCostRealMonthly,
+          'projection' => $indirectCostProjMonthly,
+        ],
+        'operating_profit' => [
+          'label' => __('Laba (Rugi) Usaha'),
+          'budget' => $operatingProfitBudgetMonthly,
+          'realization' => $operatingProfitRealMonthly,
+          'projection' => $operatingProfitProjMonthly,
+        ],
+        'other_income' => [
+          'label' => __('Pendapatan Lain-lain (Other Income)'),
+          'budget' => $otherBudgetMonthly,
+          'realization' => $otherRealMonthly,
+          'projection' => $otherProjMonthly,
+        ],
+        'other_expense' => [
+          'label' => __('Beban Lain-lain (Other Expense)'),
+          'budget' => $otherBudgetExpensesMonthly,
+          'realization' => $otherRealExpensesMonthly,
+          'projection' => $otherProjExpensesMonthly,
+        ],
+        'net_profit' => [
+          'label' => __('Laba Bersih (Net Profit)'),
+          'budget' => $netProfitBudgetMonthly,
+          'realization' => $netProfitRealMonthly,
+          'projection' => $netProfitProjMonthly,
+        ],
+        'ebitda' => [
+          'label' => __('EBITDA'),
+          'budget' => $ebitdaBudgetMonthly,
+          'realization' => $ebitdaRealMonthly,
+          'projection' => $ebitdaProjMonthly,
+        ],
+      ];
+
       // Color palette for COA group items within each report group
       $colorPalette = ['primary', 'info', 'success', 'warning', 'danger', 'secondary', 'dark'];
 
@@ -1081,6 +1431,8 @@ class Analytics extends Controller
       'coaData',
       'plGroups',
       'plSummary',
+      'plGroupsMonthly',
+      'plSummaryMonthly',
       'unmappedGroup',
       'comparisonData'
     );
