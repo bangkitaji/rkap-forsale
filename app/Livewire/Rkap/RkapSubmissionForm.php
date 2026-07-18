@@ -971,6 +971,7 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
+        $this->validateActivitiesHaveCoaMappings();
         $this->validateLockedMappedCoaForKepalaBiro();
         $this->validateBudgetItemsCoaMapping();
         $this->validatePastPeriodPayments();
@@ -984,6 +985,7 @@ class RkapSubmissionForm extends Component
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
+        $this->validateActivitiesHaveCoaMappings();
         $this->validateLockedMappedCoaForKepalaBiro();
         $this->validateBudgetItemsCoaMapping();
         $this->validatePastPeriodPayments();
@@ -1039,6 +1041,25 @@ class RkapSubmissionForm extends Component
                     ]);
                 }
                 $seen[] = (int) $actId;
+            }
+        }
+    }
+
+    private function validateActivitiesHaveCoaMappings(): void
+    {
+        foreach (($this->workPlans ?? []) as $wpIdx => $wpData) {
+            foreach (($wpData['activities'] ?? []) as $actIdx => $actData) {
+                $activityId = $actData['activity_id'] ?? null;
+                $isPastPeriod = (bool) ($actData['is_past_period_payment'] ?? false);
+
+                if ($activityId && !$isPastPeriod) {
+                    $activity = Activity::with('coas')->find($activityId);
+                    if ($activity && $activity->coas->isEmpty()) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "workPlans.{$wpIdx}.activities.{$actIdx}.activity_id" => 'Kegiatan "' . $activity->title . '" belum dipetakan ke COA. Silakan hubungi admin.',
+                        ]);
+                    }
+                }
             }
         }
     }
@@ -1452,7 +1473,7 @@ class RkapSubmissionForm extends Component
         $selectedActivityIds = collect($this->workPlans)
             ->flatMap(fn($wp) => collect($wp['activities'])->pluck('activity_id'))
             ->filter()->unique()->toArray();
-        $activitiesMap = Activity::whereIn('id', $selectedActivityIds)->get()->keyBy('id');
+        $activitiesMap = Activity::with('coas')->whereIn('id', $selectedActivityIds)->get()->keyBy('id');
 
         return view('livewire.rkap.rkap-submission-form', [
             'workPlanOptions' => $this->workPlanOptions,

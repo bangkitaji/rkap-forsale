@@ -217,14 +217,14 @@ class RkapSubmissionFormTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        // Activity without COAs -> should allow COA selection now based on updated rules
+        // Activity without COAs -> should forbid COA selection and throw validation errors
         $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
             ->set('workPlans.0.work_plan_id', $this->workPlan->id)
             ->set('workPlans.0.activities.0.activity_id', $this->activityWithoutCoas->id)
             ->set('workPlans.0.activities.0.budget_items.0.coa_id', $this->coa1->id);
 
         $component->call('saveDraft')
-            ->assertHasNoErrors();
+            ->assertHasErrors(['workPlans.0.activities.0.activity_id']);
     }
 
     public function test_cannot_save_budget_item_coa_without_activity(): void

@@ -295,6 +295,8 @@
       $isTransferLocked = (bool) ($act['is_transfer_locked'] ?? false);
       $isApproved = $isApprovedRaw || $isTransferLocked;
       $isRejected = ($act['approval_status'] ?? 'pending') === 'rejected';
+      $isPastPeriod = (bool) ($act['is_past_period_payment'] ?? false);
+      $hasMappedCoas = !$act['activity_id'] || $isPastPeriod || ($selectedActivity && $selectedActivity->coas->isNotEmpty());
       @endphp
 
       <div class="activity-card p-3 mb-3" wire:key="wp-{{ $wpIdx }}-{{ $wp['_uid'] }}-act-card-{{ $actIdx }}-{{ $actUid }}">
@@ -604,6 +606,15 @@
 
         {{-- Budget Items section --}}
         @if (!empty($wp['work_plan_id']) && !empty($act['activity_id']))
+        @if (!$hasMappedCoas)
+        <div class="alert alert-danger d-flex align-items-center p-3 mb-3 animate__animated animate__fadeIn" role="alert">
+          <i class="bx bx-error-circle me-3 fs-4"></i>
+          <div>
+            <h6 class="alert-heading mb-1 fw-bold text-danger">{{ __('Kegiatan Belum Terpetakan ke COA') }}</h6>
+            <span>{{ __('Kegiatan ini belum dipetakan ke akun COA. Silakan hubungi admin untuk melakukan pemetaan COA terlebih dahulu. Anda dilarang menambahkan uraian & detail belanja sebelum pemetaan COA dilakukan.') }}</span>
+          </div>
+        </div>
+        @endif
         <div x-data="{
                 dropdownOpen: false,
                 modalKey: null,
@@ -709,10 +720,10 @@
                         <input type="text"
                           class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $firstIdx . '.coa_id') is-invalid @enderror"
                           placeholder="{{ __('Cari akun/belanja...') }}" x-model="search"
-                          @focus="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }"
-                          @input="if (!@js($isCoaLockedForKepalaBiro)) { open = true; $dispatch('coa-dropdown-open') }" autocomplete="off"
-                          @disabled($isApproved || $isCoaLockedForKepalaBiro)>
-                        @if ($firstBi['coa_id'] && !$isApproved && !$isCoaLockedForKepalaBiro)
+                          @focus="if (!@js($isCoaLockedForKepalaBiro) && @js($hasMappedCoas)) { open = true; $dispatch('coa-dropdown-open') }"
+                          @input="if (!@js($isCoaLockedForKepalaBiro) && @js($hasMappedCoas)) { open = true; $dispatch('coa-dropdown-open') }" autocomplete="off"
+                          @disabled($isApproved || $isCoaLockedForKepalaBiro || !$hasMappedCoas)>
+                        @if ($firstBi['coa_id'] && !$isApproved && !$isCoaLockedForKepalaBiro && $hasMappedCoas)
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                           wire:click="updateGroupCoa({{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, null)"
                           @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
@@ -720,7 +731,7 @@
                           <i class="bx bx-x"></i>
                         </button>
                         @endif
-                        @if (!$isApproved && $totalItemsCount > $itemCount)
+                        @if (!$isApproved && $totalItemsCount > $itemCount && $hasMappedCoas)
                         <button type="button"
                           wire:click="removeGroup({{ $wpIdx }}, {{ $actIdx }}, {{ $indicesJson }})"
                           @click="isDirty = true" class="btn btn-sm btn-outline-danger"
@@ -838,20 +849,20 @@
                   <td class="border-top-0">
                     <input type="text" class="form-control form-control-sm"
                       wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.remarks"
-                      placeholder="{{ __('Detail Belanja / Ket...') }}" @disabled($isApproved)>
+                      placeholder="{{ __('Detail Belanja / Ket...') }}" @disabled($isApproved || !$hasMappedCoas)>
                   </td>
                   <td class="border-top-0 rkap-min-w-120">
                     {{-- Vol 1 --}}
                     <input type="number" step="any"
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity"
-                      min="0.0001" placeholder="Vol 1" @disabled($isApproved)>
+                      min="0.0001" placeholder="Vol 1" @disabled($isApproved || !$hasMappedCoas)>
 
                     {{-- Vol 2 --}}
                     <input type="number" step="any"
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.quantity_2') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.quantity_2"
-                      min="0.0001" placeholder="Vol 2" @disabled($isApproved)>
+                      min="0.0001" placeholder="Vol 2" @disabled($isApproved || !$hasMappedCoas)>
                   </td>
                   <td class="border-top-0 rkap-min-w-120 rkap-position-relative">
                     {{-- Satuan 1 --}}
@@ -859,14 +870,14 @@
                       class="form-control form-control-sm mb-2 @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit') is-invalid @enderror"
                       wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit"
                       list="satuan-options" placeholder="Satuan 1" autocomplete="off"
-                      @disabled($isApproved)>
+                      @disabled($isApproved || !$hasMappedCoas)>
 
                     {{-- Satuan 2 --}}
                     <input type="text"
                       class="form-control form-control-sm @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_2') is-invalid @enderror"
                       wire:model.live.debounce.500ms="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.unit_2"
                       list="satuan-options" placeholder="Satuan 2 (opsional)" autocomplete="off"
-                      @disabled($isApproved)>
+                      @disabled($isApproved || !$hasMappedCoas)>
                   </td>
                   <td class="border-top-0 rkap-min-w-180">
                     <div x-data="{
@@ -900,7 +911,7 @@
                           class="form-control form-control-sm text-end @error('workPlans.' . $wpIdx . '.activities.' . $actIdx . '.budget_items.' . $biIdx . '.unit_price') is-invalid @enderror"
                           :value="display" @input="onInput($event)" @blur="onBlur($event)"
                           @focus="$event.target.select()" placeholder="0" inputmode="numeric"
-                          @disabled($isApproved)>
+                          @disabled($isApproved || !$hasMappedCoas)>
                       </div>
                     </div>
                   </td>
@@ -911,11 +922,11 @@
                     <div class="d-flex align-items-center justify-content-center gap-1">
                       <button type="button" class="btn btn-sm btn-icon btn-outline-primary"
                         title="More Details" @click="openModal('{{ $modalKey }}')"
-                        @disabled($biTotal <=0)>
+                        @disabled($biTotal <= 0 || !$hasMappedCoas)>
                         <i class="bx bx-detail"></i>
                       </button>
-
-                      @if ($itemCount > 1 && !$isApproved)
+ 
+                      @if ($itemCount > 1 && !$isApproved && $hasMappedCoas)
                       <button type="button"
                         wire:click="removeBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-danger"
@@ -923,8 +934,8 @@
                         <i class="bx bx-trash"></i>
                       </button>
                       @endif
-
-                      @if ($itemIdx === $itemCount - 1 && !$isApproved)
+ 
+                      @if ($itemIdx === $itemCount - 1 && !$isApproved && $hasMappedCoas)
                       <button type="button"
                         wire:click="duplicateBudgetItem({{ $wpIdx }}, {{ $actIdx }}, {{ $biIdx }})"
                         @click="isDirty = true" class="btn btn-sm btn-icon btn-outline-success"
