@@ -191,7 +191,13 @@ class RkapBulkUpload extends Component
             $row = [];
             foreach (self::ALL_COLUMNS as $col) {
                 $letter = $colMap[$col] ?? null;
-                $row[$col] = $letter ? trim((string) ($rowData[$letter] ?? '')) : '';
+                $val = $letter ? (string) ($rowData[$letter] ?? '') : '';
+                if (in_array($col, ['work_plan_code', 'activity_code', 'coa_code'])) {
+                    $val = preg_replace('/^[\s\p{Z}\p{C}]+|[\s\p{Z}\p{C}]+$/u', '', $val);
+                } else {
+                    $val = trim($val);
+                }
+                $row[$col] = $val;
             }
 
             // Skip completely empty rows

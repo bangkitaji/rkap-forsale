@@ -323,4 +323,71 @@ class RkapBulkUploadTest extends TestCase
 
         unlink($tempPath);
     }
+
+    public function test_bulk_upload_trims_codes_with_whitespace(): void
+    {
+        $this->actingAs($this->user);
+
+        // Create Excel file with spaces at front/back of codes
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Pengajuan');
+
+        $sheet->setCellValue('A1', 'ID Biro');
+        $sheet->setCellValue('B1', $this->bureau->id);
+        $sheet->setCellValue('A2', 'ID Periode');
+        $sheet->setCellValue('B2', $this->period->id);
+
+        $headers = [
+            'work_plan_code', 'work_plan_name',
+            'activity_code', 'activity_name',
+            'coa_code', 'coa_name',
+            'unit', 'quantity', 'unit_2', 'quantity_2',
+            'unit_price', 'remarks',
+            'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12',
+            'co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12',
+        ];
+        foreach ($headers as $colIdx => $header) {
+            $sheet->setCellValueExplicit(
+                \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '4',
+                $header,
+                \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+            );
+        }
+
+        // Data Row: work plan code, activity code, coa code have whitespace/non-breaking spaces (e.g. \u{A0})
+        $row = [
+            "  WP001 \u{A0}", 'Test Work Plan',
+            " \u{A0} ACT001  ", 'Test Activity',
+            "  510101 \u{A0} ", 'Gaji Karyawan',
+            'Unit', '2', '', '',
+            '5000', 'Expense item with spaces',
+            '5000', '5000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+            '5000', '5000', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+        ];
+        foreach ($row as $colIdx => $val) {
+            $sheet->setCellValue(
+                \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx + 1) . '6',
+                $val
+            );
+        }
+
+        $tempPath = tempnam(sys_get_temp_dir(), 'rkap_test_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempPath);
+
+        $excelContent = file_get_contents($tempPath);
+        $uploadedFile = UploadedFile::fake()->createWithContent('template.xlsx', $excelContent);
+
+        // Run bulk upload component and expect it to succeed because spaces are trimmed robustly
+        Livewire::test(RkapBulkUpload::class, ['periodId' => $this->period->id])
+            ->upload('file', [$uploadedFile])
+            ->call('uploadAndParse')
+            ->assertSet('parsed', true)
+            ->call('saveAsDraft')
+            ->assertSet('imported', true);
+
+        $this->assertEquals(1, RkapSubmission::count());
+        unlink($tempPath);
+    }
 }
