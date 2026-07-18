@@ -1650,4 +1650,343 @@ class Analytics extends Controller
 
     return response()->json(['data' => $rows]);
   }
+
+  public function capex(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $currentYear = (int) date('Y');
+
+    // Define scoped bureau IDs based on user role
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')->where('department_id', $user->department_id)->pluck('id')->toArray();
+    }
+
+    // Get periods for dropdown selection (include finalized & open)
+    $finalizedPeriods = RkapPeriod::orderBy('year', 'desc')
+      ->orderBy('created_at', 'desc')
+      ->get();
+
+    // 1. Get the requested period
+    $selectedPeriodId = $request->query('period_id');
+    $activePeriod = null;
+
+    if ($selectedPeriodId) {
+      $activePeriod = RkapPeriod::find($selectedPeriodId);
+    }
+
+    if (!$activePeriod) {
+      $activePeriod = RkapPeriod::where('year', $currentYear)->first()
+        ?? RkapPeriod::latest()->first();
+    }
+
+    $stats = [
+      'total_budget' => 0.0,
+      'total_realization' => 0.0,
+      'total_projection' => 0.0,
+      'absorption_rate' => 0.0,
+      'outlook_rate' => 0.0,
+      'variance' => 0.0,
+    ];
+
+    $coaGroupSummary = [];
+    $detailedCoas = [];
+
+    if ($activePeriod) {
+      $periodId = $activePeriod->id;
+      $includeAllStatuses = $activePeriod->status !== 'finalized';
+
+      // Caching data using AnalyticsCacheService key pattern
+      $cacheKey = AnalyticsCacheService::detailKey('capex-dashboard', $periodId, 0, $bureauIds);
+
+      $cachedData = Cache::remember($cacheKey, AnalyticsCacheService::TTL, function () use ($periodId, $bureauIds, $includeAllStatuses) {
+        $capexCoaCodes = [
+          '1105000001', '1201010001', '1201020001', '1201030001', '1201040001', '1201050001', '1201060001', '1201070001', '1201080001', '1201090001',
+          '1201100001', '1201990001', '1201999999', '1203010001', '1203010101', '1203010201', '1203010202', '1203010203', '1203010204', '1203010205',
+          '1203010206', '1203010207', '1203010299', '1203010301', '1203010302', '1203010303', '1203010304', '1203010399', '1203010401', '1203010402',
+          '1203010403', '1203010501', '1203010601', '1203010701', '1203019901', '1203020001', '1203020101', '1203020201', '1203020202', '1203020299',
+          '1203020301', '1203020302', '1203020303', '1203020399', '1203020401', '1203020402', '1203020403', '1203029901', '1203030101', '1203030201',
+          '1203030301', '1203030399', '1203030401', '1203030402', '1203040301', '1203030403', '1203030501', '1203030502', '1203030503', '1203030504',
+          '1203030505', '1203030506', '1203040101', '1203040102', '1203040103', '1203040201', '1203040302', '1203049901', '1204000001', '1204000002',
+          '1204000003', '1204000004', '1206000001', '1299000001'
+        ];
+
+        // 1. Total Capex Budget
+        $total_budget = (float) DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->where('rkap_submissions.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereNull('coas.deleted_at')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->sum('rkap_budget_items.total_price');
+
+        // 2. Total Capex Realization
+        $total_realization = (float) DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereNull('coas.deleted_at')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->sum('rkap_budget_item_realizations.amount');
+
+        // 3. Total Capex Projection
+        $total_projection = (float) DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->where('rkap_submissions.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereNull('coas.deleted_at')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->sum('rkap_budget_items.projection');
+
+        $absorption_rate = $total_budget > 0
+          ? round(($total_realization / $total_budget) * 100, 1)
+          : 0.0;
+
+        $outlook_rate = $total_budget > 0
+          ? round(($total_projection / $total_budget) * 100, 1)
+          : 0.0;
+
+        $variance = $total_budget - $total_projection;
+
+        // Fetch COA group sums for the list of Capex COAs
+        $coaGroupDataRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->where('rkap_submissions.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereNull('coas.deleted_at')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->selectRaw('
+            coa_groups.id as id,
+            coa_groups.code as code,
+            coa_groups.name as name,
+            SUM(rkap_budget_items.total_price) as budget,
+            SUM(rkap_budget_items.projection) as projection
+          ')
+          ->groupBy('coa_groups.id', 'coa_groups.code', 'coa_groups.name')
+          ->get()
+          ->keyBy('id')
+          ->toArray();
+
+        $coaGroupRealizationsRaw = DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereNull('coas.deleted_at')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->selectRaw('coa_groups.id as id, SUM(rkap_budget_item_realizations.amount) as total')
+          ->groupBy('coa_groups.id')
+          ->pluck('total', 'id')
+          ->toArray();
+
+        // Get all coa groups that contain our Capex COAs
+        $allCoaGroups = DB::table('coas')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->select('coa_groups.id', 'coa_groups.code', 'coa_groups.name')
+          ->distinct()
+          ->get();
+
+        $coaGroupSummary = [];
+        foreach ($allCoaGroups as $cg) {
+          $cgBudget = (float) (isset($coaGroupDataRaw[$cg->id]) ? $coaGroupDataRaw[$cg->id]->budget : 0.0);
+          $cgProjection = (float) (isset($coaGroupDataRaw[$cg->id]) ? $coaGroupDataRaw[$cg->id]->projection : 0.0);
+          $cgRealization = (float) ($coaGroupRealizationsRaw[$cg->id] ?? 0.0);
+
+          $coaGroupSummary[] = [
+            'id' => $cg->id,
+            'code' => $cg->code,
+            'name' => $cg->name,
+            'budget' => $cgBudget,
+            'realization' => $cgRealization,
+            'projection' => $cgProjection,
+            'variance' => $cgBudget - $cgProjection,
+            'absorption_rate' => $cgBudget > 0 ? round(($cgRealization / $cgBudget) * 100, 1) : 0.0,
+          ];
+        }
+
+        // Fetch list of COAs with detail counts (all of them from our user list)
+        $coaList = DB::table('coas')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->whereIn('coas.code', $capexCoaCodes)
+          ->whereNull('coas.deleted_at')
+          ->select('coas.code', 'coas.title', 'coa_groups.name as group_name', 'coa_groups.id as group_id')
+          ->get()
+          ->keyBy('code');
+
+        $coaDataRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->where('rkap_submissions.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+          ->selectRaw('
+            rkap_budget_items.account_code as code,
+            SUM(rkap_budget_items.total_price) as budget,
+            SUM(rkap_budget_items.projection) as projection
+          ')
+          ->groupBy('rkap_budget_items.account_code')
+          ->get()
+          ->keyBy('code')
+          ->toArray();
+
+        $coaRealizationsRaw = DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+          ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+          ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+          ->selectRaw('rkap_budget_items.account_code as code, SUM(rkap_budget_item_realizations.amount) as total')
+          ->groupBy('rkap_budget_items.account_code')
+          ->pluck('total', 'code')
+          ->toArray();
+
+        $detailedCoas = [];
+        foreach ($coaList as $code => $coa) {
+          $coaBudget = (float) (isset($coaDataRaw[$code]) ? $coaDataRaw[$code]->budget : 0.0);
+          $coaProjection = (float) (isset($coaDataRaw[$code]) ? $coaDataRaw[$code]->projection : 0.0);
+          $coaRealization = (float) ($coaRealizationsRaw[$code] ?? 0.0);
+
+          $detailedCoas[] = [
+            'code' => $code,
+            'title' => $coa->title,
+            'group_name' => $coa->group_name,
+            'group_id' => $coa->group_id,
+            'budget' => $coaBudget,
+            'realization' => $coaRealization,
+            'projection' => $coaProjection,
+            'variance' => $coaBudget - $coaProjection,
+            'absorption_rate' => $coaBudget > 0 ? round(($coaRealization / $coaBudget) * 100, 1) : 0.0,
+          ];
+        }
+
+        // Sort detailed COAs by code
+        usort($detailedCoas, fn($a, $b) => strcmp($a['code'], $b['code']));
+
+        return [
+          'stats' => [
+            'total_budget' => $total_budget,
+            'total_realization' => $total_realization,
+            'total_projection' => $total_projection,
+            'absorption_rate' => $absorption_rate,
+            'outlook_rate' => $outlook_rate,
+            'variance' => $variance,
+          ],
+          'coaGroupSummary' => $coaGroupSummary,
+          'detailedCoas' => $detailedCoas,
+        ];
+      });
+
+      $stats = $cachedData['stats'];
+      $coaGroupSummary = $cachedData['coaGroupSummary'];
+      $detailedCoas = $cachedData['detailedCoas'];
+    }
+
+    return view('content.dashboard.analytics-capex', compact(
+      'activePeriod',
+      'finalizedPeriods',
+      'stats',
+      'coaGroupSummary',
+      'detailedCoas'
+    ));
+  }
+
+  public function coaDetail(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $coaCode = $request->query('coa_code');
+    $periodId = (int) $request->query('period_id');
+
+    if (!$coaCode || !$periodId) {
+      return response()->json(['data' => []]);
+    }
+
+    $bureauIds = null;
+    if ($user->isKepalaBiro()) {
+      $bureauIds = [$user->bureau_id];
+    } elseif ($user->isKepalaDepartemen()) {
+      $bureauIds = DB::table('bureaus')
+        ->where('department_id', $user->department_id)
+        ->pluck('id')
+        ->toArray();
+    }
+
+    $period = RkapPeriod::find($periodId);
+    $includeAllStatuses = ($period && $period->status !== 'finalized');
+
+    $sanitizedCoa = (int) filter_var($coaCode, FILTER_SANITIZE_NUMBER_INT);
+    $cacheKey = AnalyticsCacheService::detailKey('coa-code-detail', $periodId, $sanitizedCoa, $bureauIds);
+
+    $rows = Cache::remember($cacheKey, AnalyticsCacheService::DETAIL_TTL, function () use ($periodId, $coaCode, $bureauIds, $includeAllStatuses) {
+      return DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+        ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+        ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->where('coas.code', $coaCode)
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->selectRaw('
+          coas.code as coa_code,
+          coas.title as coa_title,
+          rkap_work_plans.program_code,
+          rkap_work_plans.program_name,
+          directorates.code as directorate_code,
+          departments.code as department_code,
+          bureaus.code as bureau_code,
+          SUM(rkap_budget_items.total_price) as budget,
+          SUM(COALESCE(rl.realization_total, 0)) as realization,
+          SUM(rkap_budget_items.projection) as projection
+        ')
+        ->groupBy(
+          'coas.code',
+          'coas.title',
+          'rkap_work_plans.program_code',
+          'rkap_work_plans.program_name',
+          'directorates.code',
+          'departments.code',
+          'bureaus.code'
+        )
+        ->orderBy('rkap_work_plans.program_code')
+        ->get();
+    });
+
+    return response()->json(['data' => $rows]);
+  }
 }

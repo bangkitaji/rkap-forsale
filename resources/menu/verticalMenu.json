@@ -8,7 +8,8 @@
         "analytics-report",
         "analytics-cashflow",
         "analytics-cashflow-matrix",
-        "analytics-reconciliation"
+        "analytics-reconciliation",
+        "analytics-capex"
       ],
       "permission": "dashboard.show",
       "submenu": [
@@ -31,6 +32,13 @@
           "icon": "menu-icon icon-base bx bx-grid",
           "name": "Laporan Cash Flow",
           "slug": "analytics-cashflow-matrix",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/capex",
+          "icon": "menu-icon icon-base bx bx-wallet",
+          "name": "Capex",
+          "slug": "analytics-capex",
           "permission": "dashboard.show"
         }
       ]

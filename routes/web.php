@@ -15,7 +15,9 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/analytics/cashflow-matrix', [Analytics::class, 'cashflowMatrix'])->name('analytics-cashflow-matrix');
   Route::post('/analytics/cashflow-matrix/sync', [CashflowSyncController::class, 'sync'])->name('analytics-cashflow-matrix-sync');
   Route::get('/analytics/reconciliation', [Analytics::class, 'reconciliation'])->name('analytics-reconciliation');
+  Route::get('/analytics/capex', [Analytics::class, 'capex'])->name('analytics-capex');
   Route::get('/analytics/coa-group-detail', [Analytics::class, 'coaGroupDetail'])->name('analytics.coa-group-detail');
+  Route::get('/analytics/coa-detail', [Analytics::class, 'coaDetail'])->name('analytics.coa-detail');
   Route::get('/analytics/cashflow-group-detail', [Analytics::class, 'cashflowGroupDetail'])->name('analytics.cashflow-group-detail');
   Route::get('/analytics/difference-group-detail', [Analytics::class, 'differenceGroupDetail'])->name('analytics.difference-group-detail');
   Route::get('/', \App\Livewire\Rkap\RkapDashboard::class)->name('rkap-dashboard');
