@@ -1,4 +1,19 @@
-<div x-data="{ isDirty: false, isSubmitting: false, showToast: false, toastMessage: '', toastType: 'success' }" @input="isDirty = true" @change="isDirty = true"
+<div x-data="{
+    isDirty: false,
+    isSubmitting: false,
+    showToast: false,
+    toastMessage: '',
+    toastType: 'success',
+    init() {
+        if (!window.RKAP_MASTER_COAS) {
+            $wire.getMasterData().then(data => {
+                window.RKAP_MASTER_COAS = data.coas;
+                window.RKAP_MASTER_WORK_PLANS = data.workPlans;
+                window.RKAP_MASTER_ACTIVITIES = data.activities;
+            });
+        }
+    }
+}" @input="isDirty = true" @change="isDirty = true"
   @form-saved.window="toastMessage = $event.detail.message || '{{ __('Draf RKAP berhasil disimpan.') }}'; toastType = 'success'; showToast = true; isDirty = false; setTimeout(() => showToast = false, 5000)"
   @work-plan-duplicate-rejected.window="toastMessage = '{{ __('Program Kerja ini sudah dipilih pada kartu lain. Silakan pilih Program Kerja yang berbeda.') }}'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
   @activity-duplicate-rejected.window="toastMessage = '{{ __('Kegiatan ini sudah dipilih di baris lain dalam Program Kerja yang sama. Silakan pilih kegiatan yang berbeda.') }}'; toastType = 'warning'; showToast = true; setTimeout(() => showToast = false, 5000)"
@@ -1538,11 +1553,4 @@
       }
     });
   </script>
-  @script
-  <script>
-      window.RKAP_MASTER_COAS = {!! json_encode($allCoasMaster) !!};
-      window.RKAP_MASTER_WORK_PLANS = {!! json_encode($allWorkPlansMaster) !!};
-      window.RKAP_MASTER_ACTIVITIES = {!! json_encode($allActivitiesMaster) !!};
-  </script>
-  @endscript
 </div>

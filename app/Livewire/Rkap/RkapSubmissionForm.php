@@ -1467,6 +1467,16 @@ class RkapSubmissionForm extends Component
         return $this->prevDataCache;
     }
 
+    #[\Livewire\Attributes\Renderless]
+    public function getMasterData()
+    {
+        return [
+            'coas' => \App\Models\Coa::select('id', 'code', 'title')->get()->map(fn($c) => ['id' => $c->id, 'code' => $c->code, 'title' => $c->title, 'is_past' => str_starts_with($c->code, '2'), 'search' => strtolower($c->code . ' ' . $c->title)])->toArray(),
+            'workPlans' => \App\Models\WorkPlan::select('id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($w) => ['id' => $w->id, 'code' => $w->code, 'title' => $w->title, 'search' => strtolower($w->code . ' ' . $w->title)])->toArray(),
+            'activities' => \App\Models\Activity::select('id', 'work_plan_id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($a) => ['id' => $a->id, 'work_plan_id' => $a->work_plan_id, 'code' => $a->code, 'title' => $a->title, 'search' => strtolower($a->code . ' ' . $a->title)])->toArray(),
+        ];
+    }
+
     public function render()
     {
         // Pre-load all selected Activity models to avoid N+1 Activity::find() in Blade
@@ -1482,9 +1492,6 @@ class RkapSubmissionForm extends Component
             'prevData' => $this->buildPreviousMap(),
             'isKepalaBiroUser' => $this->isCurrentUserKepalaBiro(),
             'activitiesMap' => $activitiesMap,
-            'allCoasMaster' => \App\Models\Coa::select('id', 'code', 'title')->get()->map(fn($c) => ['id' => $c->id, 'code' => $c->code, 'title' => $c->title, 'is_past' => str_starts_with($c->code, '2'), 'search' => strtolower($c->code . ' ' . $c->title)])->toArray(),
-            'allWorkPlansMaster' => \App\Models\WorkPlan::select('id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($w) => ['id' => $w->id, 'code' => $w->code, 'title' => $w->title, 'search' => strtolower($w->code . ' ' . $w->title)])->toArray(),
-            'allActivitiesMaster' => \App\Models\Activity::select('id', 'work_plan_id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($a) => ['id' => $a->id, 'work_plan_id' => $a->work_plan_id, 'code' => $a->code, 'title' => $a->title, 'search' => strtolower($a->code . ' ' . $a->title)])->toArray(),
         ])->layout('layouts.contentNavbarLayout');
     }
 }
