@@ -33,6 +33,7 @@ class Login extends Component
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::clear($throttleKey);
             session()->regenerate();
+            Auth::logoutOtherDevices($this->password);
 
             // Redirect to intended or home
             return redirect()->intended('/');
