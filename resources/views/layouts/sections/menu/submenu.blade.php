@@ -14,12 +14,12 @@ use Illuminate\Support\Facades\Route;
     @endif
 
     {{-- Kepala Departemen restriction for specific reports --}}
-    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/report', 'analytics/cashflow']) && auth()->check() && auth()->user()->isKepalaDepartemen())
+    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/cashflow']) && auth()->check() && auth()->user()->isKepalaDepartemen())
       @continue
     @endif
 
     {{-- Bureau User restriction for cashflow and reconciliation reports --}}
-    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/cashflow', 'analytics/cashflow-matrix', 'analytics/reconciliation']) && auth()->check() && auth()->user()->isKepalaBiro())
+    @if (isset($submenu->url) && in_array($submenu->url, ['analytics/cashflow', 'analytics/reconciliation']) && auth()->check() && auth()->user()->isKepalaBiro())
       @continue
     @endif
 

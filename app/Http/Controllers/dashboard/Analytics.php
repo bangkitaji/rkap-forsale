@@ -1574,6 +1574,8 @@ class Analytics extends Controller
     $inflowGroups = [];
     $outflowGroups = [];
     $cfSummary = [];
+    $cfGroupsMonthly = ['inflow' => ['items' => [], 'budget_subtotal' => [], 'realization_subtotal' => [], 'projection_subtotal' => []], 'outflow' => ['items' => [], 'budget_subtotal' => [], 'realization_subtotal' => [], 'projection_subtotal' => []]];
+    $cfSummaryMonthly = ['inflow' => ['budget' => [], 'realization' => [], 'projection' => []], 'outflow' => ['budget' => [], 'realization' => [], 'projection' => []], 'net' => ['budget' => [], 'realization' => [], 'projection' => []]];
 
     if ($activePeriod) {
       $bureauIds = null;
@@ -1689,6 +1691,195 @@ class Analytics extends Controller
           'projection' => $netProj,
         ],
       ];
+
+      // --- Monthly CF Calculations ---
+
+      // 1. Monthly budget grouped by cashflow_group_id + month
+      $cfBudgetsMonthlyRaw = DB::table('rkap_budget_item_monthlies')
+        ->join('rkap_budget_items', 'rkap_budget_item_monthlies.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, rkap_budget_item_monthlies.month, SUM(rkap_budget_item_monthlies.amount) as total')
+        ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_monthlies.month')
+        ->get();
+
+      // 2. Monthly realizations grouped by cashflow_group_id + month
+      $cfRealizationsMonthlyRaw = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, rkap_budget_item_realizations.month, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_realizations.month')
+        ->get();
+
+      // 3. Monthly projections grouped by cashflow_group_id + month
+      $cfProjectionsMonthlyRaw = DB::table('rkap_budget_item_projections')
+        ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->selectRaw('coas.cashflow_group_id, rkap_budget_item_projections.month, SUM(rkap_budget_item_projections.amount) as total')
+        ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_projections.month')
+        ->get();
+
+      // Aggregate into [cashflow_group_id][month] => total
+      $cfBudgetsMonthly = [];
+      foreach ($cfBudgetsMonthlyRaw as $row) {
+        $cgId = $row->cashflow_group_id;
+        $month = (int) $row->month;
+        if (!isset($cfBudgetsMonthly[$cgId])) {
+          $cfBudgetsMonthly[$cgId] = array_fill(1, 12, 0.0);
+        }
+        $cfBudgetsMonthly[$cgId][$month] += (float) $row->total;
+      }
+
+      $cfRealizationsMonthly = [];
+      foreach ($cfRealizationsMonthlyRaw as $row) {
+        $cgId = $row->cashflow_group_id;
+        $month = (int) $row->month;
+        if (!isset($cfRealizationsMonthly[$cgId])) {
+          $cfRealizationsMonthly[$cgId] = array_fill(1, 12, 0.0);
+        }
+        $cfRealizationsMonthly[$cgId][$month] += (float) $row->total;
+      }
+
+      $cfProjectionsMonthly = [];
+      foreach ($cfProjectionsMonthlyRaw as $row) {
+        $cgId = $row->cashflow_group_id;
+        $month = (int) $row->month;
+        if (!isset($cfProjectionsMonthly[$cgId])) {
+          $cfProjectionsMonthly[$cgId] = array_fill(1, 12, 0.0);
+        }
+        $cfProjectionsMonthly[$cgId][$month] += (float) $row->total;
+      }
+
+      // 4. Handle yearly-only projections (no monthly projection records) — proportional distribution
+      $cfYearlyItems = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
+        ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+        ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
+        ->whereNull('coas.deleted_at')
+        ->whereNotNull('coas.cashflow_group_id')
+        ->where('rkap_budget_items.projection', '>', 0)
+        ->whereNotExists(function ($query) use ($activePeriod) {
+          $query->select(DB::raw(1))
+            ->from('rkap_budget_item_projections')
+            ->whereRaw('rkap_budget_item_projections.rkap_budget_item_id = rkap_budget_items.id')
+            ->where('rkap_budget_item_projections.rkap_period_id', $activePeriod->id);
+        })
+        ->select(
+          'rkap_budget_items.id',
+          'rkap_budget_items.projection',
+          'coas.cashflow_group_id'
+        )
+        ->get();
+
+      $cfYearlyItemIds = $cfYearlyItems->pluck('id')->toArray();
+      $cfMonthlyPlans = [];
+      if (!empty($cfYearlyItemIds)) {
+        $cfMonthlyPlans = DB::table('rkap_budget_item_monthlies')
+          ->whereIn('rkap_budget_item_id', $cfYearlyItemIds)
+          ->select('rkap_budget_item_id', 'month', 'amount')
+          ->get()
+          ->groupBy('rkap_budget_item_id');
+      }
+
+      foreach ($cfYearlyItems as $item) {
+        $itemId = $item->id;
+        $cgId = $item->cashflow_group_id;
+        $yearlyProj = (float) $item->projection;
+
+        if (!isset($cfProjectionsMonthly[$cgId])) {
+          $cfProjectionsMonthly[$cgId] = array_fill(1, 12, 0.0);
+        }
+
+        $plans = $cfMonthlyPlans[$itemId] ?? collect([]);
+        $planTotal = $plans->sum('amount');
+
+        if ($planTotal > 0) {
+          foreach ($plans as $plan) {
+            $m = (int) $plan->month;
+            $cfProjectionsMonthly[$cgId][$m] += $yearlyProj * ((float) $plan->amount / $planTotal);
+          }
+        } else {
+          $share = $yearlyProj / 12.0;
+          for ($m = 1; $m <= 12; $m++) {
+            $cfProjectionsMonthly[$cgId][$m] += $share;
+          }
+        }
+      }
+
+      // 5. Build $cfGroupsMonthly
+      $cfGroupsMonthly = [
+        'inflow'  => ['items' => [], 'budget_subtotal' => array_fill(1, 12, 0.0), 'realization_subtotal' => array_fill(1, 12, 0.0), 'projection_subtotal' => array_fill(1, 12, 0.0)],
+        'outflow' => ['items' => [], 'budget_subtotal' => array_fill(1, 12, 0.0), 'realization_subtotal' => array_fill(1, 12, 0.0), 'projection_subtotal' => array_fill(1, 12, 0.0)],
+      ];
+
+      foreach ($cashflowGroups as $idx => $cg) {
+        $budget      = $cfBudgetsMonthly[$cg->id]      ?? array_fill(1, 12, 0.0);
+        $realization = $cfRealizationsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
+        $projection  = $cfProjectionsMonthly[$cg->id]  ?? array_fill(1, 12, 0.0);
+
+        $monthlyItem = [
+          'id'          => $cg->id,
+          'code'        => $cg->code,
+          'name'        => $cg->name,
+          'color'       => $colorPalette[$idx % count($colorPalette)],
+          'budget'      => $budget,
+          'realization' => $realization,
+          'projection'  => $projection,
+        ];
+
+        $isInflow = str_starts_with($cg->code, 'CF0A') || $cg->code === 'CF0B10';
+        $side = $isInflow ? 'inflow' : 'outflow';
+
+        $cfGroupsMonthly[$side]['items'][] = $monthlyItem;
+        for ($m = 1; $m <= 12; $m++) {
+          $cfGroupsMonthly[$side]['budget_subtotal'][$m]      += $budget[$m];
+          $cfGroupsMonthly[$side]['realization_subtotal'][$m] += $realization[$m];
+          $cfGroupsMonthly[$side]['projection_subtotal'][$m]  += $projection[$m];
+        }
+      }
+
+      // 6. Build $cfSummaryMonthly
+      $cfSummaryMonthly = [
+        'inflow'  => [
+          'budget'      => $cfGroupsMonthly['inflow']['budget_subtotal'],
+          'realization' => $cfGroupsMonthly['inflow']['realization_subtotal'],
+          'projection'  => $cfGroupsMonthly['inflow']['projection_subtotal'],
+        ],
+        'outflow' => [
+          'budget'      => $cfGroupsMonthly['outflow']['budget_subtotal'],
+          'realization' => $cfGroupsMonthly['outflow']['realization_subtotal'],
+          'projection'  => $cfGroupsMonthly['outflow']['projection_subtotal'],
+        ],
+        'net'     => ['budget' => array_fill(1, 12, 0.0), 'realization' => array_fill(1, 12, 0.0), 'projection' => array_fill(1, 12, 0.0)],
+      ];
+      for ($m = 1; $m <= 12; $m++) {
+        $cfSummaryMonthly['net']['budget'][$m]      = $cfGroupsMonthly['inflow']['budget_subtotal'][$m]      - $cfGroupsMonthly['outflow']['budget_subtotal'][$m];
+        $cfSummaryMonthly['net']['realization'][$m] = $cfGroupsMonthly['inflow']['realization_subtotal'][$m] - $cfGroupsMonthly['outflow']['realization_subtotal'][$m];
+        $cfSummaryMonthly['net']['projection'][$m]  = $cfGroupsMonthly['inflow']['projection_subtotal'][$m]  - $cfGroupsMonthly['outflow']['projection_subtotal'][$m];
+      }
     }
 
     return view('content.dashboard.analytics-cashflow', compact(
@@ -1696,7 +1887,9 @@ class Analytics extends Controller
       'finalizedPeriods',
       'inflowGroups',
       'outflowGroups',
-      'cfSummary'
+      'cfSummary',
+      'cfGroupsMonthly',
+      'cfSummaryMonthly'
     ));
   }
 
@@ -1705,10 +1898,6 @@ class Analytics extends Controller
     $user = Auth::user();
     if (!$user) {
       abort(403);
-    }
-
-    if ($user->isKepalaBiro()) {
-      abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
 
     // Get all versions

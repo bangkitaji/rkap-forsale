@@ -599,5 +599,8 @@
     "Pilih Tipe Data:": "Select Data Type:",
     "Anggaran (Budget)": "Budget",
     "Realisasi (Realization)": "Realization",
-    "Proyeksi (Outlook)": "Projection (Outlook)"
+    "Proyeksi (Outlook)": "Projection (Outlook)",
+    "Pilih Tipe Data Cash Flow:": "Select Cash Flow Data Type:",
+    "Menampilkan rincian cash flow per bulan dari Januari hingga Desember": "Displaying monthly cash flow details from January to December",
+    "Rincian Laporan Cash Flow (Arus Kas)": "Cash Flow Statement Details"
 }
