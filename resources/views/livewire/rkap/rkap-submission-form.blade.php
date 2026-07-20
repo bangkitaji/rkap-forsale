@@ -169,18 +169,44 @@
           <div x-data="{
               open: false,
               search: '{{ $selectedWorkPlan ? $selectedWorkPlan->code . ' — ' . $selectedWorkPlan->title : '' }}',
-          }" class="position-relative"
+              currentLabel: '{{ $selectedWorkPlan ? $selectedWorkPlan->code . ' — ' . $selectedWorkPlan->title : '' }}',
+              selectedId: @js($wp['work_plan_id'] ?? null),
+              wpIndex: {{ $wpIdx }},
+              get usedIds() {
+                  return @js($this->getUsedWorkPlanIds($wpIdx));
+              },
+              get filteredWorkPlans() {
+                  let list = window.RKAP_MASTER_WORK_PLANS || [];
+                  let used = this.usedIds;
+                  list = list.filter(w => !used.includes(w.id));
+                  let q = (this.search || '').trim().toLowerCase();
+                  if (q === (this.currentLabel || '').trim().toLowerCase()) {
+                      q = '';
+                  }
+                  if (!q) {
+                      return list.slice(0, 20);
+                  }
+                  return list.filter(w => w.search.includes(q)).slice(0, 30);
+              },
+              selectWorkPlan(w) {
+                  $wire.set('workPlans.' + this.wpIndex + '.work_plan_id', w.id);
+                  this.currentLabel = w.code + ' — ' + w.title;
+                  this.search = this.currentLabel;
+                  this.selectedId = w.id;
+                  this.open = false;
+              }
+          }" x-effect="if (!open && search !== currentLabel) search = currentLabel" class="position-relative" @click.outside="open = false"
             wire:key="wp-{{ $wp['_uid'] }}-wp-select-{{ $wp['work_plan_id'] ?? 'null' }}">
 
             <div class="input-group">
               <input type="text"
                 class="form-control @error('workPlans.' . $wpIdx . '.work_plan_id') is-invalid @enderror"
-                placeholder="{{ __('Cari program kerja...') }}" x-model="search" @focus="open = true" @click.outside="open = false"
+                placeholder="{{ __('Cari program kerja...') }}" x-model="search" @focus="open = true"
                 @input="open = true" autocomplete="off" id="wp-search-{{ $wpIdx }}"
                 @disabled($hasApproved)>
               @if ($wp['work_plan_id'] && !$hasApproved)
               <button type="button" class="btn btn-outline-secondary"
-                wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)" @click="search = ''"
+                wire:click="$set('workPlans.{{ $wpIdx }}.work_plan_id', null)" @click="search = ''; currentLabel = ''; selectedId = null; open = false;"
                 title="{{ __('Hapus pilihan') }}">
                 <i class="bx bx-x"></i>
               </button>
@@ -203,23 +229,20 @@
             </select>
 
             {{-- Dropdown options --}}
-            <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu">
-              @forelse($rowWorkPlanOptions as $wpo)
-              <div
-                class="px-3 py-2 cursor-pointer dropdown-item small {{ $wp['work_plan_id'] == $wpo->id ? 'bg-primary text-white' : '' }}"
-                x-show="search === '' || '{{ strtolower($wpo->code . ' ' . $wpo->title) }}'.includes(search.toLowerCase())"
-                @click="
-                                        $wire.set('workPlans.{{ $wpIdx }}.work_plan_id', {{ $wpo->id }});
-                                        search = '{{ $wpo->code }} — {{ $wpo->title }}';
-                                        open = false;
-                                    ">
-                <span class="fw-semibold text-primary">{{ $wpo->code }}</span>
-                <span class="ms-1">{{ $wpo->title }}</span>
+            <div x-show="open" x-cloak wire:ignore.self class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu" style="z-index: 1055; max-height: 250px; overflow-y: auto;">
+              <template x-for="wpo in filteredWorkPlans" :key="wpo.id">
+                <div
+                  class="px-3 py-2 cursor-pointer dropdown-item small"
+                  :class="selectedId == wpo.id ? 'bg-primary text-white' : ''"
+                  @click="selectWorkPlan(wpo)">
+                  <span class="fw-semibold text-primary" :class="selectedId == wpo.id ? 'text-white' : ''" x-text="wpo.code"></span>
+                  <span class="ms-1" x-text="wpo.title"></span>
+                </div>
+              </template>
+              <div x-show="filteredWorkPlans.length === 0" class="px-3 py-2 text-muted small">
+                {{ __('Tidak ada data program kerja.') }}
               </div>
-              @empty
-              <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data program kerja.') }}</div>
-              @endforelse
-              <div class="px-3 py-2 text-muted small border-top"><i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk menyaring program kerja.') }}</div>
+              <div class="px-3 py-2 text-muted small border-top bg-light"><i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk menyaring program kerja.') }}</div>
             </div>
           </div>
         </div>
@@ -331,7 +354,38 @@
             <div x-data="{
                   open: false,
                   search: '{{ $selectedActivity ? $selectedActivity->code . ' — ' . $selectedActivity->title : '' }}',
-              }" class="position-relative" @click.outside="open = false"
+                  currentLabel: '{{ $selectedActivity ? $selectedActivity->code . ' — ' . $selectedActivity->title : '' }}',
+                  selectedId: @js($act['activity_id'] ?? null),
+                  wpIndex: {{ $wpIdx }},
+                  actIndex: {{ $actIdx }},
+                  parentWpId: @js($wp['work_plan_id'] ?? null),
+                  get usedIds() {
+                      return @js($this->getUsedActivityIds($wpIdx, $actIdx));
+                  },
+                  get filteredActivities() {
+                      let list = window.RKAP_MASTER_ACTIVITIES || [];
+                      let used = this.usedIds;
+                      if (this.parentWpId) {
+                          list = list.filter(a => a.work_plan_id == this.parentWpId);
+                      }
+                      list = list.filter(a => !used.includes(a.id));
+                      let q = (this.search || '').trim().toLowerCase();
+                      if (q === (this.currentLabel || '').trim().toLowerCase()) {
+                          q = '';
+                      }
+                      if (!q) {
+                          return list.slice(0, 20);
+                      }
+                      return list.filter(a => a.search.includes(q)).slice(0, 30);
+                  },
+                  selectActivity(a) {
+                      $wire.set('workPlans.' + this.wpIndex + '.activities.' + this.actIndex + '.activity_id', a.id);
+                      this.currentLabel = a.code + ' — ' + a.title;
+                      this.search = this.currentLabel;
+                      this.selectedId = a.id;
+                      this.open = false;
+                  }
+              }" x-effect="if (!open && search !== currentLabel) search = currentLabel" class="position-relative" @click.outside="open = false"
               wire:key="wp-{{ $wp['_uid'] }}-act-select-{{ $wp['work_plan_id'] ?? 'null' }}-{{ $actUid }}-{{ $act['activity_id'] ?? 'null' }}">
 
               <div class="input-group">
@@ -343,7 +397,7 @@
                 @if ($act['activity_id'] && !$isApproved)
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                   wire:click="$set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id', null)"
-                  @click="search = ''" title="{{ __('Hapus pilihan') }}">
+                  @click="search = ''; currentLabel = ''; selectedId = null; open = false;" title="{{ __('Hapus pilihan') }}">
                   <i class="bx bx-x"></i>
                 </button>
                 @endif
@@ -364,25 +418,22 @@
               </select>
 
               {{-- Dropdown options --}}
-              <div x-show="open" x-cloak class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu"
+              <div x-show="open" x-cloak wire:ignore.self class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu"
                 style="z-index: 1055; max-height: 250px; overflow-y: auto;">
-                @forelse($activities as $a)
-                <div
-                  class="px-3 py-2 cursor-pointer dropdown-item small {{ $act['activity_id'] == $a->id ? 'bg-primary text-white' : '' }}"
-                  x-show="search === '' || '{{ strtolower($a->code . ' ' . $a->title) }}'.includes(search.toLowerCase())"
-                  @click="
-                                            $wire.set('workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.activity_id', {{ $a->id }});
-                                            search = '{{ addslashes($a->code . ' — ' . $a->title) }}';
-                                            open = false;
-                                        ">
-                  <div class="d-flex flex-column gap-1">
-                    <span class="fw-semibold text-primary">{{ $a->code }}</span>
-                    <span class="text-secondary rkap-font-085">{{ $a->title }}</span>
+                <template x-for="a in filteredActivities" :key="a.id">
+                  <div
+                    class="px-3 py-2 cursor-pointer dropdown-item small"
+                    :class="selectedId == a.id ? 'bg-primary text-white' : ''"
+                    @click="selectActivity(a)">
+                    <div class="d-flex flex-column gap-1">
+                      <span class="fw-semibold text-primary" :class="selectedId == a.id ? 'text-white' : ''" x-text="a.code"></span>
+                      <span class="text-secondary rkap-font-085" :class="selectedId == a.id ? 'text-white-50' : ''" x-text="a.title"></span>
+                    </div>
                   </div>
+                </template>
+                <div x-show="filteredActivities.length === 0" class="px-3 py-2 text-muted small">
+                  {{ __('Tidak ada data kegiatan.') }}
                 </div>
-                @empty
-                <div class="px-3 py-2 text-muted small">{{ __('Tidak ada data kegiatan.') }}</div>
-                @endforelse
                 <div class="px-3 py-2 text-muted small border-top bg-light">
                   <i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk menyaring kegiatan.') }}
                 </div>
@@ -694,6 +745,31 @@
                               open: false,
                               search: @js($searchLabel),
                               currentLabel: @js($searchLabel),
+                              selectedId: @js($firstBi['coa_id'] ?? null),
+                              isPastPeriod: @js($isPastPeriod),
+                              get filteredCoas() {
+                                  let list = window.RKAP_MASTER_COAS || [];
+                                  if (this.isPastPeriod) {
+                                      list = list.filter(c => c.is_past);
+                                  }
+                                  let q = (this.search || '').trim().toLowerCase();
+                                  if (q === (this.currentLabel || '').trim().toLowerCase()) {
+                                      q = '';
+                                  }
+                                  if (!q) {
+                                      return list.slice(0, 20);
+                                  }
+                                  return list.filter(c => c.search.includes(q)).slice(0, 30);
+                              },
+                              selectCoa(coa) {
+                                  $wire.call('updateGroupCoa', {{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, coa.id);
+                                  this.currentLabel = coa.code + ' — ' + coa.title;
+                                  this.search = this.currentLabel;
+                                  this.selectedId = coa.id;
+                                  this.open = false;
+                                  $dispatch('coa-dropdown-close');
+                                  isDirty = true;
+                              }
                           }"
                     x-effect="if (!open && search !== currentLabel) search = currentLabel"
                     :class="open ? 'rkap-dropdown-open' : ''"
@@ -726,7 +802,7 @@
                         @if ($firstBi['coa_id'] && !$isApproved && !$isCoaLockedForKepalaBiro && $hasMappedCoas)
                         <button type="button" class="btn btn-sm btn-outline-secondary"
                           wire:click="updateGroupCoa({{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, null)"
-                          @click="search = ''; currentLabel = ''; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
+                          @click="search = ''; currentLabel = ''; selectedId = null; open = false; $dispatch('coa-dropdown-close'); isDirty = true;"
                           title="{{ __('Hapus pilihan') }}">
                           <i class="bx bx-x"></i>
                         </button>
@@ -800,27 +876,23 @@
                         @endif
                         @endif
                       </select>
-                      <div x-show="open && !@js($isCoaLockedForKepalaBiro)" x-cloak
+                      <div x-show="open && !@js($isCoaLockedForKepalaBiro)" x-cloak wire:ignore.self
                         class="position-absolute bg-white border rounded shadow-sm w-100 mt-1 rkap-dropdown-menu"
                         style="z-index: 1055; max-height: 250px; overflow-y: auto;">
-                        @foreach ($filteredCoasOrdered as $coa)
-                        <div
-                          class="px-3 py-2 cursor-pointer dropdown-item small {{ ($firstBi['coa_id'] ?? null) == $coa->id ? 'bg-primary text-white' : '' }}"
-                          x-show="search === '' || '{{ strtolower($coa->code . ' ' . $coa->title) }}'.includes(search.toLowerCase())"
-                          @click="
-                                                            $wire.call('updateGroupCoa', {{ $wpIdx }}, {{ $actIdx }}, {{ $firstIdx }}, {{ $coa->id }});
-                                                            currentLabel = '{{ $coa->code }} — {{ $coa->title }}';
-                                                            search = currentLabel;
-                                                            open = false;
-                                                            $dispatch('coa-dropdown-close');
-                                                            isDirty = true;
-                                                        ">
-                          <span class="fw-semibold text-primary">{{ $coa->code }}</span>
-                          <span class="ms-1">{{ $coa->title }}</span>
+                        <template x-for="coa in filteredCoas" :key="coa.id">
+                          <div
+                            class="px-3 py-2 cursor-pointer dropdown-item small"
+                            :class="selectedId == coa.id ? 'bg-primary text-white' : ''"
+                            @click="selectCoa(coa)">
+                            <span class="fw-semibold text-primary" :class="selectedId == coa.id ? 'text-white' : ''" x-text="coa.code"></span>
+                            <span class="ms-1" x-text="coa.title"></span>
+                          </div>
+                        </template>
+                        <div x-show="filteredCoas.length === 0" class="px-3 py-2 text-muted small">
+                          {{ __('Tidak ada data COA yang cocok.') }}
                         </div>
-                        @endforeach
                         <div class="px-3 py-2 text-muted small border-top bg-light">
-                          <i class="bx bx-info-circle me-1"></i>Ketik untuk menyaring COA.
+                          <i class="bx bx-info-circle me-1"></i>{{ __('Ketik untuk mencari dari seluruh master COA.') }}
                         </div>
                       </div>
                     </div>
@@ -1466,4 +1538,11 @@
       }
     });
   </script>
+  @script
+  <script>
+      window.RKAP_MASTER_COAS = {!! json_encode($allCoasMaster) !!};
+      window.RKAP_MASTER_WORK_PLANS = {!! json_encode($allWorkPlansMaster) !!};
+      window.RKAP_MASTER_ACTIVITIES = {!! json_encode($allActivitiesMaster) !!};
+  </script>
+  @endscript
 </div>
