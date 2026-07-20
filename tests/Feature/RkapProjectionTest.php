@@ -596,4 +596,66 @@ class RkapProjectionTest extends TestCase
         // Current month (no realization) should be updated to user input (30000)
         $this->assertEquals(30000, \App\Models\RkapBudgetItemProjection::where('rkap_budget_item_id', $this->budgetItem->id)->where('month', $currentMonth)->value('amount'));
     }
+
+    public function test_projection_validation_respects_allow_exceed_setting_manual(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        // 1. Setting = 0 (default: exceed not allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '0');
+
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 150000)
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['yearlyProjection']);
+
+        // 2. Setting = 1 (exceed allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '1');
+
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 150000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(150000.00, (float)$this->budgetItem->projection);
+    }
+
+    public function test_monthly_projection_validation_respects_allow_exceed_setting_manual(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $currentMonth = (int) date('n');
+
+        // 1. Setting = 0 (default: exceed not allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '0');
+
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'monthly')
+            ->set("editingProjections.{$currentMonth}", 150000)
+            ->call('saveMonthlyProjections')
+            ->assertHasErrors(['editingProjections']);
+
+        // 2. Setting = 1 (exceed allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '1');
+
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'monthly')
+            ->set("editingProjections.{$currentMonth}", 150000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(200000.00, (float)$this->budgetItem->projection);
+    }
 }

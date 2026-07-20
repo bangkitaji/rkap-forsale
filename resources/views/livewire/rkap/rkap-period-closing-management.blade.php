@@ -29,6 +29,21 @@
               @enderror
             </div>
 
+            <hr class="my-4">
+
+            <h5 class="mb-3">Pengaturan Validasi Proyeksi</h5>
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="allowProjectionExceedBudgetInput" wire:model="allowProjectionExceedBudget">
+                <label class="form-check-label fw-semibold" for="allowProjectionExceedBudgetInput">
+                  Izinkan total akumulasi proyeksi melebihi anggaran RKAP
+                </label>
+              </div>
+              <div class="form-text text-muted">
+                Jika diaktifkan, pengguna dapat mengisi dan menyimpan proyeksi bulanan maupun tahunan dengan total nilai yang melebihi pagu anggaran RKAP yang disetujui.
+              </div>
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">
               <i class="bx bx-save me-1"></i> {{ __('Simpan Pengaturan') }}
             </button>

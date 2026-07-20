@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 class RkapPeriodClosingManagement extends Component
 {
     public int $closingDay;
+    public bool $allowProjectionExceedBudget;
 
     public function mount(): void
     {
@@ -17,6 +18,7 @@ class RkapPeriodClosingManagement extends Component
         }
 
         $this->closingDay = (int) Setting::get('rkap_closing_day', 10);
+        $this->allowProjectionExceedBudget = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
     }
 
     public function save(): void
@@ -30,6 +32,7 @@ class RkapPeriodClosingManagement extends Component
         ]);
 
         Setting::set('rkap_closing_day', $this->closingDay);
+        Setting::set('rkap_allow_projection_exceed_budget', $this->allowProjectionExceedBudget ? '1' : '0');
 
         session()->flash('message', __('Setting closing periode berhasil disimpan.'));
     }

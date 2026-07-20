@@ -207,6 +207,7 @@ class RkapProjectionUploadTest extends TestCase
     public function test_upload_total_projection_can_exceed_total_budget(): void
     {
         $this->actingAs($this->adminUser);
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '1');
 
         $currentMonth = (int) date('n');
 
@@ -313,6 +314,7 @@ class RkapProjectionUploadTest extends TestCase
     public function test_upload_yearly_projection_can_exceed_total_price(): void
     {
         $this->actingAs($this->adminUser);
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '1');
 
         // Total price is 1000000. Let's upload 1200000. It should succeed!
         $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
@@ -441,5 +443,38 @@ class RkapProjectionUploadTest extends TestCase
 
         $this->budgetItem->refresh();
         $this->assertEquals(-15000.00, (float)$this->budgetItem->projection);
+    }
+
+    public function test_projection_validation_respects_allow_exceed_setting_upload(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // 1. Setting = 0 (default: exceed not allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '0');
+
+        $csvContent = "budget_item_id,yearly,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12\n";
+        $csvContent .= "{$this->budgetItem->id},1500000,0,0,0,0,0,0,0,0,0,0,0,0\n";
+        $file = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file)
+            ->call('uploadAndImport')
+            ->assertSet('imported', false);
+
+        // 2. Setting = 1 (exceed allowed)
+        \App\Models\Setting::set('rkap_allow_projection_exceed_budget', '1');
+
+        $file2 = UploadedFile::fake()->createWithContent('projections.csv', $csvContent);
+
+        Livewire::test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('file', $file2)
+            ->call('uploadAndImport')
+            ->assertHasNoErrors()
+            ->assertSet('imported', true);
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(1500000.00, (float)$this->budgetItem->projection);
     }
 }

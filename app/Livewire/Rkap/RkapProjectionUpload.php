@@ -5,6 +5,7 @@ namespace App\Livewire\Rkap;
 use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemProjection;
 use App\Models\RkapPeriod;
+use App\Models\Setting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -283,9 +284,16 @@ class RkapProjectionUpload extends Component
             $dbHasMonthly = $budgetItem->projections->count() > 0;
             $dbHasYearly = (float)$budgetItem->projection > 0 && !$dbHasMonthly;
 
+            $allowExceed = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+
             if ($hasMonthly) {
                 if ($dbHasYearly) {
                     $this->errorsList[] = "Baris {$rowNo}: Tidak dapat mengisi proyeksi bulanan karena item ini sudah diatur dengan proyeksi tahunan.";
+                    continue;
+                }
+
+                if (!$allowExceed && $monthlySum > $totalBudget) {
+                    $this->errorsList[] = "Baris {$rowNo}: Total akumulasi proyeksi bulanan (Rp " . number_format($monthlySum, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($totalBudget, 0, ',', '.') . ").";
                     continue;
                 }
 
@@ -311,6 +319,11 @@ class RkapProjectionUpload extends Component
                     }
                 }
             } else {
+                if (!$allowExceed && $yearlyVal > $totalBudget) {
+                    $this->errorsList[] = "Baris {$rowNo}: Total proyeksi tahunan (Rp " . number_format($yearlyVal, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($totalBudget, 0, ',', '.') . ").";
+                    continue;
+                }
+
                 if (abs($yearlyVal) > 0.001) {
                     if ($dbHasMonthly) {
                         $this->errorsList[] = "Baris {$rowNo}: Tidak dapat mengisi proyeksi tahunan karena item ini sudah diatur dengan proyeksi bulanan.";

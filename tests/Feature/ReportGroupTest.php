@@ -77,6 +77,7 @@ class ReportGroupTest extends TestCase
         $response = $this->get('/settings/report-groups');
         $response->assertStatus(200);
 
+        $this->flushSession();
         $this->actingAs($this->verifikatorUser);
         $response = $this->get('/settings/report-groups');
         $response->assertStatus(200);

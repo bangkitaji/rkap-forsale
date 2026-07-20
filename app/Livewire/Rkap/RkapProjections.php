@@ -7,6 +7,7 @@ use App\Models\RkapPeriod;
 use App\Models\RkapSubmission;
 use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemProjection;
+use App\Models\Setting;
 use App\Models\Bureau;
 use App\Models\Department;
 use App\Models\Directorate;
@@ -272,7 +273,8 @@ class RkapProjections extends Component
         }
 
         $sanitizedValue = $value !== '' && $value !== null ? (float)$value : 0.00;
-        if ($sanitizedValue > (float)$selectedItem->total_price) {
+        $allowExceed = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+        if (!$allowExceed && $sanitizedValue > (float)$selectedItem->total_price) {
             $this->addError('yearlyProjection', "Total proyeksi tahunan (Rp " . number_format($sanitizedValue, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
         } else {
             $this->resetErrorBag('yearlyProjection');
@@ -330,7 +332,8 @@ class RkapProjections extends Component
             }
         }
 
-        if ($totalProjections > (float) $selectedItem->total_price) {
+        $allowExceed = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+        if (!$allowExceed && $totalProjections > (float) $selectedItem->total_price) {
             $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
         } else {
             $this->resetErrorBag('editingProjections');
@@ -390,7 +393,8 @@ class RkapProjections extends Component
 
             // Validate yearly projection
             $yearlyVal = $this->yearlyProjection !== '' && $this->yearlyProjection !== null ? (float)$this->yearlyProjection : 0.00;
-            if ($yearlyVal > (float)$selectedItem->total_price) {
+            $allowExceed = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+            if (!$allowExceed && $yearlyVal > (float)$selectedItem->total_price) {
                 $this->addError('yearlyProjection', "Total proyeksi tahunan (Rp " . number_format($yearlyVal, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
                 return;
             }
@@ -440,7 +444,8 @@ class RkapProjections extends Component
                 }
             }
 
-            if ($totalProjections > (float) $selectedItem->total_price) {
+            $allowExceed = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+            if (!$allowExceed && $totalProjections > (float) $selectedItem->total_price) {
                 $this->addError('editingProjections', "Total akumulasi proyeksi (Rp " . number_format($totalProjections, 0, ',', '.') . ") tidak boleh melebihi total anggaran RKAP yang disetujui (Rp " . number_format($selectedItem->total_price, 0, ',', '.') . ").");
                 return;
             }

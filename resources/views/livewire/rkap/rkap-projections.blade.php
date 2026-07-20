@@ -641,7 +641,7 @@
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Batal') }}</button>
                         <button type="submit"
                             class="btn btn-primary d-flex align-items-center gap-1"
-                            @disabled($isOverBudget)
+                            @disabled($isOverBudget && \App\Models\Setting::get('rkap_allow_projection_exceed_budget', '0') !== '1')
                             @if($isOverBudget) title="Total proyeksi melebihi total anggaran RKAP" @endif>
                             <i class="bx bx-save"></i> {{ __('Simpan Proyeksi') }}
                         </button>
