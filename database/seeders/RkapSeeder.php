@@ -75,6 +75,7 @@ class RkapSeeder extends Seeder
             'rkap.realization.upload',
             'rkap.projection.input',
             'rkap.projection.view',
+            'analytics.summary.dept',
         ];
 
         foreach ($permissions as $perm) {
@@ -159,6 +160,7 @@ class RkapSeeder extends Seeder
             'rkap.show',
             'masterdata.workplan.view',
             'masterdata.activity.view',
+            'analytics.summary.dept',
         ]);
 
         $rolePresident->syncPermissions([

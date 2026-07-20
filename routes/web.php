@@ -16,6 +16,9 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/analytics/cashflow-matrix/sync', [CashflowSyncController::class, 'sync'])->name('analytics-cashflow-matrix-sync');
   Route::get('/analytics/reconciliation', [Analytics::class, 'reconciliation'])->name('analytics-reconciliation');
   Route::get('/analytics/capex', [Analytics::class, 'capex'])->name('analytics-capex');
+  Route::get('/analytics/summary-dept/pl', [Analytics::class, 'summaryDeptPl'])->name('analytics-summary-dept-pl')->middleware('permission:analytics.summary.dept');
+  Route::get('/analytics/summary-dept/cashflow', [Analytics::class, 'summaryDeptCashflow'])->name('analytics-summary-dept-cashflow')->middleware('permission:analytics.summary.dept');
+  Route::get('/analytics/summary-dept/capex', [Analytics::class, 'summaryDeptCapex'])->name('analytics-summary-dept-capex')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/coa-group-detail', [Analytics::class, 'coaGroupDetail'])->name('analytics.coa-group-detail');
   Route::get('/analytics/coa-detail', [Analytics::class, 'coaDetail'])->name('analytics.coa-detail');
   Route::get('/analytics/cashflow-group-detail', [Analytics::class, 'cashflowGroupDetail'])->name('analytics.cashflow-group-detail');

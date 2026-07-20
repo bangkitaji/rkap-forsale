@@ -9,7 +9,10 @@
         "analytics-cashflow",
         "analytics-cashflow-matrix",
         "analytics-reconciliation",
-        "analytics-capex"
+        "analytics-capex",
+        "analytics-summary-dept-pl",
+        "analytics-summary-dept-cashflow",
+        "analytics-summary-dept-capex"
       ],
       "permission": "dashboard.show",
       "submenu": [
@@ -40,6 +43,39 @@
           "name": "Capex",
           "slug": "analytics-capex",
           "permission": "dashboard.show"
+        },
+        {
+          "name": "Summary Department",
+          "icon": "menu-icon icon-base bx bx-buildings",
+          "slug": [
+            "analytics-summary-dept-pl",
+            "analytics-summary-dept-cashflow",
+            "analytics-summary-dept-capex"
+          ],
+          "permission": "analytics.summary.dept",
+          "submenu": [
+            {
+              "url": "analytics/summary-dept/pl",
+              "icon": "menu-icon icon-base bx bx-file",
+              "name": "Laba Rugi",
+              "slug": "analytics-summary-dept-pl",
+              "permission": "analytics.summary.dept"
+            },
+            {
+              "url": "analytics/summary-dept/cashflow",
+              "icon": "menu-icon icon-base bx bx-grid",
+              "name": "Cash Flow",
+              "slug": "analytics-summary-dept-cashflow",
+              "permission": "analytics.summary.dept"
+            },
+            {
+              "url": "analytics/summary-dept/capex",
+              "icon": "menu-icon icon-base bx bx-wallet",
+              "name": "Capex",
+              "slug": "analytics-summary-dept-capex",
+              "permission": "analytics.summary.dept"
+            }
+          ]
         }
       ]
     },

@@ -51,6 +51,7 @@ class RoleAndUserSeeder extends Seeder
         $permOrganizationShow = Permission::firstOrCreate(['name' => 'settings.organization.show', 'guard_name' => 'web']);
         $permSettingsCashflowGroupManage = Permission::firstOrCreate(['name' => 'settings.cashflowgroup.manage', 'guard_name' => 'web']);
         $permSettingsDifferenceGroupManage = Permission::firstOrCreate(['name' => 'settings.differencegroup.manage', 'guard_name' => 'web']);
+        $permAnalyticsSummaryDept = Permission::firstOrCreate(['name' => 'analytics.summary.dept', 'guard_name' => 'web']);
 
         // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -87,6 +88,7 @@ class RoleAndUserSeeder extends Seeder
             $permOrganizationShow,
             $permSettingsCashflowGroupManage,
             $permSettingsDifferenceGroupManage,
+            $permAnalyticsSummaryDept,
         ]);
 
         $roleUser->givePermissionTo([
@@ -115,6 +117,7 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataActivityView,
             $permMasterDataActivityManage,
             $permRkapClosingManage,
+            $permAnalyticsSummaryDept,
         ]);
 
         $roleDireksi->givePermissionTo([
