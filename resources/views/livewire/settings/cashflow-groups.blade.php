@@ -65,6 +65,7 @@
                             <th>Code</th>
                             <th>Name</th>
                             <th>Description</th>
+                            <th>Mapped COA</th>
                             <th class="rkap-w-100">Actions</th>
                         </tr>
                     </thead>
@@ -77,6 +78,17 @@
                                 {{ $group->description ?? '-' }}
                             </td>
                             <td>
+                                @if($group->coas && $group->coas->count() > 0)
+                                    <div class="d-flex flex-wrap gap-1 rkap-mw-300">
+                                        @foreach($group->coas as $coa)
+                                            <span class="badge bg-label-secondary" title="{{ $coa->title }}">{{ $coa->code }}</span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
+                            <td>
                                 <button wire:click="edit({{ $group->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect">
                                     <i class="bx bx-edit-alt"></i>
                                 </button>
@@ -87,7 +99,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center">No Cashflow Group records found.</td>
+                            <td colspan="5" class="text-center">No Cashflow Group records found.</td>
                         </tr>
                         @endforelse
                     </tbody>

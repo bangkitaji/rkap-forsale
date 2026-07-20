@@ -89,7 +89,8 @@ class CashflowSyncController extends Controller
 
         $groupIds = $cashflowGroupMap->keys()->toArray();
 
-        // ── 4. Accumulate total_price from rkap_budget_items (all statuses) ───────
+        $cf0b9GroupId = array_search('CF0B9', $cashflowGroupMap->toArray());
+ 
         $accumulated = DB::table('rkap_budget_items')
             ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
             ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -97,7 +98,11 @@ class CashflowSyncController extends Controller
             ->where('rkap_submissions.rkap_period_id', $period->id)
             ->whereNull('coas.deleted_at')
             ->whereIn('coas.cashflow_group_id', $groupIds)
-            ->selectRaw('coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total')
+            ->selectRaw(
+                $cf0b9GroupId !== false
+                ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) ELSE rkap_budget_items.total_price END) as total"
+                : "coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total"
+            )
             ->groupBy('coas.cashflow_group_id')
             ->pluck('total', 'cashflow_group_id')
             ->toArray();

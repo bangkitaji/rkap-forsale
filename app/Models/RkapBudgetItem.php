@@ -20,6 +20,7 @@ class RkapBudgetItem extends Model
         'total_price',
         'projection',
         'remarks',
+        'flow_direction',
     ];
 
     protected function casts(): array

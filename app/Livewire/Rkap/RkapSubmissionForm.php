@@ -250,6 +250,7 @@ class RkapSubmissionForm extends Component
             'description'               => '',
             'coa_group_name'            => '',
             'cashflow_group_name'       => '',
+            'cashflow_group_code'       => '',
             'difference_group_name'     => '',
             'unit'                      => '',
             'quantity'                  => 1,
@@ -263,6 +264,7 @@ class RkapSubmissionForm extends Component
             'cash_out_months'           => [],
             'realization_distribution'  => [],
             'realization_months'        => [],
+            'flow_direction'            => 'OUT',
         ];
     }
 
@@ -578,6 +580,7 @@ class RkapSubmissionForm extends Component
                             'description'              => $bi->description,
                             'coa_group_name'           => $coa && $coa->coaGroup ? $coa->coaGroup->name : '',
                             'cashflow_group_name'      => $coa && $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
+                            'cashflow_group_code'      => $coa && $coa->cashflowGroup ? $coa->cashflowGroup->code : '',
                             'difference_group_name'    => $coa && $coa->differenceGroup ? $coa->differenceGroup->name : '',
                             'unit'                     => $bi->unit ?? '',
                             'quantity'                 => $bi->quantity,
@@ -591,6 +594,7 @@ class RkapSubmissionForm extends Component
                             'cash_out_months'          => $bi->cashOuts->pluck('month')->toArray(),
                             'realization_distribution' => $bi->realizations->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                             'realization_months'       => $bi->realizations->pluck('month')->toArray(),
+                            'flow_direction'           => $bi->flow_direction ?? 'OUT',
                         ];
                     })->toArray(),
                     'is_past_period_payment' => (bool) ($wp->is_past_period_payment ?? false),
@@ -807,6 +811,7 @@ class RkapSubmissionForm extends Component
         $title = $coa ? $coa->title : '';
         $groupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : '';
         $cashflowGroupName = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->name : '';
+        $cashflowGroupCode = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->code : '';
         $differenceGroupName = ($coa && $coa->differenceGroup) ? $coa->differenceGroup->name : '';
         $shouldLock = $this->shouldLockMappedCoaForCurrentUser($activityId, $coaId);
 
@@ -818,6 +823,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_group_name'] = $groupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_name'] = $cashflowGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['difference_group_name'] = $differenceGroupName;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $biIndex);
@@ -837,6 +843,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_group_name'] = $groupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_name'] = $cashflowGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_name'] = $differenceGroupName;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $idx);
@@ -856,6 +863,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['description'] = $title;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['coa_group_name'] = $groupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_name'] = $cashflowGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_name'] = $differenceGroupName;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $idx);
@@ -963,6 +971,7 @@ class RkapSubmissionForm extends Component
             'workPlans.*.activities.*.budget_items.*.unit_2' => 'nullable|string',
             'workPlans.*.activities.*.budget_items.*.quantity_2' => 'nullable|numeric|gt:0',
             'workPlans.*.activities.*.budget_items.*.unit_price' => 'required|numeric|min:0',
+            'workPlans.*.activities.*.budget_items.*.flow_direction' => 'required|in:IN,OUT',
         ];
     }
 
@@ -1387,6 +1396,7 @@ class RkapSubmissionForm extends Component
                                 'quantity_2' => $biData['quantity_2'] !== null && $biData['quantity_2'] !== '' ? (float) $biData['quantity_2'] : null,
                                 'unit_price' => $biData['unit_price'],
                                 'remarks' => $biData['remarks'] ?: null,
+                                'flow_direction' => $biData['flow_direction'] ?? 'OUT',
                             ]
                         );
 

@@ -223,7 +223,8 @@ class CashflowGroups extends Component
     public function render()
     {
         // 1. Cashflow Groups CRUD Data
-        $cashflowGroups = CashflowGroup::search('code|name', $this->search)
+        $cashflowGroups = CashflowGroup::with('coas')
+            ->search('code|name', $this->search)
             ->orderBy('code')
             ->paginate($this->perPage, ['*'], 'groupsPage');
 

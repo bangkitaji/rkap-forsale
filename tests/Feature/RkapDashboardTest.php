@@ -464,7 +464,7 @@ class RkapDashboardTest extends TestCase
 
         // Assert that P&L summary and table are not displayed
         $response->assertDontSee('Ringkasan Laba Rugi');
-        $response->assertDontSee('Laporan Laba Rugi');
+        $response->assertDontSee('Laporan Laba Rugi (Profit & Loss Statement)');
 
         // Assert comparative data options
         $deptData = $response->viewData('departmentData');
@@ -497,6 +497,7 @@ class RkapDashboardTest extends TestCase
             'email' => 'direksiglobal@example.com',
             'password' => bcrypt('password'),
             'directorate_id' => $directorate->id,
+            'must_change_password' => false,
         ]);
         $direksiUser->assignRole($roleDireksi);
 
@@ -505,6 +506,7 @@ class RkapDashboardTest extends TestCase
             'name' => 'Dirut Global Test',
             'email' => 'dirutglobal@example.com',
             'password' => bcrypt('password'),
+            'must_change_password' => false,
         ]);
         $dirutUser->assignRole($roleDirut);
 
@@ -539,6 +541,7 @@ class RkapDashboardTest extends TestCase
         $this->assertEquals(150000.0, $stats1['total_budget']);
 
         // 2. Assert Direktur Utama User sees global data (150000)
+        $this->flushSession();
         $response2 = $this->actingAs($dirutUser)->get('/analytics');
         $response2->assertStatus(200);
         $stats2 = $response2->viewData('stats');
@@ -792,6 +795,7 @@ class RkapDashboardTest extends TestCase
         $this->assertEquals(0.0, $compDataAdmin[2]['expense_projection']);
 
         // 2. Assert kabiro1 scoping limits data to Bureau 1 for all three years
+        $this->flushSession();
         $responseKabiro = $this->actingAs($this->kabiro1)->get('/analytics');
         $responseKabiro->assertStatus(200);
         $compDataKabiro = $responseKabiro->viewData('comparisonData');
@@ -1105,9 +1109,11 @@ class RkapDashboardTest extends TestCase
             'email' => 'regularbureau@example.com',
             'password' => bcrypt('password'),
             'bureau_id' => $this->bureau1->id,
+            'must_change_password' => false,
         ]);
         $regularUser->assignRole($roleUser);
 
+        $this->flushSession();
         $response4 = $this->actingAs($regularUser)->get('/analytics/cashflow');
         $response4->assertStatus(403);
 
@@ -1383,5 +1389,98 @@ class RkapDashboardTest extends TestCase
                 ->count(),
             'Re-sync should update existing fact, not create duplicate'
         );
+    }
+
+    public function test_cf0b9_flow_direction_sync_and_reporting(): void
+    {
+        // 1. Setup DB category
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // 2. Create CF0B9 cashflow group
+        $cfGroup = \App\Models\CashflowGroup::create([
+            'code' => 'CF0B9',
+            'name' => 'Penarikan Dana Dibatasi Pengunannya Operasi',
+        ]);
+
+        \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0B9'],
+            ['category_id' => 1, 'description' => 'Penarikan Dana Dibatasi Pengunannya Operasi']
+        );
+
+        // 3. Create COA mapped to CF0B9
+        $coa = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_CF0B9'],
+            ['title' => 'Test COA CF0B9', 'cashflow_group_id' => $cfGroup->id]
+        );
+        $coa->update(['cashflow_group_id' => $cfGroup->id]);
+
+        // 4. Create budget item with flow_direction = 'IN'
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code'       => 'WP_CF0B9',
+            'program_name'       => 'CF0B9 Work Plan',
+        ]);
+
+        $budgetItem = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coa->code,
+            'description'       => 'Test Item IN',
+            'quantity'          => 1,
+            'unit_price'        => 500000.0,
+            'total_price'       => 500000.0,
+            'flow_direction'    => 'IN',
+        ]);
+
+        // Sync and verify
+        $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ])->assertJson(['success' => true]);
+
+        // Amount should be positive for IN
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0B9',
+            'amount'    => 500000.0,
+        ]);
+
+        // Verify Dashboard Reporting for IN
+        $response = $this->actingAs($this->admin)->get('/analytics/cashflow');
+        $response->assertStatus(200);
+        $outflowGroups = $response->viewData('outflowGroups');
+        $cfSummary = $response->viewData('cfSummary');
+
+        $this->assertNotEmpty($outflowGroups);
+        $cf0b9Item = collect($outflowGroups)->firstWhere('code', 'CF0B9');
+        $this->assertNotNull($cf0b9Item);
+        // IN means it should be dynamically calculated as 500000.0
+        $this->assertEquals(500000.0, $cf0b9Item['budget']);
+
+        // Now test OUT
+        $budgetItem->update([
+            'flow_direction' => 'OUT',
+        ]);
+
+        // Sync and verify
+        $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ])->assertJson(['success' => true]);
+
+        // Amount should be negative for OUT
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0B9',
+            'amount'    => -500000.0,
+        ]);
+
+        // Verify Dashboard Reporting for OUT
+        $response = $this->actingAs($this->admin)->get('/analytics/cashflow');
+        $response->assertStatus(200);
+        $outflowGroups = $response->viewData('outflowGroups');
+        $cf0b9Item = collect($outflowGroups)->firstWhere('code', 'CF0B9');
+        // OUT means it should be dynamically calculated as -500000.0
+        $this->assertEquals(-500000.0, $cf0b9Item['budget']);
     }
 }

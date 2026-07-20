@@ -1206,6 +1206,18 @@
                           @endif
                     </div>
                   </div>
+                  @if (($bi['cashflow_group_code'] ?? '') === 'CF0B9')
+                  <div class="mb-3 d-flex align-items-center gap-2 mt-2">
+                    <span class="small fw-semibold text-muted">{{ __('Sifat Aliran Kas:') }}</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <input type="radio" class="btn-check" name="flow-{{ $modalKey }}" id="flow-in-{{ $modalKey }}" value="IN" wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.flow_direction" @disabled($isApproved)>
+                      <label class="btn btn-outline-success px-3 d-flex align-items-center" for="flow-in-{{ $modalKey }}"><i class="bx bx-trending-up me-1"></i>IN (Uang Masuk)</label>
+
+                      <input type="radio" class="btn-check" name="flow-{{ $modalKey }}" id="flow-out-{{ $modalKey }}" value="OUT" wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.flow_direction" @disabled($isApproved)>
+                      <label class="btn btn-outline-danger px-3 d-flex align-items-center" for="flow-out-{{ $modalKey }}"><i class="bx bx-trending-down me-1"></i>OUT (Uang Keluar)</label>
+                    </div>
+                  </div>
+                  @endif
                   <div class="d-flex align-items-center mb-1">
                     <label class="form-label small text-muted mb-0">{{ __('Pilih Bulan Pendanaan:') }}</label>
                   </div>
