@@ -2948,9 +2948,29 @@ class Analytics extends Controller
     }
     $departments = $departmentsQuery->get();
 
-    $cashflowGroups = \App\Models\CashflowGroup::orderBy('code')->get();
-    $inflowGroups = $cashflowGroups->where('type', 'inflow');
-    $outflowGroups = $cashflowGroups->where('type', 'outflow');
+    // Load cashflow groups with their report group (category: Operasi / Investasi / Pendanaan)
+    $cashflowGroups = \App\Models\CashflowGroup::with('reportGroup')->orderBy('code')->get();
+
+    // FIX: cashflow_groups has no 'type' column.
+    // Inflow/Outflow is determined by coas.cf_type = 'CASH IN' or 'CASH OUT'.
+    $cfTypeMap = DB::table('coas')
+      ->whereNotNull('cashflow_group_id')
+      ->whereNull('deleted_at')
+      ->selectRaw('cashflow_group_id, cf_type, COUNT(*) as cnt')
+      ->groupBy('cashflow_group_id', 'cf_type')
+      ->get()
+      ->groupBy('cashflow_group_id');
+
+    // Classify each cashflow group as inflow or outflow based on dominant COA cf_type
+    $cgTypeMap = []; // cashflow_group_id => 'inflow' | 'outflow'
+    foreach ($cfTypeMap as $cgId => $rows) {
+      $cashIn  = $rows->where('cf_type', 'CASH IN')->sum('cnt');
+      $cashOut = $rows->where('cf_type', 'CASH OUT')->sum('cnt');
+      $cgTypeMap[$cgId] = ($cashIn >= $cashOut) ? 'inflow' : 'outflow';
+    }
+
+    $inflowGroups  = $cashflowGroups->filter(fn($g) => ($cgTypeMap[$g->id] ?? 'outflow') === 'inflow');
+    $outflowGroups = $cashflowGroups->filter(fn($g) => ($cgTypeMap[$g->id] ?? 'outflow') === 'outflow');
 
     $matrix = [];
     $deptTotals = [];
@@ -2980,8 +3000,9 @@ class Analytics extends Controller
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->whereIn('bureaus.department_id', $deptIds)
         ->whereNull('coas.deleted_at')
-        ->selectRaw('bureaus.department_id, cashflow_groups.id as cashflow_group_id, cashflow_groups.type as cg_type, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
-        ->groupBy('bureaus.department_id', 'cashflow_groups.id', 'cashflow_groups.type')
+        ->whereIn('coas.cf_type', ['CASH IN', 'CASH OUT'])
+        ->selectRaw('bureaus.department_id, cashflow_groups.id as cashflow_group_id, coas.cf_type, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
+        ->groupBy('bureaus.department_id', 'cashflow_groups.id', 'coas.cf_type')
         ->get();
 
       $realizationsRaw = DB::table('rkap_budget_item_realizations')
@@ -2994,6 +3015,7 @@ class Analytics extends Controller
         ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
         ->whereIn('bureaus.department_id', $deptIds)
         ->whereNull('coas.deleted_at')
+        ->whereIn('coas.cf_type', ['CASH IN', 'CASH OUT'])
         ->selectRaw('bureaus.department_id, cashflow_groups.id as cashflow_group_id, SUM(rkap_budget_item_realizations.amount) as realization')
         ->groupBy('bureaus.department_id', 'cashflow_groups.id')
         ->get();
@@ -3004,41 +3026,90 @@ class Analytics extends Controller
       }
 
       foreach ($budgetsRaw as $b) {
-        $deptId = $b->department_id;
-        $cgId = $b->cashflow_group_id;
-        $cgType = $b->cg_type;
-        $budget = (float) $b->budget;
-        $projection = (float) $b->projection;
+        $deptId     = $b->department_id;
+        $cgId       = $b->cashflow_group_id;
+        $cfType     = $b->cf_type; // 'CASH IN' or 'CASH OUT'
+        $isInflow   = $cfType === 'CASH IN';
+        $budget      = (float) $b->budget;
+        $projection  = (float) $b->projection;
         $realization = $realMap[$deptId . '_' . $cgId] ?? 0.0;
 
-        $matrix[$cgId][$deptId] = [
-          'budget' => $budget,
-          'realization' => $realization,
-          'projection' => $projection,
-        ];
+        // Matrix cell: accumulate per (group, dept)
+        if (!isset($matrix[$cgId][$deptId])) {
+          $matrix[$cgId][$deptId] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+        }
+        $matrix[$cgId][$deptId]['budget']      += $budget;
+        $matrix[$cgId][$deptId]['realization'] += $realization;
+        $matrix[$cgId][$deptId]['projection']  += $projection;
 
         if (isset($groupTotals[$cgId])) {
-          $groupTotals[$cgId]['budget'] += $budget;
+          $groupTotals[$cgId]['budget']      += $budget;
           $groupTotals[$cgId]['realization'] += $realization;
-          $groupTotals[$cgId]['projection'] += $projection;
+          $groupTotals[$cgId]['projection']  += $projection;
         }
 
         if (isset($deptTotals[$deptId])) {
-          if ($cgType === 'inflow') {
-            $deptTotals[$deptId]['inflow_budget'] += $budget;
+          if ($isInflow) {
+            $deptTotals[$deptId]['inflow_budget']      += $budget;
             $deptTotals[$deptId]['inflow_realization'] += $realization;
-            $deptTotals[$deptId]['inflow_projection'] += $projection;
+            $deptTotals[$deptId]['inflow_projection']  += $projection;
           } else {
-            $deptTotals[$deptId]['outflow_budget'] += $budget;
+            $deptTotals[$deptId]['outflow_budget']      += $budget;
             $deptTotals[$deptId]['outflow_realization'] += $realization;
-            $deptTotals[$deptId]['outflow_projection'] += $projection;
+            $deptTotals[$deptId]['outflow_projection']  += $projection;
           }
 
-          $deptTotals[$deptId]['net_budget'] = $deptTotals[$deptId]['inflow_budget'] - $deptTotals[$deptId]['outflow_budget'];
+          $deptTotals[$deptId]['net_budget']      = $deptTotals[$deptId]['inflow_budget']      - $deptTotals[$deptId]['outflow_budget'];
           $deptTotals[$deptId]['net_realization'] = $deptTotals[$deptId]['inflow_realization'] - $deptTotals[$deptId]['outflow_realization'];
-          $deptTotals[$deptId]['net_projection'] = $deptTotals[$deptId]['inflow_projection'] - $deptTotals[$deptId]['outflow_projection'];
+          $deptTotals[$deptId]['net_projection']  = $deptTotals[$deptId]['inflow_projection']  - $deptTotals[$deptId]['outflow_projection'];
         }
       }
+    }
+
+    // -------------------------------------------------------------------
+    // Build categorised Cashflow Report (Laporan Arus Kas tab)
+    // Category = report_groups where type = 'CF'
+    // -------------------------------------------------------------------
+    $cfReportGroups = \App\Models\ReportGroup::where('type', 'CF')->orderBy('id')->get();
+
+    $reportData = [];
+    foreach ($cfReportGroups as $rg) {
+      $reportData[$rg->id] = [
+        'label'    => $rg->name,
+        'rows'     => [],
+        'subtotal' => ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0],
+      ];
+    }
+
+    foreach ($cashflowGroups as $cg) {
+      $rgId = $cg->report_group_id;
+      if (!$rgId || !isset($reportData[$rgId])) continue;
+
+      $gTot     = $groupTotals[$cg->id] ?? ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+      $isInflow = ($cgTypeMap[$cg->id] ?? 'outflow') === 'inflow';
+      $sign     = $isInflow ? 1 : -1;
+
+      $reportData[$rgId]['rows'][] = [
+        'code'        => $cg->code,
+        'name'        => $cg->name,
+        'is_inflow'   => $isInflow,
+        'budget'      => $gTot['budget'],
+        'realization' => $gTot['realization'],
+        'projection'  => $gTot['projection'],
+      ];
+
+      // Subtotal: inflow adds, outflow subtracts
+      $reportData[$rgId]['subtotal']['budget']      += $sign * $gTot['budget'];
+      $reportData[$rgId]['subtotal']['realization'] += $sign * $gTot['realization'];
+      $reportData[$rgId]['subtotal']['projection']  += $sign * $gTot['projection'];
+    }
+
+    // Grand total kenaikan/penurunan netto kas
+    $grandTotal = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+    foreach ($reportData as $section) {
+      $grandTotal['budget']      += $section['subtotal']['budget'];
+      $grandTotal['realization'] += $section['subtotal']['realization'];
+      $grandTotal['projection']  += $section['subtotal']['projection'];
     }
 
     return view('content.dashboard.analytics-summary-dept-cashflow', compact(
@@ -3051,7 +3122,9 @@ class Analytics extends Controller
       'outflowGroups',
       'matrix',
       'deptTotals',
-      'groupTotals'
+      'groupTotals',
+      'reportData',
+      'grandTotal'
     ));
   }
 
