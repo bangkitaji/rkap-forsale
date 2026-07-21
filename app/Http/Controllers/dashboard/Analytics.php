@@ -2592,7 +2592,7 @@ class Analytics extends Controller
     return response()->json(['data' => $rows]);
   }
 
-  public function summaryDeptPl(Request $request)
+  public function summaryDeptPlCapex(Request $request)
   {
     $user = Auth::user();
     if (!$user || (!$user->isAdmin() && !$user->isVerifikator())) {
@@ -2620,14 +2620,15 @@ class Analytics extends Controller
     }
     $departments = $departmentsQuery->get();
 
+    // 1. Process P&L Data
     $plReportGroups = \App\Models\ReportGroup::where('type', 'PL')
       ->orderBy('code')
       ->get();
-    $plReportGroupIds = $plReportGroups->pluck('id')->toArray();
-
+    
     $matrix = [];
     $deptTotals = [];
     $groupTotals = [];
+    $grandTotal = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
 
     foreach ($departments as $dept) {
       $deptTotals[$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
@@ -2635,8 +2636,6 @@ class Analytics extends Controller
     foreach ($plReportGroups as $group) {
       $groupTotals[$group->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
     }
-
-    $grandTotal = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
 
     if ($activePeriod && $departments->isNotEmpty()) {
       $periodId = $activePeriod->id;
@@ -2648,14 +2647,15 @@ class Analytics extends Controller
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->whereIn('bureaus.department_id', $deptIds)
-        ->whereNull('coas.deleted_at')
-        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('bureaus.department_id, coa_groups.report_group_id, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
-        ->groupBy('bureaus.department_id', 'coa_groups.report_group_id')
+        ->where('report_groups.type', 'PL')
+        ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
+        ->groupBy('bureaus.department_id', 'report_groups.id')
         ->get();
 
+      $realMap = [];
       $realizationsRaw = DB::table('rkap_budget_item_realizations')
         ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
@@ -2663,17 +2663,23 @@ class Analytics extends Controller
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
         ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
         ->whereIn('bureaus.department_id', $deptIds)
-        ->whereNull('coas.deleted_at')
-        ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('bureaus.department_id, coa_groups.report_group_id, SUM(rkap_budget_item_realizations.amount) as realization')
-        ->groupBy('bureaus.department_id', 'coa_groups.report_group_id')
+        ->where('report_groups.type', 'PL')
+        ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_item_realizations.amount) as amount')
+        ->groupBy('bureaus.department_id', 'report_groups.id')
         ->get();
 
-      $realMap = [];
       foreach ($realizationsRaw as $r) {
-        $realMap[$r->department_id . '_' . $r->report_group_id] = (float) $r->realization;
+        $realMap[$r->department_id . '_' . $r->report_group_id] = (float) $r->amount;
+      }
+
+      foreach ($plReportGroups as $rg) {
+        $matrix[$rg->id] = [];
+        foreach ($departments as $dept) {
+          $matrix[$rg->id][$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+        }
       }
 
       foreach ($budgetsRaw as $b) {
@@ -2706,7 +2712,74 @@ class Analytics extends Controller
       }
     }
 
-    return view('content.dashboard.analytics-summary-dept-pl', compact(
+    // 2. Process Capex Data
+    $capexCoaCodes = [
+      '1105000001', '1201010001', '1201020001', '1201030001', '1201040001', '1201050001', '1201060001', '1201070001', '1201080001', '1201090001',
+      '1201100001', '1201990001', '1201999999', '1203010001', '1203010101', '1203010201', '1203010202', '1203010203', '1203010204', '1203010205',
+      '1203010206', '1203010207', '1203010299', '1203010301', '1203010302', '1203010303', '1203010304', '1203010399', '1203010401', '1203010402',
+      '1203010403', '1203010501', '1203010601', '1203010701', '1203019901', '1203020001', '1203020101', '1203020201', '1203020202', '1203020299',
+      '1203020301', '1203020302', '1203020303', '1203020399', '1203020401', '1203020402', '1203020403', '1203029901', '1203030101', '1203030201',
+      '1203030301', '1203030399', '1203030401', '1203030402', '1203040301', '1203030403', '1203030501', '1203030502', '1203030503', '1203030504',
+    ];
+
+    $capexMatrix = [];
+    $totalStats = [
+      'total_budget' => 0.0,
+      'total_realization' => 0.0,
+      'total_projection' => 0.0,
+    ];
+
+    foreach ($departments as $dept) {
+      $capexMatrix[$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+    }
+
+    if ($activePeriod && $departments->isNotEmpty()) {
+      $periodId = $activePeriod->id;
+      $deptIds = $departments->pluck('id')->toArray();
+
+      $budgetsRaw = DB::table('rkap_budget_items')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->where('rkap_submissions.rkap_period_id', $periodId)
+        ->whereIn('bureaus.department_id', $deptIds)
+        ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+        ->selectRaw('bureaus.department_id, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
+        ->groupBy('bureaus.department_id')
+        ->get()
+        ->keyBy('department_id');
+
+      $realizationsRaw = DB::table('rkap_budget_item_realizations')
+        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
+        ->whereIn('bureaus.department_id', $deptIds)
+        ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+        ->selectRaw('bureaus.department_id, SUM(rkap_budget_item_realizations.amount) as realization')
+        ->groupBy('bureaus.department_id')
+        ->get()
+        ->keyBy('department_id');
+
+      foreach ($departments as $dept) {
+        $budget = (float) (isset($budgetsRaw[$dept->id]) ? $budgetsRaw[$dept->id]->budget : 0.0);
+        $projection = (float) (isset($budgetsRaw[$dept->id]) ? $budgetsRaw[$dept->id]->projection : 0.0);
+        $realization = (float) (isset($realizationsRaw[$dept->id]) ? $realizationsRaw[$dept->id]->realization : 0.0);
+
+        $capexMatrix[$dept->id] = [
+          'budget' => $budget,
+          'realization' => $realization,
+          'projection' => $projection,
+        ];
+
+        $totalStats['total_budget'] += $budget;
+        $totalStats['total_realization'] += $realization;
+        $totalStats['total_projection'] += $projection;
+      }
+    }
+
+    return view('content.dashboard.analytics-summary-dept-pl-capex', compact(
       'activePeriod',
       'finalizedPeriods',
       'directorates',
@@ -2716,7 +2789,9 @@ class Analytics extends Controller
       'matrix',
       'deptTotals',
       'groupTotals',
-      'grandTotal'
+      'grandTotal',
+      'capexMatrix',
+      'totalStats'
     ));
   }
 
