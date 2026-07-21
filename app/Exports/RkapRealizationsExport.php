@@ -5,12 +5,11 @@ namespace App\Exports;
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
+class RkapRealizationsExport implements FromArray, WithEvents
 {
     public function __construct(
         private readonly ?int $periodId,
@@ -45,14 +44,12 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
             return $rows;
         }
 
-        // Fetch submissions using realization filter logic
+        // Optimized eager loading: only load what we need
         $query = RkapSubmission::with([
             'bureau.department.directorate',
             'workPlans.activity.workPlan',
             'workPlans.workPlan',
             'workPlans.budgetItems.realizations',
-            'workPlans.budgetItems.monthlies',
-            'period'
         ])
             ->where('rkap_period_id', $this->periodId)
             ->where('status', 'approved');
@@ -124,8 +121,7 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
 
                     // Add monthly realization values
                     for ($m = 1; $m <= 12; $m++) {
-                        $realVal = isset($realizationsMap[$m]) ? (float)$realizationsMap[$m] : 0.0;
-                        $row[] = $realVal;
+                        $row[] = isset($realizationsMap[$m]) ? (float)$realizationsMap[$m] : 0.0;
                     }
 
                     // Total Realisasi: sum of N to Y
@@ -163,8 +159,36 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
-                // Style the single header row
-                $sheet->getStyle('A1:AA1')->applyFromArray([
+                $highestRow = $sheet->getHighestRow();
+                $highestCol = 'AA';
+
+                // Set fixed column widths instead of auto-size (major perf gain)
+                $colWidths = [
+                    'A' => 5,   // No
+                    'B' => 18,  // Direktorat
+                    'C' => 18,  // Departemen
+                    'D' => 22,  // Biro
+                    'E' => 12,  // Kode Program
+                    'F' => 25,  // Nama Program
+                    'G' => 12,  // Kode Kegiatan
+                    'H' => 25,  // Nama Kegiatan
+                    'I' => 12,  // Kode COA
+                    'J' => 25,  // Deskripsi COA
+                    'K' => 20,  // Remarks
+                    'L' => 14,  // Volume & Satuan
+                    'M' => 18,  // Total Anggaran
+                ];
+                foreach ($colWidths as $col => $width) {
+                    $sheet->getColumnDimension($col)->setWidth($width);
+                }
+                // Monthly + total columns: uniform width
+                for ($c = 14; $c <= 27; $c++) {
+                    $col = Coordinate::stringFromColumnIndex($c);
+                    $sheet->getColumnDimension($col)->setWidth(18);
+                }
+
+                // Style header row
+                $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
                     'font' => [
                         'bold'  => true,
                         'color' => ['rgb' => 'FFFFFF'],
@@ -172,7 +196,7 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
                     ],
                     'fill' => [
                         'fillType'   => 'solid',
-                        'startColor' => ['rgb' => '1F385C'], // Premium Dark Blue
+                        'startColor' => ['rgb' => '1F385C'],
                     ],
                     'alignment' => [
                         'horizontal' => 'center',
@@ -187,17 +211,15 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
                     ],
                 ]);
 
-                // Soft green header colors for monthly realization columns (N to Y)
+                // Soft green header for monthly realization columns (N to Y)
                 $sheet->getStyle('N1:Y1')->applyFromArray([
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'D5EAD8']],
                     'font' => ['color' => ['rgb' => '1E4620']],
                 ]);
 
-                $highestRow = $sheet->getHighestRow();
-
-                // Style data cells
                 if ($highestRow >= 2) {
-                    $sheet->getStyle("A2:AA{$highestRow}")->applyFromArray([
+                    // Style all data cells in one call
+                    $sheet->getStyle("A2:{$highestCol}{$highestRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => 'thin',
@@ -209,23 +231,22 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
                         ],
                     ]);
 
-                    // Format columns
+                    // Format numeric columns in batch ranges
                     $sheet->getStyle("M2:M{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0');
 
-                    for ($c = 14; $c <= 25; $c++) {
-                        $col = Coordinate::stringFromColumnIndex($c);
-                        $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                            ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
-                        $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                            ->getAlignment()->setHorizontal('right');
-                    }
+                    // N to Y — single range styling
+                    $sheet->getStyle("N2:Y{$highestRow}")
+                        ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
+                    $sheet->getStyle("N2:Y{$highestRow}")
+                        ->getAlignment()->setHorizontal('right');
 
+                    // Z and AA
                     $sheet->getStyle("Z2:AA{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
                     $sheet->getStyle("Z2:AA{$highestRow}")->getFont()->setBold(true);
 
-                    // Add subtle background color to columns
+                    // Background colors
                     $sheet->getStyle("M2:M{$highestRow}")->applyFromArray([
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'F2F4F7']]
                     ]);
@@ -236,11 +257,9 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FDF2F2']]
                     ]);
 
-                    // Style the TOTAL row specifically
+                    // Style the TOTAL row
                     $sheet->getStyle("A{$highestRow}:AA{$highestRow}")->applyFromArray([
-                        'font' => [
-                            'bold' => true,
-                        ],
+                        'font' => ['bold' => true],
                         'borders' => [
                             'top' => [
                                 'borderStyle' => 'thin',
@@ -259,10 +278,7 @@ class RkapRealizationsExport implements FromArray, WithEvents, ShouldAutoSize
                 }
 
                 $sheet->getRowDimension(1)->setRowHeight(32);
-
-                // Freeze panes at column N
                 $sheet->freezePane('N2');
-
                 $sheet->setTitle('Monitoring Realisasi RKAP');
             },
         ];

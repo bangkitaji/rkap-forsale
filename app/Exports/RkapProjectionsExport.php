@@ -4,13 +4,13 @@ namespace App\Exports;
 
 use App\Models\RkapSubmission;
 use App\Models\RkapPeriod;
+use App\Models\Setting;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
+class RkapProjectionsExport implements FromArray, WithEvents
 {
     public function __construct(
         private readonly ?int $periodId,
@@ -45,14 +45,29 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
             return $rows;
         }
 
+        // Pre-compute closed months ONCE (avoids N×12 Setting::get queries)
+        $period = RkapPeriod::find($this->periodId);
+        $closedMonths = [];
+        if ($period) {
+            $closingDay = (int) Setting::get('rkap_closing_day', 0);
+            if ($closingDay >= 1) {
+                $now = now();
+                for ($m = 1; $m <= 12; $m++) {
+                    $nextMonth = \Carbon\Carbon::create($period->year, $m, 1)->addMonth();
+                    $dayToUse = min($closingDay, $nextMonth->daysInMonth);
+                    $closingDate = $nextMonth->day($dayToUse)->endOfDay();
+                    $closedMonths[$m] = $now->greaterThan($closingDate);
+                }
+            }
+        }
+
+        // Optimized eager loading: only load what we need
         $query = RkapSubmission::with([
             'bureau.department.directorate',
             'workPlans.activity.workPlan',
             'workPlans.workPlan',
             'workPlans.budgetItems.realizations',
             'workPlans.budgetItems.projections',
-            'workPlans.budgetItems.monthlies',
-            'period'
         ])
             ->where('rkap_period_id', $this->periodId)
             ->where('status', 'approved');
@@ -123,11 +138,10 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                     $volUnit = $bi->quantity . ' ' . $bi->unit . ($bi->unit_2 ? ' x ' . $bi->quantity_2 . ' ' . $bi->unit_2 : '');
                     $budgetTotal = (float) $bi->total_price;
 
-                    // Projections map
+                    // Projections map (use pre-loaded collections)
                     $realizationsMap = $bi->realizations->pluck('amount', 'month')->toArray();
                     $projectionsMap  = $bi->projections->pluck('amount', 'month')->toArray();
                     $hasMonthlyProjections = count($projectionsMap) > 0;
-                    $period = $sub->period;
 
                     $row = [
                         $counter++,
@@ -147,25 +161,17 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
 
                     $currentRow = $startRowIndex + $counter - 2;
 
-                    // Add monthly projection values
+                    // Add monthly projection values (use pre-computed closedMonths)
                     for ($m = 1; $m <= 12; $m++) {
-                        $projVal = 0.0;
-                        $isClosed = $period && $period->isMonthClosed($m);
-                        $hasRealization = isset($realizationsMap[$m]);
-
-                        if ($hasRealization) {
-                            $projVal = (float)$realizationsMap[$m];
-                        } elseif ($isClosed) {
-                            $projVal = 0.0;
+                        if (isset($realizationsMap[$m])) {
+                            $row[] = (float)$realizationsMap[$m];
+                        } elseif (!empty($closedMonths[$m])) {
+                            $row[] = 0.0;
+                        } elseif ($hasMonthlyProjections && isset($projectionsMap[$m])) {
+                            $row[] = (float)$projectionsMap[$m];
                         } else {
-                            if ($hasMonthlyProjections) {
-                                $projVal = isset($projectionsMap[$m]) ? (float)$projectionsMap[$m] : 0.0;
-                            } else {
-                                $projVal = 0.0;
-                            }
+                            $row[] = 0.0;
                         }
-
-                        $row[] = $projVal;
                     }
 
                     // Total Proyeksi: sum of N to Y if monthly, or direct value if yearly
@@ -207,8 +213,36 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
-                // Style the single header row
-                $sheet->getStyle('A1:AA1')->applyFromArray([
+                $highestRow = $sheet->getHighestRow();
+                $highestCol = 'AA';
+
+                // Set fixed column widths instead of auto-size (major perf gain)
+                $colWidths = [
+                    'A' => 5,   // No
+                    'B' => 18,  // Direktorat
+                    'C' => 18,  // Departemen
+                    'D' => 22,  // Biro
+                    'E' => 12,  // Kode Program
+                    'F' => 25,  // Nama Program
+                    'G' => 12,  // Kode Kegiatan
+                    'H' => 25,  // Nama Kegiatan
+                    'I' => 12,  // Kode COA
+                    'J' => 25,  // Deskripsi COA
+                    'K' => 20,  // Remarks
+                    'L' => 14,  // Volume & Satuan
+                    'M' => 18,  // Total Anggaran
+                ];
+                foreach ($colWidths as $col => $width) {
+                    $sheet->getColumnDimension($col)->setWidth($width);
+                }
+                // Monthly + total columns: uniform width
+                for ($c = 14; $c <= 27; $c++) {
+                    $col = Coordinate::stringFromColumnIndex($c);
+                    $sheet->getColumnDimension($col)->setWidth(18);
+                }
+
+                // Style header row in one call
+                $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
                     'font' => [
                         'bold'  => true,
                         'color' => ['rgb' => 'FFFFFF'],
@@ -216,7 +250,7 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                     ],
                     'fill' => [
                         'fillType'   => 'solid',
-                        'startColor' => ['rgb' => '1F385C'], // Premium Dark Blue
+                        'startColor' => ['rgb' => '1F385C'],
                     ],
                     'alignment' => [
                         'horizontal' => 'center',
@@ -231,17 +265,15 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                     ],
                 ]);
 
-                // Soft yellow header colors for monthly projection columns (N to Y)
+                // Soft yellow header for monthly projection columns (N to Y)
                 $sheet->getStyle('N1:Y1')->applyFromArray([
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FFF2CC']],
                     'font' => ['color' => ['rgb' => '7F6000']],
                 ]);
 
-                $highestRow = $sheet->getHighestRow();
-
-                // Style data cells
                 if ($highestRow >= 2) {
-                    $sheet->getStyle("A2:AA{$highestRow}")->applyFromArray([
+                    // Style all data cells in one call
+                    $sheet->getStyle("A2:{$highestCol}{$highestRow}")->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => 'thin',
@@ -253,23 +285,22 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                         ],
                     ]);
 
-                    // Format columns
+                    // Format numeric columns in batch ranges (instead of per-column loop)
                     $sheet->getStyle("M2:M{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0');
 
-                    for ($c = 14; $c <= 25; $c++) {
-                        $col = Coordinate::stringFromColumnIndex($c);
-                        $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                            ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
-                        $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                            ->getAlignment()->setHorizontal('right');
-                    }
+                    // N to Y (cols 14-25) — single range styling
+                    $sheet->getStyle("N2:Y{$highestRow}")
+                        ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
+                    $sheet->getStyle("N2:Y{$highestRow}")
+                        ->getAlignment()->setHorizontal('right');
 
+                    // Z and AA — total & selisih
                     $sheet->getStyle("Z2:AA{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
                     $sheet->getStyle("Z2:AA{$highestRow}")->getFont()->setBold(true);
 
-                    // Add subtle background color to columns
+                    // Background colors on key columns
                     $sheet->getStyle("M2:M{$highestRow}")->applyFromArray([
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'F2F4F7']]
                     ]);
@@ -280,11 +311,9 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FDF2F2']]
                     ]);
 
-                    // Style the TOTAL row specifically
+                    // Style the TOTAL row
                     $sheet->getStyle("A{$highestRow}:AA{$highestRow}")->applyFromArray([
-                        'font' => [
-                            'bold' => true,
-                        ],
+                        'font' => ['bold' => true],
                         'borders' => [
                             'top' => [
                                 'borderStyle' => 'thin',
@@ -303,10 +332,7 @@ class RkapProjectionsExport implements FromArray, WithEvents, ShouldAutoSize
                 }
 
                 $sheet->getRowDimension(1)->setRowHeight(32);
-
-                // Freeze panes at column N
                 $sheet->freezePane('N2');
-
                 $sheet->setTitle('Monitoring Proyeksi RKAP');
             },
         ];
