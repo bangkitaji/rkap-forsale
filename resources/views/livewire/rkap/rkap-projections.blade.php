@@ -273,16 +273,69 @@
                     </div>
                 </div>
 
-                {{-- Status Filter --}}
+                {{-- Status Filter (Multi-Select) --}}
                 @if($activeTab === 'summary')
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">{{ __('Status Pengisian') }}</label>
-                    <select class="form-select" wire:model.live="filterStatus">
-                        <option value="">-- Semua Status --</option>
-                        <option value="Selesai">Selesai</option>
-                        <option value="Sedang Diisi">Sedang Diisi</option>
-                        <option value="Belum Diisi">Belum Diisi</option>
-                    </select>
+                    <div class="position-relative" x-data="{
+                        open: false,
+                        selected: @entangle('filterStatus').live,
+                        options: [
+                            { value: 'Selesai',      label: 'Selesai',      color: 'bg-label-success' },
+                            { value: 'Sedang Diisi', label: 'Sedang Diisi', color: 'bg-label-warning' },
+                            { value: 'Belum Diisi',  label: 'Belum Diisi',  color: 'bg-label-secondary' },
+                        ],
+                        toggle(value) {
+                            if (this.selected.includes(value)) {
+                                this.selected = this.selected.filter(v => v !== value);
+                            } else {
+                                this.selected = [...this.selected, value];
+                            }
+                        },
+                        get label() {
+                            if (!this.selected || this.selected.length === 0) return '-- Semua Status --';
+                            if (this.selected.length === 1) return this.selected[0];
+                            return this.selected.length + ' status dipilih';
+                        }
+                    }" @click.outside="open = false">
+
+                        <button type="button"
+                            class="form-select text-start d-flex align-items-center justify-content-between"
+                            @click="open = !open">
+                            <span x-text="label" class="text-truncate"></span>
+                            <span x-show="selected && selected.length > 0"
+                                class="badge bg-primary rounded-pill ms-2 flex-shrink-0"
+                                x-text="selected.length"
+                                x-cloak></span>
+                        </button>
+
+                        <div class="dropdown-menu w-100 p-2 shadow-sm border mt-1"
+                            :class="{ 'show': open }" style="min-width: 200px;">
+
+                            <div class="list-group list-group-flush">
+                                {{-- Clear all --}}
+                                <button type="button"
+                                    class="list-group-item list-group-item-action py-1 px-2 border-0 rounded text-start text-muted small"
+                                    @click="selected = []">
+                                    <i class="bx bx-x me-1"></i> Hapus Semua
+                                </button>
+
+                                <div class="dropdown-divider"></div>
+
+                                <template x-for="opt in options" :key="opt.value">
+                                    <button type="button"
+                                        class="list-group-item list-group-item-action py-2 px-2 border-0 rounded text-start d-flex align-items-center gap-2"
+                                        @click.stop="toggle(opt.value)">
+                                        <input type="checkbox"
+                                            class="form-check-input flex-shrink-0 mt-0"
+                                            style="pointer-events: none;"
+                                            :checked="selected.includes(opt.value)">
+                                        <span x-text="opt.label" class="small fw-semibold"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 @endif
             </div>

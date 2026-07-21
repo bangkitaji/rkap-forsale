@@ -33,11 +33,11 @@ class RkapProjections extends Component
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
     public string $activeTab = 'input';
-    public ?string $filterStatus = null;
+    public array $filterStatus = [];
 
     protected $queryString = [
         'activeTab' => ['except' => 'input'],
-        'filterStatus' => ['except' => ''],
+        'filterStatus' => ['except' => []],
     ];
 
     protected $rules = [
@@ -580,10 +580,12 @@ class RkapProjections extends Component
             ];
         }
 
-        // Apply status filter
+        // Apply status filter (supports multiple selections)
         $collection = collect($rows);
-        if ($this->filterStatus && in_array($this->filterStatus, ['Selesai', 'Sedang Diisi', 'Belum Diisi'])) {
-            $collection = $collection->filter(fn($row) => $row['status'] === $this->filterStatus);
+        $validStatuses = ['Selesai', 'Sedang Diisi', 'Belum Diisi'];
+        $activeFilters = array_filter($this->filterStatus ?? [], fn($s) => in_array($s, $validStatuses));
+        if (!empty($activeFilters)) {
+            $collection = $collection->filter(fn($row) => in_array($row['status'], $activeFilters));
         }
 
         $sortedRows = $collection->sortBy('bureau_code')->values();
