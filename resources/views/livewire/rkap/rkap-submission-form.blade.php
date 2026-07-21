@@ -1269,7 +1269,29 @@
                         </th>
                         <th class="text-end">
                           Selisih (Rp)
-                          <div class="small fw-normal text-muted rkap-summary-note">({{ $bi['difference_group_name'] ?: '-' }})</div>
+                          @php
+                            $coaModel = !empty($bi['coa_id']) ? \App\Models\Coa::with('differenceGroups')->find($bi['coa_id']) : null;
+                            $mappedDgs = $coaModel ? $coaModel->differenceGroups : collect();
+                          @endphp
+                          @if($mappedDgs->count() > 1)
+                            @php
+                              $usedDgIds = $this->getUsedDifferenceGroupIds((int)$wpIdx, (int)$actIdx, (int)$biIdx);
+                            @endphp
+                            <div>
+                              <select class="form-select form-select-sm d-inline-block w-auto mt-1 rkap-font-07 py-0 px-2" wire:model.live="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.difference_group_id">
+                                <option value="">-- Pilih Group --</option>
+                                @foreach($mappedDgs as $dg)
+                                  <option value="{{ $dg->id }}" @disabled(in_array((int)$dg->id, $usedDgIds, true))>
+                                    {{ $dg->code }} - {{ $dg->name }}
+                                  </option>
+                                @endforeach
+                              </select>
+                            </div>
+                          @elseif($mappedDgs->count() === 1)
+                            <div class="small fw-normal text-muted rkap-summary-note">({{ $mappedDgs->first()->name }})</div>
+                          @else
+                            <div class="small fw-normal text-muted rkap-summary-note">(-)</div>
+                          @endif
                         </th>
                       </tr>
                     </thead>

@@ -13,7 +13,7 @@ class Coa extends Model
 {
     use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'title', 'title_en', 'description', 'description_en', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'difference_group_id', 'cf_type'];
+    protected $fillable = ['code', 'title', 'title_en', 'description', 'description_en', 'coa_group_id', 'coa_category_id', 'cashflow_group_id', 'cf_type'];
 
     public function coaGroup(): BelongsTo
     {
@@ -33,9 +33,9 @@ class Coa extends Model
         return $this->belongsTo(CashflowGroup::class, 'cashflow_group_id');
     }
 
-    public function differenceGroup(): BelongsTo
+    public function differenceGroups(): BelongsToMany
     {
-        return $this->belongsTo(DifferenceGroup::class, 'difference_group_id');
+        return $this->belongsToMany(DifferenceGroup::class, 'difference_group_coa', 'coa_id', 'difference_group_id');
     }
 
     public function activities(): BelongsToMany

@@ -15,8 +15,8 @@ class DifferenceGroup extends Model
 
     protected $searchable = ['code', 'name'];
 
-    public function coas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function coas(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->hasMany(Coa::class, 'difference_group_id');
+        return $this->belongsToMany(Coa::class, 'difference_group_coa', 'difference_group_id', 'coa_id');
     }
 }

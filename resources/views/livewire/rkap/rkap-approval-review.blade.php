@@ -1834,7 +1834,7 @@
                                 break;
                                 }
                                 }
-                                $coa = $bi['model']?->coa ?? \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->where('code', $bi['account_code'])->first();
+                                $coa = $bi['model']?->coa ?? \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroups'])->where('code', $bi['account_code'])->first();
                                 @endphp
 
                                 @if (!$hasAnyValue)
@@ -1858,7 +1858,7 @@
                                         </th>
                                         <th class="text-end">
                                           Selisih (Rp)
-                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $coa?->differenceGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '-' }})</div>
                                         </th>
                                       </tr>
                                     </thead>

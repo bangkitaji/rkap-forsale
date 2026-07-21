@@ -888,6 +888,75 @@ class RkapSubmissionFormTest extends TestCase
         $component->call('submitForReview')
             ->assertHasErrors(['workPlans.0.activities.0.budget_items.0.cash_out']);
     }
+
+    public function test_difference_group_selection_and_exclusion_on_submission_form(): void
+    {
+        $this->actingAs($this->user);
+
+        // 1. Create two Difference Groups
+        $dg1 = \App\Models\DifferenceGroup::create(['code' => 'DG1', 'name' => 'Difference Group 1']);
+        $dg2 = \App\Models\DifferenceGroup::create(['code' => 'DG2', 'name' => 'Difference Group 2']);
+
+        // 2. Map Coa1 to both Difference Groups
+        $this->coa1->differenceGroups()->sync([$dg1->id, $dg2->id]);
+
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $this->activityWithCoas->id)
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 0)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 0)
+            ->set('workPlans.0.activities.0.budget_items.0.difference_group_id', $dg1->id);
+
+        // Verify that since values are 0 (not inputted yet), the group ID is not considered used
+        $this->assertCount(0, $component->instance()->getUsedDifferenceGroupIds(0, 0, 1));
+
+        // Now set positive values
+        $component->set('workPlans.0.activities.0.budget_items.0.quantity', 1)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 1000);
+
+        // Add a second budget item using duplicate (so index 1 also has coa1)
+        $component->call('duplicateBudgetItem', 0, 0, 0);
+
+        // Verify that for the second item (index 1, same COA), dg1 is considered used
+        $usedBeforeSecondSelect = $component->instance()->getUsedDifferenceGroupIds(0, 0, 1);
+        $this->assertCount(1, $usedBeforeSecondSelect);
+        $this->assertEquals($dg1->id, $usedBeforeSecondSelect[0]);
+
+        // Verify that for the third item (index 2, different COA coa2), dg1 is NOT considered used
+        $this->assertCount(0, $component->instance()->getUsedDifferenceGroupIds(0, 0, 2));
+
+        // The second item should have the same coa1, let's select dg2 for it
+        $component->set('workPlans.0.activities.0.budget_items.1.difference_group_id', $dg2->id);
+
+        // Distribute monthly distribution for both so they save successfully
+        $component->call('toggleMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.monthly_distribution.1', 1000)
+            ->call('toggleMonth', 0, 0, 1, 1)
+            ->set('workPlans.0.activities.0.budget_items.1.monthly_distribution.1', 1000);
+
+        // Verify used difference groups list
+        $used = $component->instance()->getUsedDifferenceGroupIds(0, 0, 0);
+        $this->assertCount(1, $used);
+        $this->assertEquals($dg2->id, $used[0]);
+
+        $usedForSecond = $component->instance()->getUsedDifferenceGroupIds(0, 0, 1);
+        $this->assertCount(1, $usedForSecond);
+        $this->assertEquals($dg1->id, $usedForSecond[0]);
+
+        // Save draft
+        $component->call('saveDraft')
+            ->assertHasNoErrors();
+
+        // Verify database records
+        $submissionId = $component->get('submissionId');
+        $budgetItems = \App\Models\RkapBudgetItem::whereHas('workPlan', fn($q) => $q->where('rkap_submission_id', $submissionId))
+            ->whereNotNull('difference_group_id')
+            ->orderBy('id')
+            ->get();
+        $this->assertCount(2, $budgetItems);
+        $this->assertEquals($dg1->id, $budgetItems[0]->difference_group_id);
+        $this->assertEquals($dg2->id, $budgetItems[1]->difference_group_id);
+    }
 }
 
 

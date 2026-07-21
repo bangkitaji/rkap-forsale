@@ -688,7 +688,7 @@
                                         </th>
                                         <th class="text-end">
                                           Selisih (Rp)
-                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ $bi->coa?->differenceGroup?->name ?: '-' }})</div>
+                                          <div class="small fw-normal text-muted rkap-font-065 rkap-opacity-85">({{ ($bi->coa && $bi->coa->differenceGroups->isNotEmpty()) ? $bi->coa->differenceGroups->pluck('name')->implode(', ') : '-' }})</div>
                                         </th>
                                       </tr>
                                     </thead>

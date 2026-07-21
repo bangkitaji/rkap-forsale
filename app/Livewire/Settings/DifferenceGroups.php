@@ -161,14 +161,52 @@ class DifferenceGroups extends Component
         $this->resetValidation();
     }
 
+    // Single COA mapping modal control
+    public $isMappingModalOpen = false;
+    public $selectedCoaForMapping = null;
+    public array $tempMappedGroups = [];
+
     // Mapping actions
+    public function openMappingModal($coaId)
+    {
+        $coa = Coa::with('differenceGroups')->findOrFail($coaId);
+        $this->selectedCoaForMapping = $coa;
+        $this->tempMappedGroups = $coa->differenceGroups->pluck('id')->map(fn($id) => (string)$id)->toArray();
+        $this->isMappingModalOpen = true;
+    }
+
+    public function closeMappingModal()
+    {
+        $this->isMappingModalOpen = false;
+        $this->selectedCoaForMapping = null;
+        $this->tempMappedGroups = [];
+    }
+
+    public function saveSingleCoaMapping()
+    {
+        if (!$this->selectedCoaForMapping) {
+            return;
+        }
+
+        try {
+            $coa = Coa::findOrFail($this->selectedCoaForMapping->id);
+            $coa->differenceGroups()->sync($this->tempMappedGroups);
+            session()->flash('mapping_message', "Pemetaan untuk COA {$coa->code} berhasil diperbarui.");
+            $this->closeMappingModal();
+        } catch (\Exception $e) {
+            session()->flash('mapping_error', __('Gagal memperbarui pemetaan.'));
+        }
+    }
+
     public function mapSingleCoa($coaId, $differenceGroupId)
     {
         try {
             $coa = Coa::findOrFail($coaId);
-            $coa->update([
-                'difference_group_id' => $differenceGroupId ?: null
-            ]);
+            if ($differenceGroupId) {
+                $coa->differenceGroups()->sync([$differenceGroupId]);
+            } else {
+                $coa->differenceGroups()->detach();
+            }
             session()->flash('mapping_message', "Pemetaan untuk COA {$coa->code} berhasil diperbarui.");
         } catch (\Exception $e) {
             session()->flash('mapping_error', __('Gagal memperbarui pemetaan.'));
@@ -184,9 +222,17 @@ class DifferenceGroups extends Component
 
         try {
             $differenceGroupId = $this->bulkDifferenceGroupId ?: null;
-            Coa::whereIn('id', $this->selectedCoas)->update([
-                'difference_group_id' => $differenceGroupId
-            ]);
+            
+            foreach ($this->selectedCoas as $coaId) {
+                $coa = Coa::find($coaId);
+                if ($coa) {
+                    if ($differenceGroupId) {
+                        $coa->differenceGroups()->syncWithoutDetaching([$differenceGroupId]);
+                    } else {
+                        $coa->differenceGroups()->detach();
+                    }
+                }
+            }
 
             $count = count($this->selectedCoas);
             session()->flash('mapping_message', "Berhasil memperbarui pemetaan untuk {$count} COA.");
@@ -208,9 +254,9 @@ class DifferenceGroups extends Component
                 });
             }
             if ($this->filterDifferenceGroup === 'unmapped') {
-                $coasQuery->whereNull('difference_group_id');
+                $coasQuery->whereDoesntHave('differenceGroups');
             } elseif ($this->filterDifferenceGroup) {
-                $coasQuery->where('difference_group_id', $this->filterDifferenceGroup);
+                $coasQuery->whereHas('differenceGroups', fn($q) => $q->where('difference_groups.id', $this->filterDifferenceGroup));
             }
             $this->selectedCoas = $coasQuery->pluck('id')
                 ->map(fn($id) => (string)$id)
@@ -223,12 +269,13 @@ class DifferenceGroups extends Component
     public function render()
     {
         // 1. Difference Groups CRUD Data
-        $differenceGroups = DifferenceGroup::search('code|name', $this->search)
+        $differenceGroups = DifferenceGroup::with('coas')
+            ->search('code|name', $this->search)
             ->orderBy('code')
             ->paginate($this->perPage, ['*'], 'groupsPage');
 
         // 2. COA Mapping Data
-        $coasQuery = Coa::query()->with('differenceGroup', 'coaGroup');
+        $coasQuery = Coa::query()->with('differenceGroups', 'coaGroup');
 
         if ($this->searchMapping) {
             $coasQuery->where(function ($q) {
@@ -238,9 +285,9 @@ class DifferenceGroups extends Component
         }
 
         if ($this->filterDifferenceGroup === 'unmapped') {
-            $coasQuery->whereNull('difference_group_id');
+            $coasQuery->whereDoesntHave('differenceGroups');
         } elseif ($this->filterDifferenceGroup) {
-            $coasQuery->where('difference_group_id', $this->filterDifferenceGroup);
+            $coasQuery->whereHas('differenceGroups', fn($q) => $q->where('difference_groups.id', $this->filterDifferenceGroup));
         }
 
         $coas = $coasQuery->orderBy('code')

@@ -27,7 +27,7 @@ class RkapReview extends Component
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',
             'workPlans.budgetItems.coa.cashflowGroup',
-            'workPlans.budgetItems.coa.differenceGroup',
+            'workPlans.budgetItems.coa.differenceGroups',
             'versions.creator',
             'approvals.user',
             'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
@@ -60,7 +60,7 @@ class RkapReview extends Component
         }
 
         $this->reviewComments = '';
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', __('RKAP berhasil disetujui.'));
     }
 
@@ -83,7 +83,7 @@ class RkapReview extends Component
 
         $this->revisionReason = '';
         $this->showRevisionForm = false;
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', __('RKAP berhasil ditolak dan dikembalikan untuk revisi.'));
     }
 

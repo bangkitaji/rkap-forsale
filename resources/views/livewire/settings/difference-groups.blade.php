@@ -65,6 +65,7 @@
                             <th>Code</th>
                             <th>Name</th>
                             <th>Description</th>
+                            <th>{{ __('COA Terpetak') }}</th>
                             <th class="rkap-w-100">Actions</th>
                         </tr>
                     </thead>
@@ -75,6 +76,15 @@
                             <td><strong>{{ $group->name }}</strong></td>
                             <td class="text-wrap rkap-mw-400">
                                 {{ $group->description ?? '-' }}
+                            </td>
+                            <td class="rkap-w-300 align-middle">
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    @forelse($group->coas as $coa)
+                                    <span class="badge bg-label-secondary" title="{{ $coa->title }}">{{ $coa->code }}</span>
+                                    @empty
+                                    <span class="text-muted small">-- Unmapped --</span>
+                                    @endforelse
+                                </div>
                             </td>
                             <td>
                                 <button wire:click="edit({{ $group->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect">
@@ -87,7 +97,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center">No Difference Group records found.</td>
+                            <td colspan="5" class="text-center">No Difference Group records found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -229,15 +239,18 @@
                                 <span class="text-muted small">-</span>
                                 @endif
                             </td>
-                            <td class="rkap-w-300">
-                                <select class="form-select form-select-sm" wire:change="mapSingleCoa({{ $coa->id }}, $event.target.value)">
-                                    <option value="">-- Unmapped --</option>
-                                    @foreach($allDifferenceGroups as $dg)
-                                    <option value="{{ $dg->id }}" @selected($coa->difference_group_id == $dg->id)>
-                                        {{ $dg->code }} - {{ $dg->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
+                            <td class="rkap-w-300 align-middle">
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    @forelse($coa->differenceGroups as $dg)
+                                    <span class="badge bg-label-primary">{{ $dg->code }}</span>
+                                    @empty
+                                    <span class="text-muted small">-- Unmapped --</span>
+                                    @endforelse
+
+                                    <button class="btn btn-xs btn-outline-primary ms-auto" wire:click="openMappingModal({{ $coa->id }})">
+                                        <i class="bx bx-edit-alt small"></i> Edit
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -251,6 +264,43 @@
 
             <div class="mt-4">
                 {{ $coas->links() }}
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Mapping Modal --}}
+    @if($isMappingModalOpen && $selectedCoaForMapping)
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Mapping COA: {{ $selectedCoaForMapping->code }}</h5>
+                    <button type="button" class="btn-close" wire:click="closeMappingModal()"></button>
+                </div>
+                <form wire:submit.prevent="saveSingleCoaMapping">
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">{{ $selectedCoaForMapping->title }}</p>
+                        
+                        <label class="form-label fw-semibold mb-2">Pilih Difference Group:</label>
+                        <div class="row">
+                            @foreach($allDifferenceGroups as $dg)
+                            <div class="col-12 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="dg-chk-{{ $dg->id }}" value="{{ $dg->id }}" wire:model="tempMappedGroups">
+                                    <label class="form-check-label" for="dg-chk-{{ $dg->id }}">
+                                        <span class="badge bg-label-primary me-1">{{ $dg->code }}</span> - {{ $dg->name }}
+                                    </label>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeMappingModal()">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

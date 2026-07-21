@@ -21,6 +21,7 @@ class RkapBudgetItem extends Model
         'projection',
         'remarks',
         'flow_direction',
+        'difference_group_id',
     ];
 
     protected function casts(): array
@@ -86,6 +87,11 @@ class RkapBudgetItem extends Model
     public function projections(): HasMany
     {
         return $this->hasMany(RkapBudgetItemProjection::class)->orderBy('month');
+    }
+
+    public function differenceGroup(): BelongsTo
+    {
+        return $this->belongsTo(DifferenceGroup::class, 'difference_group_id');
     }
 
     protected static function booted(): void

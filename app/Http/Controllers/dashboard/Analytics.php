@@ -2122,7 +2122,13 @@ class Analytics extends Controller
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
-        ->join('difference_groups', 'coas.difference_group_id', '=', 'difference_groups.id')
+        ->leftJoin('difference_group_coa', function ($join) {
+            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+                 ->whereNull('rkap_budget_items.difference_group_id');
+        })
+        ->join('difference_groups', function ($join) {
+            $join->on('difference_groups.id', '=', DB::raw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id)'));
+        })
         ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
@@ -2136,13 +2142,16 @@ class Analytics extends Controller
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->leftJoin('difference_group_coa', function ($join) {
+            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+                 ->whereNull('rkap_budget_items.difference_group_id');
+        })
         ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->whereNotNull('coas.difference_group_id')
-        ->selectRaw('coas.difference_group_id, SUM(rkap_budget_item_realizations.amount) as total')
-        ->groupBy('coas.difference_group_id')
+        ->selectRaw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id) as difference_group_id, SUM(rkap_budget_item_realizations.amount) as total')
+        ->groupBy(DB::raw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id)'))
         ->pluck('total', 'difference_group_id')
         ->toArray();
 
@@ -2202,11 +2211,15 @@ class Analytics extends Controller
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+        ->leftJoin('difference_group_coa', function ($join) {
+            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+                 ->whereNull('rkap_budget_items.difference_group_id');
+        })
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('departments', 'bureaus.department_id', '=', 'departments.id')
         ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
         ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-        ->where('coas.difference_group_id', $differenceGroupId)
+        ->where(DB::raw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id)'), $differenceGroupId)
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->where('rkap_submissions.status', 'approved')
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))

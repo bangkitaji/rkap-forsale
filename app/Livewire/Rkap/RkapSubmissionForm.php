@@ -189,7 +189,7 @@ class RkapSubmissionForm extends Component
                 $isPastPeriod = $this->workPlans[$wpIdx]['activities'][$actIdx]['is_past_period_payment'] ?? false;
 
                 if (!$isPastPeriod) {
-                    $activity = Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroup'])->find($activityId);
+                    $activity = Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroups'])->find($activityId);
 
                     // Auto-populate work_plan_id on the parent card if not set
                     if ($activity && $activity->work_plan_id && empty($this->workPlans[$wpIdx]['work_plan_id'])) {
@@ -207,7 +207,8 @@ class RkapSubmissionForm extends Component
                                 'description'           => $coa->title,
                                 'coa_group_name'        => $coa->coaGroup ? $coa->coaGroup->name : '',
                                 'cashflow_group_name'   => $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
-                                'difference_group_name' => $coa->differenceGroup ? $coa->differenceGroup->name : '',
+                                'difference_group_name' => ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '',
+                                'difference_group_id'   => ($coa && $coa->differenceGroups->count() === 1) ? $coa->differenceGroups->first()->id : null,
                             ]);
                         })->toArray();
                     } else {
@@ -265,6 +266,7 @@ class RkapSubmissionForm extends Component
             'realization_distribution'  => [],
             'realization_months'        => [],
             'flow_direction'            => 'OUT',
+            'difference_group_id'       => null,
         ];
     }
 
@@ -539,7 +541,7 @@ class RkapSubmissionForm extends Component
 
         // Pre-load COAs by account_code to avoid N+1 query
         $accountCodes = $this->submission->workPlans->flatMap(fn($wp) => $wp->budgetItems->pluck('account_code'))->filter()->unique()->toArray();
-        $coaMap = Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->whereIn('code', $accountCodes)->get()->keyBy('code');
+        $coaMap = Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroups'])->whereIn('code', $accountCodes)->get()->keyBy('code');
 
         $this->workPlans = [];
         foreach ($grouped as $wpId => $rkapWorkPlans) {
@@ -581,7 +583,8 @@ class RkapSubmissionForm extends Component
                             'coa_group_name'           => $coa && $coa->coaGroup ? $coa->coaGroup->name : '',
                             'cashflow_group_name'      => $coa && $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
                             'cashflow_group_code'      => $coa && $coa->cashflowGroup ? $coa->cashflowGroup->code : '',
-                            'difference_group_name'    => $coa && $coa->differenceGroup ? $coa->differenceGroup->name : '',
+                            'difference_group_name'    => ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '',
+                            'difference_group_id'      => $bi->difference_group_id ?? (($coa && $coa->differenceGroups->count() === 1) ? $coa->differenceGroups->first()->id : null),
                             'unit'                     => $bi->unit ?? '',
                             'quantity'                 => $bi->quantity,
                             'unit_2'                   => $bi->unit_2 ?? '',
@@ -804,7 +807,7 @@ class RkapSubmissionForm extends Component
 
         $coa = null;
         if ($coaId) {
-            $coa = Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->find($coaId);
+            $coa = Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroups'])->find($coaId);
         }
 
         $code = $coa ? $coa->code : '';
@@ -812,7 +815,8 @@ class RkapSubmissionForm extends Component
         $groupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : '';
         $cashflowGroupName = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->name : '';
         $cashflowGroupCode = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->code : '';
-        $differenceGroupName = ($coa && $coa->differenceGroup) ? $coa->differenceGroup->name : '';
+        $differenceGroupName = ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '';
+        $differenceGroupId = ($coa && $coa->differenceGroups->count() === 1) ? $coa->differenceGroups->first()->id : null;
         $shouldLock = $this->shouldLockMappedCoaForCurrentUser($activityId, $coaId);
 
         if ($oldCoaId === null) {
@@ -825,6 +829,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_name'] = $cashflowGroupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['difference_group_name'] = $differenceGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['difference_group_id'] = $differenceGroupId;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $biIndex);
             }
@@ -845,6 +850,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_name'] = $cashflowGroupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_name'] = $differenceGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_id'] = $differenceGroupId;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $idx);
             }
@@ -865,6 +871,7 @@ class RkapSubmissionForm extends Component
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_name'] = $cashflowGroupName;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['cashflow_group_code'] = $cashflowGroupCode;
             $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_name'] = $differenceGroupName;
+            $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$idx]['difference_group_id'] = $differenceGroupId;
             if ($coaId === null) {
                 $this->clearBudgetItemDetails($wpIndex, $actIndex, $idx);
             }
@@ -889,6 +896,45 @@ class RkapSubmissionForm extends Component
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['coa_group_name']            = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['cashflow_group_name']       = '';
         $this->workPlans[$wpIndex]['activities'][$actIndex]['budget_items'][$biIndex]['difference_group_name']     = '';
+    }
+
+    public function getUsedDifferenceGroupIds(int $excludeWpIdx, int $excludeActIdx, int $excludeBiIdx): array
+    {
+        $targetCoaId = null;
+        if (isset($this->workPlans[$excludeWpIdx]['activities'][$excludeActIdx]['budget_items'][$excludeBiIdx]['coa_id'])) {
+            $targetCoaId = (int) $this->workPlans[$excludeWpIdx]['activities'][$excludeActIdx]['budget_items'][$excludeBiIdx]['coa_id'];
+        }
+
+        $used = [];
+        foreach ($this->workPlans as $wIdx => $wp) {
+            foreach ($wp['activities'] ?? [] as $aIdx => $activity) {
+                foreach ($activity['budget_items'] ?? [] as $bIdx => $bi) {
+                    if ($wIdx === $excludeWpIdx && $aIdx === $excludeActIdx && $bIdx === $excludeBiIdx) {
+                        continue;
+                    }
+
+                    // Only consider it used if the COA matches the target budget item's COA
+                    if ($targetCoaId !== null && isset($bi['coa_id']) && (int) $bi['coa_id'] !== $targetCoaId) {
+                        continue;
+                    }
+
+                    if (!empty($bi['difference_group_id'])) {
+                        $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
+                        $totalPrice = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
+                        
+                        $distSum = 0.0;
+                        foreach ($bi['monthly_distribution'] ?? [] as $val) {
+                            $distSum += (float) $val;
+                        }
+
+                        if ($totalPrice > 0 || $distSum > 0) {
+                            $used[] = (int) $bi['difference_group_id'];
+                        }
+                    }
+                }
+            }
+        }
+        return array_unique($used);
     }
 
     private function isCurrentUserKepalaBiro(): bool
@@ -1397,6 +1443,7 @@ class RkapSubmissionForm extends Component
                                 'unit_price' => $biData['unit_price'],
                                 'remarks' => $biData['remarks'] ?: null,
                                 'flow_direction' => $biData['flow_direction'] ?? 'OUT',
+                                'difference_group_id' => $biData['difference_group_id'] ?? null,
                             ]
                         );
 

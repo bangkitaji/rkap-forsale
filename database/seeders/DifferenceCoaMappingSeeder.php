@@ -15,7 +15,7 @@ class DifferenceCoaMappingSeeder extends Seeder
   public function run(): void
   {
     // Reset existing mappings
-    Coa::query()->update(['difference_group_id' => null]);
+    \Illuminate\Support\Facades\DB::table('difference_group_coa')->delete();
 
     // Use COA master JSON as the source of valid COA codes for mapping.
     $allowedCoaCodes = null;
@@ -648,9 +648,19 @@ class DifferenceCoaMappingSeeder extends Seeder
 
       $group = DifferenceGroup::where('code', $diffCode)->first();
       if ($group) {
-        Coa::whereIn('code', $coaCodes)->update([
-          'difference_group_id' => $group->id,
-        ]);
+        $coaIds = Coa::whereIn('code', $coaCodes)->pluck('id');
+        $pivotData = [];
+        foreach ($coaIds as $coaId) {
+          $pivotData[] = [
+            'coa_id' => $coaId,
+            'difference_group_id' => $group->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+          ];
+        }
+        if (!empty($pivotData)) {
+          \Illuminate\Support\Facades\DB::table('difference_group_coa')->insert($pivotData);
+        }
       }
     }
   }

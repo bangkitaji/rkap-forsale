@@ -186,7 +186,7 @@ class DifferenceGroupsTest extends TestCase
             ->call('mapSingleCoa', $coa1->id, $group->id)
             ->assertHasNoErrors();
 
-        $this->assertEquals($group->id, $coa1->refresh()->difference_group_id);
+        $this->assertTrue($coa1->refresh()->differenceGroups->contains($group->id));
 
         // 3. Test Select All and Bulk Mapping
         $test = Livewire::actingAs($this->adminUser)
@@ -204,7 +204,7 @@ class DifferenceGroupsTest extends TestCase
             ->call('applyBulkMapping')
             ->assertHasNoErrors();
 
-        $this->assertEquals($group->id, $coa2->refresh()->difference_group_id);
+        $this->assertTrue($coa2->refresh()->differenceGroups->contains($group->id));
 
         // 4. Test Bulk Unmapping (Remove Mapping)
         Livewire::actingAs($this->adminUser)
@@ -215,7 +215,25 @@ class DifferenceGroupsTest extends TestCase
             ->call('applyBulkMapping')
             ->assertHasNoErrors();
 
-        $this->assertNull($coa1->refresh()->difference_group_id);
-        $this->assertNull($coa2->refresh()->difference_group_id);
+        $this->assertTrue($coa1->refresh()->differenceGroups->isEmpty());
+        $this->assertTrue($coa2->refresh()->differenceGroups->isEmpty());
+
+        // 5. Test Multiple Mapping for a single COA
+        $group2 = DifferenceGroup::create([
+            'code' => 'DF888',
+            'name' => 'Second Test Difference',
+        ]);
+        
+        Livewire::actingAs($this->adminUser)
+            ->test(DifferenceGroups::class)
+            ->call('openMappingModal', $coa1->id)
+            ->set('tempMappedGroups', [(string)$group->id, (string)$group2->id])
+            ->call('saveSingleCoaMapping')
+            ->assertHasNoErrors();
+
+        $coa1->refresh();
+        $this->assertEquals(2, $coa1->differenceGroups->count());
+        $this->assertTrue($coa1->differenceGroups->contains($group->id));
+        $this->assertTrue($coa1->differenceGroups->contains($group2->id));
     }
 }

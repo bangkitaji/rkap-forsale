@@ -40,7 +40,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',
             'workPlans.budgetItems.coa.cashflowGroup',
-            'workPlans.budgetItems.coa.differenceGroup',
+            'workPlans.budgetItems.coa.differenceGroups',
             'versions.creator',
             'approvals.user',
             'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
@@ -78,7 +78,7 @@ class RkapApprovalReview extends Component
                 $wp->update(['revision_notes' => null]);
             }
         }
-        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup']);
+        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups']);
     }
 
     public function updateActivityRevisionNotes(int $workPlanId, string $notes): void
@@ -132,7 +132,7 @@ class RkapApprovalReview extends Component
         }
 
         $this->reviewComments = '';
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', __('RKAP berhasil disetujui.'));
     }
 
@@ -192,7 +192,7 @@ class RkapApprovalReview extends Component
 
         $this->revisionReason = '';
         $this->showRevisionForm = false;
-        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroup', 'versions.creator', 'comments.user', 'comments.replies.user']);
+        $this->submission->refresh()->load(['approvals.user', 'workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups', 'versions.creator', 'comments.user', 'comments.replies.user']);
         session()->flash('message', __('RKAP berhasil ditolak dan dikembalikan untuk revisi.'));
     }
 
@@ -842,7 +842,7 @@ class RkapApprovalReview extends Component
 
     public function getCoaOptionsListProperty()
     {
-        return \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->orderBy('code')->get();
+        return \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroups'])->orderBy('code')->get();
     }
 
     public function getSatuanOptionsProperty()
@@ -899,14 +899,14 @@ class RkapApprovalReview extends Component
 
         $coa = null;
         if ($coaId) {
-            $coa = \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroup'])->find($coaId);
+            $coa = \App\Models\Coa::with(['coaGroup', 'cashflowGroup', 'differenceGroups'])->find($coaId);
         }
 
         $code = $coa ? $coa->code : '';
         $title = $coa ? $coa->title : '';
         $groupName = ($coa && $coa->coaGroup) ? $coa->coaGroup->name : '';
         $cashflowGroupName = ($coa && $coa->cashflowGroup) ? $coa->cashflowGroup->name : '';
-        $differenceGroupName = ($coa && $coa->differenceGroup) ? $coa->differenceGroup->name : '';
+        $differenceGroupName = ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '';
 
         if ($oldCoaId === null) {
             $this->newActivityBudgetItems[$biIndex]['coa_id'] = $coaId;
@@ -978,7 +978,7 @@ class RkapApprovalReview extends Component
             return;
         }
 
-        $activity = \App\Models\Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroup'])->find($value);
+        $activity = \App\Models\Activity::with(['coas.coaGroup', 'coas.cashflowGroup', 'coas.differenceGroups'])->find($value);
         if ($activity) {
             $this->activityDescription = $activity->description ?: '';
             if ($activity->coas->isNotEmpty()) {
@@ -989,7 +989,7 @@ class RkapApprovalReview extends Component
                         'description'           => $coa->title,
                         'coa_group_name'        => $coa->coaGroup ? $coa->coaGroup->name : '',
                         'cashflow_group_name'   => $coa->cashflowGroup ? $coa->cashflowGroup->name : '',
-                        'difference_group_name' => $coa->differenceGroup ? $coa->differenceGroup->name : '',
+                        'difference_group_name' => ($coa && $coa->differenceGroups->isNotEmpty()) ? $coa->differenceGroups->pluck('name')->implode(', ') : '',
                     ]);
                 })->toArray();
             } else {
@@ -1155,7 +1155,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',
             'workPlans.budgetItems.coa.cashflowGroup',
-            'workPlans.budgetItems.coa.differenceGroup'
+            'workPlans.budgetItems.coa.differenceGroups'
         ]);
 
         session()->flash('message', __('Perubahan berhasil disimpan.'));
@@ -1192,7 +1192,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',
             'workPlans.budgetItems.coa.cashflowGroup',
-            'workPlans.budgetItems.coa.differenceGroup'
+            'workPlans.budgetItems.coa.differenceGroups'
         ]);
 
         session()->flash('message', __('Program/Kegiatan berhasil dihapus.'));
@@ -1224,7 +1224,7 @@ class RkapApprovalReview extends Component
             'workPlans.budgetItems.cashOuts',
             'workPlans.budgetItems.coa.coaGroup',
             'workPlans.budgetItems.coa.cashflowGroup',
-            'workPlans.budgetItems.coa.differenceGroup'
+            'workPlans.budgetItems.coa.differenceGroups'
         ]);
 
         session()->flash('message', __('Detail item anggaran berhasil dihapus.'));
