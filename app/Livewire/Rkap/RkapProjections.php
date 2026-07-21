@@ -32,6 +32,11 @@ class RkapProjections extends Component
     public string $inputMode = 'monthly';
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
+    public string $activeTab = 'input';
+
+    protected $queryString = [
+        'activeTab' => ['except' => 'input'],
+    ];
 
     protected $rules = [
         'editingProjections' => 'array',
@@ -496,13 +501,118 @@ class RkapProjections extends Component
         $this->dispatch('projections-saved');
     }
 
+    public function getSummaryData(): array
+    {
+        if (!$this->activePeriodId) {
+            return [
+                'stats' => [
+                    'total_bureaus' => 0,
+                    'total_items' => 0,
+                    'filled_items' => 0,
+                    'unfilled_items' => 0,
+                    'percentage' => 0,
+                ],
+                'rows' => collect(),
+            ];
+        }
+
+        // Fetch all approved submissions for the active period, with relationships eager-loaded
+        $query = RkapSubmission::with([
+            'bureau.department.directorate',
+            'workPlans.budgetItems.projections',
+        ])
+            ->where('rkap_period_id', $this->activePeriodId)
+            ->where('status', 'approved');
+
+        // Apply filters
+        if ($this->bureauId) {
+            $query->where('bureau_id', $this->bureauId);
+        } elseif ($this->departmentId) {
+            $query->whereHas('bureau', fn($q) => $q->where('department_id', $this->departmentId));
+        } elseif ($this->directorateId) {
+            $query->whereHas('bureau.department', fn($q) => $q->where('directorate_id', $this->directorateId));
+        }
+
+        $submissions = $query->get();
+
+        $rows = [];
+        $totalBureaus = $submissions->count();
+        $grandTotalItems = 0;
+        $grandFilledItems = 0;
+
+        foreach ($submissions as $sub) {
+            $bureauTotalItems = 0;
+            $bureauFilledItems = 0;
+
+            foreach ($sub->workPlans as $wp) {
+                foreach ($wp->budgetItems as $bi) {
+                    $bureauTotalItems++;
+                    $isFilled = $bi->projections->count() > 0 || (float) $bi->projection > 0;
+                    if ($isFilled) {
+                        $bureauFilledItems++;
+                    }
+                }
+            }
+
+            $unfilled = $bureauTotalItems - $bureauFilledItems;
+            $percent = $bureauTotalItems > 0 ? round(($bureauFilledItems / $bureauTotalItems) * 100, 1) : 0.0;
+
+            if ($percent === 100.0) {
+                $status = 'Selesai';
+                $statusClass = 'bg-label-success';
+            } elseif ($percent > 0.0) {
+                $status = 'Sedang Diisi';
+                $statusClass = 'bg-label-warning';
+            } else {
+                $status = 'Belum Diisi';
+                $statusClass = 'bg-label-secondary';
+            }
+
+            $rows[] = [
+                'directorate' => $sub->bureau->department->directorate->name ?? '-',
+                'department' => $sub->bureau->department->name ?? '-',
+                'bureau_code' => $sub->bureau->code,
+                'bureau_name' => $sub->bureau->name,
+                'total_items' => $bureauTotalItems,
+                'filled_items' => $bureauFilledItems,
+                'unfilled_items' => $unfilled,
+                'percentage' => $percent,
+                'status' => $status,
+                'status_class' => $statusClass,
+            ];
+
+            $grandTotalItems += $bureauTotalItems;
+            $grandFilledItems += $bureauFilledItems;
+        }
+
+        $grandUnfilledItems = $grandTotalItems - $grandFilledItems;
+        $grandPercent = $grandTotalItems > 0 ? round(($grandFilledItems / $grandTotalItems) * 100, 1) : 0.0;
+
+        return [
+            'stats' => [
+                'total_bureaus' => $totalBureaus,
+                'total_items' => $grandTotalItems,
+                'filled_items' => $grandFilledItems,
+                'unfilled_items' => $grandUnfilledItems,
+                'percentage' => $grandPercent,
+            ],
+            'rows' => collect($rows)->sortBy('bureau_code')->values(),
+        ];
+    }
+
     public function render(): View
     {
+        $summaryData = [];
+        if ($this->activeTab === 'summary') {
+            $summaryData = $this->getSummaryData();
+        }
+
         return view('livewire.rkap.rkap-projections', [
             'directorateOptions' => $this->directorateOptions,
             'departmentOptions' => $this->departmentOptions,
             'bureauOptions' => $this->bureauOptions,
-            'submissions' => $this->getSubmissions(),
+            'submissions' => $this->activeTab === 'input' ? $this->getSubmissions() : collect(),
+            'summaryData' => $summaryData,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

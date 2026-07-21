@@ -48,18 +48,39 @@
         </div>
     </div>
 
+    @if(Auth::user()->isAdmin() || Auth::user()->isVerifikator())
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-pills flex-column flex-md-row mb-4">
+                <li class="nav-item">
+                    <button type="button" class="nav-link @if($activeTab === 'input') active @endif" wire:click="$set('activeTab', 'input')">
+                        <i class="bx bx-edit me-1"></i> {{ __('Input Proyeksi') }}
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @if($activeTab === 'summary') active @endif" wire:click="$set('activeTab', 'summary')">
+                        <i class="bx bx-bar-chart-alt-2 me-1"></i> {{ __('Ringkasan Proyeksi') }}
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+    @endif
+
     {{-- Alert Info / Guide --}}
+    @if($activeTab === 'input')
     <div class="alert alert-primary d-flex align-items-center gap-2 mb-4" role="alert">
         <span class="badge bg-primary rounded-pill"><i class="bx bx-info-circle text-white"></i></span>
         <div>
             Halaman ini digunakan untuk menginput <strong>{{ __('Proyeksi Realisasi Akhir Tahun') }}</strong> dari masing-masing item anggaran pada periode berjalan (<strong>{{ $activePeriodTitle ?? '-' }}</strong>). Proyeksi ini membantu evaluasi pemenuhan budget dan realisasi.
         </div>
     </div>
+    @endif
 
     {{-- Filter Selector Card --}}
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0 fw-bold">Input Proyeksi {{ $activePeriodTitle ?? '' }}</h5>
+            <h5 class="mb-0 fw-bold">{{ $activeTab === 'summary' ? __('Ringkasan Proyeksi') : __('Input Proyeksi') }} {{ $activePeriodTitle ?? '' }}</h5>
         </div>
         <div class="card-body">
             <div class="row g-3">
@@ -256,7 +277,8 @@
     </div>
 
     {{-- Main Input Form --}}
-    @if(!$activePeriodId)
+    @if($activeTab === 'input')
+        @if(!$activePeriodId)
     <div class="card py-5 text-center text-muted">
         <div class="card-body">
             <i class="bx bx-calendar-exclamation bx-lg d-block mb-3 text-danger"></i>
@@ -288,6 +310,19 @@
             <h5 class="fw-bold text-dark mb-0">
                 Biro: <span class="text-primary">{{ $sub->bureau->code }} — {{ $sub->bureau->name }}</span>
             </h5>
+            @php
+                $bureauTotalItems = 0;
+                $bureauFilledItems = 0;
+                foreach($sub->workPlans as $wp) {
+                    $bureauTotalItems += $wp->budgetItems->count();
+                    $bureauFilledItems += $wp->budgetItems->filter(fn($bi) => $bi->projections->count() > 0 || (float)$bi->projection > 0)->count();
+                }
+                $bureauPercent = $bureauTotalItems > 0 ? round(($bureauFilledItems / $bureauTotalItems) * 100) : 0;
+                $bureauBadgeClass = $bureauPercent === 100 ? 'bg-label-success' : ($bureauPercent > 0 ? 'bg-label-warning' : 'bg-label-secondary');
+            @endphp
+            <span class="badge {{ $bureauBadgeClass }} ms-2" title="{{ __('Progres pengisian proyeksi untuk biro ini') }}">
+                {{ __('Proyeksi:') }} {{ $bureauFilledItems }}/{{ $bureauTotalItems }} ({{ $bureauPercent }}%)
+            </span>
         </div>
 
         @foreach($sub->workPlans as $wp)
@@ -297,6 +332,15 @@
                     <i class="bx bx-list-ul text-primary"></i>
                     <h6 class="mb-0 fw-bold text-primary">{{ $wp->program_code }} — {{ $wp->program_name }}</h6>
                 </div>
+                @php
+                    $wpTotalItems = $wp->budgetItems->count();
+                    $wpFilledItems = $wp->budgetItems->filter(fn($bi) => $bi->projections->count() > 0 || (float)$bi->projection > 0)->count();
+                    $wpPercent = $wpTotalItems > 0 ? round(($wpFilledItems / $wpTotalItems) * 100) : 0;
+                    $wpBadgeClass = $wpPercent === 100 ? 'bg-label-success' : ($wpPercent > 0 ? 'bg-label-warning' : 'bg-label-secondary');
+                @endphp
+                <span class="badge {{ $wpBadgeClass }}" title="{{ __('Progres pengisian proyeksi program kerja ini') }}">
+                    {{ __('Terisi:') }} {{ $wpFilledItems }}/{{ $wpTotalItems }} ({{ $wpPercent }}%)
+                </span>
             </div>
 
             <div class="card-body p-3">
@@ -309,6 +353,7 @@
                                 <th class="text-center text-nowrap">{{ __('Volume & Satuan') }}</th>
                                 <th class="text-end text-nowrap">{{ __('Anggaran RKAP') }}</th>
                                 <th class="text-end text-nowrap">{{ __('Realisasi YTD') }}</th>
+                                <th class="text-center rkap-w-100">Status</th>
                                 <th class="text-end text-nowrap">Proyeksi (Total)</th>
                             </tr>
                         </thead>
@@ -337,6 +382,16 @@
                                 <td class="text-end text-nowrap text-success fw-semibold">
                                     Rp {{ number_format($realizationYtd, 0, ',', '.') }}
                                 </td>
+                                <td class="text-center">
+                                    @php
+                                        $isBiFilled = $bi->projections->count() > 0 || (float) $bi->projection > 0;
+                                    @endphp
+                                    @if($isBiFilled)
+                                    <span class="badge bg-label-success"><i class="bx bx-check me-1"></i>{{ __('Sudah Input') }}</span>
+                                    @else
+                                    <span class="badge bg-label-secondary"><i class="bx bx-time-five me-1"></i>{{ __('Belum Input') }}</span>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap">
                                     <div class="d-flex justify-content-end align-items-center gap-2">
                                         <span class="fw-bold text-dark">Rp {{ number_format($bi->projection, 0, ',', '.') }}</span>
@@ -360,6 +415,125 @@
         @endforeach
     </div>
     @endforeach
+    @endif
+    @endif
+
+    {{-- Summary Dashboard Tab --}}
+    @if($activeTab === 'summary')
+    <div class="row g-4 mb-4">
+        <!-- Card 1: Total Biro -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-info p-2"><i class="bx bx-building fs-4"></i></span>
+                    </div>
+                    <h4 class="mb-1 fw-bold">{{ $summaryData['stats']['total_bureaus'] }}</h4>
+                    <p class="mb-0 text-muted small">{{ __('Total Biro Terdaftar') }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 2: Total Item Anggaran -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-primary p-2"><i class="bx bx-list-ol fs-4"></i></span>
+                    </div>
+                    <h4 class="mb-1 fw-bold">{{ number_format($summaryData['stats']['total_items'], 0, ',', '.') }}</h4>
+                    <p class="mb-0 text-muted small">{{ __('Total Item Anggaran') }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 3: Sudah Diproyeksikan -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-success p-2"><i class="bx bx-check-circle fs-4"></i></span>
+                    </div>
+                    <h4 class="mb-1 fw-bold text-success">
+                        {{ number_format($summaryData['stats']['filled_items'], 0, ',', '.') }}
+                        <span class="text-muted small fw-normal">/ {{ number_format($summaryData['stats']['total_items'], 0, ',', '.') }}</span>
+                    </h4>
+                    <p class="mb-0 text-muted small">{{ __('Sudah Diproyeksikan') }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Card 4: Persentase Pengisian -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-warning p-2"><i class="bx bx-pie-chart-alt fs-4"></i></span>
+                    </div>
+                    <h4 class="mb-1 fw-bold text-warning">{{ $summaryData['stats']['percentage'] }}%</h4>
+                    <p class="mb-0 text-muted small">{{ __('Persentase Pengisian') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Details Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-0 fw-bold">{{ __('Progress Pengisian Proyeksi per Biro') }}</h5>
+                <small class="text-muted">{{ __('Daftar unit kerja yang telah menyerahkan RKAP dan progres pengisian proyeksinya.') }}</small>
+            </div>
+        </div>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="rkap-w-50">No</th>
+                        <th>Direktorat / Departemen</th>
+                        <th>Biro (Unit Kerja)</th>
+                        <th class="text-center">{{ __('Jumlah Item') }}</th>
+                        <th class="text-center">{{ __('Terisi') }}</th>
+                        <th class="text-center">{{ __('Belum Terisi') }}</th>
+                        <th class="rkap-w-150">{{ __('Progres') }}</th>
+                        <th class="text-center rkap-w-100">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+                    @forelse($summaryData['rows'] as $idx => $row)
+                    <tr>
+                        <td>{{ $idx + 1 }}</td>
+                        <td>
+                            <div class="text-dark fw-semibold small">{{ $row['directorate'] }}</div>
+                            <div class="text-muted small">{{ $row['department'] }}</div>
+                        </td>
+                        <td>
+                            <strong class="text-primary">{{ $row['bureau_code'] }}</strong> — {{ $row['bureau_name'] }}
+                        </td>
+                        <td class="text-center fw-semibold">{{ $row['total_items'] }}</td>
+                        <td class="text-center text-success fw-semibold">{{ $row['filled_items'] }}</td>
+                        <td class="text-center text-muted">{{ $row['unfilled_items'] }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress w-100" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $row['percentage'] }}%" aria-valuenow="{{ $row['percentage'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="small fw-semibold">{{ $row['percentage'] }}%</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {{ $row['status_class'] }}">{{ $row['status'] }}</span>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bx bx-info-circle fs-4 d-block mb-2 text-warning"></i>
+                            {{ __('Tidak ada data pengajuan RKAP yang terverifikasi.') }}
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
     @endif
 
     {{-- Modal Input Proyeksi --}}

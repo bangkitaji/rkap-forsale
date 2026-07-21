@@ -2,6 +2,42 @@
 
 @section('title', __('Laporan Laba Rugi per Departemen'))
 
+@section('page-style')
+<style>
+  /* Freeze pane style for P&L Department Summary table first column */
+  #summaryDeptPlTable thead tr:first-child th:first-child,
+  #summaryDeptPlTable tbody td:first-child,
+  #summaryDeptPlTable tfoot td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    border-right: 2px solid #d9dee3 !important;
+  }
+
+  #summaryDeptPlTable thead tr:first-child th:first-child {
+    z-index: 4;
+    background-color: #f5f5f9 !important;
+  }
+
+  #summaryDeptPlTable tbody tr:nth-child(even) td:first-child {
+    background-color: #f9fafb !important;
+  }
+
+  #summaryDeptPlTable tbody tr:nth-child(odd) td:first-child {
+    background-color: #ffffff !important;
+  }
+
+  #summaryDeptPlTable tbody tr:hover td:first-child {
+    background-color: #f5f5f9 !important;
+  }
+
+  #summaryDeptPlTable tfoot td:first-child {
+    z-index: 3;
+    background-color: #f5f5f9 !important;
+  }
+</style>
+@endsection
+
 @section('content')
 <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
   <div>
@@ -69,17 +105,16 @@
         </div>
       </div>
       <div class="table-responsive text-nowrap" style="max-height: 650px;">
-        <table class="table table-bordered table-hover align-middle mb-0">
+        <table class="table table-bordered table-hover align-middle mb-0" id="summaryDeptPlTable">
           <thead class="table-light sticky-top bg-light">
             <tr>
-              <th rowspan="2" class="align-middle bg-light text-center rkap-mw-250" style="left: 0; z-index: 3;">{{ __('GOLONGAN REPORT GROUP') }}</th>
+              <th rowspan="2" class="align-middle bg-light text-center rkap-mw-250">{{ __('GOLONGAN REPORT GROUP') }}</th>
               @foreach ($departments as $dept)
               <th colspan="3" class="text-center border-bottom text-uppercase fw-bold bg-label-secondary">
                 {{ $dept->code }}<br>
                 <small class="text-muted text-none fw-normal" style="font-size: 0.75rem;">{{ Str::limit($dept->name, 25) }}</small>
               </th>
               @endforeach
-              <th colspan="3" class="text-center border-bottom text-uppercase fw-bold bg-label-primary">{{ __('TOTAL KONSOLIDASI') }}</th>
             </tr>
             <tr class="small text-center fw-bold">
               @foreach ($departments as $dept)
@@ -87,9 +122,6 @@
               <th class="text-end px-2 text-success" style="min-width: 100px;">{{ __('R') }}</th>
               <th class="text-end px-2 text-info" style="min-width: 100px;">{{ __('P') }}</th>
               @endforeach
-              <th class="text-end px-2 text-primary bg-light" style="min-width: 110px;">{{ __('B') }}</th>
-              <th class="text-end px-2 text-success bg-light" style="min-width: 110px;">{{ __('R') }}</th>
-              <th class="text-end px-2 text-info bg-light" style="min-width: 110px;">{{ __('P') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -104,16 +136,10 @@
               <td class="text-end small px-2 text-success">{{ $cell['realization'] != 0 ? number_format($cell['realization'], 0, ',', '.') : '-' }}</td>
               <td class="text-end small px-2 text-info">{{ $cell['projection'] != 0 ? number_format($cell['projection'], 0, ',', '.') : '-' }}</td>
               @endforeach
-              @php
-                $gTot = $groupTotals[$group->id] ?? ['budget' => 0, 'realization' => 0, 'projection' => 0];
-              @endphp
-              <td class="text-end fw-bold small px-2 text-primary bg-light">{{ $gTot['budget'] != 0 ? number_format($gTot['budget'], 0, ',', '.') : '-' }}</td>
-              <td class="text-end fw-bold small px-2 text-success bg-light">{{ $gTot['realization'] != 0 ? number_format($gTot['realization'], 0, ',', '.') : '-' }}</td>
-              <td class="text-end fw-bold small px-2 text-info bg-light">{{ $gTot['projection'] != 0 ? number_format($gTot['projection'], 0, ',', '.') : '-' }}</td>
             </tr>
             @empty
             <tr>
-              <td colspan="{{ count($departments) * 3 + 4 }}" class="text-center py-4 text-muted">{{ __('Tidak ada data report group P&L.') }}</td>
+              <td colspan="{{ count($departments) * 3 + 1 }}" class="text-center py-4 text-muted">{{ __('Tidak ada data report group P&L.') }}</td>
             </tr>
             @endforelse
           </tbody>
@@ -128,9 +154,6 @@
               <td class="text-end px-2 text-success">{{ number_format($dTot['realization'], 0, ',', '.') }}</td>
               <td class="text-end px-2 text-info">{{ number_format($dTot['projection'], 0, ',', '.') }}</td>
               @endforeach
-              <td class="text-end px-2 text-primary bg-light">{{ number_format($grandTotal['budget'], 0, ',', '.') }}</td>
-              <td class="text-end px-2 text-success bg-light">{{ number_format($grandTotal['realization'], 0, ',', '.') }}</td>
-              <td class="text-end px-2 text-info bg-light">{{ number_format($grandTotal['projection'], 0, ',', '.') }}</td>
             </tr>
           </tfoot>
         </table>

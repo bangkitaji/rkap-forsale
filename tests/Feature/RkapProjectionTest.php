@@ -658,4 +658,68 @@ class RkapProjectionTest extends TestCase
         $this->budgetItem->refresh();
         $this->assertEquals(200000.00, (float)$this->budgetItem->projection);
     }
+
+    public function test_projection_tab_navigation_and_summary_dashboard_data(): void
+    {
+        // 1. Create an admin user
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
+        $permView = Permission::firstOrCreate(['name' => 'rkap.projection.view', 'guard_name' => 'web']);
+        $roleAdmin->givePermissionTo($permView);
+        
+        $adminUser = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin-proj@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $adminUser->assignRole($roleAdmin);
+
+        $this->actingAs($adminUser);
+
+        // 2. Load the component and check that activeTab is 'input' by default, and we can switch to 'summary'
+        $component = Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->assertSet('activeTab', 'input')
+            ->set('activeTab', 'summary');
+
+        // 3. Call getSummaryData and assert stats
+        $summary = $component->instance()->getSummaryData();
+        $this->assertArrayHasKey('stats', $summary);
+        $this->assertArrayHasKey('rows', $summary);
+
+        $stats = $summary['stats'];
+        $this->assertEquals(1, $stats['total_bureaus']);
+        $this->assertEquals(1, $stats['total_items']);
+        $this->assertEquals(0, $stats['filled_items']); // not input yet
+        $this->assertEquals(1, $stats['unfilled_items']);
+        $this->assertEquals(0.0, $stats['percentage']);
+
+        // 4. Fill a projection and verify stats update
+        $this->actingAs($this->kepalaBiro);
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', 50000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        // 5. Re-check summary stats as admin
+        $this->actingAs($adminUser);
+        $component2 = Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->set('activeTab', 'summary');
+        
+        $summary2 = $component2->instance()->getSummaryData();
+        $stats2 = $summary2['stats'];
+        $this->assertEquals(1, $stats2['filled_items']);
+        $this->assertEquals(0, $stats2['unfilled_items']);
+        $this->assertEquals(100.0, $stats2['percentage']);
+
+        $rows = $summary2['rows'];
+        $this->assertCount(1, $rows);
+        $this->assertEquals('BUR01', $rows[0]['bureau_code']);
+        $this->assertEquals(1, $rows[0]['total_items']);
+        $this->assertEquals(1, $rows[0]['filled_items']);
+        $this->assertEquals('Selesai', $rows[0]['status']);
+    }
 }
