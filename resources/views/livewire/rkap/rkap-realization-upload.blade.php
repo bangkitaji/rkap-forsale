@@ -295,6 +295,11 @@
           </div>
           @if($periodId)
           <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+              <i class="bx bx-download"></i>
+              <span wire:loading.remove wire:target="exportExcel">Download Excel Realisasi</span>
+              <span wire:loading wire:target="exportExcel">Downloading...</span>
+            </button>
             {{-- Month filter for list --}}
             <div class="rkap-min-w-160">
               <select class="form-select form-select-sm" wire:model.live="filterMonth">

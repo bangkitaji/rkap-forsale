@@ -11,6 +11,11 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Input Proyeksi</h4>
         <div class="d-flex align-items-center gap-2">
+            <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                <i class="bx bx-download"></i>
+                <span wire:loading.remove wire:target="exportExcel">Download Excel Proyeksi</span>
+                <span wire:loading wire:target="exportExcel">Downloading...</span>
+            </button>
             @can('rkap.projection.input')
             @if(Auth::user()->hasRole('admin') || Auth::user()->hasRole('verifikator'))
             <a href="{{ route('rkap-projection-upload') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">

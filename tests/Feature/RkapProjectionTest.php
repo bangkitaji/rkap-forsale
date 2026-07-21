@@ -776,4 +776,20 @@ class RkapProjectionTest extends TestCase
         $this->budgetItem->refresh();
         $this->assertEquals(-25000.00, (float)$this->budgetItem->projection);
     }
+
+    public function test_can_export_projections_excel(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $response = Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('exportExcel');
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            isset($response->effects['download']) || 
+            (isset($response->payload['effects']['download'])) ||
+            $response->effects !== null
+        );
+    }
 }

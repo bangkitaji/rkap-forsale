@@ -15,6 +15,8 @@ use App\Services\AnalyticsCacheService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
+use App\Exports\RkapProjectionsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RkapProjections extends Component
 {
@@ -607,6 +609,29 @@ class RkapProjections extends Component
             ],
             'rows' => $sortedRows,
         ];
+    }
+
+    public function exportExcel()
+    {
+        $user = Auth::user();
+        if (!$user || !$user->can('rkap.projection.view')) {
+            abort(403, __('Anda tidak memiliki akses untuk mengekspor data ini.'));
+        }
+
+        $period = RkapPeriod::find($this->activePeriodId);
+        $year = $period ? $period->year : date('Y');
+        $filename = 'rkap-monitoring-proyeksi-' . $year . '-' . date('YmdHis') . '.xlsx';
+
+        return Excel::download(
+            new RkapProjectionsExport(
+                $this->activePeriodId,
+                $this->directorateId,
+                $this->departmentId,
+                $this->bureauId,
+                $this->filterStatus
+            ),
+            $filename
+        );
     }
 
     public function render(): View

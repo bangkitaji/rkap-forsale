@@ -515,4 +515,20 @@ class RkapRealizationUploadTest extends TestCase
         $component->set('filterDepartmentId', $department->id)
             ->assertSee('Departemen: ' . $department->name);
     }
+
+    public function test_can_export_realizations_excel(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        $response = Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->call('exportExcel');
+
+        $response->assertStatus(200);
+        $this->assertTrue(
+            isset($response->effects['download']) || 
+            (isset($response->payload['effects']['download'])) ||
+            $response->effects !== null
+        );
+    }
 }

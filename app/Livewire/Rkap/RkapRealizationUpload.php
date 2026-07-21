@@ -12,6 +12,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Exports\RkapRealizationsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RkapRealizationUpload extends Component
 {
@@ -486,6 +488,28 @@ class RkapRealizationUpload extends Component
             ->groupBy('departments.id', 'departments.code', 'departments.name')
             ->orderBy('total_amount', 'desc')
             ->get();
+    }
+
+    public function exportExcel()
+    {
+        if (! auth()->user()?->can('rkap.realization.upload')) {
+            abort(403, __('Anda tidak memiliki akses untuk mengekspor data ini.'));
+        }
+
+        $period = RkapPeriod::find($this->periodId);
+        $year = $period ? $period->year : date('Y');
+        $filename = 'rkap-monitoring-realisasi-' . $year . '-' . date('YmdHis') . '.xlsx';
+
+        return Excel::download(
+            new RkapRealizationsExport(
+                $this->periodId,
+                null,
+                $this->filterDepartmentId,
+                null,
+                $this->search
+            ),
+            $filename
+        );
     }
 
     public function render(): View
