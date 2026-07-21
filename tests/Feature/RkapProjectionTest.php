@@ -721,5 +721,18 @@ class RkapProjectionTest extends TestCase
         $this->assertEquals(1, $rows[0]['total_items']);
         $this->assertEquals(1, $rows[0]['filled_items']);
         $this->assertEquals('Selesai', $rows[0]['status']);
+
+        // 6. Test Status Filtering
+        // When filterStatus is set to 'Selesai', should find 1 row
+        $component2->set('filterStatus', 'Selesai');
+        $filteredSummary = $component2->instance()->getSummaryData();
+        $this->assertCount(1, $filteredSummary['rows']);
+        $this->assertEquals(1, $filteredSummary['stats']['total_bureaus']);
+
+        // When filterStatus is set to 'Belum Diisi', should find 0 rows (as it is Selesai)
+        $component2->set('filterStatus', 'Belum Diisi');
+        $filteredSummary2 = $component2->instance()->getSummaryData();
+        $this->assertCount(0, $filteredSummary2['rows']);
+        $this->assertEquals(0, $filteredSummary2['stats']['total_bureaus']);
     }
 }

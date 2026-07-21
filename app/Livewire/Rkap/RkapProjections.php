@@ -33,9 +33,11 @@ class RkapProjections extends Component
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
     public string $activeTab = 'input';
+    public ?string $filterStatus = null;
 
     protected $queryString = [
         'activeTab' => ['except' => 'input'],
+        'filterStatus' => ['except' => ''],
     ];
 
     protected $rules = [
@@ -536,10 +538,6 @@ class RkapProjections extends Component
         $submissions = $query->get();
 
         $rows = [];
-        $totalBureaus = $submissions->count();
-        $grandTotalItems = 0;
-        $grandFilledItems = 0;
-
         foreach ($submissions as $sub) {
             $bureauTotalItems = 0;
             $bureauFilledItems = 0;
@@ -580,12 +578,20 @@ class RkapProjections extends Component
                 'status' => $status,
                 'status_class' => $statusClass,
             ];
-
-            $grandTotalItems += $bureauTotalItems;
-            $grandFilledItems += $bureauFilledItems;
         }
 
-        $grandUnfilledItems = $grandTotalItems - $grandFilledItems;
+        // Apply status filter
+        $collection = collect($rows);
+        if ($this->filterStatus && in_array($this->filterStatus, ['Selesai', 'Sedang Diisi', 'Belum Diisi'])) {
+            $collection = $collection->filter(fn($row) => $row['status'] === $this->filterStatus);
+        }
+
+        $sortedRows = $collection->sortBy('bureau_code')->values();
+
+        $totalBureaus = $sortedRows->count();
+        $grandTotalItems = $sortedRows->sum('total_items');
+        $grandFilledItems = $sortedRows->sum('filled_items');
+        $grandUnfilledItems = $sortedRows->sum('unfilled_items');
         $grandPercent = $grandTotalItems > 0 ? round(($grandFilledItems / $grandTotalItems) * 100, 1) : 0.0;
 
         return [
@@ -596,7 +602,7 @@ class RkapProjections extends Component
                 'unfilled_items' => $grandUnfilledItems,
                 'percentage' => $grandPercent,
             ],
-            'rows' => collect($rows)->sortBy('bureau_code')->values(),
+            'rows' => $sortedRows,
         ];
     }
 

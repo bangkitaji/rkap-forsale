@@ -85,7 +85,7 @@
         <div class="card-body">
             <div class="row g-3">
                 {{-- Directorate Filter --}}
-                <div class="col-md-4">
+                <div class="{{ $activeTab === 'summary' ? 'col-md-3' : 'col-md-4' }}">
                     <label class="form-label fw-semibold">{{ __('Direktorat') }}</label>
                     <div class="position-relative" x-data="{
                         open: false,
@@ -148,7 +148,7 @@
                 </div>
 
                 {{-- Department Filter --}}
-                <div class="col-md-4">
+                <div class="{{ $activeTab === 'summary' ? 'col-md-3' : 'col-md-4' }}">
                     <label class="form-label fw-semibold">{{ __('Departemen') }}</label>
                     <div class="position-relative" x-data="{
                         open: false,
@@ -211,7 +211,7 @@
                 </div>
 
                 {{-- Bureau Filter --}}
-                <div class="col-md-4">
+                <div class="{{ $activeTab === 'summary' ? 'col-md-3' : 'col-md-4' }}">
                     <label class="form-label fw-semibold">Biro</label>
                     <div class="position-relative" x-data="{
                         open: false,
@@ -272,6 +272,19 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Status Filter --}}
+                @if($activeTab === 'summary')
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">{{ __('Status Pengisian') }}</label>
+                    <select class="form-select" wire:model.live="filterStatus">
+                        <option value="">-- Semua Status --</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Sedang Diisi">Sedang Diisi</option>
+                        <option value="Belum Diisi">Belum Diisi</option>
+                    </select>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -482,7 +495,7 @@
                 <small class="text-muted">{{ __('Daftar unit kerja yang telah menyerahkan RKAP dan progres pengisian proyeksinya.') }}</small>
             </div>
         </div>
-        <div class="table-responsive text-nowrap">
+        <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -505,7 +518,8 @@
                             <div class="text-muted small">{{ $row['department'] }}</div>
                         </td>
                         <td>
-                            <strong class="text-primary">{{ $row['bureau_code'] }}</strong> — {{ $row['bureau_name'] }}
+                            <div class="text-primary fw-semibold small">{{ $row['bureau_code'] }}</div>
+                            <div class="text-dark fw-bold small">{{ $row['bureau_name'] }}</div>
                         </td>
                         <td class="text-center fw-semibold">{{ $row['total_items'] }}</td>
                         <td class="text-center text-success fw-semibold">{{ $row['filled_items'] }}</td>
