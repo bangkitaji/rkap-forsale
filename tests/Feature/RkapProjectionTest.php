@@ -735,4 +735,45 @@ class RkapProjectionTest extends TestCase
         $this->assertCount(0, $filteredSummary2['rows']);
         $this->assertEquals(0, $filteredSummary2['stats']['total_bureaus']);
     }
+
+    public function test_can_save_negative_yearly_projection(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'yearly')
+            ->set('yearlyProjection', -50000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(-50000.00, (float)$this->budgetItem->projection);
+    }
+
+    public function test_can_save_negative_monthly_projection(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        $currentMonth = (int) date('n');
+
+        $component = Livewire::test(RkapProjections::class)
+            ->set('activePeriodId', $this->activePeriod->id)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->set('inputMode', 'monthly');
+
+        for ($m = 1; $m <= 12; $m++) {
+            if ($m !== $currentMonth) {
+                $component->set('editingProjections.' . $m, 0);
+            }
+        }
+
+        $component->set("editingProjections.{$currentMonth}", -25000)
+            ->call('saveMonthlyProjections')
+            ->assertHasNoErrors();
+
+        $this->budgetItem->refresh();
+        $this->assertEquals(-25000.00, (float)$this->budgetItem->projection);
+    }
 }

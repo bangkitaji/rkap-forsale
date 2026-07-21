@@ -33,7 +33,7 @@ class RkapProjections extends Component
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
     public string $activeTab = 'input';
-    public array $filterStatus = [];
+    public $filterStatus = [];
 
     protected $queryString = [
         'activeTab' => ['except' => 'input'],
@@ -42,9 +42,9 @@ class RkapProjections extends Component
 
     protected $rules = [
         'editingProjections' => 'array',
-        'editingProjections.*' => 'nullable|numeric|min:0',
+        'editingProjections.*' => 'nullable|numeric',
         'inputMode' => 'required|in:monthly,yearly',
-        'yearlyProjection' => 'nullable|numeric|min:0',
+        'yearlyProjection' => 'nullable|numeric',
     ];
 
     protected $validationAttributes = [
@@ -580,10 +580,11 @@ class RkapProjections extends Component
             ];
         }
 
-        // Apply status filter (supports multiple selections)
+        // Apply status filter (supports multiple selections, handles both array and string inputs)
         $collection = collect($rows);
         $validStatuses = ['Selesai', 'Sedang Diisi', 'Belum Diisi'];
-        $activeFilters = array_filter($this->filterStatus ?? [], fn($s) => in_array($s, $validStatuses));
+        $statuses = is_array($this->filterStatus) ? $this->filterStatus : (is_string($this->filterStatus) && $this->filterStatus !== '' ? [$this->filterStatus] : []);
+        $activeFilters = array_filter($statuses, fn($s) => in_array($s, $validStatuses));
         if (!empty($activeFilters)) {
             $collection = $collection->filter(fn($row) => in_array($row['status'], $activeFilters));
         }

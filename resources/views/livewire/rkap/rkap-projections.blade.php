@@ -729,9 +729,9 @@
                                     let cursor = e.target.selectionStart;
                                     let originalLength = e.target.value.length;
                                     
-                                    let clean = e.target.value.replace(/[^0-9]/g, '');
-                                    this.raw = clean === '' ? null : parseFloat(clean);
-                                    this.display = this.format(clean);
+                                    let clean = e.target.value.replace(/[^-0-9]/g, '').replace(/(?!^)-/g, '');
+                                    this.raw = (clean === '' || clean === '-') ? null : parseFloat(clean);
+                                    this.display = clean === '-' ? '-' : this.format(clean);
                                     
                                     this.$nextTick(() => {
                                         let newLength = this.display.length;
@@ -838,9 +838,9 @@
                                                         let cursor = e.target.selectionStart;
                                                         let originalLength = e.target.value.length;
                                                         
-                                                        let clean = e.target.value.replace(/[^0-9]/g, '');
-                                                        this.raw = clean === '' ? null : parseFloat(clean);
-                                                        this.display = this.format(clean);
+                                                        let clean = e.target.value.replace(/[^-0-9]/g, '').replace(/(?!^)-/g, '');
+                                                        this.raw = (clean === '' || clean === '-') ? null : parseFloat(clean);
+                                                        this.display = clean === '-' ? '-' : this.format(clean);
                                                         
                                                         this.$nextTick(() => {
                                                             let newLength = this.display.length;
