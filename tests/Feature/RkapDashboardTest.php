@@ -1253,6 +1253,7 @@ class RkapDashboardTest extends TestCase
             'description'       => 'CF Test Budget Item',
             'quantity'          => 1,
             'unit_price'        => 500000.0,
+            'projection'        => 400000.0,
         ]);
 
         // Act: call sync
@@ -1265,10 +1266,19 @@ class RkapDashboardTest extends TestCase
         $response->assertJson(['success' => true]);
         $this->assertStringContainsString('RKAP', $response->json('version'));
 
-        // Assert: cash_flow_facts was upserted with correct amount (inflow → positive)
+        // Assert: cash_flow_facts was upserted with correct amount (inflow → positive) for RKAP
         $this->assertDatabaseHas('cash_flow_facts', [
             'item_code' => 'CF0A1B',
             'amount'    => 500000.0,
+        ]);
+
+        // Assert: cash_flow_facts was upserted with correct amount for PROGNOSA
+        $prognosaVersion = \App\Models\FinancialVersion::where('name', 'PROGNOSA')->where('year', $this->period->year)->first();
+        $this->assertNotNull($prognosaVersion);
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code'  => 'CF0A1B',
+            'version_id' => $prognosaVersion->version_id,
+            'amount'     => 400000.0,
         ]);
     }
 
@@ -1380,15 +1390,28 @@ class RkapDashboardTest extends TestCase
             'period_id' => $this->period->id,
         ])->assertJson(['success' => true]);
 
-        // Only one fact row, with updated value
+        // Only one fact row per version, with updated value
         $this->assertDatabaseMissing('cash_flow_facts', ['item_code' => 'CF0A3', 'amount' => 100000.0]);
         $this->assertDatabaseHas('cash_flow_facts', ['item_code' => 'CF0A3', 'amount' => 999000.0]);
+
+        $version = \App\Models\FinancialVersion::where('name', 'RKAP')->where('year', $this->period->year)->first();
         $this->assertEquals(
             1,
             \Illuminate\Support\Facades\DB::table('cash_flow_facts')
                 ->where('item_code', 'CF0A3')
+                ->where('version_id', $version->version_id)
                 ->count(),
-            'Re-sync should update existing fact, not create duplicate'
+            'Re-sync should update existing RKAP fact, not create duplicate'
+        );
+
+        $prognosaVersion = \App\Models\FinancialVersion::where('name', 'PROGNOSA')->where('year', $this->period->year)->first();
+        $this->assertEquals(
+            1,
+            \Illuminate\Support\Facades\DB::table('cash_flow_facts')
+                ->where('item_code', 'CF0A3')
+                ->where('version_id', $prognosaVersion->version_id)
+                ->count(),
+            'Re-sync should update existing PROGNOSA fact, not create duplicate'
         );
     }
 

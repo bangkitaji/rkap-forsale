@@ -2600,16 +2600,18 @@ class Analytics extends Controller
     }
 
     $finalizedPeriods = RkapPeriod::orderBy('year', 'desc')->orderBy('created_at', 'desc')->get();
-    $selectedPeriodId = $request->query('period_id');
-    $activePeriod = null;
 
-    if ($selectedPeriodId) {
-      $activePeriod = RkapPeriod::find($selectedPeriodId);
-    }
-    if (!$activePeriod) {
-      $currentYear = (int) date('Y');
-      $activePeriod = RkapPeriod::where('year', $currentYear)->first() ?? RkapPeriod::latest()->first();
-    }
+    // Resolve separate period selections, default to latest active period if missing
+    $currentYear = (int) date('Y');
+    $defaultPeriod = RkapPeriod::where('year', $currentYear)->first() ?? RkapPeriod::latest()->first();
+
+    $budgetPeriodId = $request->query('budget_period_id') ?: ($defaultPeriod?->id);
+    $realizationPeriodId = $request->query('realization_period_id') ?: ($defaultPeriod?->id);
+    $projectionPeriodId = $request->query('projection_period_id') ?: ($defaultPeriod?->id);
+
+    $budgetPeriod = RkapPeriod::find($budgetPeriodId) ?? $defaultPeriod;
+    $realizationPeriod = RkapPeriod::find($realizationPeriodId) ?? $defaultPeriod;
+    $projectionPeriod = RkapPeriod::find($projectionPeriodId) ?? $defaultPeriod;
 
     $directorates = \App\Models\Directorate::orderBy('code')->get();
     $selectedDirectorateId = $request->query('directorate_id');
@@ -2635,80 +2637,95 @@ class Analytics extends Controller
     }
     foreach ($plReportGroups as $group) {
       $groupTotals[$group->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+      $matrix[$group->id] = [];
+      foreach ($departments as $dept) {
+        $matrix[$group->id][$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+      }
     }
 
-    if ($activePeriod && $departments->isNotEmpty()) {
-      $periodId = $activePeriod->id;
+    if ($departments->isNotEmpty()) {
       $deptIds = $departments->pluck('id')->toArray();
 
-      $budgetsRaw = DB::table('rkap_budget_items')
-        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
-        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
-        ->where('rkap_submissions.rkap_period_id', $periodId)
-        ->whereIn('bureaus.department_id', $deptIds)
-        ->where('report_groups.type', 'PL')
-        ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
-        ->groupBy('bureaus.department_id', 'report_groups.id')
-        ->get();
+      // 1.1 Query operational budgets (Budget Period)
+      if ($budgetPeriod) {
+        $includeAllStatusesB = ($budgetPeriod->status !== 'finalized');
+        $budgetsRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
+          ->where('rkap_submissions.rkap_period_id', $budgetPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->where('report_groups.type', 'PL')
+          ->whereNull('coas.deleted_at')
+          ->when(!$includeAllStatusesB, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.total_price) as budget')
+          ->groupBy('bureaus.department_id', 'report_groups.id')
+          ->get();
 
-      $realMap = [];
-      $realizationsRaw = DB::table('rkap_budget_item_realizations')
-        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-        ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
-        ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
-        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
-        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
-        ->whereIn('bureaus.department_id', $deptIds)
-        ->where('report_groups.type', 'PL')
-        ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_item_realizations.amount) as amount')
-        ->groupBy('bureaus.department_id', 'report_groups.id')
-        ->get();
-
-      foreach ($realizationsRaw as $r) {
-        $realMap[$r->department_id . '_' . $r->report_group_id] = (float) $r->amount;
-      }
-
-      foreach ($plReportGroups as $rg) {
-        $matrix[$rg->id] = [];
-        foreach ($departments as $dept) {
-          $matrix[$rg->id][$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+        foreach ($budgetsRaw as $b) {
+          $matrix[$b->report_group_id][$b->department_id]['budget'] = (float) $b->budget;
+          $deptTotals[$b->department_id]['budget'] += (float) $b->budget;
+          $groupTotals[$b->report_group_id]['budget'] += (float) $b->budget;
+          $grandTotal['budget'] += (float) $b->budget;
         }
       }
 
-      foreach ($budgetsRaw as $b) {
-        $deptId = $b->department_id;
-        $rgId = $b->report_group_id;
-        $budget = (float) $b->budget;
-        $projection = (float) $b->projection;
-        $realization = $realMap[$deptId . '_' . $rgId] ?? 0.0;
+      // 1.2 Query operational realizations (Realization Period)
+      if ($realizationPeriod) {
+        $includeAllStatusesR = ($realizationPeriod->status !== 'finalized');
+        $realizationsRaw = DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $realizationPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->where('report_groups.type', 'PL')
+          ->whereNull('coas.deleted_at')
+          ->when(!$includeAllStatusesR, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_item_realizations.amount) as realization')
+          ->groupBy('bureaus.department_id', 'report_groups.id')
+          ->get();
 
-        $matrix[$rgId][$deptId] = [
-          'budget' => $budget,
-          'realization' => $realization,
-          'projection' => $projection,
-        ];
-
-        if (isset($deptTotals[$deptId])) {
-          $deptTotals[$deptId]['budget'] += $budget;
-          $deptTotals[$deptId]['realization'] += $realization;
-          $deptTotals[$deptId]['projection'] += $projection;
+        foreach ($realizationsRaw as $r) {
+          $matrix[$r->report_group_id][$r->department_id]['realization'] = (float) $r->realization;
+          $deptTotals[$r->department_id]['realization'] += (float) $r->realization;
+          $groupTotals[$r->report_group_id]['realization'] += (float) $r->realization;
+          $grandTotal['realization'] += (float) $r->realization;
         }
-        if (isset($groupTotals[$rgId])) {
-          $groupTotals[$rgId]['budget'] += $budget;
-          $groupTotals[$rgId]['realization'] += $realization;
-          $groupTotals[$rgId]['projection'] += $projection;
-        }
+      }
 
-        $grandTotal['budget'] += $budget;
-        $grandTotal['realization'] += $realization;
-        $grandTotal['projection'] += $projection;
+      // 1.3 Query operational projections (Projection Period)
+      if ($projectionPeriod) {
+        $includeAllStatusesP = ($projectionPeriod->status !== 'finalized');
+        $projectionsRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+          ->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+          ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
+          ->where('rkap_submissions.rkap_period_id', $projectionPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->where('report_groups.type', 'PL')
+          ->whereNull('coas.deleted_at')
+          ->when(!$includeAllStatusesP, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.projection) as projection')
+          ->groupBy('bureaus.department_id', 'report_groups.id')
+          ->get();
+
+        foreach ($projectionsRaw as $p) {
+          $matrix[$p->report_group_id][$p->department_id]['projection'] = (float) $p->projection;
+          $deptTotals[$p->department_id]['projection'] += (float) $p->projection;
+          $groupTotals[$p->report_group_id]['projection'] += (float) $p->projection;
+          $grandTotal['projection'] += (float) $p->projection;
+        }
       }
     }
 
@@ -2733,39 +2750,65 @@ class Analytics extends Controller
       $capexMatrix[$dept->id] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
     }
 
-    if ($activePeriod && $departments->isNotEmpty()) {
-      $periodId = $activePeriod->id;
+    if ($departments->isNotEmpty()) {
       $deptIds = $departments->pluck('id')->toArray();
 
-      $budgetsRaw = DB::table('rkap_budget_items')
-        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-        ->where('rkap_submissions.rkap_period_id', $periodId)
-        ->whereIn('bureaus.department_id', $deptIds)
-        ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
-        ->selectRaw('bureaus.department_id, SUM(rkap_budget_items.total_price) as budget, SUM(rkap_budget_items.projection) as projection')
-        ->groupBy('bureaus.department_id')
-        ->get()
-        ->keyBy('department_id');
+      // 2.1 Capex budget totals (Budget Period)
+      if ($budgetPeriod) {
+        $includeAllStatusesCB = ($budgetPeriod->status !== 'finalized');
+        $capexBudgetsRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_submissions.rkap_period_id', $budgetPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+          ->when(!$includeAllStatusesCB, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, SUM(rkap_budget_items.total_price) as budget')
+          ->groupBy('bureaus.department_id')
+          ->get()
+          ->keyBy('department_id');
+      }
 
-      $realizationsRaw = DB::table('rkap_budget_item_realizations')
-        ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-        ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
-        ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
-        ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
-        ->where('rkap_budget_item_realizations.rkap_period_id', $periodId)
-        ->whereIn('bureaus.department_id', $deptIds)
-        ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
-        ->selectRaw('bureaus.department_id, SUM(rkap_budget_item_realizations.amount) as realization')
-        ->groupBy('bureaus.department_id')
-        ->get()
-        ->keyBy('department_id');
+      // 2.2 Capex realization totals (Realization Period)
+      if ($realizationPeriod) {
+        $includeAllStatusesCR = ($realizationPeriod->status !== 'finalized');
+        $capexRealizationsRaw = DB::table('rkap_budget_item_realizations')
+          ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_budget_item_realizations.rkap_period_id', $realizationPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+          ->when(!$includeAllStatusesCR, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, SUM(rkap_budget_item_realizations.amount) as realization')
+          ->groupBy('bureaus.department_id')
+          ->get()
+          ->keyBy('department_id');
+      }
+
+      // 2.3 Capex projection totals (Projection Period)
+      if ($projectionPeriod) {
+        $includeAllStatusesCP = ($projectionPeriod->status !== 'finalized');
+        $capexProjectionsRaw = DB::table('rkap_budget_items')
+          ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+          ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+          ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+          ->where('rkap_submissions.rkap_period_id', $projectionPeriod->id)
+          ->whereIn('bureaus.department_id', $deptIds)
+          ->whereIn('rkap_budget_items.account_code', $capexCoaCodes)
+          ->when(!$includeAllStatusesCP, fn($q) => $q->where('rkap_submissions.status', 'approved'))
+          ->selectRaw('bureaus.department_id, SUM(rkap_budget_items.projection) as projection')
+          ->groupBy('bureaus.department_id')
+          ->get()
+          ->keyBy('department_id');
+      }
 
       foreach ($departments as $dept) {
-        $budget = (float) (isset($budgetsRaw[$dept->id]) ? $budgetsRaw[$dept->id]->budget : 0.0);
-        $projection = (float) (isset($budgetsRaw[$dept->id]) ? $budgetsRaw[$dept->id]->projection : 0.0);
-        $realization = (float) (isset($realizationsRaw[$dept->id]) ? $realizationsRaw[$dept->id]->realization : 0.0);
+        $budget = (float) (isset($capexBudgetsRaw[$dept->id]) ? $capexBudgetsRaw[$dept->id]->budget : 0.0);
+        $realization = (float) (isset($capexRealizationsRaw[$dept->id]) ? $capexRealizationsRaw[$dept->id]->realization : 0.0);
+        $projection = (float) (isset($capexProjectionsRaw[$dept->id]) ? $capexProjectionsRaw[$dept->id]->projection : 0.0);
 
         $capexMatrix[$dept->id] = [
           'budget' => $budget,
@@ -2780,7 +2823,9 @@ class Analytics extends Controller
     }
 
     return view('content.dashboard.analytics-summary-dept-pl-capex', compact(
-      'activePeriod',
+      'budgetPeriod',
+      'realizationPeriod',
+      'projectionPeriod',
       'finalizedPeriods',
       'directorates',
       'selectedDirectorateId',
@@ -2793,6 +2838,85 @@ class Analytics extends Controller
       'capexMatrix',
       'totalStats'
     ));
+  }
+
+  public function summaryDeptDetail(Request $request)
+  {
+    $user = Auth::user();
+    if (!$user) {
+      abort(403);
+    }
+
+    $periodId = (int) $request->query('period_id');
+    $deptId = (int) $request->query('department_id');
+    $reportGroupId = $request->query('report_group_id'); // Can be numeric ID or 'capex'
+
+    if (!$periodId || !$deptId) {
+      return response()->json(['data' => []]);
+    }
+
+    // Determine whether to include all submission statuses based on the period's status
+    $period = RkapPeriod::find($periodId);
+    $includeAllStatuses = ($period && $period->status !== 'finalized');
+
+    $isCapex = ($reportGroupId === 'capex');
+
+    $query = DB::table('rkap_budget_items')
+      ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+      ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+      ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+      ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
+      ->join('departments', 'bureaus.department_id', '=', 'departments.id')
+      ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+      ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+      ->where('rkap_submissions.rkap_period_id', $periodId)
+      ->where('bureaus.department_id', $deptId)
+      ->whereNull('coas.deleted_at')
+      ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'));
+
+    if ($isCapex) {
+      $capexCoaCodes = [
+        '1105000001', '1201010001', '1201020001', '1201030001', '1201040001', '1201050001', '1201060001', '1201070001', '1201080001', '1201090001',
+        '1201100001', '1201990001', '1201999999', '1203010001', '1203010101', '1203010201', '1203010202', '1203010203', '1203010204', '1203010205',
+        '1203010206', '1203010207', '1203010299', '1203010301', '1203010302', '1203010303', '1203010304', '1203010399', '1203010401', '1203010402',
+        '1203010403', '1203010501', '1203010601', '1203010701', '1203019901', '1203020001', '1203020101', '1203020201', '1203020202', '1203020299',
+        '1203020301', '1203020302', '1203020303', '1203020399', '1203020401', '1203020402', '1203020403', '1203029901', '1203030101', '1203030201',
+        '1203030301', '1203030399', '1203030401', '1203030402', '1203040301', '1203030403', '1203030501', '1203030502', '1203030503', '1203030504',
+      ];
+      $query->whereIn('rkap_budget_items.account_code', $capexCoaCodes);
+    } else {
+      $query->join('coa_groups', 'coas.coa_group_id', '=', 'coa_groups.id')
+        ->join('report_groups', 'coa_groups.report_group_id', '=', 'report_groups.id')
+        ->where('report_groups.type', 'PL')
+        ->where('report_groups.id', (int) $reportGroupId);
+    }
+
+    $rows = $query->selectRaw('
+        coas.code as coa_code,
+        coas.title as coa_title,
+        rkap_work_plans.program_code,
+        rkap_work_plans.program_name,
+        directorates.code as directorate_code,
+        departments.code as department_code,
+        bureaus.code as bureau_code,
+        SUM(rkap_budget_items.total_price) as budget,
+        SUM(COALESCE(rl.realization_total, 0)) as realization,
+        SUM(rkap_budget_items.projection) as projection
+      ')
+      ->groupBy(
+        'coas.code',
+        'coas.title',
+        'rkap_work_plans.program_code',
+        'rkap_work_plans.program_name',
+        'directorates.code',
+        'departments.code',
+        'bureaus.code'
+      )
+      ->orderBy('coas.code')
+      ->orderBy('rkap_work_plans.program_code')
+      ->get();
+
+    return response()->json(['data' => $rows]);
   }
 
   public function summaryDeptCashflow(Request $request)

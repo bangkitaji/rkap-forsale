@@ -47,10 +47,15 @@ class CashflowSyncController extends Controller
 
         $period = RkapPeriod::findOrFail($validated['period_id']);
 
-        // ── 1. Find or create the RKAP financial_version for this period year ────
+        // ── 1. Find or create the RKAP and PROGNOSA financial_versions for this period year ────
         $version = FinancialVersion::firstOrCreate(
             ['name' => 'RKAP', 'year' => $period->year],
             ['name' => 'RKAP', 'year' => $period->year]
+        );
+
+        $prognosaVersion = FinancialVersion::firstOrCreate(
+            ['name' => 'PROGNOSA', 'year' => $period->year],
+            ['name' => 'PROGNOSA', 'year' => $period->year]
         );
 
         // ── 2. Get all cf_line_items that belong to category 1 (Operasi) ─────────
@@ -91,7 +96,8 @@ class CashflowSyncController extends Controller
 
         $cf0b9GroupId = array_search('CF0B9', $cashflowGroupMap->toArray());
  
-        $accumulated = DB::table('rkap_budget_items')
+        // ── 4a. Accumulate RKAP Budget totals (total_price) ──────────────────────
+        $accumulatedRkap = DB::table('rkap_budget_items')
             ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
             ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
             ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
@@ -107,7 +113,24 @@ class CashflowSyncController extends Controller
             ->pluck('total', 'cashflow_group_id')
             ->toArray();
 
-        // ── 5. Upsert into cash_flow_facts ────────────────────────────────────────
+        // ── 4b. Accumulate PROGNOSA Projection totals (projection) ────────────────
+        $accumulatedPrognosa = DB::table('rkap_budget_items')
+            ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
+            ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
+            ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+            ->where('rkap_submissions.rkap_period_id', $period->id)
+            ->whereNull('coas.deleted_at')
+            ->whereIn('coas.cashflow_group_id', $groupIds)
+            ->selectRaw(
+                $cf0b9GroupId !== false
+                ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) ELSE rkap_budget_items.projection END) as total"
+                : "coas.cashflow_group_id, SUM(rkap_budget_items.projection) as total"
+            )
+            ->groupBy('coas.cashflow_group_id')
+            ->pluck('total', 'cashflow_group_id')
+            ->toArray();
+
+        // ── 5. Upsert into cash_flow_facts for both versions ─────────────────────
         $now = now();
         $upsertedCount = 0;
         $skippedCount  = 0;
@@ -118,32 +141,57 @@ class CashflowSyncController extends Controller
                 continue;
             }
 
-            $rawAmount = (float) ($accumulated[$groupId] ?? 0.0);
-
-            // Negate for outflow items (budget items entered as positive, but
-            // in the cashflow statement outflows are shown as negatives)
+            // --- RKAP Version Upsert ---
+            $rawAmountRkap = (float) ($accumulatedRkap[$groupId] ?? 0.0);
             if (in_array($itemCode, self::OUTFLOW_ITEM_CODES)) {
-                $rawAmount = -$rawAmount;
+                $rawAmountRkap = -$rawAmountRkap;
             }
 
-            // Upsert: update if fact exists for this (item_code, version_id) pair
-            $existing = DB::table('cash_flow_facts')
+            $existingRkap = DB::table('cash_flow_facts')
                 ->where('item_code', $itemCode)
                 ->where('version_id', $version->version_id)
                 ->first();
 
-            if ($existing) {
+            if ($existingRkap) {
                 DB::table('cash_flow_facts')
-                    ->where('fact_id', $existing->fact_id)
+                    ->where('fact_id', $existingRkap->fact_id)
                     ->update([
-                        'amount'     => $rawAmount,
+                        'amount'     => $rawAmountRkap,
                         'updated_at' => $now,
                     ]);
             } else {
                 DB::table('cash_flow_facts')->insert([
                     'item_code'  => $itemCode,
                     'version_id' => $version->version_id,
-                    'amount'     => $rawAmount,
+                    'amount'     => $rawAmountRkap,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            // --- PROGNOSA Version Upsert ---
+            $rawAmountPrognosa = (float) ($accumulatedPrognosa[$groupId] ?? 0.0);
+            if (in_array($itemCode, self::OUTFLOW_ITEM_CODES)) {
+                $rawAmountPrognosa = -$rawAmountPrognosa;
+            }
+
+            $existingPrognosa = DB::table('cash_flow_facts')
+                ->where('item_code', $itemCode)
+                ->where('version_id', $prognosaVersion->version_id)
+                ->first();
+
+            if ($existingPrognosa) {
+                DB::table('cash_flow_facts')
+                    ->where('fact_id', $existingPrognosa->fact_id)
+                    ->update([
+                        'amount'     => $rawAmountPrognosa,
+                        'updated_at' => $now,
+                    ]);
+            } else {
+                DB::table('cash_flow_facts')->insert([
+                    'item_code'  => $itemCode,
+                    'version_id' => $prognosaVersion->version_id,
+                    'amount'     => $rawAmountPrognosa,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
@@ -154,7 +202,7 @@ class CashflowSyncController extends Controller
 
         return response()->json([
             'success'    => true,
-            'message'    => "Sinkronisasi berhasil. {$upsertedCount} item arus kas operasi diperbarui untuk versi \"{$version->name} {$version->year}\".",
+            'message'    => "Sinkronisasi berhasil. {$upsertedCount} item arus kas operasi diperbarui untuk versi \"{$version->name} {$version->year}\" dan \"{$prognosaVersion->name} {$prognosaVersion->year}\".",
             'version_id' => $version->version_id,
             'version'    => "{$version->name} {$version->year}",
             'period'     => $period->title ?? "Periode {$period->year}",

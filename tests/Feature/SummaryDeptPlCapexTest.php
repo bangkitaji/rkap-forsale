@@ -16,6 +16,7 @@ class SummaryDeptPlCapexTest extends TestCase
     protected User $adminUser;
     protected User $regularUser;
     protected RkapPeriod $activePeriod;
+    protected \App\Models\Department $department;
 
     protected function setUp(): void
     {
@@ -49,6 +50,10 @@ class SummaryDeptPlCapexTest extends TestCase
             'year' => 2026,
             'status' => 'finalized',
         ]);
+
+        // 4. Create Directorate and Department
+        $dir = \App\Models\Directorate::create(['code' => 'DIR_TEST', 'name' => 'Test Directorate']);
+        $this->department = \App\Models\Department::create(['code' => 'DEPT_TEST', 'name' => 'Test Department', 'directorate_id' => $dir->id]);
     }
 
     public function test_guest_cannot_access_summary_dept_pl_capex(): void
@@ -73,6 +78,26 @@ class SummaryDeptPlCapexTest extends TestCase
         $response->assertSee('TOTAL KONSOLIDASI CAPEX');
     }
 
+    public function test_admin_can_compare_different_periods_unified_summary(): void
+    {
+        $period2027 = RkapPeriod::create([
+            'title' => 'RKAP 2027',
+            'year' => 2027,
+            'status' => 'finalized',
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get("/analytics/summary-dept/pl-capex?budget_period_id={$period2027->id}&realization_period_id={$this->activePeriod->id}&projection_period_id={$this->activePeriod->id}");
+        $response->assertStatus(200);
+        $response->assertSee('Matriks Laba Rugi &amp; Capex per Departemen', false);
+        $response->assertSee('LABA RUGI (OPERASIONAL)');
+        $response->assertSee('Periode Anggaran (B)');
+        $response->assertSee('Periode Realisasi (R)');
+        $response->assertSee('Periode Proyeksi (P)');
+        $response->assertSee('B (2027)');
+        $response->assertSee('R (2026)');
+        $response->assertSee('P (2026)');
+    }
+
     public function test_old_summary_dept_routes_are_removed(): void
     {
         $this->actingAs($this->adminUser);
@@ -82,5 +107,24 @@ class SummaryDeptPlCapexTest extends TestCase
 
         $response2 = $this->get('/analytics/summary-dept/capex');
         $response2->assertStatus(404);
+    }
+
+    public function test_guest_cannot_access_summary_dept_detail(): void
+    {
+        $response = $this->get('/analytics/summary-dept/detail');
+        $response->assertRedirect('/login');
+    }
+
+    public function test_user_without_permission_cannot_access_summary_dept_detail(): void
+    {
+        $response = $this->actingAs($this->regularUser)->get("/analytics/summary-dept/detail?period_id={$this->activePeriod->id}&department_id={$this->department->id}&report_group_id=capex");
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_can_access_summary_dept_detail(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get("/analytics/summary-dept/detail?period_id={$this->activePeriod->id}&department_id={$this->department->id}&report_group_id=capex");
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['data']);
     }
 }

@@ -18,6 +18,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/analytics/capex', [Analytics::class, 'capex'])->name('analytics-capex');
   Route::get('/analytics/summary-dept/pl-capex', [Analytics::class, 'summaryDeptPlCapex'])->name('analytics-summary-dept-pl-capex')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/summary-dept/cashflow', [Analytics::class, 'summaryDeptCashflow'])->name('analytics-summary-dept-cashflow')->middleware('permission:analytics.summary.dept');
+  Route::get('/analytics/summary-dept/detail', [Analytics::class, 'summaryDeptDetail'])->name('analytics-summary-dept-detail')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/coa-group-detail', [Analytics::class, 'coaGroupDetail'])->name('analytics.coa-group-detail');
   Route::get('/analytics/coa-detail', [Analytics::class, 'coaDetail'])->name('analytics.coa-detail');
   Route::get('/analytics/cashflow-group-detail', [Analytics::class, 'cashflowGroupDetail'])->name('analytics.cashflow-group-detail');
