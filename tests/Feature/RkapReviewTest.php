@@ -713,5 +713,59 @@ class RkapReviewTest extends TestCase
 
         $this->assertEquals('COA-NEW', $bi->fresh()->account_code);
     }
+
+    public function test_approver_can_approve_all_activities(): void
+    {
+        $wp1 = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'P1',
+            'program_name' => 'Program 1',
+            'quantity' => 1,
+            'approval_status' => 'pending',
+        ]);
+        $wp2 = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'P2',
+            'program_name' => 'Program 2',
+            'quantity' => 1,
+            'approval_status' => 'pending',
+        ]);
+
+        $this->actingAs($this->kadept);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('approveAllActivities')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('approved', $wp1->fresh()->approval_status);
+        $this->assertEquals('approved', $wp2->fresh()->approval_status);
+    }
+
+    public function test_approver_can_reject_all_activities(): void
+    {
+        $wp1 = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'P1',
+            'program_name' => 'Program 1',
+            'quantity' => 1,
+            'approval_status' => 'pending',
+        ]);
+        $wp2 = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission->id,
+            'program_code' => 'P2',
+            'program_name' => 'Program 2',
+            'quantity' => 1,
+            'approval_status' => 'pending',
+        ]);
+
+        $this->actingAs($this->kadept);
+
+        Livewire::test(RkapApprovalReview::class, ['id' => $this->submission->id])
+            ->call('rejectAllActivities')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('rejected', $wp1->fresh()->approval_status);
+        $this->assertEquals('rejected', $wp2->fresh()->approval_status);
+    }
 }
 

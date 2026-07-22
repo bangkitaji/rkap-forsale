@@ -81,6 +81,32 @@ class RkapApprovalReview extends Component
         $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups']);
     }
 
+    public function approveAllActivities(): void
+    {
+        foreach ($this->submission->workPlans as $wp) {
+            $this->activityStatuses[$wp->id] = 'approved';
+            $this->activityRevisionNotes[$wp->id] = '';
+            $wp->update([
+                'approval_status' => 'approved',
+                'revision_notes' => null,
+            ]);
+        }
+        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups']);
+        session()->flash('message', __('Semua kegiatan berhasil ditandai Disetujui.'));
+    }
+
+    public function rejectAllActivities(): void
+    {
+        foreach ($this->submission->workPlans as $wp) {
+            $this->activityStatuses[$wp->id] = 'rejected';
+            $wp->update([
+                'approval_status' => 'rejected',
+            ]);
+        }
+        $this->submission->refresh()->load(['workPlans.budgetItems.monthlies', 'workPlans.budgetItems.cashOuts', 'workPlans.budgetItems.coa.coaGroup', 'workPlans.budgetItems.coa.cashflowGroup', 'workPlans.budgetItems.coa.differenceGroups']);
+        session()->flash('message', __('Semua kegiatan berhasil ditandai Ditolak. Silakan berikan catatan revisi.'));
+    }
+
     public function updateActivityRevisionNotes(int $workPlanId, string $notes): void
     {
         $this->activityRevisionNotes[$workPlanId] = $notes;

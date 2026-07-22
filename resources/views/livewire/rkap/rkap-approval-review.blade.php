@@ -364,11 +364,22 @@
 
             {{-- Activity progress summary --}}
             <div class="bg-lighter rounded p-3 mb-2 border">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <small class="text-muted fw-semibold">Status Kegiatan</small>
-                <small
-                  class="fw-bold text-{{ $allApproved ? 'success' : 'secondary' }}">{{ $approvedCount }}/{{ $totalActivities }}
-                  Disetujui</small>
+              <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+                <small class="text-muted fw-semibold">Status Kegiatan ({{ $approvedCount }}/{{ $totalActivities }} Disetujui)</small>
+                <div class="d-flex align-items-center gap-1">
+                  <button type="button" class="btn btn-xs btn-outline-success py-1 px-2 rkap-font-07"
+                    wire:click="approveAllActivities"
+                    wire:key="btn-approve-all-activities"
+                    title="{{ __('Setujui Semua Kegiatan') }}">
+                    <i class="bx bx-check-double me-1"></i>{{ __('Setujui Semua') }}
+                  </button>
+                  <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 rkap-font-07"
+                    wire:click="rejectAllActivities"
+                    wire:key="btn-reject-all-activities"
+                    title="{{ __('Tolak Semua Kegiatan') }}">
+                    <i class="bx bx-x-circle me-1"></i>{{ __('Tolak Semua') }}
+                  </button>
+                </div>
               </div>
               <div class="progress mb-2 rkap-h-6">
                 @if ($totalActivities > 0)
