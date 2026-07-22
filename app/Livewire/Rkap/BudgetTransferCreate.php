@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\RkapPeriod;
 use App\Models\RkapSubmission;
 use App\Models\RkapWorkPlan;
+use App\Models\RkapBudgetItem;
 use App\Models\Bureau;
 use App\Services\BudgetTransferService;
 use Illuminate\Support\Facades\Auth;
@@ -16,11 +17,20 @@ class BudgetTransferCreate extends Component
     public ?int $periodId = null;
     public ?int $targetBureauId = null;
     public string $notes = '';
-    public array $selectedWorkPlans = []; // [wpId => boolean]
+    public array $selectedItems = []; // [budgetItemId => bool]
+    public array $transferAmounts = []; // [budgetItemId => float|string]
 
     public function updatedPeriodId(): void
     {
-        $this->selectedWorkPlans = [];
+        $this->selectedItems = [];
+        $this->transferAmounts = [];
+    }
+
+    public function toggleSelectItem(int $budgetItemId, float $defaultAmount): void
+    {
+        if (!isset($this->transferAmounts[$budgetItemId]) || empty($this->transferAmounts[$budgetItemId])) {
+            $this->transferAmounts[$budgetItemId] = $defaultAmount;
+        }
     }
 
     public function submit(BudgetTransferService $service)
@@ -40,15 +50,41 @@ class BudgetTransferCreate extends Component
             'targetBureauId.required' => __('Biro tujuan wajib dipilih.'),
         ]);
 
-        $selectedWpIds = array_keys(array_filter($this->selectedWorkPlans));
+        $selectedItemIds = array_keys(array_filter($this->selectedItems));
 
-        if (empty($selectedWpIds)) {
-            session()->flash('error', __('Pilih minimal satu program kerja atau kegiatan untuk ditransfer.'));
+        if (empty($selectedItemIds)) {
+            session()->flash('error', __('Pilih minimal satu kegiatan/item anggaran untuk ditransfer.'));
             return;
         }
 
+        $itemsData = [];
+        foreach ($selectedItemIds as $itemId) {
+            $bi = RkapBudgetItem::find($itemId);
+            if (!$bi) {
+                continue;
+            }
+            $amount = isset($this->transferAmounts[$itemId]) && $this->transferAmounts[$itemId] !== ''
+                ? (float) $this->transferAmounts[$itemId]
+                : (float) $bi->total_price;
+
+            if ($amount <= 0) {
+                session()->flash('error', __('Nominal transfer untuk kegiatan "' . $bi->description . '" harus lebih besar dari 0.'));
+                return;
+            }
+            if ($amount > (float) $bi->total_price) {
+                session()->flash('error', __('Nominal transfer untuk kegiatan "' . $bi->description . '" tidak boleh melebihi budget yang tersedia (Rp ' . number_format($bi->total_price, 0, ',', '.') . ').'));
+                return;
+            }
+
+            $itemsData[] = [
+                'work_plan_id' => $bi->rkap_work_plan_id,
+                'budget_item_id' => $bi->id,
+                'amount_transferred' => $amount,
+            ];
+        }
+
         try {
-            $service->createTransfer($user, $this->periodId, $this->targetBureauId, $selectedWpIds, $this->notes);
+            $service->createTransfer($user, $this->periodId, $this->targetBureauId, $itemsData, $this->notes);
             session()->flash('message', __('Pengajuan transfer budget berhasil dibuat dan menunggu approval dari biro tujuan.'));
             return redirect()->route('rkap-budget-transfers');
         } catch (Exception $e) {
@@ -95,7 +131,7 @@ class BudgetTransferCreate extends Component
 
             if ($submission) {
                 $workPlans = RkapWorkPlan::where('rkap_submission_id', $submission->id)
-                    ->with('budgetItems')
+                    ->with(['workPlan', 'budgetItems'])
                     ->get();
             }
         }

@@ -45,7 +45,7 @@
             </div>
 
             <div>
-              <span class="text-muted small d-block">{{ __('Total Anggaran') }}</span>
+              <span class="text-muted small d-block">{{ __('Total Nominal Transfer') }}</span>
               <strong class="text-primary fs-5">Rp {{ number_format($transfer->total_amount, 0, ',', '.') }}</strong>
             </div>
 
@@ -108,77 +108,61 @@
       </div>
     </div>
 
-    {{-- Program Kerja List details --}}
+    {{-- Items List details --}}
     <div class="col-md-8">
       @foreach($transfer->items as $idx => $item)
       @php
       $wp = $item->workPlan;
-      $wpTotal = $wp->budgetItems->sum('total_price');
+      $bi = $item->budgetItem;
+      $transferredAmount = $item->amount_transferred ?: ($bi ? $bi->total_price : $wp->budgetItems->sum('total_price'));
       @endphp
       <div class="card mb-4 border-start border-primary border-3" wire:key="item-card-{{ $item->id }}">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
           <div>
             <span class="badge bg-label-primary mb-1">Item Transfer {{ $idx + 1 }}</span>
-            @if($wp->workPlan)
+            @if($wp && $wp->workPlan)
             <div class="small text-muted mb-1">
               <i class="bx bx-briefcase me-1"></i><strong>{{ __('Program Kerja:') }}</strong> {{ $wp->workPlan->code }} — {{ $wp->workPlan->title }}
             </div>
             @endif
-            <h5 class="card-title mb-0"><i class="bx bx-task me-1 text-primary"></i>{{ __('Kegiatan:') }} {{ $wp->program_code }} — {{ $wp->program_name }}</h5>
+            <h5 class="card-title mb-0">
+              <i class="bx bx-task me-1 text-primary"></i>
+              @if($bi)
+                {{ $bi->account_code }} — {{ $bi->description }}
+              @elseif($wp)
+                {{ $wp->program_code }} — {{ $wp->program_name }}
+              @endif
+            </h5>
           </div>
-          <strong class="text-primary fs-5">Rp {{ number_format($wpTotal, 0, ',', '.') }}</strong>
+          <div class="text-end">
+            <span class="small text-muted d-block">{{ __('Nominal Ditransfer') }}</span>
+            <strong class="text-primary fs-5">Rp {{ number_format($transferredAmount, 0, ',', '.') }}</strong>
+          </div>
         </div>
         <div class="card-body pt-4">
+          @if($bi)
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <span class="text-muted small d-block">{{ __('Program Kerja Induk') }}</span>
+              <strong class="text-dark">{{ $wp->program_code }} — {{ $wp->program_name }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted small d-block">{{ __('Budget Saat Ini (Biro Asal)') }}</span>
+              <strong class="text-dark">Rp {{ number_format($bi->total_price, 0, ',', '.') }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted small d-block">{{ __('Estimasi Sisa Budget (Biro Asal)') }}</span>
+              <strong class="text-success">Rp {{ number_format(max(0, $bi->total_price - $transferredAmount), 0, ',', '.') }}</strong>
+            </div>
+          </div>
+          @elseif($wp)
           @if($wp->description)
           <div class="mb-3">
             <span class="text-muted small d-block">{{ __('Deskripsi / Tujuan') }}</span>
             <p class="mb-0 text-dark">{{ $wp->description }}</p>
           </div>
           @endif
-
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <span class="text-muted small d-block">{{ __('Target Output') }}</span>
-              <strong class="text-dark">{{ $wp->output_target ?: '-' }}</strong>
-            </div>
-            <div class="col-md-6">
-              <span class="text-muted small d-block">{{ __('Volume & Satuan') }}</span>
-              <strong class="text-dark">{{ $wp->quantity }} {{ $wp->unit ?: '-' }}</strong>
-            </div>
-          </div>
-
-          {{-- Budget Items Detail Table --}}
-          <h6 class="fw-bold border-bottom pb-2 mb-3"><i class="bx bx-list-check me-1 text-primary"></i>{{ __('Rincian Anggaran') }}</h6>
-          <div class="table-responsive text-nowrap">
-            <table class="table table-bordered table-sm">
-              <thead class="table-light">
-                <tr>
-                  <th>{{ __('COA / Detail Belanja') }}</th>
-                  <th class="text-center">{{ __('Vol') }}</th>
-                  <th>{{ __('Satuan') }}</th>
-                  <th class="text-end">{{ __('Harga Satuan') }}</th>
-                  <th class="text-end">{{ __('Total') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach($wp->budgetItems as $bi)
-                <tr>
-                  <td>
-                    <span class="badge bg-label-info">{{ $bi->account_code }}</span>
-                    <strong class="text-dark d-block mt-1">{{ $bi->description }}</strong>
-                    @if($bi->remarks)
-                    <small class="text-muted">{{ $bi->remarks }}</small>
-                    @endif
-                  </td>
-                  <td class="text-center">{{ $bi->quantity }}</td>
-                  <td>{{ $bi->unit }}</td>
-                  <td class="text-end">Rp {{ number_format($bi->unit_price, 0, ',', '.') }}</td>
-                  <td class="text-end"><strong class="text-primary">Rp {{ number_format($bi->total_price, 0, ',', '.') }}</strong></td>
-                </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
+          @endif
         </div>
       </div>
       @endforeach

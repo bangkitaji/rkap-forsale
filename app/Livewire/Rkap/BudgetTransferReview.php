@@ -23,9 +23,7 @@ class BudgetTransferReview extends Component
             'reviewer',
             'items.workPlan.activity.coas',
             'items.workPlan.budgetItems.monthlies',
-            'items.workPlan.budgetItems.cashOuts',
-            'items.workPlan.budgetItems.realizations',
-            'items.workPlan.budgetItems.projections',
+            'items.budgetItem',
         ])->findOrFail($id);
     }
 
@@ -39,7 +37,7 @@ class BudgetTransferReview extends Component
 
         try {
             $service->approveTransfer($this->transfer, $user, $this->reviewNotes);
-            session()->flash('message', __('Transfer budget berhasil disetujui. Program kerja dan seluruh data anggaran telah dipindahkan ke Biro Anda.'));
+            session()->flash('message', __('Transfer budget berhasil disetujui. Program kerja dan kegiatan beserta anggarannya telah dipindahkan ke Biro Anda.'));
             $this->redirectRoute('rkap-budget-transfers');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());

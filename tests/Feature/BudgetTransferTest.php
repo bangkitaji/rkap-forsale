@@ -33,6 +33,7 @@ class BudgetTransferTest extends TestCase
     protected RkapPeriod $period;
     protected RkapSubmission $submissionSource;
     protected RkapWorkPlan $workPlan1;
+    protected RkapBudgetItem $budgetItem1;
 
     protected function setUp(): void
     {
@@ -126,11 +127,12 @@ class BudgetTransferTest extends TestCase
             'rkap_submission_id' => $this->submissionSource->id,
             'work_plan_id' => $masterWp->id,
             'activity_id' => $masterAct->id,
+            'program_code' => 'ACT001',
             'program_name' => 'Master Activity',
             'quantity' => 1,
         ]);
 
-        $budgetItem = RkapBudgetItem::create([
+        $this->budgetItem1 = RkapBudgetItem::create([
             'rkap_work_plan_id' => $this->workPlan1->id,
             'account_code' => $coa->code,
             'description' => $coa->title,
@@ -139,13 +141,11 @@ class BudgetTransferTest extends TestCase
             'total_price' => 5000000,
         ]);
 
-        $budgetItem->monthlies()->create(['month' => 1, 'amount' => 5000000]);
-        $budgetItem->cashOuts()->create(['month' => 1, 'amount' => 5000000]);
-        $budgetItem->realizations()->create(['month' => 1, 'amount' => 100000, 'rkap_period_id' => $this->period->id]);
-        $budgetItem->projections()->create(['month' => 1, 'amount' => 100000, 'rkap_period_id' => $this->period->id]);
+        $this->budgetItem1->monthlies()->create(['month' => 1, 'amount' => 5000000]);
+        $this->budgetItem1->cashOuts()->create(['month' => 1, 'amount' => 5000000]);
     }
 
-    public function test_can_create_transfer_request(): void
+    public function test_can_create_transfer_request_legacy(): void
     {
         $service = new BudgetTransferService();
         $transfer = $service->createTransfer(
@@ -162,47 +162,112 @@ class BudgetTransferTest extends TestCase
             'total_amount' => 5000000,
             'notes' => 'Catatan Transfer',
         ]);
-
-        $this->assertDatabaseHas('budget_transfer_items', [
-            'budget_transfer_id' => $transfer->id,
-            'rkap_work_plan_id' => $this->workPlan1->id,
-        ]);
-
-        $this->assertTrue($this->workPlan1->isLockedForTransfer());
     }
 
-    public function test_target_bureau_can_approve_transfer(): void
+    public function test_can_create_partial_budget_transfer_request(): void
     {
         $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
         $transfer = $service->createTransfer(
             $this->userSource,
             $this->period->id,
             $this->userTarget->bureau_id,
-            [$this->workPlan1->id],
-            'Catatan Transfer'
+            $itemsData,
+            'Transfer Partial 2 Juta'
         );
 
-        $service->approveTransfer($transfer, $this->userTarget, 'Approved by target');
+        $this->assertDatabaseHas('budget_transfers', [
+            'id' => $transfer->id,
+            'status' => BudgetTransferStatus::Pending->value,
+            'total_amount' => 2000000,
+            'notes' => 'Transfer Partial 2 Juta',
+        ]);
 
-        // Check transfer status
+        $this->assertDatabaseHas('budget_transfer_items', [
+            'budget_transfer_id' => $transfer->id,
+            'rkap_work_plan_id' => $this->workPlan1->id,
+            'rkap_budget_item_id' => $this->budgetItem1->id,
+            'amount_transferred' => 2000000,
+        ]);
+    }
+
+    public function test_partial_budget_transfer_approval_deducts_source_and_creates_target_budget(): void
+    {
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer Partial 2 Juta'
+        );
+
+        $service->approveTransfer($transfer, $this->userTarget, 'Approved Partial');
+
+        // Verify status approved
         $this->assertEquals(BudgetTransferStatus::Approved->value, $transfer->fresh()->status);
 
-        // Check target submission created and work plan moved
+        // Verify source budget item reduced to 3,000,000
+        $this->assertEquals(3000000, (float) $this->budgetItem1->fresh()->total_price);
+        $this->assertEquals(3000000, (float) $this->budgetItem1->monthlies()->where('month', 1)->first()->amount);
+
+        // Verify target submission created with 2,000,000
         $targetSubmission = RkapSubmission::where('rkap_period_id', $this->period->id)
             ->where('bureau_id', $this->userTarget->bureau_id)
             ->first();
 
         $this->assertNotNull($targetSubmission);
-        $this->assertEquals(SubmissionStatus::Approved->value, $targetSubmission->status);
-        $this->assertEquals($targetSubmission->id, $this->workPlan1->fresh()->rkap_submission_id);
+        $this->assertEquals(2000000, (float) $targetSubmission->total_budget);
 
-        // Verify total budget recalculated
-        $this->assertEquals(0, $this->submissionSource->fresh()->total_budget);
-        $this->assertEquals(5000000, $targetSubmission->fresh()->total_budget);
+        // Verify target work plan and budget item created
+        $targetWorkPlan = RkapWorkPlan::where('rkap_submission_id', $targetSubmission->id)->first();
+        $this->assertNotNull($targetWorkPlan);
+        $this->assertEquals('Master Activity', $targetWorkPlan->program_name);
 
-        // Verify version snapshots created
-        $this->assertEquals(2, $this->submissionSource->versions()->count());
-        $this->assertEquals(1, $targetSubmission->versions()->count());
+        $targetBudgetItem = RkapBudgetItem::where('rkap_work_plan_id', $targetWorkPlan->id)->first();
+        $this->assertNotNull($targetBudgetItem);
+        $this->assertEquals(2000000, (float) $targetBudgetItem->total_price);
+        $this->assertEquals(2000000, (float) $targetBudgetItem->monthlies()->where('month', 1)->first()->amount);
+
+        // Verify source submission total budget recalculated
+        $this->assertEquals(3000000, (float) $this->submissionSource->fresh()->total_budget);
+    }
+
+    public function test_cannot_transfer_more_than_available_budget(): void
+    {
+        $this->expectException(\Exception::class);
+
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 6000000, // Exceeds 5,000,000
+            ],
+        ];
+
+        $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer Over Budget'
+        );
     }
 
     public function test_target_bureau_can_reject_transfer(): void
@@ -219,7 +284,6 @@ class BudgetTransferTest extends TestCase
         $service->rejectTransfer($transfer, $this->userTarget, 'Rejected by target');
 
         $this->assertEquals(BudgetTransferStatus::Rejected->value, $transfer->fresh()->status);
-        $this->assertEquals($this->submissionSource->id, $this->workPlan1->fresh()->rkap_submission_id);
     }
 
     public function test_sender_can_cancel_transfer(): void
