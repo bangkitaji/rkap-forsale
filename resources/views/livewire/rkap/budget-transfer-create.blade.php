@@ -69,7 +69,7 @@
       <div class="col-lg-8">
         <div class="card shadow-sm">
           <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0 fs-6 fw-bold"><i class="bx bx-list-check me-1 text-primary"></i>{{ __('Pilih Kegiatan & Nominal Transfer') }}</h5>
+            <h5 class="card-title mb-0 fs-6 fw-bold"><i class="bx bx-list-check me-1 text-primary"></i>{{ __('Pilih Kegiatan & Nominal Budget') }}</h5>
             @if($periodId && $workPlans->isNotEmpty())
             @php
               $selectedCount = count(array_filter($selectedItems));
@@ -94,8 +94,8 @@
                 <thead class="table-light sticky-top shadow-xs" style="z-index: 2;">
                   <tr>
                     <th class="w-px-40 text-center"></th>
-                    <th>{{ __('Program Kerja / Kegiatan & Budget Awal') }}</th>
-                    <th style="width: 280px;">{{ __('Nominal Transfer Usulan') }}</th>
+                    <th>{{ __('Kegiatan & Budget Awal') }}</th>
+                    <th style="width: 260px;">{{ __('Nominal Budget Ditransfer') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,7 +136,9 @@
                         <span class="badge bg-label-info mb-1"><i class="bx bx-hash me-1"></i>{{ $bi->account_code }}</span>
                         <strong class="text-dark d-block"><i class="bx bx-task me-1"></i>{{ $bi->description }}</strong>
                         <div class="mt-1 d-flex align-items-center gap-2">
-                          <span class="badge bg-label-secondary"><i class="bx bx-wallet me-1"></i>Budget Awal: <strong>Rp {{ number_format($bi->total_price, 0, ',', '.') }}</strong></span>
+                          <span class="badge bg-label-secondary" wire:click="setFullBudget({{ $bi->id }}, {{ $bi->total_price }})" title="Klik untuk isi nominal penuh">
+                            <i class="bx bx-wallet me-1"></i>Budget Awal: <strong>Rp {{ number_format($bi->total_price, 0, ',', '.') }}</strong>
+                          </span>
                         </div>
                         @if($bi->remarks)
                         <small class="text-muted d-block mt-1">{{ $bi->remarks }}</small>
@@ -146,12 +148,17 @@
                         @endif
                       </label>
                     </td>
-                    <td style="width: 280px;" class="align-middle">
+                    <td style="width: 260px;" class="align-middle">
                       <div x-data="{
+                          isFull: false,
                           displayValue: '',
+                          fullAmount: {{ $bi->total_price }},
                           init() {
                               this.updateDisplay($wire.get('transferAmounts.{{ $bi->id }}'));
-                              $watch('$wire.transferAmounts.{{ $bi->id }}', val => this.updateDisplay(val));
+                              $watch('$wire.transferAmounts.{{ $bi->id }}', val => {
+                                  this.updateDisplay(val);
+                                  this.isFull = (val !== null && val !== undefined && parseFloat(val) === this.fullAmount);
+                              });
                           },
                           updateDisplay(val) {
                               if (val === null || val === undefined || val === '') {
@@ -167,20 +174,42 @@
                                   let num = parseInt(clean, 10);
                                   $wire.set('transferAmounts.{{ $bi->id }}', num);
                                   this.displayValue = num.toLocaleString('id-ID');
+                                  this.isFull = (num === this.fullAmount);
                               } else {
                                   $wire.set('transferAmounts.{{ $bi->id }}', '');
                                   this.displayValue = '';
+                                  this.isFull = false;
+                              }
+                          },
+                          toggleFull(e) {
+                              if (e.target.checked) {
+                                  $wire.set('selectedItems.{{ $bi->id }}', true);
+                                  $wire.set('transferAmounts.{{ $bi->id }}', this.fullAmount);
+                                  this.displayValue = this.fullAmount.toLocaleString('id-ID');
+                                  this.isFull = true;
+                              } else {
+                                  this.isFull = false;
                               }
                           }
                       }" wire:key="input-container-{{ $bi->id }}">
-                        <div class="input-group">
+                        <div class="input-group input-group-sm">
                           <span class="input-group-text fw-bold">Rp</span>
                           <input type="text"
-                            class="form-control fw-semibold text-primary"
+                            class="form-control form-control-sm fw-semibold text-primary"
                             :value="displayValue"
                             @input="onInput($event)"
-                            placeholder="0"
+                            placeholder="Nominal Budget"
                             @disabled(!$isSelected || $isPending || $isWpLocked)>
+                        </div>
+                        <div class="form-check mt-1 mb-0">
+                          <input class="form-check-input" type="checkbox"
+                            id="full-check-{{ $bi->id }}"
+                            :checked="isFull"
+                            @change="toggleFull($event)"
+                            @disabled($isPending || $isWpLocked)>
+                          <label class="form-check-label small text-muted cursor-pointer fs-7" for="full-check-{{ $bi->id }}">
+                            {{ __('Transfer 100% nominal') }}
+                          </label>
                         </div>
                       </div>
                     </td>

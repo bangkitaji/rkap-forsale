@@ -248,6 +248,43 @@ class BudgetTransferTest extends TestCase
         $this->assertEquals(3000000, (float) $this->submissionSource->fresh()->total_budget);
     }
 
+    public function test_full_budget_transfer_transfers_realization_projection_and_cashout(): void
+    {
+        $this->budgetItem1->realizations()->create(['month' => 1, 'amount' => 100000, 'rkap_period_id' => $this->period->id]);
+        $this->budgetItem1->projections()->create(['month' => 1, 'amount' => 100000, 'rkap_period_id' => $this->period->id]);
+
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 5000000, // 100% transfer
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer 100%'
+        );
+
+        $service->approveTransfer($transfer, $this->userTarget, 'Approved 100%');
+
+        $targetSubmission = RkapSubmission::where('rkap_period_id', $this->period->id)
+            ->where('bureau_id', $this->userTarget->bureau_id)
+            ->first();
+
+        $targetWorkPlan = RkapWorkPlan::where('rkap_submission_id', $targetSubmission->id)->first();
+        $targetBudgetItem = RkapBudgetItem::where('rkap_work_plan_id', $targetWorkPlan->id)->first();
+
+        // Verify realization, projection, and cashout moved to target item
+        $this->assertEquals(1, $targetBudgetItem->realizations()->count());
+        $this->assertEquals(100000, (float) $targetBudgetItem->realizations()->first()->amount);
+        $this->assertEquals(0, $this->budgetItem1->fresh()->realizations()->count());
+    }
+
     public function test_cannot_transfer_more_than_available_budget(): void
     {
         $this->expectException(\Exception::class);

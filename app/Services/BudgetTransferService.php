@@ -296,6 +296,14 @@ class BudgetTransferService
                                     'amount' => $mAmount,
                                 ]);
                             }
+
+                            // If 100% budget transfer, also transfer realization, projection, and cash out records
+                            $isFullTransfer = ($origTotal > 0 && abs($transferAmount - $origTotal) < 0.01) || ($ratio >= 1.0);
+                            if ($isFullTransfer) {
+                                $sourceBudgetItem->realizations()->update(['rkap_budget_item_id' => $targetBudgetItem->id]);
+                                $sourceBudgetItem->projections()->update(['rkap_budget_item_id' => $targetBudgetItem->id]);
+                                $sourceBudgetItem->cashOuts()->update(['rkap_budget_item_id' => $targetBudgetItem->id]);
+                            }
                         }
                     } else {
                         // Fallback for whole workplan transfer

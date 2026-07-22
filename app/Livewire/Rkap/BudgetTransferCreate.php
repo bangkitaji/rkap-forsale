@@ -33,6 +33,44 @@ class BudgetTransferCreate extends Component
         }
     }
 
+    public function setFullBudget(int $budgetItemId, float $totalPrice): void
+    {
+        $this->selectedItems[$budgetItemId] = true;
+        $this->transferAmounts[$budgetItemId] = $totalPrice;
+    }
+
+    public function selectAllFullBudget(): void
+    {
+        if (!$this->periodId) return;
+
+        $user = Auth::user();
+        if (!$user || !$user->bureau_id) return;
+
+        $submission = RkapSubmission::where('rkap_period_id', $this->periodId)
+            ->where('bureau_id', $user->bureau_id)
+            ->where('status', \App\Enums\SubmissionStatus::Approved->value)
+            ->first();
+
+        if (!$submission) return;
+
+        $workPlans = RkapWorkPlan::where('rkap_submission_id', $submission->id)
+            ->with('budgetItems')
+            ->get();
+
+        foreach ($workPlans as $wp) {
+            if ($wp->isLockedForTransfer()) continue;
+            foreach ($wp->budgetItems as $bi) {
+                $isPending = \App\Models\BudgetTransferItem::where('rkap_budget_item_id', $bi->id)
+                    ->whereHas('transfer', fn($q) => $q->where('status', \App\Enums\BudgetTransferStatus::Pending->value))
+                    ->exists();
+                if ($isPending) continue;
+
+                $this->selectedItems[$bi->id] = true;
+                $this->transferAmounts[$bi->id] = (float) $bi->total_price;
+            }
+        }
+    }
+
     public function submit(BudgetTransferService $service)
     {
         $user = Auth::user();
