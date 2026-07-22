@@ -338,4 +338,110 @@ class BudgetTransferTest extends TestCase
 
         $this->assertEquals(BudgetTransferStatus::Cancelled->value, $transfer->fresh()->status);
     }
+
+    public function test_admin_can_delete_zero_budget_transferred_item(): void
+    {
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $adminUser = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $adminUser->assignRole($adminRole);
+
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 5000000, // 100% transfer, leaving 0 budget
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer 100%'
+        );
+
+        $service->approveTransfer($transfer, $this->userTarget, 'Approved 100%');
+
+        $transferItem = $transfer->items()->first();
+
+        // Source budget item has 0 price
+        $this->assertEquals(0, (float) $this->budgetItem1->fresh()->total_price);
+
+        // Admin cleans up zero-budget item
+        $service->deleteZeroBudgetTransferredItem($adminUser, $transferItem->id);
+
+        $this->assertDatabaseMissing('rkap_budget_items', ['id' => $this->budgetItem1->id]);
+    }
+
+    public function test_non_admin_cannot_delete_zero_budget_transferred_item(): void
+    {
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 5000000,
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer 100%'
+        );
+
+        $service->approveTransfer($transfer, $this->userTarget, 'Approved 100%');
+
+        $transferItem = $transfer->items()->first();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Hanya Administrator');
+
+        $service->deleteZeroBudgetTransferredItem($this->userSource, $transferItem->id);
+    }
+
+    public function test_admin_cannot_delete_item_with_remaining_budget(): void
+    {
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $adminUser = User::create([
+            'name' => 'Admin User',
+            'email' => 'admin2@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $adminUser->assignRole($adminRole);
+
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000, // Partial transfer, leaving 3,000,000 budget
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer Partial'
+        );
+
+        $service->approveTransfer($transfer, $this->userTarget, 'Approved Partial');
+
+        $transferItem = $transfer->items()->first();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Hanya kegiatan dengan sisa budget Rp 0');
+
+        $service->deleteZeroBudgetTransferredItem($adminUser, $transferItem->id);
+    }
 }

@@ -67,6 +67,27 @@ class BudgetTransferReview extends Component
         return $this->transfer->isPending() && $user && $user->bureau_id === $this->transfer->target_bureau_id && $user->hasPermissionTo('rkap.transfer.review');
     }
 
+    public function deleteZeroBudgetTransferredItem(int $itemId, BudgetTransferService $service): void
+    {
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            session()->flash('error', __('Hanya Administrator yang dapat menghapus record transfer budget Rp 0.'));
+            return;
+        }
+
+        try {
+            $service->deleteZeroBudgetTransferredItem($user, $itemId);
+            session()->flash('message', __('Record kegiatan ber-budget Rp 0 di Biro Asal telah berhasil dibersihkan.'));
+            $this->transfer->refresh()->load([
+                'items.workPlan.activity.coas',
+                'items.workPlan.budgetItems.monthlies',
+                'items.budgetItem',
+            ]);
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render()
     {
         return view('livewire.rkap.budget-transfer-review')->layout('layouts.contentNavbarLayout');

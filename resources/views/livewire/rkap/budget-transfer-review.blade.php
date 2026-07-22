@@ -163,6 +163,22 @@
           </div>
           @endif
           @endif
+
+          @if ($transfer->status === \App\Enums\BudgetTransferStatus::Approved->value && auth()->user()->isAdmin())
+          @if (($bi && (float) $bi->total_price == 0) || ($wp && (float) $wp->total_budget == 0))
+          <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center bg-lighter p-2 rounded">
+            <div class="small text-muted me-2">
+              <i class="bx bx-info-circle text-warning me-1"></i>{{ __('Sisa budget di Biro Asal saat ini Rp 0. Administrator dapat membersihkan record ini dari Biro Asal.') }}
+            </div>
+            <button type="button" class="btn btn-xs btn-outline-danger text-nowrap"
+              wire:click="deleteZeroBudgetTransferredItem({{ $item->id }})"
+              wire:key="btn-delete-zero-item-{{ $item->id }}"
+              wire:confirm="{{ __('Yakin menghapus record kegiatan ber-budget Rp 0 ini dari Biro Asal? Data di Biro Tujuan tidak akan terpengaruh.') }}">
+              <i class="bx bx-trash me-1"></i>{{ __('Hapus Record Budget Rp 0') }}
+            </button>
+          </div>
+          @endif
+          @endif
         </div>
       </div>
       @endforeach

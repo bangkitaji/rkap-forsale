@@ -386,4 +386,86 @@ class BudgetTransferService
             'status' => BudgetTransferStatus::Cancelled->value,
         ]);
     }
+
+    /**
+     * Delete a zero-budget transferred item from source bureau (Admin only).
+     */
+    public function deleteZeroBudgetTransferredItem(User $admin, int $transferItemId): void
+    {
+        if (!$admin->isAdmin()) {
+            throw new Exception("Hanya Administrator yang diperbolehkan menghapus record transfer budget Rp 0.");
+        }
+
+        $item = BudgetTransferItem::with(['transfer.sourceSubmission', 'budgetItem', 'workPlan.budgetItems'])->findOrFail($transferItemId);
+
+        if ($item->transfer->status !== BudgetTransferStatus::Approved->value) {
+            throw new Exception("Hanya record transfer yang sudah disetujui (Approved) yang dapat dibersihkan.");
+        }
+
+        $budgetItem = $item->budgetItem;
+        if ($budgetItem && (float) $budgetItem->total_price > 0) {
+            throw new Exception("Hanya kegiatan dengan sisa budget Rp 0 di Biro Asal yang dapat dihapus.");
+        }
+
+        DB::transaction(function () use ($item, $budgetItem) {
+            if ($budgetItem) {
+                $workPlan = $budgetItem->workPlan;
+                $budgetItem->delete();
+
+                // If workplan has no remaining budget items, clean up workplan
+                if ($workPlan) {
+                    $workPlan->refresh();
+                    if ($workPlan->budgetItems()->count() === 0) {
+                        $workPlan->delete();
+                    }
+                }
+            } else {
+                $workPlan = $item->workPlan;
+                if ($workPlan && (float) $workPlan->total_budget === 0.0) {
+                    $workPlan->delete();
+                }
+            }
+
+            if ($item->transfer->sourceSubmission) {
+                $item->transfer->sourceSubmission->calculateTotalBudget();
+            }
+        });
+    }
+
+    /**
+     * Delete a zero-budget transferred work plan from source bureau (Admin only).
+     */
+    public function deleteZeroBudgetTransferredWorkPlan(User $admin, int $workPlanId): void
+    {
+        if (!$admin->isAdmin()) {
+            throw new Exception("Hanya Administrator yang diperbolehkan menghapus Program Kerja budget Rp 0.");
+        }
+
+        $workPlan = RkapWorkPlan::with(['submission', 'budgetItems'])->findOrFail($workPlanId);
+
+        $isTransferredApproved = BudgetTransferItem::where('rkap_work_plan_id', $workPlanId)
+            ->whereHas('transfer', function ($q) {
+                $q->where('status', BudgetTransferStatus::Approved->value);
+            })->exists();
+
+        if (!$isTransferredApproved) {
+            throw new Exception("Hanya Program Kerja hasil transfer yang sudah disetujui (Approved) yang dapat dibersihkan.");
+        }
+
+        if ((float) $workPlan->total_budget > 0) {
+            throw new Exception("Hanya Program Kerja dengan sisa budget Rp 0 yang dapat dihapus.");
+        }
+
+        DB::transaction(function () use ($workPlan) {
+            $submission = $workPlan->submission;
+            foreach ($workPlan->budgetItems as $bi) {
+                $bi->delete();
+            }
+            $workPlan->delete();
+
+            if ($submission) {
+                $submission->calculateTotalBudget();
+            }
+        });
+    }
 }
