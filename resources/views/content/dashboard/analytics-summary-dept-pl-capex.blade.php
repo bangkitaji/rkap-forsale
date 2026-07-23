@@ -36,6 +36,12 @@
     z-index: 3;
   }
 
+  #summaryDeptPlCapexTable tbody tr.bg-primary td:first-child {
+    z-index: 3;
+    background-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+  }
+
   .btn-drilldown {
     cursor: pointer;
     text-decoration: none;
@@ -324,6 +330,28 @@
               <td class="text-end px-2 text-primary">{{ number_format($cell['budget'], 0, ',', '.') }}</td>
               <td class="text-end px-2 text-success">{{ number_format($cell['realization'], 0, ',', '.') }}</td>
               <td class="text-end px-2 text-info">{{ number_format($cell['projection'], 0, ',', '.') }}</td>
+              @endforeach
+            </tr>
+
+            <!-- Separator Empty Row -->
+            <tr style="height: 15px; border: none;">
+              <td colspan="{{ count($departments) * 3 + 1 }}" style="background-color: #f5f5f9; border: none; height: 15px;"></td>
+            </tr>
+
+            <!-- Grand Total Row: Laba Rugi + Capex -->
+            <tr class="bg-primary text-white fw-bold">
+              <td class="text-uppercase text-white ps-3 py-2"><i class="bx bx-calculator me-1"></i> {{ __('TOTAL KONSOLIDASI (LABA RUGI + CAPEX)') }}</td>
+              @foreach ($departments as $dept)
+              @php
+                $dTot = $deptTotals[$dept->id] ?? ['budget' => 0, 'realization' => 0, 'projection' => 0];
+                $cTot = $capexMatrix[$dept->id] ?? ['budget' => 0, 'realization' => 0, 'projection' => 0];
+                $combBudget = $dTot['budget'] + $cTot['budget'];
+                $combRealization = $dTot['realization'] + $cTot['realization'];
+                $combProjection = $dTot['projection'] + $cTot['projection'];
+              @endphp
+              <td class="text-end px-2 text-white">{{ number_format($combBudget, 0, ',', '.') }}</td>
+              <td class="text-end px-2 text-white">{{ number_format($combRealization, 0, ',', '.') }}</td>
+              <td class="text-end px-2 text-white">{{ number_format($combProjection, 0, ',', '.') }}</td>
               @endforeach
             </tr>
           </tbody>

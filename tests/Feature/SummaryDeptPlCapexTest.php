@@ -76,6 +76,7 @@ class SummaryDeptPlCapexTest extends TestCase
         $response->assertSee('LABA RUGI (OPERASIONAL)');
         $response->assertSee('BELANJA MODAL (CAPEX)');
         $response->assertSee('TOTAL KONSOLIDASI CAPEX');
+        $response->assertSee('TOTAL KONSOLIDASI (LABA RUGI + CAPEX)');
     }
 
     public function test_admin_can_compare_different_periods_unified_summary(): void
@@ -126,5 +127,14 @@ class SummaryDeptPlCapexTest extends TestCase
         $response = $this->actingAs($this->adminUser)->get("/analytics/summary-dept/detail?period_id={$this->activePeriod->id}&department_id={$this->department->id}&report_group_id=capex");
         $response->assertStatus(200);
         $response->assertJsonStructure(['data']);
+    }
+
+    public function test_capex_coa_codes_includes_intangible_assets(): void
+    {
+        $codes = \App\Http\Controllers\dashboard\Analytics::getCapexCoaCodes();
+        $this->assertContains('1204000001', $codes);
+        $this->assertContains('1204000002', $codes);
+        $this->assertContains('1204000003', $codes);
+        $this->assertContains('1204000004', $codes);
     }
 }
