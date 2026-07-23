@@ -21,7 +21,7 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
 
         // Row 1 — main headers
         $rows[] = array_merge(
-            ['Direktorat', 'Departemen', 'Biro', 'COA SAP', 'COA SAP Desc', 'Kode Program Kerja', 'Program Kerja', 'Kode Kegiatan', 'Nama Kegiatan'],
+            ['Kode Direktorat', 'Kode Departemen', 'Kode Biro', 'COA SAP', 'COA SAP Desc', 'Kode Group Cashflow', 'Nama Group Cashflow', 'Kode Group Difference', 'Nama Group Difference', 'Kode Program Kerja', 'Program Kerja', 'Kode Kegiatan', 'Nama Kegiatan'],
             ['Budget', '', '', '', '', '', '', '', '', '', '', '', ''],
             ['Kas Keluar', '', '', '', '', '', '', '', '', '', '', '', ''],
             ['Realisasi', '', '', '', '', '', '', '', '', '', '', '', '']
@@ -29,7 +29,7 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
 
         // Row 2 — month sub-headers
         $rows[] = array_merge(
-            ['', '', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', '', '', '', '', '', ''],
             $this->monthHeaders('Budget'),
             $this->monthHeaders('Kas Keluar'),
             $this->monthHeaders('Realisasi')
@@ -50,14 +50,33 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 'workPlans.budgetItems.monthlies',
                 'workPlans.budgetItems.cashOuts',
                 'workPlans.budgetItems.realizations',
+                'workPlans.budgetItems.coa.cashflowGroup',
+                'workPlans.budgetItems.differenceGroup',
+                'workPlans.budgetItems.coa.differenceGroups',
             ]);
 
-            $dirName  = $submission->bureau?->department?->directorate?->name ?? '-';
-            $deptName = $submission->bureau?->department?->name ?? '-';
-            $buroName = $submission->bureau?->name ?? '-';
+            $dirCode  = $submission->bureau?->department?->directorate?->code ?? '-';
+            $deptCode = $submission->bureau?->department?->code ?? '-';
+            $buroCode = $submission->bureau?->code ?? '-';
 
             foreach ($submission->workPlans as $wp) {
                 foreach ($wp->budgetItems as $bi) {
+                    $cfGroup = $bi->coa?->cashflowGroup;
+                    $cfCode  = $cfGroup?->code ?? '-';
+                    $cfName  = $cfGroup?->name ?? '-';
+
+                    $diffGroup = $bi->differenceGroup;
+                    if ($diffGroup) {
+                        $diffCode = $diffGroup->code ?? '-';
+                        $diffName = $diffGroup->name ?? '-';
+                    } elseif ($bi->coa && $bi->coa->differenceGroups->isNotEmpty()) {
+                        $diffCode = $bi->coa->differenceGroups->map(fn($dg) => $dg->code ?? '-')->filter(fn($c) => $c !== '-')->implode(', ') ?: '-';
+                        $diffName = $bi->coa->differenceGroups->map(fn($dg) => $dg->name ?? '-')->filter(fn($n) => $n !== '-')->implode(', ') ?: '-';
+                    } else {
+                        $diffCode = '-';
+                        $diffName = '-';
+                    }
+
                     $budgetByMonth  = array_fill(1, 12, 0);
                     $cashOutByMonth = array_fill(1, 12, 0);
                     $realByMonth    = array_fill(1, 12, 0);
@@ -88,11 +107,15 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
 
                     $rows[] = array_merge(
                         [
-                            $dirName,
-                            $deptName,
-                            $buroName,
+                            $dirCode,
+                            $deptCode,
+                            $buroCode,
                             $bi->account_code ?? '',
                             $bi->description ?? '',
+                            $cfCode,
+                            $cfName,
+                            $diffCode,
+                            $diffName,
                             $wp->workPlan?->code ?? '',
                             $wp->workPlan?->title ?? ($wp->program_name ?? ''),
                             $wp->activity?->code ?? '',
@@ -111,7 +134,7 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
 
         // Grand total row
         $rows[] = array_merge(
-            ['', '', '', '', '', '', '', '', 'GRAND TOTAL'],
+            ['', '', '', '', '', '', '', '', '', '', '', '', 'GRAND TOTAL'],
             array_values($grandBudgetByMonth),
             [$grandBudgetTotal],
             array_values($grandCashByMonth),
@@ -129,18 +152,18 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet->getDelegate();
 
-                // Merge static header cells vertically (A-I)
-                foreach (range('A', 'I') as $col) {
+                // Merge static header cells vertically (A-M)
+                foreach (range('A', 'M') as $col) {
                     $sheet->mergeCells("{$col}1:{$col}2");
                 }
 
-                // Group headers: Budget (J-V), Kas Keluar (W-AI), Realisasi (AJ-AV)
-                $sheet->mergeCells('J1:V1');
-                $sheet->mergeCells('W1:AI1');
-                $sheet->mergeCells('AJ1:AV1');
+                // Group headers: Budget (N-Z), Kas Keluar (AA-AM), Realisasi (AN-AZ)
+                $sheet->mergeCells('N1:Z1');
+                $sheet->mergeCells('AA1:AM1');
+                $sheet->mergeCells('AN1:AZ1');
 
                 // Header styling
-                $sheet->getStyle('A1:AV2')->applyFromArray([
+                $sheet->getStyle('A1:AZ2')->applyFromArray([
                     'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill'      => ['fillType' => 'solid', 'startColor' => ['rgb' => '1A3C6E']],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center', 'wrapText' => true],
@@ -148,13 +171,13 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 ]);
 
                 // Realisasi header — green for distinction
-                $sheet->getStyle('AJ1:AV2')->applyFromArray([
+                $sheet->getStyle('AN1:AZ2')->applyFromArray([
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1E6B3C']],
                 ]);
 
                 // Grand total row styling
                 $highestRow = $sheet->getHighestRow();
-                $sheet->getStyle("A{$highestRow}:AV{$highestRow}")->applyFromArray([
+                $sheet->getStyle("A{$highestRow}:AZ{$highestRow}")->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'C00000']],
                 ]);
@@ -163,13 +186,13 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                 if ($highestRow >= 3) {
                     $dataEnd = $highestRow - 1;
                     if ($dataEnd >= 3) {
-                        $sheet->getStyle("A3:AV{$dataEnd}")->applyFromArray([
+                        $sheet->getStyle("A3:AZ{$dataEnd}")->applyFromArray([
                             'borders'   => ['allBorders' => ['borderStyle' => 'thin', 'color' => ['rgb' => 'D9D9D9']]],
                             'alignment' => ['vertical' => 'top'],
                         ]);
                     }
                     // Number format for numeric columns
-                    $sheet->getStyle("J3:AV{$highestRow}")
+                    $sheet->getStyle("N3:AZ{$highestRow}")
                         ->getNumberFormat()
                         ->setFormatCode('#,##0');
                 }
