@@ -401,7 +401,7 @@
             <div class="card-header bg-lighter py-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bx bx-list-ul text-primary"></i>
-                    <h6 class="mb-0 fw-bold text-primary">{{ $wp->program_code }} — {{ $wp->program_name }}</h6>
+                    <h6 class="mb-0 fw-bold text-primary">{{ $loop->iteration }}. {{ $wp->program_code }} — {{ $wp->program_name }}</h6>
                 </div>
                 @php
                     $wpTotalItems = $wp->budgetItems->count();
