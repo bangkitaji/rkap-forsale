@@ -634,6 +634,73 @@ class RkapProjections extends Component
         );
     }
 
+    public function getFilteredTotalsProperty(): array
+    {
+        if (!$this->activePeriodId) {
+            return [
+                'total_budget' => 0.0,
+                'total_realization' => 0.0,
+                'total_projection' => 0.0,
+                'variance' => 0.0,
+                'realization_percentage' => 0.0,
+                'projection_percentage' => 0.0,
+            ];
+        }
+
+        $user = Auth::user();
+        $query = RkapSubmission::with([
+            'workPlans.budgetItems.realizations',
+            'workPlans.budgetItems.projections',
+        ])
+            ->where('rkap_period_id', $this->activePeriodId)
+            ->where('status', 'approved');
+
+        if ($this->bureauId) {
+            $query->where('bureau_id', $this->bureauId);
+        } elseif ($this->departmentId) {
+            $query->whereHas('bureau', fn($q) => $q->where('department_id', $this->departmentId));
+        } elseif ($this->directorateId) {
+            $query->whereHas('bureau.department', fn($q) => $q->where('directorate_id', $this->directorateId));
+        } else {
+            if ($user->isKepalaBiro()) {
+                $query->where('bureau_id', $user->bureau_id);
+            } elseif ($user->isKepalaDepartemen()) {
+                $query->whereHas('bureau', fn($q) => $q->where('department_id', $user->department_id));
+            } elseif ($user->isDireksi()) {
+                $query->whereHas('bureau.department', fn($q) => $q->where('directorate_id', $user->directorate_id));
+            }
+        }
+
+        $submissions = $query->get();
+
+        $totalBudget = 0.0;
+        $totalRealization = 0.0;
+        $totalProjection = 0.0;
+
+        foreach ($submissions as $sub) {
+            foreach ($sub->workPlans as $wp) {
+                foreach ($wp->budgetItems as $bi) {
+                    $totalBudget += (float) $bi->total_price;
+                    $totalRealization += (float) $bi->realizations->sum('amount');
+                    $totalProjection += (float) $bi->projection;
+                }
+            }
+        }
+
+        $variance = $totalBudget - $totalProjection;
+        $realizationPct = $totalBudget > 0 ? round(($totalRealization / $totalBudget) * 100, 1) : 0.0;
+        $projectionPct = $totalBudget > 0 ? round(($totalProjection / $totalBudget) * 100, 1) : 0.0;
+
+        return [
+            'total_budget' => $totalBudget,
+            'total_realization' => $totalRealization,
+            'total_projection' => $totalProjection,
+            'variance' => $variance,
+            'realization_percentage' => $realizationPct,
+            'projection_percentage' => $projectionPct,
+        ];
+    }
+
     public function render(): View
     {
         $summaryData = [];
@@ -647,6 +714,7 @@ class RkapProjections extends Component
             'bureauOptions' => $this->bureauOptions,
             'submissions' => $this->activeTab === 'input' ? $this->getSubmissions() : collect(),
             'summaryData' => $summaryData,
+            'filteredTotals' => $this->filteredTotals,
         ])->layout('layouts.contentNavbarLayout');
     }
 }

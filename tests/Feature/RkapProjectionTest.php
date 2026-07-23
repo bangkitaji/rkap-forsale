@@ -282,6 +282,17 @@ class RkapProjectionTest extends TestCase
             ->assertDontSee('Silakan pilih Direktorat, Departemen, atau Biro terlebih dahulu');
     }
 
+    public function test_dynamic_summary_totals_below_filter(): void
+    {
+        $this->actingAs($this->kepalaBiro);
+
+        Livewire::test(RkapProjections::class)
+            ->assertSee('Total Anggaran RKAP')
+            ->assertSee('Total Realisasi YTD')
+            ->assertSee('Total Proyeksi (Akhir Tahun)')
+            ->assertSee('Rp ' . number_format($this->budgetItem->total_price, 0, ',', '.'));
+    }
+
     public function test_kepala_departemen_can_view_projections_but_cannot_edit(): void
     {
         $roleKepalaDept = Role::firstOrCreate(['name' => 'kepala_departemen']);

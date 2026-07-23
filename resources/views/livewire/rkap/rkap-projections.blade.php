@@ -347,6 +347,58 @@
         </div>
     </div>
 
+    {{-- Dynamic Filter Summary Cards --}}
+    @if($activePeriodId)
+    <div class="row g-4 mb-4" wire:key="filtered-summary-cards-{{ $directorateId }}-{{ $departmentId }}-{{ $bureauId }}">
+        <!-- Total Anggaran RKAP -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-primary p-2"><i class="bx bx-wallet fs-4"></i></span>
+                        <span class="badge bg-label-primary">{{ __('RKAP') }}</span>
+                    </div>
+                    <h4 class="mb-1 fw-bold text-primary">Rp {{ number_format($filteredTotals['total_budget'], 0, ',', '.') }}</h4>
+                    <p class="mb-0 text-muted small">{{ __('Total Anggaran RKAP') }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Total Realisasi YTD -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-success p-2"><i class="bx bx-check-circle fs-4"></i></span>
+                        <span class="badge bg-label-success">{{ $filteredTotals['realization_percentage'] }}% {{ __('dari RKAP') }}</span>
+                    </div>
+                    <h4 class="mb-1 fw-bold text-success">Rp {{ number_format($filteredTotals['total_realization'], 0, ',', '.') }}</h4>
+                    <p class="mb-0 text-muted small">{{ __('Total Realisasi YTD') }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Total Proyeksi -->
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="avatar rounded-circle bg-label-info p-2"><i class="bx bx-line-chart fs-4"></i></span>
+                        <span class="badge bg-label-info">{{ $filteredTotals['projection_percentage'] }}% {{ __('dari RKAP') }}</span>
+                    </div>
+                    <h4 class="mb-1 fw-bold text-info">Rp {{ number_format($filteredTotals['total_projection'], 0, ',', '.') }}</h4>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <p class="mb-0 text-muted small">{{ __('Total Proyeksi (Akhir Tahun)') }}</p>
+                        @if($filteredTotals['variance'] < 0)
+                        <span class="small text-danger fw-semibold" title="{{ __('Proyeksi melebihi anggaran') }}">(+Rp {{ number_format(abs($filteredTotals['variance']), 0, ',', '.') }})</span>
+                        @else
+                        <span class="small text-muted" title="{{ __('Sisa anggaran proyeksi') }}">(Sisa Rp {{ number_format($filteredTotals['variance'], 0, ',', '.') }})</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Main Input Form --}}
     @if($activeTab === 'input')
         @if(!$activePeriodId)
