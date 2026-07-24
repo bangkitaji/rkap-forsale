@@ -96,18 +96,22 @@ class CashflowSyncController extends Controller
 
         $cf0b9GroupId = array_search('CF0B9', $cashflowGroupMap->toArray());
  
-        // ── 4a. Accumulate RKAP Budget totals (total_price) ──────────────────────
+        // ── 4a. Accumulate RKAP Rencana Kas Keluar totals ─────────────────────────
         $accumulatedRkap = DB::table('rkap_budget_items')
             ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
             ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
             ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+            ->leftJoin(
+                DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as cash_out_total FROM rkap_budget_item_cash_outs GROUP BY rkap_budget_item_id) as co'),
+                'co.rkap_budget_item_id', '=', 'rkap_budget_items.id'
+            )
             ->where('rkap_submissions.rkap_period_id', $period->id)
             ->whereNull('coas.deleted_at')
             ->whereIn('coas.cashflow_group_id', $groupIds)
             ->selectRaw(
                 $cf0b9GroupId !== false
-                ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) ELSE rkap_budget_items.total_price END) as total"
-                : "coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total"
+                ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -COALESCE(co.cash_out_total, rkap_budget_items.total_price) ELSE COALESCE(co.cash_out_total, rkap_budget_items.total_price) END) ELSE COALESCE(co.cash_out_total, rkap_budget_items.total_price) END) as total"
+                : "coas.cashflow_group_id, SUM(COALESCE(co.cash_out_total, rkap_budget_items.total_price)) as total"
             )
             ->groupBy('coas.cashflow_group_id')
             ->pluck('total', 'cashflow_group_id')

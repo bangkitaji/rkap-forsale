@@ -1336,6 +1336,72 @@ class RkapDashboardTest extends TestCase
         ]);
     }
 
+    public function test_cashflow_sync_uses_cash_out_plan_over_budget_total(): void
+    {
+        // Arrange
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        $cfGroup = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0B3'],
+            ['name' => 'Pembayaran ke Karyawan']
+        );
+
+        \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0B3'],
+            ['category_id' => 1, 'description' => 'Pembayaran ke Karyawan']
+        );
+
+        $coa = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_CASHOUT'],
+            ['title' => 'Test COA Cashout', 'cashflow_group_id' => $cfGroup->id]
+        );
+        $coa->update(['cashflow_group_id' => $cfGroup->id]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code'       => 'WP_CF_CASHOUT',
+            'program_name'       => 'CF Cashout Test',
+        ]);
+
+        $budgetItem = \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coa->code,
+            'description'       => 'Cashout Budget Item',
+            'quantity'          => 1,
+            'unit_price'        => 1000000.0,
+        ]);
+
+        \App\Models\RkapBudgetItemCashOut::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'month'               => 1,
+            'amount'              => 300000.0,
+        ]);
+        \App\Models\RkapBudgetItemCashOut::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'month'               => 2,
+            'amount'              => 400000.0,
+        ]);
+
+        // Act: call sync
+        $response = $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ]);
+
+        // Assert: amount synced for RKAP is -700000 (outflow) instead of -1000000
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0B3',
+            'amount'    => -700000.0,
+        ]);
+    }
+
     public function test_cashflow_sync_updates_existing_fact_on_re_sync(): void
     {
         // Arrange: cf_categories uses custom PK not in $fillable, use DB::table

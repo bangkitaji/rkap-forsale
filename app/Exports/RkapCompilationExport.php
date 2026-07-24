@@ -65,16 +65,22 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                     $cfCode  = $cfGroup?->code ?? '-';
                     $cfName  = $cfGroup?->name ?? '-';
 
-                    $diffGroup = $bi->differenceGroup;
-                    if ($diffGroup) {
-                        $diffCode = $diffGroup->code ?? '-';
-                        $diffName = $diffGroup->name ?? '-';
+                    // Kumpulkan daftar difference groups sebagai array of [code, name]
+                    $diffGroups = [];
+                    if ($bi->differenceGroup) {
+                        $diffGroups[] = [
+                            'code' => $bi->differenceGroup->code ?? '-',
+                            'name' => $bi->differenceGroup->name ?? '-',
+                        ];
                     } elseif ($bi->coa && $bi->coa->differenceGroups->isNotEmpty()) {
-                        $diffCode = $bi->coa->differenceGroups->map(fn($dg) => $dg->code ?? '-')->filter(fn($c) => $c !== '-')->implode(', ') ?: '-';
-                        $diffName = $bi->coa->differenceGroups->map(fn($dg) => $dg->name ?? '-')->filter(fn($n) => $n !== '-')->implode(', ') ?: '-';
+                        foreach ($bi->coa->differenceGroups as $dg) {
+                            $diffGroups[] = [
+                                'code' => $dg->code ?? '-',
+                                'name' => $dg->name ?? '-',
+                            ];
+                        }
                     } else {
-                        $diffCode = '-';
-                        $diffName = '-';
+                        $diffGroups[] = ['code' => '-', 'name' => '-'];
                     }
 
                     $budgetByMonth  = array_fill(1, 12, 0);
@@ -91,11 +97,11 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                         $realByMonth[(int) $realization->month] = (float) $realization->amount;
                     }
 
-                    $budgetTotal  = array_sum($budgetByMonth);
-                    $cashTotal    = array_sum($cashOutByMonth);
-                    $realTotal    = array_sum($realByMonth);
+                    $budgetTotal = array_sum($budgetByMonth);
+                    $cashTotal   = array_sum($cashOutByMonth);
+                    $realTotal   = array_sum($realByMonth);
 
-                    // accumulate grand totals
+                    // Akumulasi grand totals dihitung sekali per budget item
                     for ($m = 1; $m <= 12; $m++) {
                         $grandBudgetByMonth[$m] += $budgetByMonth[$m];
                         $grandCashByMonth[$m]   += $cashOutByMonth[$m];
@@ -105,29 +111,32 @@ class RkapCompilationExport implements FromArray, WithEvents, ShouldAutoSize
                     $grandCashTotal   += $cashTotal;
                     $grandRealTotal   += $realTotal;
 
-                    $rows[] = array_merge(
-                        [
-                            $dirCode,
-                            $deptCode,
-                            $buroCode,
-                            $bi->account_code ?? '',
-                            $bi->description ?? '',
-                            $cfCode,
-                            $cfName,
-                            $diffCode,
-                            $diffName,
-                            $wp->workPlan?->code ?? '',
-                            $wp->workPlan?->title ?? ($wp->program_name ?? ''),
-                            $wp->activity?->code ?? '',
-                            $wp->activity?->title ?? '',
-                        ],
-                        array_values($budgetByMonth),
-                        [$budgetTotal],
-                        array_values($cashOutByMonth),
-                        [$cashTotal],
-                        array_values($realByMonth),
-                        [$realTotal]
-                    );
+                    // Buat 1 baris per difference group
+                    foreach ($diffGroups as $dg) {
+                        $rows[] = array_merge(
+                            [
+                                $dirCode,
+                                $deptCode,
+                                $buroCode,
+                                $bi->account_code ?? '',
+                                $bi->description ?? '',
+                                $cfCode,
+                                $cfName,
+                                $dg['code'],
+                                $dg['name'],
+                                $wp->workPlan?->code ?? '',
+                                $wp->workPlan?->title ?? ($wp->program_name ?? ''),
+                                $wp->activity?->code ?? '',
+                                $wp->activity?->title ?? '',
+                            ],
+                            array_values($budgetByMonth),
+                            [$budgetTotal],
+                            array_values($cashOutByMonth),
+                            [$cashTotal],
+                            array_values($realByMonth),
+                            [$realTotal]
+                        );
+                    }
                 }
             }
         }
