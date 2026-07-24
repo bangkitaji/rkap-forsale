@@ -280,20 +280,17 @@ class RkapBulkUpload extends Component
 
             // Quantity
             $qty = (float) ($row['quantity'] ?: 0);
-            if ($qty <= 0) {
-                $this->importErrors[] = "{$prefix}: " . __('quantity harus lebih besar dari 0.');
+            if ($qty == 0) {
+                $this->importErrors[] = "{$prefix}: " . __('quantity tidak boleh 0.');
             }
 
             // Unit price
             $unitPrice = (float) ($row['unit_price'] ?: 0);
-            if ($unitPrice < 0) {
-                $this->importErrors[] = "{$prefix}: " . __('unit_price tidak boleh negatif.');
-            }
 
             // Calculate total
             $qty2 = !empty($row['unit_2']) ? (float) ($row['quantity_2'] ?: 1) : 1;
-            if (!empty($row['unit_2']) && $qty2 <= 0) {
-                $this->importErrors[] = "{$prefix}: " . __('quantity_2 harus lebih besar dari 0 jika unit_2 diisi.');
+            if (!empty($row['unit_2']) && $qty2 == 0) {
+                $this->importErrors[] = "{$prefix}: " . __('quantity_2 tidak boleh 0 jika unit_2 diisi.');
             }
             $totalItem = $qty * $qty2 * $unitPrice;
 
@@ -301,13 +298,10 @@ class RkapBulkUpload extends Component
             $monthlyTotal = 0;
             for ($m = 1; $m <= 12; $m++) {
                 $val = (float) ($row["m{$m}"] ?: 0);
-                if ($val < 0) {
-                    $this->importErrors[] = "{$prefix}: " . __('m:month tidak boleh negatif.', ['month' => $m]);
-                }
                 $monthlyTotal += $val;
             }
 
-            if ($totalItem > 0 && abs($totalItem - $monthlyTotal) > 0.01) {
+            if (abs($totalItem) > 0.01 && abs($totalItem - $monthlyTotal) > 0.01) {
                 $diff = $totalItem - $monthlyTotal;
                 $this->importErrors[] = "{$prefix}: " . __('Total distribusi bulanan (Rp :monthly) tidak sama dengan total item (Rp :total). Selisih: Rp :diff.', [
                     'monthly' => number_format($monthlyTotal, 0, ',', '.'),
@@ -320,19 +314,12 @@ class RkapBulkUpload extends Component
             $cashOutTotal = 0;
             for ($m = 1; $m <= 12; $m++) {
                 $val = (float) ($row["co{$m}"] ?: 0);
-                if ($val < 0) {
-                    $this->importErrors[] = "{$prefix}: " . __('co:month tidak boleh negatif.', ['month' => $m]);
-                }
                 $cashOutTotal += $val;
-            }
-
-            if ($cashOutTotal <= 0 && $totalItem > 0) {
-                $this->importErrors[] = "{$prefix}: " . __('Total rencana kas keluar harus lebih besar dari 0.');
             }
 
             $isRevenue = $coa && $coa->isRevenue();
 
-            if (!$isRevenue && ($cashOutTotal - $totalItem > 0.01)) {
+            if (!$isRevenue && $totalItem > 0 && ($cashOutTotal - $totalItem > 0.01)) {
                 $this->importErrors[] = "{$prefix}: " . __('Total rencana kas keluar (Rp :cashout) melebihi total item (Rp :total).', [
                     'cashout' => number_format($cashOutTotal, 0, ',', '.'),
                     'total'   => number_format($totalItem, 0, ',', '.'),
@@ -454,7 +441,7 @@ class RkapBulkUpload extends Component
                         // Save monthly distribution
                         for ($m = 1; $m <= 12; $m++) {
                             $amount = (float) ($row["m{$m}"] ?: 0);
-                            if ($amount > 0) {
+                            if ($amount != 0) {
                                 $budgetItem->monthlies()->create([
                                     'month'  => $m,
                                     'amount' => $amount,
@@ -465,7 +452,7 @@ class RkapBulkUpload extends Component
                         // Save cash out distribution
                         for ($m = 1; $m <= 12; $m++) {
                             $amount = (float) ($row["co{$m}"] ?: 0);
-                            if ($amount > 0) {
+                            if ($amount != 0) {
                                 $budgetItem->cashOuts()->create([
                                     'month'  => $m,
                                     'amount' => $amount,
