@@ -26,9 +26,10 @@ class RkapProjectionsExport implements FromArray, WithEvents
 
         // Single header row
         $headers = [
-            'No', 'Direktorat', 'Departemen', 'Biro (Unit Kerja)', 
+            'No', 'Kode Direktorat', 'Kode Departemen', 'Kode Biro', 
             'Kode Program', 'Nama Program Kerja', 
             'Kode Kegiatan', 'Nama Kegiatan', 
+            'Kode Anggaran', 'Nama Anggaran',
             'Kode Akun (COA)', 'Deskripsi COA', 
             'Remarks / Detail Belanja', 'Volume & Satuan',
             'Total Anggaran RKAP (B)',
@@ -68,6 +69,7 @@ class RkapProjectionsExport implements FromArray, WithEvents
             'workPlans.workPlan',
             'workPlans.budgetItems.realizations',
             'workPlans.budgetItems.projections',
+            'workPlans.budgetItems.coa.coaGroup',
         ])
             ->where('rkap_period_id', $this->periodId)
             ->where('status', 'approved');
@@ -121,9 +123,9 @@ class RkapProjectionsExport implements FromArray, WithEvents
         $startRowIndex = 2; // Data starts at Row 2
 
         foreach ($filteredSubmissions as $sub) {
-            $dirName  = $sub->bureau->department->directorate->name ?? '-';
-            $deptName = $sub->bureau->department->name ?? '-';
-            $buroName = $sub->bureau->name ?? '-';
+            $dirCode  = $sub->bureau?->department?->directorate?->code ?? '-';
+            $deptCode = $sub->bureau?->department?->code ?? '-';
+            $buroCode = $sub->bureau?->code ?? '-';
 
             foreach ($sub->workPlans as $wp) {
                 $wpCode = $wp->workPlan?->code ?? $wp->activity?->workPlan?->code ?? $wp->program_code ?? '';
@@ -132,6 +134,8 @@ class RkapProjectionsExport implements FromArray, WithEvents
                 $activityName = $wp->activity?->title ?? '';
 
                 foreach ($wp->budgetItems as $bi) {
+                    $coaGroupCode = $bi->coa?->coaGroup?->code ?? '-';
+                    $coaGroupName = $bi->coa?->coaGroup?->name ?? '-';
                     $coaCode = $bi->account_code ?? '';
                     $coaDesc = $bi->description ?? '';
                     $remarks = $bi->remarks ?? '';
@@ -145,13 +149,15 @@ class RkapProjectionsExport implements FromArray, WithEvents
 
                     $row = [
                         $counter++,
-                        $dirName,
-                        $deptName,
-                        $buroName,
+                        $dirCode,
+                        $deptCode,
+                        $buroCode,
                         $wpCode,
                         $wpName,
                         $activityCode,
                         $activityName,
+                        $coaGroupCode,
+                        $coaGroupName,
                         $coaCode,
                         $coaDesc,
                         $remarks,
@@ -174,15 +180,15 @@ class RkapProjectionsExport implements FromArray, WithEvents
                         }
                     }
 
-                    // Total Proyeksi: sum of N to Y if monthly, or direct value if yearly
+                    // Total Proyeksi: sum of P to AA if monthly, or direct value if yearly
                     if ($hasMonthlyProjections) {
-                        $row[] = "=SUM(N{$currentRow}:Y{$currentRow})";
+                        $row[] = "=SUM(P{$currentRow}:AA{$currentRow})";
                     } else {
                         $row[] = (float) $bi->projection;
                     }
 
-                    // Selisih = Budget (M) - Total Proyeksi (Z)
-                    $row[] = "=M{$currentRow}-Z{$currentRow}";
+                    // Selisih = Budget (O) - Total Proyeksi (AB)
+                    $row[] = "=O{$currentRow}-AB{$currentRow}";
 
                     $rows[] = $row;
                 }
@@ -194,10 +200,10 @@ class RkapProjectionsExport implements FromArray, WithEvents
         if ($lastDataRow >= 2) {
             $totalRow = [
                 'TOTAL',
-                '', '', '', '', '', '', '', '', '', '', '', 
-                "=SUM(M2:M{$lastDataRow})"
+                '', '', '', '', '', '', '', '', '', '', '', '', '', 
+                "=SUM(O2:O{$lastDataRow})"
             ];
-            for ($c = 14; $c <= 27; $c++) {
+            for ($c = 16; $c <= 29; $c++) {
                 $colLetter = Coordinate::stringFromColumnIndex($c);
                 $totalRow[] = "=SUM({$colLetter}2:{$colLetter}{$lastDataRow})";
             }
@@ -214,29 +220,31 @@ class RkapProjectionsExport implements FromArray, WithEvents
                 $sheet = $event->sheet->getDelegate();
 
                 $highestRow = $sheet->getHighestRow();
-                $highestCol = 'AA';
+                $highestCol = 'AC';
 
                 // Set fixed column widths instead of auto-size (major perf gain)
                 $colWidths = [
                     'A' => 5,   // No
-                    'B' => 18,  // Direktorat
-                    'C' => 18,  // Departemen
-                    'D' => 22,  // Biro
+                    'B' => 15,  // Kode Direktorat
+                    'C' => 15,  // Kode Departemen
+                    'D' => 18,  // Kode Biro
                     'E' => 12,  // Kode Program
                     'F' => 25,  // Nama Program
                     'G' => 12,  // Kode Kegiatan
                     'H' => 25,  // Nama Kegiatan
-                    'I' => 12,  // Kode COA
-                    'J' => 25,  // Deskripsi COA
-                    'K' => 20,  // Remarks
-                    'L' => 14,  // Volume & Satuan
-                    'M' => 18,  // Total Anggaran
+                    'I' => 14,  // Kode Anggaran
+                    'J' => 25,  // Nama Anggaran
+                    'K' => 12,  // Kode COA
+                    'L' => 25,  // Deskripsi COA
+                    'M' => 20,  // Remarks
+                    'N' => 14,  // Volume & Satuan
+                    'O' => 18,  // Total Anggaran
                 ];
                 foreach ($colWidths as $col => $width) {
                     $sheet->getColumnDimension($col)->setWidth($width);
                 }
                 // Monthly + total columns: uniform width
-                for ($c = 14; $c <= 27; $c++) {
+                for ($c = 16; $c <= 29; $c++) {
                     $col = Coordinate::stringFromColumnIndex($c);
                     $sheet->getColumnDimension($col)->setWidth(18);
                 }
@@ -265,8 +273,8 @@ class RkapProjectionsExport implements FromArray, WithEvents
                     ],
                 ]);
 
-                // Soft yellow header for monthly projection columns (N to Y)
-                $sheet->getStyle('N1:Y1')->applyFromArray([
+                // Soft yellow header for monthly projection columns (P to AA)
+                $sheet->getStyle('P1:AA1')->applyFromArray([
                     'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FFF2CC']],
                     'font' => ['color' => ['rgb' => '7F6000']],
                 ]);
@@ -286,33 +294,33 @@ class RkapProjectionsExport implements FromArray, WithEvents
                     ]);
 
                     // Format numeric columns in batch ranges (instead of per-column loop)
-                    $sheet->getStyle("M2:M{$highestRow}")
+                    $sheet->getStyle("O2:O{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0');
 
-                    // N to Y (cols 14-25) — single range styling
-                    $sheet->getStyle("N2:Y{$highestRow}")
+                    // P to AA (cols 16-27) — single range styling
+                    $sheet->getStyle("P2:AA{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
-                    $sheet->getStyle("N2:Y{$highestRow}")
+                    $sheet->getStyle("P2:AA{$highestRow}")
                         ->getAlignment()->setHorizontal('right');
 
-                    // Z and AA — total & selisih
-                    $sheet->getStyle("Z2:AA{$highestRow}")
+                    // AB and AC — total & selisih
+                    $sheet->getStyle("AB2:AC{$highestRow}")
                         ->getNumberFormat()->setFormatCode('#,##0;-#,##0;0');
-                    $sheet->getStyle("Z2:AA{$highestRow}")->getFont()->setBold(true);
+                    $sheet->getStyle("AB2:AC{$highestRow}")->getFont()->setBold(true);
 
                     // Background colors on key columns
-                    $sheet->getStyle("M2:M{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("O2:O{$highestRow}")->applyFromArray([
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'F2F4F7']]
                     ]);
-                    $sheet->getStyle("Z2:Z{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("AB2:AB{$highestRow}")->applyFromArray([
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FFFDF0']]
                     ]);
-                    $sheet->getStyle("AA2:AA{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("AC2:AC{$highestRow}")->applyFromArray([
                         'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => 'FDF2F2']]
                     ]);
 
                     // Style the TOTAL row
-                    $sheet->getStyle("A{$highestRow}:AA{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A{$highestRow}:AC{$highestRow}")->applyFromArray([
                         'font' => ['bold' => true],
                         'borders' => [
                             'top' => [
@@ -332,7 +340,7 @@ class RkapProjectionsExport implements FromArray, WithEvents
                 }
 
                 $sheet->getRowDimension(1)->setRowHeight(32);
-                $sheet->freezePane('N2');
+                $sheet->freezePane('P2');
                 $sheet->setTitle('Monitoring Proyeksi RKAP');
             },
         ];
