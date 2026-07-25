@@ -1252,9 +1252,7 @@ class RkapSubmissionForm extends Component
                     $distribution = $biData['cash_out_distribution'] ?? [];
 
                     if (empty($months)) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            "workPlans.{$wpIdx}.activities.{$actIdx}.budget_items.{$biIdx}.cash_out" => 'Rencana kas keluar wajib diisi. Pilih minimal 1 bulan.',
-                        ]);
+                        continue;
                     }
 
                     $allocated = 0;
