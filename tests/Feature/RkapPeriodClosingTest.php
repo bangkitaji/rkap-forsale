@@ -517,4 +517,60 @@ class RkapPeriodClosingTest extends TestCase
             ->call('uploadAndImport')
             ->assertSet('errorsList', ['Penginputan dan perubahan data proyeksi saat ini sedang ditutup.']);
     }
+
+    public function test_admin_can_update_submission_status_setting(): void
+    {
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapPeriodClosingManagement::class)
+            ->set('closingDay', 15)
+            ->set('projectionStatus', 'open')
+            ->set('submissionStatus', 'closed')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSee('Setting closing periode berhasil disimpan.');
+
+        $this->assertEquals('closed', Setting::get('rkap_submission_status'));
+    }
+
+    public function test_closed_submission_setting_prevents_saving_draft(): void
+    {
+        Setting::set('rkap_submission_status', 'closed');
+
+        $directorate = Directorate::create(['name' => 'Dir Test', 'code' => 'DIR']);
+        $department = Department::create(['name' => 'Dept Test', 'code' => 'DEPT', 'directorate_id' => $directorate->id]);
+        $bureau = Bureau::create(['name' => 'Bureau Test', 'code' => 'BUR', 'department_id' => $department->id]);
+
+        $user = User::create([
+            'name' => 'Bureau User',
+            'email' => 'bureau_user@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $bureau->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Rkap\RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->call('saveDraft')
+            ->assertSee('Pengisian Usulan RKAP Ditutup');
+    }
+
+    public function test_closed_submission_setting_prevents_submit_for_review(): void
+    {
+        Setting::set('rkap_submission_status', 'closed');
+
+        $directorate = Directorate::create(['name' => 'Dir Test', 'code' => 'DIR']);
+        $department = Department::create(['name' => 'Dept Test', 'code' => 'DEPT', 'directorate_id' => $directorate->id]);
+        $bureau = Bureau::create(['name' => 'Bureau Test', 'code' => 'BUR', 'department_id' => $department->id]);
+
+        $user = User::create([
+            'name' => 'Bureau User',
+            'email' => 'bureau_user2@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $bureau->id,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Rkap\RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->call('submitForReview')
+            ->assertSee('Pengisian Usulan RKAP Ditutup');
+    }
 }

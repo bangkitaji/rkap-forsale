@@ -61,6 +61,16 @@
   </div>
   @endif
 
+  @if ($this->isSubmissionClosed)
+  <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mb-4 shadow-sm" role="alert">
+    <i class="bx bx-lock-alt fs-2 text-warning"></i>
+    <div>
+      <h6 class="mb-1 fw-bold text-dark">{{ __('Pengisian Usulan RKAP Ditutup') }}</h6>
+      <span class="small text-muted">{{ __('Periode pengisian usulan RKAP saat ini sedang ditutup. Anda tidak dapat menyetujui, meminta revisi, atau mengedit data usulan RKAP.') }}</span>
+    </div>
+  </div>
+  @endif
+
   <div class="row">
     <!-- Main Content: RKAP Details -->
     <div class="col-12">
@@ -370,12 +380,14 @@
                   <button type="button" class="btn btn-xs btn-outline-success py-1 px-2 rkap-font-07"
                     wire:click="approveAllActivities"
                     wire:key="btn-approve-all-activities"
+                    @disabled($this->isSubmissionClosed)
                     title="{{ __('Setujui Semua Kegiatan') }}">
                     <i class="bx bx-check-double me-1"></i>{{ __('Setujui Semua') }}
                   </button>
                   <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 rkap-font-07"
                     wire:click="rejectAllActivities"
                     wire:key="btn-reject-all-activities"
+                    @disabled($this->isSubmissionClosed)
                     title="{{ __('Tolak Semua Kegiatan') }}">
                     <i class="bx bx-x-circle me-1"></i>{{ __('Tolak Semua') }}
                   </button>
@@ -410,19 +422,19 @@
             <div class="row g-2 mt-2">
               <div class="col">
                 <button class="btn btn-success w-100 py-2 text-nowrap" wire:key="btn-approve-rkap" wire:click="approve"
-                  wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved)>
+                  wire:loading.attr="disabled" wire:confirm="Yakin menyetujui RKAP ini?" @disabled(!$allApproved || $this->isSubmissionClosed)>
                   <i class="bx bx-check-circle me-1"></i> Setujui RKAP
                 </button>
               </div>
               <div class="col">
                 <button class="btn btn-outline-danger w-100 py-2 text-nowrap" wire:key="btn-open-revision-form"
-                  wire:click="openRevisionForm" @disabled(!$hasRejected)>
+                  wire:click="openRevisionForm" @disabled(!$hasRejected || $this->isSubmissionClosed)>
                   <i class="bx bx-x-circle me-1"></i> Minta Revisi
                 </button>
               </div>
               @if (auth()->user()->isVerifikator())
               <div class="col">
-                <button class="btn btn-primary w-100 py-2 text-nowrap" wire:click="enterEditMode" wire:key="btn-open-add-activity">
+                <button class="btn btn-primary w-100 py-2 text-nowrap" wire:click="enterEditMode" wire:key="btn-open-add-activity" @disabled($this->isSubmissionClosed)>
                   <i class="bx bx-edit me-1"></i> Program Kegiatan
                 </button>
               </div>

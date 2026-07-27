@@ -13,6 +13,7 @@ use App\Models\Activity;
 use App\Models\Coa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 use App\Livewire\Traits\HandlesDistribution;
 
@@ -71,6 +72,11 @@ class RkapSubmissionForm extends Component
         11 => 'Nov',
         12 => 'Des',
     ];
+
+    public function getIsSubmissionClosedProperty(): bool
+    {
+        return Setting::get('rkap_submission_status', 'open') === 'closed';
+    }
 
     public function mount(?int $periodId = null, ?int $id = null): void
     {
@@ -1023,6 +1029,11 @@ class RkapSubmissionForm extends Component
 
     public function saveDraft(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyimpan perubahan.'));
+            return;
+        }
+
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();
@@ -1037,6 +1048,11 @@ class RkapSubmissionForm extends Component
 
     public function submitForReview(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat mengajukan usulan.'));
+            return;
+        }
+
         $this->validate();
         $this->validateNoDuplicateWorkPlans();
         $this->validateNoDuplicateActivities();

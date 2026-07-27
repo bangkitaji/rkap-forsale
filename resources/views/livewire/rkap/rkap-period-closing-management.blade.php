@@ -31,6 +31,33 @@
 
             <hr class="my-4">
 
+            <h5 class="mb-3">Pengaturan Akses Pengisian Usulan RKAP</h5>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Status Pengisian / Edit Usulan RKAP <span class="text-danger">*</span></label>
+              <div class="d-flex gap-4 mt-1">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="submissionStatus" id="subStatusOpen" value="open" wire:model="submissionStatus">
+                  <label class="form-check-label fw-semibold text-success d-flex align-items-center gap-1" for="subStatusOpen">
+                    <i class="bx bx-lock-open-alt"></i> Open (Pengisian Usulan Dibuka)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="submissionStatus" id="subStatusClosed" value="closed" wire:model="submissionStatus">
+                  <label class="form-check-label fw-semibold text-danger d-flex align-items-center gap-1" for="subStatusClosed">
+                    <i class="bx bx-lock-alt"></i> Close (Pengisian Usulan Ditutup)
+                  </label>
+                </div>
+              </div>
+              @error('submissionStatus')
+                <div class="text-danger small mt-1">{{ $message }}</div>
+              @enderror
+              <div class="form-text text-muted mt-2">
+                Jika diset ke <strong>Close</strong>, pengguna tidak dapat membuat, mengedit, mengajukan, menyetujui, atau menolak usulan RKAP, serta tidak dapat melakukan transfer budget.
+              </div>
+            </div>
+
+            <hr class="my-4">
+
             <h5 class="mb-3">Pengaturan Akses Proyeksi</h5>
             <div class="mb-4">
               <label class="form-label fw-semibold">Status Penginputan / Edit Proyeksi <span class="text-danger">*</span></label>

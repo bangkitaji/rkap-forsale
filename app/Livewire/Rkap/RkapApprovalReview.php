@@ -7,6 +7,7 @@ use App\Models\RkapSubmission;
 use App\Models\RkapBudgetItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 class RkapApprovalReview extends Component
 {
@@ -28,6 +29,11 @@ class RkapApprovalReview extends Component
     public string $activityUnit = 'Paket';
     public int $activityQuantity = 1;
     public array $newActivityBudgetItems = [];
+
+    public function getIsSubmissionClosedProperty(): bool
+    {
+        return Setting::get('rkap_submission_status', 'open') === 'closed';
+    }
 
     public function mount(int $id): void
     {
@@ -118,6 +124,11 @@ class RkapApprovalReview extends Component
 
     public function approve(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyetujui usulan.'));
+            return;
+        }
+
         $user = Auth::user();
 
         // 1. the approver can only approve the rkap submission if all activities are approved
@@ -164,6 +175,11 @@ class RkapApprovalReview extends Component
 
     public function requestRevision(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat meminta revisi.'));
+            return;
+        }
+
         // 2. the approver can only reject if there is one or more rejected activities
         // 3. the approver must give revision notes
         $hasRejected = false;
@@ -1064,6 +1080,11 @@ class RkapApprovalReview extends Component
 
     public function saveEditMode(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyimpan perubahan.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
             session()->flash('error', __('Anda tidak memiliki wewenang untuk menyimpan perubahan.'));
@@ -1191,6 +1212,11 @@ class RkapApprovalReview extends Component
 
     public function deleteWorkPlan(int $id): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menghapus kegiatan.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
             session()->flash('error', __('Anda tidak memiliki wewenang untuk menghapus kegiatan.'));
@@ -1226,6 +1252,11 @@ class RkapApprovalReview extends Component
 
     public function deleteBudgetItem(int $id): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menghapus item anggaran.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user->isVerifikator() || !$this->submission->canBeReviewedBy($user)) {
             session()->flash('error', __('Anda tidak memiliki wewenang untuk menghapus item anggaran.'));

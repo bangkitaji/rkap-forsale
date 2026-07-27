@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\BudgetTransfer;
 use App\Services\BudgetTransferService;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
 use Exception;
 
 class BudgetTransferReview extends Component
@@ -29,6 +30,11 @@ class BudgetTransferReview extends Component
 
     public function approve(BudgetTransferService $service): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyetujui transfer budget.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user || $user->bureau_id !== $this->transfer->target_bureau_id) {
             session()->flash('error', __('Hanya biro tujuan yang dapat menyetujui transfer ini.'));
@@ -46,6 +52,11 @@ class BudgetTransferReview extends Component
 
     public function reject(BudgetTransferService $service): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menolak transfer budget.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user || $user->bureau_id !== $this->transfer->target_bureau_id) {
             session()->flash('error', __('Hanya biro tujuan yang dapat menolak transfer ini.'));
@@ -69,6 +80,11 @@ class BudgetTransferReview extends Component
 
     public function deleteZeroBudgetTransferredItem(int $itemId, BudgetTransferService $service): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat melakukan perubahan.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user || !$user->isAdmin()) {
             session()->flash('error', __('Hanya Administrator yang dapat menghapus record transfer budget Rp 0.'));

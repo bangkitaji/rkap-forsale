@@ -10,6 +10,7 @@ use App\Models\RkapBudgetItem;
 use App\Models\Bureau;
 use App\Services\BudgetTransferService;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Setting;
 use Exception;
 
 class BudgetTransferCreate extends Component
@@ -73,6 +74,11 @@ class BudgetTransferCreate extends Component
 
     public function submit(BudgetTransferService $service)
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat mengajukan transfer budget.'));
+            return;
+        }
+
         $user = Auth::user();
         if (!$user || !$user->bureau_id) {
             session()->flash('error', __('Anda harus terasosiasi dengan Biro untuk mengajukan transfer.'));

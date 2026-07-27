@@ -48,6 +48,16 @@
     </div>
   </div>
 
+  @if ($this->isSubmissionClosed)
+  <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mb-4 shadow-sm" role="alert">
+    <i class="bx bx-lock-alt fs-2 text-warning"></i>
+    <div>
+      <h6 class="mb-1 fw-bold text-dark">{{ __('Pengisian Usulan RKAP Ditutup') }}</h6>
+      <span class="small text-muted">{{ __('Periode pengisian usulan RKAP saat ini sedang ditutup. Anda tidak dapat mengunggah atau menyimpan data usulan RKAP.') }}</span>
+    </div>
+  </div>
+  @endif
+
   {{-- Upload Area --}}
   @if (!$imported)
   <div class="card mb-4">

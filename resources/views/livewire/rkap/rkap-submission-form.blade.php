@@ -88,6 +88,16 @@
   </div>
   @endif
 
+  @if ($this->isSubmissionClosed)
+  <div class="alert alert-warning border-warning d-flex align-items-center gap-3 mb-4 shadow-sm" role="alert">
+    <i class="bx bx-lock-alt fs-2 text-warning"></i>
+    <div>
+      <h6 class="mb-1 fw-bold text-dark">{{ __('Pengisian Usulan RKAP Ditutup') }}</h6>
+      <span class="small text-muted">{{ __('Periode pengisian usulan RKAP saat ini sedang ditutup. Anda hanya dapat melihat data dan tidak dapat membuat, mengedit, atau menyimpan usulan.') }}</span>
+    </div>
+  </div>
+  @endif
+
   {{-- Rejection / Revision Banner --}}
   @if ($submission && str_ends_with($submission->status, '_revision'))
   @php
@@ -1503,7 +1513,7 @@
   @endforeach
 
   <div class="d-flex gap-2 mb-4">
-    <button type="button" wire:click="addWorkPlan()" class="btn btn-label-primary">
+    <button type="button" wire:click="addWorkPlan()" class="btn btn-label-primary" @disabled($this->isSubmissionClosed)>
       <i class="bx bx-plus me-1"></i> {{ __('Tambah Program Kerja') }}
     </button>
   </div>
@@ -1516,12 +1526,14 @@
       </a>
       <div class="d-flex gap-2">
         <button wire:click="saveDraft()" @click="isSubmitting = true" wire:loading.attr="disabled"
+          @disabled($this->isSubmissionClosed)
           class="btn btn-label-primary">
           <span wire:loading.remove wire:target="saveDraft"><i class="bx bx-save me-1"></i> {{ __('Simpan Draft') }}</span>
           <span wire:loading wire:target="saveDraft"><span class="spinner-border spinner-border-sm me-1"></span>
             {{ __('Menyimpan...') }}</span>
         </button>
         <button wire:click="submitForReview()" @click="isSubmitting = true" wire:loading.attr="disabled"
+          @disabled($this->isSubmissionClosed)
           wire:confirm="{{ __('Yakin mengajukan RKAP ini untuk review? Pastikan data sudah lengkap.') }}" class="btn btn-primary">
           <span wire:loading.remove wire:target="submitForReview"><i class="bx bx-send me-1"></i> {{ __('Ajukan untuk') }}
             {{ __('Review') }}</span>

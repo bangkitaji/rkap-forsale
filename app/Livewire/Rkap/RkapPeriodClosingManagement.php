@@ -11,6 +11,7 @@ class RkapPeriodClosingManagement extends Component
     public int $closingDay;
     public bool $allowProjectionExceedBudget;
     public string $projectionStatus = 'open';
+    public string $submissionStatus = 'open';
 
     public function mount(): void
     {
@@ -21,6 +22,7 @@ class RkapPeriodClosingManagement extends Component
         $this->closingDay = (int) Setting::get('rkap_closing_day', 10);
         $this->allowProjectionExceedBudget = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
         $this->projectionStatus = Setting::get('rkap_projection_status', 'open');
+        $this->submissionStatus = Setting::get('rkap_submission_status', 'open');
     }
 
     public function save(): void
@@ -28,17 +30,21 @@ class RkapPeriodClosingManagement extends Component
         $this->validate([
             'closingDay' => 'required|integer|between:1,31',
             'projectionStatus' => 'required|in:open,closed',
+            'submissionStatus' => 'required|in:open,closed',
         ], [
             'closingDay.required' => 'Tanggal closing wajib diisi.',
             'closingDay.integer' => 'Tanggal closing harus berupa angka.',
             'closingDay.between' => 'Tanggal closing harus antara 1 sampai 31.',
             'projectionStatus.required' => 'Status penginputan proyeksi wajib dipilih.',
             'projectionStatus.in' => 'Status penginputan proyeksi tidak valid.',
+            'submissionStatus.required' => 'Status pengisian usulan RKAP wajib dipilih.',
+            'submissionStatus.in' => 'Status pengisian usulan RKAP tidak valid.',
         ]);
 
         Setting::set('rkap_closing_day', $this->closingDay);
         Setting::set('rkap_allow_projection_exceed_budget', $this->allowProjectionExceedBudget ? '1' : '0');
         Setting::set('rkap_projection_status', $this->projectionStatus);
+        Setting::set('rkap_submission_status', $this->submissionStatus);
 
         session()->flash('message', __('Setting closing periode berhasil disimpan.'));
     }

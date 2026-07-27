@@ -11,6 +11,7 @@ use App\Models\RkapWorkPlan;
 use App\Models\WorkPlan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -52,6 +53,11 @@ class RkapBulkUpload extends Component
         'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12',
         'co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12',
     ];
+
+    public function getIsSubmissionClosedProperty(): bool
+    {
+        return Setting::get('rkap_submission_status', 'open') === 'closed';
+    }
 
     public function mount(int $periodId): void
     {
@@ -333,6 +339,11 @@ class RkapBulkUpload extends Component
      */
     public function saveAsDraft(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyimpan perubahan.'));
+            return;
+        }
+
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
