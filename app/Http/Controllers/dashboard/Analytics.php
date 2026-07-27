@@ -1536,6 +1536,12 @@ class Analytics extends Controller
         ->get();
     });
 
+    if ($request->query('export') === 'excel') {
+      $coaGroup = \Illuminate\Support\Facades\DB::table('coa_groups')->find($coaGroupId);
+      $groupName = $coaGroup ? $coaGroup->name : 'Detail';
+      return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CoaGroupDetailExport($rows->toArray(), $groupName), 'coa_group_detail.xlsx');
+    }
+
     return response()->json(['data' => $rows]);
   }
 

@@ -16,6 +16,7 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/analytics/cashflow-matrix/sync', [CashflowSyncController::class, 'sync'])->name('analytics-cashflow-matrix-sync');
   Route::get('/analytics/reconciliation', [Analytics::class, 'reconciliation'])->name('analytics-reconciliation');
   Route::get('/analytics/capex', [Analytics::class, 'capex'])->name('analytics-capex');
+  Route::get('/analytics/cds-report', \App\Livewire\Analytics\CdsReport::class)->name('analytics-cds-report');
   Route::get('/analytics/summary-dept/pl-capex', [Analytics::class, 'summaryDeptPlCapex'])->name('analytics-summary-dept-pl-capex')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/summary-dept/cashflow', [Analytics::class, 'summaryDeptCashflow'])->name('analytics-summary-dept-cashflow')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/summary-dept/detail', [Analytics::class, 'summaryDeptDetail'])->name('analytics-summary-dept-detail')->middleware('permission:analytics.summary.dept');
@@ -68,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/settings/difference-groups', \App\Livewire\Settings\DifferenceGroups::class)
     ->name('settings-difference-groups')
     ->middleware('permission:settings.differencegroup.manage');
+
+  Route::get('/settings/cds-groups', \App\Livewire\Settings\CdsGroups::class)
+    ->name('settings-cds-groups')
+    ->middleware('permission:settings.cdsgroup.manage');
 
   // RKAP routes
   Route::prefix('rkap')->group(function () {

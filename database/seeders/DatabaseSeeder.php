@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             CoaProfitLossMappingSeeder::class,
             CashflowReportGroupMappingSeeder::class,
             CashFlowSeeder::class,
+            CdsGroupSeeder::class,
         ]);
     }
 }

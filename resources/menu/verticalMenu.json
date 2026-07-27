@@ -10,6 +10,7 @@
         "analytics-cashflow-matrix",
         "analytics-reconciliation",
         "analytics-capex",
+        "analytics-cds-report",
         "analytics-summary-dept-pl-capex",
         "analytics-summary-dept-cashflow"
       ],
@@ -41,6 +42,13 @@
           "icon": "menu-icon icon-base bx bx-wallet",
           "name": "Capex",
           "slug": "analytics-capex",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/cds-report",
+          "icon": "menu-icon icon-base bx bx-layer",
+          "name": "Laporan CDS",
+          "slug": "analytics-cds-report",
           "permission": "dashboard.show"
         },
         {
@@ -250,6 +258,7 @@
         "settings-report-groups",
         "settings-cashflow-groups",
         "settings-difference-groups",
+        "settings-cds-groups",
         "settings-satuans",
         "settings-data-migration-upload"
       ],
@@ -289,6 +298,13 @@
           "name": "Difference Group",
           "slug": "settings-difference-groups",
           "permission": "settings.differencegroup.manage"
+        },
+        {
+          "url": "settings/cds-groups",
+          "icon": "menu-icon icon-base bx bx-layer",
+          "name": "CDS Group",
+          "slug": "settings-cds-groups",
+          "permission": "settings.cdsgroup.manage"
         },
         {
           "url": "settings/satuans",

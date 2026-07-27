@@ -696,15 +696,21 @@
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header d-flex align-items-center text-white rkap-bg-kcic-red">
-        <h5 class="modal-title d-flex align-items-center text-white mb-4 rkap-text-white" id="coaGroupDetailModalLabel">
+        <h5 class="modal-title d-flex align-items-center text-white mb-0 rkap-text-white" id="coaGroupDetailModalLabel">
           <i class="bx bx-detail me-2 fs-4 text-white rkap-text-white"></i>
           <span id="coaGroupDetailTitle" class="text-white rkap-text-white">{{ __('Detail COA') }}</span>
         </h5>
-        <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal"
-          aria-label="Tutup"></button>
+        <div class="ms-auto d-flex gap-2 align-items-center">
+          <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal"
+            aria-label="Tutup"></button>
+        </div>
       </div>
-      <hr>
       <div class="modal-body p-0">
+        <div class="d-flex justify-content-end p-3 pb-3">
+          <button type="button" class="btn btn-sm d-none text-white" id="btnExportCoaGroupDetail" style="background-color: #146c43; border-color: #146c43;">
+            <i class="bx bx-export me-1"></i>{{ __('Export Excel') }}
+          </button>
+        </div>
         <div id="coaGroupDetailLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
           <p class="text-muted mt-2 mb-0">{{ __('Memuat data...') }}</p>
@@ -799,6 +805,16 @@
     const detailTbody = document.getElementById('coaGroupDetailTbody');
     const detailTfoot = document.getElementById('coaGroupDetailTfoot');
     const detailEmpty = document.getElementById('coaGroupDetailEmpty');
+    const btnExport = document.getElementById('btnExportCoaGroupDetail');
+
+    let currentCgId = null;
+    let currentPeriodId = null;
+
+    btnExport.addEventListener('click', function() {
+      if (currentCgId && currentPeriodId) {
+        window.location.href = `/analytics/coa-group-detail?coa_group_id=${currentCgId}&period_id=${currentPeriodId}&export=excel`;
+      }
+    });
 
     function formatRp(val) {
       const num = parseFloat(val) || 0;
@@ -814,12 +830,16 @@
         const cgId = this.dataset.coaGroupId;
         const cgName = this.dataset.coaGroupName;
         const periodId = this.dataset.periodId;
+        
+        currentCgId = cgId;
+        currentPeriodId = periodId;
 
         detailTitle.textContent = cgName;
         detailLoading.classList.remove('d-none');
         detailError.classList.add('d-none');
         detailWrap.classList.add('d-none');
         detailEmpty.classList.add('d-none');
+        btnExport.classList.add('d-none');
         detailTbody.innerHTML = '';
         detailTfoot.innerHTML = '';
 
@@ -842,6 +862,8 @@
               detailEmpty.classList.remove('d-none');
               return;
             }
+            
+            btnExport.classList.remove('d-none');
 
             let totalBudget = 0,
               totalReal = 0,

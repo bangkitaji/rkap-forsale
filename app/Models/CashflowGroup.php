@@ -11,7 +11,7 @@ class CashflowGroup extends Model
 {
     use SoftDeletes, Searchable, Translatable;
 
-    protected $fillable = ['code', 'name', 'name_en', 'description', 'report_group_id'];
+    protected $fillable = ['code', 'name', 'name_en', 'description', 'report_group_id', 'cds_group_id'];
 
     protected $searchable = ['code', 'name'];
 
@@ -23,5 +23,10 @@ class CashflowGroup extends Model
     public function reportGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ReportGroup::class, 'report_group_id');
+    }
+
+    public function cdsGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(CdsGroup::class, 'cds_group_id');
     }
 }
