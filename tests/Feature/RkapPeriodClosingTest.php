@@ -454,4 +454,67 @@ class RkapPeriodClosingTest extends TestCase
         $this->assertNotNull($savedProjection);
         $this->assertEquals(15000, (float) $savedProjection->amount);
     }
+
+    public function test_admin_can_update_projection_status_setting(): void
+    {
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapPeriodClosingManagement::class)
+            ->assertSet('projectionStatus', 'open')
+            ->set('projectionStatus', 'closed')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('closed', Setting::get('rkap_projection_status'));
+    }
+
+    public function test_closed_projection_setting_prevents_saving_projection(): void
+    {
+        Setting::set('rkap_projection_status', 'closed');
+
+        $directorate = Directorate::create(['name' => 'Dir Test', 'code' => 'DIR']);
+        $department = Department::create(['name' => 'Dept Test', 'code' => 'DEPT', 'directorate_id' => $directorate->id]);
+        $bureau = Bureau::create(['name' => 'Bureau Test', 'code' => 'BUR', 'department_id' => $department->id]);
+        $wpMaster = WorkPlan::create(['title' => 'WP Master', 'code' => 'WPM']);
+
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $bureau->id,
+            'status' => 'approved',
+            'created_by' => $this->verifikator->id,
+        ]);
+
+        $workPlan = RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $wpMaster->id,
+            'program_code' => 'WP003',
+            'program_name' => 'Work Plan 3',
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code' => '521223',
+            'description' => 'Item Projection Test',
+            'quantity' => 1,
+            'unit_price' => 100000,
+            'total_price' => 100000,
+        ]);
+
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapProjections::class)
+            ->call('selectBudgetItem', $budgetItem->id)
+            ->set('editingProjections.7', 50000)
+            ->call('saveMonthlyProjections')
+            ->assertSee('Penginputan dan perubahan data proyeksi saat ini sedang ditutup.');
+    }
+
+    public function test_closed_projection_setting_prevents_mass_upload_projection(): void
+    {
+        Setting::set('rkap_projection_status', 'closed');
+
+        Livewire::actingAs($this->verifikator)
+            ->test(RkapProjectionUpload::class)
+            ->set('periodId', $this->period->id)
+            ->call('uploadAndImport')
+            ->assertSet('errorsList', ['Penginputan dan perubahan data proyeksi saat ini sedang ditutup.']);
+    }
 }

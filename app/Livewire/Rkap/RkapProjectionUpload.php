@@ -64,12 +64,23 @@ class RkapProjectionUpload extends Component
         return $names[$month] ?? '';
     }
 
+    public function getIsProjectionClosedProperty(): bool
+    {
+        $status = Setting::get('rkap_projection_status', 'open');
+        return in_array($status, ['closed', 'close'], true);
+    }
+
     public function uploadAndImport(): void
     {
         ini_set('memory_limit', '1024M');
         set_time_limit(300);
 
         $this->resetState(keepPeriod: true);
+
+        if ($this->isProjectionClosed) {
+            $this->errorsList[] = 'Penginputan dan perubahan data proyeksi saat ini sedang ditutup.';
+            return;
+        }
 
         $this->validate([
             'periodId' => 'required|integer|exists:rkap_periods,id',

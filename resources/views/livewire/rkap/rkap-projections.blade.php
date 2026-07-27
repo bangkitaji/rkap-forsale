@@ -18,9 +18,15 @@
             </button>
             @can('rkap.projection.input')
             @if(Auth::user()->hasRole('admin') || Auth::user()->hasRole('verifikator'))
+            @if(!$this->isProjectionClosed)
             <a href="{{ route('rkap-projection-upload') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
                 <i class="bx bx-upload"></i> Upload Massal Proyeksi
             </a>
+            @else
+            <button type="button" class="btn btn-secondary btn-sm d-flex align-items-center gap-1" disabled title="Upload Massal Proyeksi Ditutup">
+                <i class="bx bx-lock-alt"></i> Upload Massal Proyeksi
+            </button>
+            @endif
             @endif
             @endcan
             <div class="text-muted small border-start ps-2">
@@ -74,6 +80,14 @@
 
     {{-- Alert Info / Guide --}}
     @if($activeTab === 'input')
+    @if($this->isProjectionClosed)
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+        <span class="badge bg-warning rounded-pill"><i class="bx bx-lock-alt text-white"></i></span>
+        <div>
+            <strong>{{ __('Penginputan / Edit Proyeksi Ditutup!') }}</strong> {{ __('Pengaturan penginputan data proyeksi saat ini dalam posisi Close. Pengguna tidak dapat menambah, mengedit, atau mengunggah data proyeksi.') }}
+        </div>
+    </div>
+    @endif
     <div class="alert alert-primary d-flex align-items-center gap-2 mb-4" role="alert">
         <span class="badge bg-primary rounded-pill"><i class="bx bx-info-circle text-white"></i></span>
         <div>
@@ -725,6 +739,13 @@
                             </div>
                         </div>
 
+                        @if($this->isProjectionClosed)
+                        <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
+                            <i class="bx bx-lock-alt fs-4"></i>
+                            <div class="small fw-semibold">{{ __('Penginputan dan perubahan data proyeksi saat ini sedang ditutup oleh administrator. Data hanya dapat dilihat.') }}</div>
+                        </div>
+                        @endif
+
                         @error('editingProjections')
                         <div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert" wire:key="accumulation-error-{{ $selectedBudgetItemId }}">
                             <i class="bx bx-error-circle fs-4"></i>
@@ -806,8 +827,7 @@
                                             class="form-control form-control-lg @error('yearlyProjection') is-invalid @enderror"
                                             x-model="display"
                                             @input="onInput"
-                                            @blur="onBlur"
-                                            @disabled($hasClosedMonths)
+                                                                                     @disabled($hasClosedMonths || $this->isProjectionClosed)
                                             placeholder="{{ __('Masukkan total proyeksi pertahun...') }}">
                                     </div>
                                 </div>
@@ -890,7 +910,7 @@
                                                         let num = Math.round(parseFloat(val));
                                                         if (isNaN(num)) return '';
                                                         return new Intl.NumberFormat('id-ID').format(num);
-                                                    },
+                                                     },
                                                     onInput(e) {
                                                         let cursor = e.target.selectionStart;
                                                         let originalLength = e.target.value.length;
@@ -916,7 +936,7 @@
                                                             x-model="display"
                                                             @input="onInput"
                                                             @blur="onBlur"
-                                                            @disabled($isLocked)>
+                                                            @disabled($isLocked || $this->isProjectionClosed)>
                                                     </div>
                                                 </div>
                                                 @if($isLocked && $existingProj)
@@ -939,11 +959,11 @@
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Batal') }}</button>
                         <button type="submit"
                             class="btn btn-primary d-flex align-items-center gap-1"
-                            @disabled($isOverBudget && \App\Models\Setting::get('rkap_allow_projection_exceed_budget', '0') !== '1')
-                            @if($isOverBudget) title="Total proyeksi melebihi total anggaran RKAP" @endif>
+                            @disabled($this->isProjectionClosed || ($isOverBudget && \App\Models\Setting::get('rkap_allow_projection_exceed_budget', '0') !== '1'))
+                            @if($this->isProjectionClosed) title="Penginputan proyeksi sedang ditutup" @elseif($isOverBudget) title="Total proyeksi melebihi total anggaran RKAP" @endif>
                             <i class="bx bx-save"></i> {{ __('Simpan Proyeksi') }}
                         </button>
-                    </div>
+                    </div>            </div>
                 </form>
                 @endif
             </div>

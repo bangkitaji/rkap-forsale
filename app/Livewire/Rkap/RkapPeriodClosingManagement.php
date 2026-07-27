@@ -10,6 +10,7 @@ class RkapPeriodClosingManagement extends Component
 {
     public int $closingDay;
     public bool $allowProjectionExceedBudget;
+    public string $projectionStatus = 'open';
 
     public function mount(): void
     {
@@ -19,20 +20,25 @@ class RkapPeriodClosingManagement extends Component
 
         $this->closingDay = (int) Setting::get('rkap_closing_day', 10);
         $this->allowProjectionExceedBudget = Setting::get('rkap_allow_projection_exceed_budget', '0') === '1';
+        $this->projectionStatus = Setting::get('rkap_projection_status', 'open');
     }
 
     public function save(): void
     {
         $this->validate([
             'closingDay' => 'required|integer|between:1,31',
+            'projectionStatus' => 'required|in:open,closed',
         ], [
             'closingDay.required' => 'Tanggal closing wajib diisi.',
             'closingDay.integer' => 'Tanggal closing harus berupa angka.',
             'closingDay.between' => 'Tanggal closing harus antara 1 sampai 31.',
+            'projectionStatus.required' => 'Status penginputan proyeksi wajib dipilih.',
+            'projectionStatus.in' => 'Status penginputan proyeksi tidak valid.',
         ]);
 
         Setting::set('rkap_closing_day', $this->closingDay);
         Setting::set('rkap_allow_projection_exceed_budget', $this->allowProjectionExceedBudget ? '1' : '0');
+        Setting::set('rkap_projection_status', $this->projectionStatus);
 
         session()->flash('message', __('Setting closing periode berhasil disimpan.'));
     }

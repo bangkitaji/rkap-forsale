@@ -14,6 +14,15 @@
           <span>Upload Massal Proyeksi RKAP</span>
         </h5>
         <div class="card-body">
+          @if($this->isProjectionClosed)
+          <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+            <span class="badge bg-warning rounded-pill"><i class="bx bx-lock-alt text-white"></i></span>
+            <div>
+              <strong>Penginputan / Edit Proyeksi Ditutup!</strong> Pengaturan penginputan data proyeksi saat ini dalam posisi <strong>Close</strong>. Anda tidak dapat melakukan unggah atau perubahan data proyeksi.
+            </div>
+          </div>
+          @endif
+
           <p class="text-muted mb-4">
             Upload file Excel (.xlsx, .xls) atau CSV untuk melakukan pembaruan proyeksi anggaran untuk seluruh bulan (Januari s.d. Desember) secara massal.
             Hanya <strong>Administrator</strong> dan <strong>{{ __('Verifikator') }}</strong> yang memiliki akses untuk melakukan upload ini.
@@ -26,6 +35,7 @@
               <div class="mb-3">
                 <label class="form-label fw-semibold" for="periodSelect">Periode RKAP <span class="text-danger">*</span></label>
                 <select id="periodSelect" class="form-select" wire:model.live="periodId"
+                  @disabled($this->isProjectionClosed)
                   wire:loading.attr="disabled" wire:target="uploadAndImport">
                   <option value="">— Pilih Periode —</option>
                   @foreach ($periodOptions as $period)
@@ -68,6 +78,7 @@
                 <div class="mb-3">
                   <label class="form-label fw-semibold" for="projectionFile">File Excel / CSV</label>
                   <input id="projectionFile" type="file" class="form-control" wire:model="file"
+                    @disabled($this->isProjectionClosed)
                     wire:loading.attr="disabled" wire:target="file, uploadAndImport"
                     accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
                   @error('file')
@@ -76,6 +87,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100"
+                  @disabled($this->isProjectionClosed)
                   wire:loading.attr="disabled" wire:target="file, uploadAndImport">
                   <span wire:loading.remove wire:target="file, uploadAndImport">
                     <i class="bx bx-upload me-1"></i> Mulai Unggah &amp; Import

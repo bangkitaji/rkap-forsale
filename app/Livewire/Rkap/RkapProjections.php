@@ -352,6 +352,12 @@ class RkapProjections extends Component
         $this->yearlyProjection = $totalProjections;
     }
 
+    public function getIsProjectionClosedProperty(): bool
+    {
+        $status = Setting::get('rkap_projection_status', 'open');
+        return in_array($status, ['closed', 'close'], true);
+    }
+
     public function saveMonthlyProjections(): void
     {
         if (!$this->selectedBudgetItemId) {
@@ -362,6 +368,11 @@ class RkapProjections extends Component
 
         if (!$user || !$user->can('rkap.projection.input')) {
             session()->flash('error', __('Anda tidak memiliki akses untuk menyimpan proyeksi.'));
+            return;
+        }
+
+        if ($this->isProjectionClosed) {
+            session()->flash('error', __('Penginputan dan perubahan data proyeksi saat ini sedang ditutup.'));
             return;
         }
 

@@ -2,7 +2,7 @@
     <div class="py-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h4 class="mb-1"><span class="text-muted fw-light">{{ __('Analytics') }} /</span> {{ __('Laporan CDS') }}</h4>
-            <p class="text-muted mb-0">{{ __('Akumulasi Nilai Anggaran, Realisasi, dan Proyeksi berdasarkan CDS Group') }}</p>
+            <p class="text-muted mb-0">{{ __('Akumulasi Nilai Anggaran (Cash Flow), Realisasi, dan Proyeksi berdasarkan CDS Group') }}</p>
         </div>
 
         <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
@@ -38,12 +38,12 @@
             <div class="card h-100 border-start border-primary border-4 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-muted fw-medium small">{{ __('Total RKAP (Budget)') }}</span>
+                        <span class="text-muted fw-medium small">{{ __('Total RKAP (Cash Flow)') }}</span>
                         <div class="avatar avatar-sm flex-shrink-0">
                             <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-wallet fs-4"></i></span>
                         </div>
                     </div>
-                    <h4 class="mb-0 fw-bold text-primary">Rp {{ number_format($grandTotalBudget, 0, ',', '.') }}</h4>
+                    <h4 class="mb-0 fw-bold text-primary">{{ $this->formatRp($grandTotalBudget) }}</h4>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
                             <span class="avatar-initial rounded bg-label-success"><i class="bx bx-check-circle fs-4"></i></span>
                         </div>
                     </div>
-                    <h4 class="mb-0 fw-bold text-success">Rp {{ number_format($grandTotalRealization, 0, ',', '.') }}</h4>
+                    <h4 class="mb-0 fw-bold text-success">{{ $this->formatRp($grandTotalRealization) }}</h4>
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@
                             <span class="avatar-initial rounded bg-label-info"><i class="bx bx-trending-up fs-4"></i></span>
                         </div>
                     </div>
-                    <h4 class="mb-0 fw-bold text-info">Rp {{ number_format($grandTotalProjection, 0, ',', '.') }}</h4>
+                    <h4 class="mb-0 fw-bold text-info">{{ $this->formatRp($grandTotalProjection) }}</h4>
                 </div>
             </div>
         </div>
@@ -102,7 +102,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>{{ __('CDS Group') }}</th>
-                        <th class="text-end">{{ __('RKAP (Budget)') }}</th>
+                        <th class="text-end">{{ __('RKAP (Cash Flow)') }}</th>
                         <th class="text-end">{{ __('Realisasi') }}</th>
                         <th class="text-end">{{ __('Proyeksi') }}</th>
                         <th class="text-center">{{ __('% Penyerapan') }}</th>
@@ -117,9 +117,9 @@
                             <span class="badge bg-label-primary me-2">{{ $item['group']->code }}</span>
                             <strong>{{ $item['group']->name }}</strong>
                         </td>
-                        <td class="text-end fw-semibold">Rp {{ number_format($item['budget'], 0, ',', '.') }}</td>
-                        <td class="text-end text-success fw-semibold">Rp {{ number_format($item['realization'], 0, ',', '.') }}</td>
-                        <td class="text-end text-info fw-semibold">Rp {{ number_format($item['projection'], 0, ',', '.') }}</td>
+                        <td class="text-end fw-semibold">{{ $this->formatRp($item['budget']) }}</td>
+                        <td class="text-end text-success fw-semibold">{{ $this->formatRp($item['realization']) }}</td>
+                        <td class="text-end text-info fw-semibold">{{ $this->formatRp($item['projection']) }}</td>
                         <td class="text-center">
                             <span class="badge bg-label-{{ $item['absorption_rate'] >= 80 ? 'success' : ($item['absorption_rate'] >= 50 ? 'warning' : 'danger') }}">
                                 {{ $item['absorption_rate'] }}%
@@ -159,7 +159,7 @@
                                                 <td><span class="badge bg-label-{{ $detail['type'] === 'COA Group' ? 'info' : 'success' }}">{{ $detail['type'] }}</span></td>
                                                 <td><code>{{ $detail['code'] }}</code></td>
                                                 <td>{{ $detail['name'] }}</td>
-                                                <td class="text-end">Rp {{ number_format($detail['budget'], 0, ',', '.') }}</td>
+                                                <td class="text-end">{{ $this->formatRp($detail['budget']) }}</td>
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -180,9 +180,9 @@
                 <tfoot class="table-light border-top-2">
                     <tr class="fw-bold">
                         <td>TOTAL KESELURUHAN</td>
-                        <td class="text-end text-primary">Rp {{ number_format($grandTotalBudget, 0, ',', '.') }}</td>
-                        <td class="text-end text-success">Rp {{ number_format($grandTotalRealization, 0, ',', '.') }}</td>
-                        <td class="text-end text-info">Rp {{ number_format($grandTotalProjection, 0, ',', '.') }}</td>
+                        <td class="text-end text-primary">{{ $this->formatRp($grandTotalBudget) }}</td>
+                        <td class="text-end text-success">{{ $this->formatRp($grandTotalRealization) }}</td>
+                        <td class="text-end text-info">{{ $this->formatRp($grandTotalProjection) }}</td>
                         <td class="text-center"><span class="badge bg-primary">{{ $grandAbsorption }}%</span></td>
                         <td class="text-center" colspan="2"></td>
                     </tr>
