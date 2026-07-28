@@ -213,6 +213,7 @@ class Analytics extends Controller
           'rkap_budget_items.id',
           'rkap_budget_items.total_price',
           'rkap_budget_items.projection',
+          'rkap_budget_items.is_gain',
           'coas.code as coa_code',
           'coa_groups.code as coa_group_code',
           'report_groups.code as report_group_code'
@@ -235,6 +236,12 @@ class Analytics extends Controller
         $amountBudget = (float) $item->total_price;
         $amountReal = (float) ($activePeriodRealizationSums[$item->id] ?? 0.0);
         $amountProj = (float) $item->projection;
+
+        if ($coaCode === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+          $amountBudget = -$amountBudget;
+          $amountReal = -$amountReal;
+          $amountProj = -$amountProj;
+        }
 
         if ($rgCode === 'PL0001') {
           $isExpense = false;
@@ -686,7 +693,7 @@ class Analytics extends Controller
 
       // Budget per COA group and code
       $cgBudgetsRaw = $baseJoin()
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_items.total_price) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
         ->get();
 
@@ -702,7 +709,7 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_item_realizations.amount) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
         ->get();
 
@@ -717,7 +724,7 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(rkap_budget_items.projection) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code')
         ->get();
 
@@ -768,7 +775,7 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_monthlies.month, SUM(rkap_budget_item_monthlies.amount) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_monthlies.month, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_item_monthlies.amount ELSE rkap_budget_item_monthlies.amount END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_monthlies.month')
         ->get();
 
@@ -783,7 +790,7 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_realizations.month, SUM(rkap_budget_item_realizations.amount) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_realizations.month, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_realizations.month')
         ->get();
 
@@ -798,7 +805,7 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->whereIn('coa_groups.report_group_id', $plReportGroupIds)
-        ->selectRaw('coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_projections.month, SUM(rkap_budget_item_projections.amount) as total')
+        ->selectRaw("coa_groups.id as coa_group_id, coa_groups.code as coa_group_code, coas.code as coa_code, rkap_budget_item_projections.month, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_item_projections.amount ELSE rkap_budget_item_projections.amount END) as total")
         ->groupBy('coa_groups.id', 'coa_groups.code', 'coas.code', 'rkap_budget_item_projections.month')
         ->get();
 
@@ -1340,6 +1347,7 @@ class Analytics extends Controller
             'rkap_budget_items.id',
             'rkap_budget_items.total_price',
             'rkap_budget_items.projection',
+            'rkap_budget_items.is_gain',
             'coas.code as coa_code',
             'coa_groups.code as coa_group_code',
             'report_groups.code as report_group_code'
@@ -1362,6 +1370,12 @@ class Analytics extends Controller
           $amountBudget = (float) $item->total_price;
           $amountReal = (float) ($realizationSums[$item->id] ?? 0.0);
           $amountProj = (float) $item->projection;
+
+          if ($coaCode === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+            $amountBudget = -$amountBudget;
+            $amountReal = -$amountReal;
+            $amountProj = -$amountProj;
+          }
 
           if ($rgCode === 'PL0001') {
             $isExpense = false;
@@ -1510,7 +1524,7 @@ class Analytics extends Controller
         ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->selectRaw('
+        ->selectRaw("
           coas.code as coa_code,
           coas.title as coa_title,
           rkap_work_plans.program_code,
@@ -1518,10 +1532,10 @@ class Analytics extends Controller
           directorates.code as directorate_code,
           departments.code as department_code,
           bureaus.code as bureau_code,
-          SUM(rkap_budget_items.total_price) as budget,
-          SUM(COALESCE(rl.realization_total, 0)) as realization,
-          SUM(rkap_budget_items.projection) as projection
-        ')
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) as budget,
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -COALESCE(rl.realization_total, 0) ELSE COALESCE(rl.realization_total, 0) END) as realization,
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as projection
+        ")
         ->groupBy(
           'coas.code',
           'coas.title',
@@ -2561,7 +2575,7 @@ class Analytics extends Controller
         ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
-        ->selectRaw('
+        ->selectRaw("
           coas.code as coa_code,
           coas.title as coa_title,
           rkap_work_plans.program_code,
@@ -2569,10 +2583,10 @@ class Analytics extends Controller
           directorates.code as directorate_code,
           departments.code as department_code,
           bureaus.code as bureau_code,
-          SUM(rkap_budget_items.total_price) as budget,
-          SUM(COALESCE(rl.realization_total, 0)) as realization,
-          SUM(rkap_budget_items.projection) as projection
-        ')
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) as budget,
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -COALESCE(rl.realization_total, 0) ELSE COALESCE(rl.realization_total, 0) END) as realization,
+          SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as projection
+        ")
         ->groupBy(
           'coas.code',
           'coas.title',
@@ -2658,7 +2672,7 @@ class Analytics extends Controller
           ->where('report_groups.type', 'PL')
           ->whereNull('coas.deleted_at')
           ->when(!$includeAllStatusesB, fn($q) => $q->where('rkap_submissions.status', 'approved'))
-          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.total_price) as budget')
+          ->selectRaw("bureaus.department_id, report_groups.id as report_group_id, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) as budget")
           ->groupBy('bureaus.department_id', 'report_groups.id')
           ->get();
 
@@ -2686,7 +2700,7 @@ class Analytics extends Controller
           ->where('report_groups.type', 'PL')
           ->whereNull('coas.deleted_at')
           ->when(!$includeAllStatusesR, fn($q) => $q->where('rkap_submissions.status', 'approved'))
-          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_item_realizations.amount) as realization')
+          ->selectRaw("bureaus.department_id, report_groups.id as report_group_id, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) as realization")
           ->groupBy('bureaus.department_id', 'report_groups.id')
           ->get();
 
@@ -2713,7 +2727,7 @@ class Analytics extends Controller
           ->where('report_groups.type', 'PL')
           ->whereNull('coas.deleted_at')
           ->when(!$includeAllStatusesP, fn($q) => $q->where('rkap_submissions.status', 'approved'))
-          ->selectRaw('bureaus.department_id, report_groups.id as report_group_id, SUM(rkap_budget_items.projection) as projection')
+          ->selectRaw("bureaus.department_id, report_groups.id as report_group_id, SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as projection")
           ->groupBy('bureaus.department_id', 'report_groups.id')
           ->get();
 
@@ -2874,7 +2888,7 @@ class Analytics extends Controller
         ->where('report_groups.id', (int) $reportGroupId);
     }
 
-    $rows = $query->selectRaw('
+    $rows = $query->selectRaw("
         coas.code as coa_code,
         coas.title as coa_title,
         rkap_work_plans.program_code,
@@ -2882,10 +2896,10 @@ class Analytics extends Controller
         directorates.code as directorate_code,
         departments.code as department_code,
         bureaus.code as bureau_code,
-        SUM(rkap_budget_items.total_price) as budget,
-        SUM(COALESCE(rl.realization_total, 0)) as realization,
-        SUM(rkap_budget_items.projection) as projection
-      ')
+        SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) as budget,
+        SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -COALESCE(rl.realization_total, 0) ELSE COALESCE(rl.realization_total, 0) END) as realization,
+        SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as projection
+      ")
       ->groupBy(
         'coas.code',
         'coas.title',

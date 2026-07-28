@@ -957,6 +957,44 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertEquals($dg1->id, $budgetItems[0]->difference_group_id);
         $this->assertEquals($dg2->id, $budgetItems[1]->difference_group_id);
     }
+
+    public function test_is_gain_toggle_for_account_7603000001(): void
+    {
+        $this->actingAs($this->user);
+
+        $gainLossCoa = Coa::create([
+            'code' => '7603000001',
+            'title' => 'Profit/Loss due to currency exchange differences',
+        ]);
+
+        $activity = Activity::create([
+            'work_plan_id' => $this->workPlan->id,
+            'code' => 'ACT_GAIN',
+            'title' => 'Activity Gain Loss',
+        ]);
+        $activity->coas()->attach([$gainLossCoa->id]);
+
+        $component = Livewire::test(RkapSubmissionForm::class, ['periodId' => $this->period->id])
+            ->set('workPlans.0.work_plan_id', $this->workPlan->id)
+            ->set('workPlans.0.activities.0.activity_id', $activity->id)
+            ->set('workPlans.0.activities.0.budget_items.0.quantity', 1)
+            ->set('workPlans.0.activities.0.budget_items.0.unit_price', 50000)
+            ->set('workPlans.0.activities.0.budget_items.0.is_gain', false)
+            ->call('toggleMonth', 0, 0, 0, 1)
+            ->set('workPlans.0.activities.0.budget_items.0.monthly_distribution.1', 50000);
+
+        $component->call('saveDraft')
+            ->assertHasNoErrors();
+
+        $submissionId = $component->get('submissionId');
+        $item = \App\Models\RkapBudgetItem::whereHas('workPlan', fn($q) => $q->where('rkap_submission_id', $submissionId))
+            ->where('account_code', '7603000001')
+            ->first();
+
+        $this->assertNotNull($item);
+        $this->assertFalse($item->is_gain);
+    }
 }
+
 
 

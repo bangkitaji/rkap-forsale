@@ -22,6 +22,7 @@ class RkapBudgetItem extends Model
         'remarks',
         'flow_direction',
         'difference_group_id',
+        'is_gain',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class RkapBudgetItem extends Model
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
             'projection' => 'decimal:2',
+            'is_gain' => 'boolean',
         ];
     }
 

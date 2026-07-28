@@ -1156,6 +1156,18 @@
                           @endif
                     </div>
                   </div>
+                  @if (($bi['account_code'] ?? '') === '7603000001')
+                  <div class="mb-3 d-flex align-items-center gap-2 mt-2">
+                    <span class="small fw-semibold text-muted">{{ __('Sifat Selisih Kurs:') }}</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <input type="radio" class="btn-check" name="gain-{{ $modalKey }}" id="gain-yes-{{ $modalKey }}" value="1" wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.is_gain" @disabled($isApproved)>
+                      <label class="btn btn-outline-success px-3 d-flex align-items-center" for="gain-yes-{{ $modalKey }}"><i class="bx bx-trending-up me-1"></i>Gain</label>
+
+                      <input type="radio" class="btn-check" name="gain-{{ $modalKey }}" id="gain-no-{{ $modalKey }}" value="0" wire:model="workPlans.{{ $wpIdx }}.activities.{{ $actIdx }}.budget_items.{{ $biIdx }}.is_gain" @disabled($isApproved)>
+                      <label class="btn btn-outline-danger px-3 d-flex align-items-center" for="gain-no-{{ $modalKey }}"><i class="bx bx-trending-down me-1"></i>Loss</label>
+                    </div>
+                  </div>
+                  @endif
                   <div class="d-flex align-items-center mb-1">
                     <label class="form-label small text-muted mb-0">{{ __('Pilih Bulan Distribusi Penganggaran:') }}</label>
                   </div>

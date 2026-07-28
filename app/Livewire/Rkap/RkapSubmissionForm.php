@@ -273,6 +273,7 @@ class RkapSubmissionForm extends Component
             'realization_months'        => [],
             'flow_direction'            => 'OUT',
             'difference_group_id'       => null,
+            'is_gain'                   => true,
         ];
     }
 
@@ -604,6 +605,7 @@ class RkapSubmissionForm extends Component
                             'realization_distribution' => $bi->realizations->pluck('amount', 'month')->map(fn($v) => (float) $v)->toArray(),
                             'realization_months'       => $bi->realizations->pluck('month')->toArray(),
                             'flow_direction'           => $bi->flow_direction ?? 'OUT',
+                            'is_gain'                  => (bool) ($bi->is_gain ?? true),
                         ];
                     })->toArray(),
                     'is_past_period_payment' => (bool) ($wp->is_past_period_payment ?? false),
@@ -1024,6 +1026,7 @@ class RkapSubmissionForm extends Component
             'workPlans.*.activities.*.budget_items.*.quantity_2' => 'nullable|numeric|gt:0',
             'workPlans.*.activities.*.budget_items.*.unit_price' => 'required|numeric|min:0',
             'workPlans.*.activities.*.budget_items.*.flow_direction' => 'required|in:IN,OUT',
+            'workPlans.*.activities.*.budget_items.*.is_gain' => 'nullable|boolean',
         ];
     }
 
@@ -1458,6 +1461,7 @@ class RkapSubmissionForm extends Component
                                 'remarks' => $biData['remarks'] ?: null,
                                 'flow_direction' => $biData['flow_direction'] ?? 'OUT',
                                 'difference_group_id' => $biData['difference_group_id'] ?? null,
+                                'is_gain' => isset($biData['is_gain']) ? (bool) $biData['is_gain'] : true,
                             ]
                         );
 
