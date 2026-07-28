@@ -908,7 +908,12 @@
                   $groupSubtotal = collect($group['items'])->sum(function ($info) {
                   $bi = $info['item'];
                   $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-                  return ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                  $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                  $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
+                  if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+                      $itemTotal = -$itemTotal;
+                  }
+                  return $itemTotal;
                   });
                   $totalItemsCount = count($newActivityBudgetItems);
                   $indices = array_column($group['items'], 'index');
@@ -1500,7 +1505,21 @@
                   @foreach ($wp['grouped_items'] as $accountCode => $items)
                   @php
                   $firstItem = $items[0];
-                  $coaGroupSubtotal = collect($items)->sum('total_price');
+                  $coaGroupSubtotal = collect($items)->sum(function ($bi) {
+                  $price = (float) ($bi['total_price'] ?? 0);
+                  $code = $bi['account_code'] ?? null;
+                  $model = $bi['model'] ?? null;
+                  $isGain = true;
+                  if ($model && isset($model->is_gain)) {
+                      $isGain = filter_var($model->is_gain, FILTER_VALIDATE_BOOLEAN);
+                  } elseif (isset($bi['is_gain'])) {
+                      $isGain = filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN);
+                  }
+                  if ($code === '7603000001' && !$isGain) {
+                      $price = -$price;
+                  }
+                  return $price;
+                  });
                   $prevWpId = $wp['work_plan_id'] ?? null;
                   $prevCode = $accountCode;
                   $itemCounters = [];
@@ -1639,6 +1658,13 @@
                         class="@if ($isBiVirtual) text-danger text-decoration-line-through @endif">
                         {{ $bi['remarks'] ?: $bi['description'] }}
                       </span>
+                      @if (($bi['account_code'] ?? '') === '7603000001')
+                      @if (filter_var($bi['is_gain'] ?? true, FILTER_VALIDATE_BOOLEAN))
+                      <span class="badge bg-success ms-1"><i class="bx bx-trending-up me-1"></i>Gain</span>
+                      @else
+                      <span class="badge bg-danger ms-1"><i class="bx bx-trending-down me-1"></i>Loss</span>
+                      @endif
+                      @endif
                       @if ($isBiVirtual)
                       <span class="badge bg-label-danger ms-1 rkap-font-06">Dihapus</span>
                       @endif

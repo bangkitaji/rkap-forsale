@@ -153,6 +153,15 @@ class RkapSubmissionForm extends Component
             $this->updateGroupCoa($wpIdx, $actIdx, $biIdx, $coaId);
         }
 
+        // is_gain toggle in a budget item
+        if (preg_match('/^workPlans\.(\d+)\.activities\.(\d+)\.budget_items\.(\d+)\.is_gain$/', $name, $m)) {
+            $wpIdx = (int) $m[1];
+            $actIdx = (int) $m[2];
+            $biIdx = (int) $m[3];
+            $val = $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['is_gain'] ?? null;
+            $this->workPlans[$wpIdx]['activities'][$actIdx]['budget_items'][$biIdx]['is_gain'] = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+        }
+
         // Work plan selection changes
         if (preg_match('/^workPlans\.(\d+)\.work_plan_id$/', $name, $m)) {
             $wpIdx    = (int) $m[1];
@@ -1003,7 +1012,19 @@ class RkapSubmissionForm extends Component
             foreach (($wp['activities'] ?? []) as $act) {
                 foreach (($act['budget_items'] ?? []) as $bi) {
                     $qty2 = (!empty($bi['unit_2'])) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-                    $total += (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
+                    $itemTotal = (float) ($bi['quantity'] ?? 0) * $qty2 * (float) ($bi['unit_price'] ?? 0);
+                    
+                    $accountCode = $bi['account_code'] ?? null;
+                    if (!$accountCode && !empty($bi['coa_id'])) {
+                        $coa = \App\Models\Coa::find($bi['coa_id']);
+                        $accountCode = $coa ? $coa->code : null;
+                    }
+
+                    $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
+                    if ($accountCode === '7603000001' && !$isGain) {
+                        $itemTotal = -$itemTotal;
+                    }
+                    $total += $itemTotal;
                 }
             }
         }

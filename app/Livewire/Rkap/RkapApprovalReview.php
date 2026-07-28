@@ -394,6 +394,7 @@ class RkapApprovalReview extends Component
                     'unit' => $bi->unit,
                     'unit_price' => (float) $bi->unit_price,
                     'total_price' => (float) $bi->total_price,
+                    'is_gain' => (bool) ($bi->is_gain ?? true),
                     'monthlies' => $bi->monthlies,
                     'cashOuts' => $bi->cashOuts,
                 ];
@@ -563,6 +564,10 @@ class RkapApprovalReview extends Component
         foreach ($currentItems as $item) {
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
+            // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
+            if ($item->account_code === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+                $totalPrice = -$totalPrice;
+            }
 
             if ($coa && $coa->coa_category_id) {
                 $catId = $coa->coa_category_id;
@@ -615,6 +620,10 @@ class RkapApprovalReview extends Component
         foreach ($prevItems as $item) {
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
+            // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
+            if ($item->account_code === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+                $totalPrice = -$totalPrice;
+            }
 
             if ($coa && $coa->coa_category_id) {
                 $catId = $coa->coa_category_id;

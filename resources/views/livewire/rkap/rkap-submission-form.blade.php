@@ -279,7 +279,12 @@
           foreach ($wp['activities'] ?? [] as $act) {
           foreach ($act['budget_items'] ?? [] as $bi) {
           $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-          $wpSubtotal += ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+          $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+          $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
+          if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+              $itemTotal = -$itemTotal;
+          }
+          $wpSubtotal += $itemTotal;
           }
           }
           @endphp
@@ -592,7 +597,12 @@
             $actSubtotal = 0;
             foreach ($act['budget_items'] ?? [] as $bi) {
             $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-            $actSubtotal += ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+            $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+            $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
+            if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+                $itemTotal = -$itemTotal;
+            }
+            $actSubtotal += $itemTotal;
             }
             @endphp
             <span class="text-muted small fw-semibold mb-1">{{ __('Subtotal Kegiatan') }}</span>
@@ -803,7 +813,12 @@
                     $groupSubtotal = collect($group['items'])->sum(function ($info) {
                     $bi = $info['item'];
                     $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
-                    return ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                    $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
+                    $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
+                    if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+                        $itemTotal = -$itemTotal;
+                    }
+                    return $itemTotal;
                     });
                     $prevWpId = $wp['work_plan_id'] ?? null;
                     $prevCode = $selectedCoa?->code ?? ($firstBi['account_code'] ?? null);

@@ -71,7 +71,16 @@ class RkapWorkPlan extends Model
 
     public function getTotalBudgetAttribute(): float
     {
-        return (float) $this->budgetItems->sum('total_price');
+        $total = 0;
+        foreach ($this->budgetItems as $bi) {
+            $price = (float) $bi->total_price;
+            $isGain = isset($bi->is_gain) ? filter_var($bi->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
+            if ($bi->account_code === '7603000001' && !$isGain) {
+                $price = -$price;
+            }
+            $total += $price;
+        }
+        return $total;
     }
 
     public function getTransferredFromAttribute(): ?Bureau

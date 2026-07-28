@@ -236,9 +236,7 @@
       $workPlan = $firstWp->workPlan;
       $programCode = $workPlan ? $workPlan->code : ($firstWp->program_code ?: '-');
       $programName = $workPlan ? $workPlan->title : ($firstWp->program_name ?: 'Program Tanpa Nama');
-      $wpGroupSubtotal = $wpGroup->sum(function ($wp) {
-      return $wp->budgetItems->sum('total_price');
-      });
+      $wpGroupSubtotal = $wpGroup->sum(fn($wp) => $wp->total_budget);
       @endphp
       <div class="card mb-4 border-start border-primary border-3">
         <div class="card-header border-bottom py-3">
@@ -300,7 +298,7 @@
           $activity = $wp->activity;
           $activityCode = $activity ? $activity->code : ($wp->program_code ?: '-');
           $activityTitle = $activity ? $activity->title : ($wp->program_name ?: '-');
-          $wpSubtotal = $wp->budgetItems->sum('total_price');
+          $wpSubtotal = $wp->total_budget;
           @endphp
           <div class="rkap-activity-card p-3 mb-3">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
@@ -477,7 +475,14 @@
                   @foreach ($wp->budgetItems->groupBy('account_code') as $accountCode => $items)
                   @php
                   $firstItem = $items->first();
-                  $coaGroupSubtotal = $items->sum('total_price');
+                  $coaGroupSubtotal = $items->sum(function ($bi) {
+                  $price = (float) $bi->total_price;
+                  $isGain = isset($bi->is_gain) ? filter_var($bi->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
+                  if ($bi->account_code === '7603000001' && !$isGain) {
+                      $price = -$price;
+                  }
+                  return $price;
+                  });
                   $prevWpId = $wp->work_plan_id ?? null;
                   $prevCode = $accountCode;
                   $prevAmount =
@@ -568,6 +573,13 @@
                   <tr>
                     <td>
                       {{ $bi->remarks ?: $bi->description }}
+                      @if ($bi->account_code === '7603000001')
+                      @if (filter_var($bi->is_gain ?? true, FILTER_VALIDATE_BOOLEAN))
+                      <span class="badge bg-success ms-1"><i class="bx bx-trending-up me-1"></i>Gain</span>
+                      @else
+                      <span class="badge bg-danger ms-1"><i class="bx bx-trending-down me-1"></i>Loss</span>
+                      @endif
+                      @endif
                     </td>
                     <td class="text-center">
                       @if ($bi->unit_2)

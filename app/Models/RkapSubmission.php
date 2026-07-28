@@ -91,7 +91,14 @@ class RkapSubmission extends Model
     }
 
     foreach ($this->workPlans as $workPlan) {
-      $total += $workPlan->budgetItems->sum('total_price');
+      foreach ($workPlan->budgetItems as $bi) {
+        $price = (float) $bi->total_price;
+        // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
+        if ($bi->account_code === '7603000001' && isset($bi->is_gain) && !(bool) $bi->is_gain) {
+          $price = -$price;
+        }
+        $total += $price;
+      }
     }
     $this->update(['total_budget' => $total]);
     return $total;
