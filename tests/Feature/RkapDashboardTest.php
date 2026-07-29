@@ -1336,6 +1336,57 @@ class RkapDashboardTest extends TestCase
         ]);
     }
 
+    public function test_cashflow_sync_negates_cf0b2b_outflow_item(): void
+    {
+        \Illuminate\Support\Facades\DB::table('cf_categories')->insertOrIgnore([
+            'category_id' => 1,
+            'name'        => 'Arus Kas Aktivitas Operasi',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        $cfGroupMra = \App\Models\CashflowGroup::firstOrCreate(
+            ['code' => 'CF0B2B'],
+            ['name' => 'Pembayaran ke Maintenance Reserved Account (MRA)']
+        );
+
+        $cfLineItemMra = \App\Models\CfLineItem::firstOrCreate(
+            ['item_code' => 'CF0B2B'],
+            ['category_id' => 1, 'description' => 'Pembayaran ke Maintenance Reserved Account (MRA)']
+        );
+
+        $coaMra = \App\Models\Coa::firstOrCreate(
+            ['code' => 'CF_TEST_COA_MRA'],
+            ['title' => 'Test COA MRA', 'cashflow_group_id' => $cfGroupMra->id]
+        );
+        $coaMra->update(['cashflow_group_id' => $cfGroupMra->id]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $this->submission1->id,
+            'program_code' => 'WP_CF_MRA',
+            'program_name' => 'CF MRA Outflow Test',
+        ]);
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code'      => $coaMra->code,
+            'description'       => 'MRA Budget Item',
+            'quantity'          => 1,
+            'unit_price'        => 350000.0,
+        ]);
+
+        $response = $this->actingAs($this->admin)->postJson('/analytics/cashflow-matrix/sync', [
+            'period_id' => $this->period->id,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('cash_flow_facts', [
+            'item_code' => 'CF0B2B',
+            'amount'    => -350000.0,
+        ]);
+    }
+
     public function test_cashflow_sync_uses_cash_out_plan_over_budget_total(): void
     {
         // Arrange

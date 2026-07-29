@@ -24,6 +24,7 @@ class CashflowSyncController extends Controller
         'CF0B3',  // Pembayaran ke Karyawan
         'CF0B5',  // Pembayaran bunga
         'CF0B2A', // Pembayaran ke Pemasok (non opex)
+        'CF0B2B', // Pembayaran ke Maintenance Reserved Account (MRA)
     ];
 
     /**
