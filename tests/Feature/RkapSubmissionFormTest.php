@@ -1000,6 +1000,7 @@ class RkapSubmissionFormTest extends TestCase
     $submission = \App\Models\RkapSubmission::create([
       'rkap_period_id' => $this->period->id,
       'bureau_id' => $this->user->bureau_id,
+      'created_by' => $this->user->id,
       'status' => 'draft',
     ]);
 
