@@ -478,7 +478,7 @@
                   $coaGroupSubtotal = $items->sum(function ($bi) {
                   $price = (float) $bi->total_price;
                   $isGain = isset($bi->is_gain) ? filter_var($bi->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
-                  if ($bi->account_code === '7603000001' && !$isGain) {
+                  if ($bi->account_code === '7603000001' && $isGain) {
                       $price = -$price;
                   }
                   return $price;

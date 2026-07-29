@@ -1021,7 +1021,7 @@ class RkapSubmissionForm extends Component
                     }
 
                     $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                    if ($accountCode === '7603000001' && !$isGain) {
+                    if ($accountCode === '7603000001' && $isGain) {
                         $itemTotal = -$itemTotal;
                     }
                     $total += $itemTotal;

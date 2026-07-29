@@ -89,7 +89,7 @@ class RkapPreviousDataService
                 $projectionVal = (float) $bi->projection;
 
                 $isGain = isset($bi->is_gain) ? filter_var($bi->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
-                if ($code === '7603000001' && !$isGain) {
+                if ($code === '7603000001' && $isGain) {
                     $budgetVal = -$budgetVal;
                     $realizationVal = -$realizationVal;
                     $projectionVal = -$projectionVal;

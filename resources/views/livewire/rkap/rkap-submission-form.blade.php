@@ -281,7 +281,7 @@
           $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
           $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
           $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-          if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+          if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
               $itemTotal = -$itemTotal;
           }
           $wpSubtotal += $itemTotal;
@@ -599,7 +599,7 @@
             $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
             $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
             $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-            if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+            if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
                 $itemTotal = -$itemTotal;
             }
             $actSubtotal += $itemTotal;
@@ -815,7 +815,7 @@
                     $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
                     $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
                     $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                    if (($bi['account_code'] ?? '') === '7603000001' && !$isGain) {
+                    if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
                         $itemTotal = -$itemTotal;
                     }
                     return $itemTotal;

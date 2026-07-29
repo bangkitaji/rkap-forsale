@@ -994,6 +994,54 @@ class RkapSubmissionFormTest extends TestCase
         $this->assertNotNull($item);
         $this->assertFalse($item->is_gain);
     }
+
+    public function test_coa_7603000001_accumulation_multiplies_by_negative_one_when_is_gain_is_true(): void
+    {
+        $submission = \App\Models\RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id' => $this->user->bureau_id,
+            'created_by' => $this->user->id,
+            'status' => 'draft',
+        ]);
+
+        $wp = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id' => $this->workPlan->id,
+        ]);
+
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => '7603000001',
+            'description' => 'Gain Item',
+            'quantity' => 1,
+            'unit_price' => 100000,
+            'total_price' => 100000,
+            'is_gain' => true,
+        ]);
+
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => '7603000001',
+            'description' => 'Loss Item',
+            'quantity' => 1,
+            'unit_price' => 40000,
+            'total_price' => 40000,
+            'is_gain' => false,
+        ]);
+
+        \App\Models\RkapBudgetItem::create([
+            'rkap_work_plan_id' => $wp->id,
+            'account_code' => '5101000001',
+            'description' => 'Expense Item',
+            'quantity' => 1,
+            'unit_price' => 500000,
+            'total_price' => 500000,
+        ]);
+
+        $wp->unsetRelation('budgetItems');
+        // Expected total: -100,000 (Gain) + 40,000 (Loss) + 500,000 = 440,000
+        $this->assertEquals(440000, $wp->total_budget);
+    }
 }
 
 

@@ -30,8 +30,9 @@ class RkapReview extends Component
             'workPlans.budgetItems.coa.differenceGroups',
             'versions.creator',
             'approvals.user',
-            'comments' => fn($q) => $q->topLevel()->with(['user', 'replies.user']),
         ])->findOrFail($id);
+
+        $this->submission->calculateTotalBudget();
     }
 
     public function approve(): void

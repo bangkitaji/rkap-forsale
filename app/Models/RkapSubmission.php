@@ -75,11 +75,8 @@ class RkapSubmission extends Model
     return $this->hasMany(RkapComment::class)->orderByDesc('created_at');
   }
 
-  // ── Budget Calculation ──
-
-  public function calculateTotalBudget(): float
+  public function getTotalBudgetAttribute(): float
   {
-    $total = 0;
     if (!$this->relationLoaded('workPlans')) {
       $this->load('workPlans.budgetItems');
     } else {
@@ -90,16 +87,16 @@ class RkapSubmission extends Model
       }
     }
 
+    $total = 0;
     foreach ($this->workPlans as $workPlan) {
-      foreach ($workPlan->budgetItems as $bi) {
-        $price = (float) $bi->total_price;
-        // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
-        if ($bi->account_code === '7603000001' && isset($bi->is_gain) && !(bool) $bi->is_gain) {
-          $price = -$price;
-        }
-        $total += $price;
-      }
+      $total += $workPlan->total_budget;
     }
+    return $total;
+  }
+
+  public function calculateTotalBudget(): float
+  {
+    $total = $this->total_budget;
     $this->update(['total_budget' => $total]);
     return $total;
   }

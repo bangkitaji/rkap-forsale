@@ -67,6 +67,8 @@ class RkapApprovalReview extends Component
             abort(403, __('Anda tidak memiliki akses untuk melihat pengajuan ini.'));
         }
 
+        $this->submission->calculateTotalBudget();
+
         foreach ($this->submission->workPlans as $wp) {
             $this->activityStatuses[$wp->id] = $wp->approval_status ?: 'pending';
             $this->activityRevisionNotes[$wp->id] = $wp->revision_notes ?: '';
@@ -564,8 +566,8 @@ class RkapApprovalReview extends Component
         foreach ($currentItems as $item) {
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
-            // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
-            if ($item->account_code === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+            $isGain = isset($item->is_gain) ? filter_var($item->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
+            if ($item->account_code === '7603000001' && $isGain) {
                 $totalPrice = -$totalPrice;
             }
 
@@ -620,8 +622,8 @@ class RkapApprovalReview extends Component
         foreach ($prevItems as $item) {
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
-            // COA 7603000001 (kerugian kurs): is_gain=true → positive, is_gain=false → negative
-            if ($item->account_code === '7603000001' && isset($item->is_gain) && !(bool) $item->is_gain) {
+            $isGain = isset($item->is_gain) ? filter_var($item->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
+            if ($item->account_code === '7603000001' && $isGain) {
                 $totalPrice = -$totalPrice;
             }
 
