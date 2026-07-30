@@ -1134,7 +1134,7 @@
       $isProgramVirtual = collect($wpGroup)->every(fn($item) => $item['is_virtual'] ?? false);
       @endphp
       <div
-        class="card mb-4 border-start border-primary border-3 @if ($isProgramVirtual) rkap-virtual-program-card @endif">
+        class="card mb-4 border-start border-primary border-3 @if ($isProgramVirtual) rkap-virtual-program-card @endif" id="program-kerja-{{ $wpId }}">
         <div class="card-header border-bottom py-3 @if ($isProgramVirtual) rkap-virtual-program-header @endif">
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex flex-column">
@@ -1204,8 +1204,9 @@
           $activityCode = $activity ? $activity->code : ($wp['program_code'] ?: '-');
           $activityTitle = $activity ? $activity->title : ($wp['program_name'] ?: '-');
           $actSubtotal = (float) $wp['total_budget'];
+          $targetWpId = $wp['id'] ?? ($wp['model']?->id ?? '');
           @endphp
-          <div class="activity-card p-3 mb-3 @if ($isWpVirtual) rkap-activity-card-virtual @endif">
+          <div class="activity-card p-3 mb-3 @if ($isWpVirtual) rkap-activity-card-virtual @endif" id="kegiatan-{{ $targetWpId }}">
             <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-2 mb-3">
               {{-- Left: icon + activity info --}}
               <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
@@ -2003,3 +2004,21 @@
   </div>
 </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+      const targetEl = document.querySelector(window.location.hash);
+      if (targetEl) {
+        setTimeout(function() {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetEl.style.transition = 'all 0.5s ease-in-out';
+          targetEl.style.boxShadow = '0 0 0 3px rgba(115, 103, 240, 0.4)';
+          setTimeout(function() {
+            targetEl.style.boxShadow = '';
+          }, 3500);
+        }, 300);
+      }
+    }
+  });
+</script>

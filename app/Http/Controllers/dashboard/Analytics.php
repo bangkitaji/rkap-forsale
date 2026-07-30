@@ -1522,6 +1522,8 @@ class Analytics extends Controller
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('departments', 'bureaus.department_id', '=', 'departments.id')
         ->join('directorates', 'departments.directorate_id', '=', 'directorates.id')
+        ->leftJoin('activities', 'rkap_work_plans.activity_id', '=', 'activities.id')
+        ->leftJoin('work_plans', 'rkap_work_plans.work_plan_id', '=', 'work_plans.id')
         ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->where('coa_groups.id', $coaGroupId)
         ->where('rkap_submissions.rkap_period_id', $periodId)
@@ -1529,10 +1531,16 @@ class Analytics extends Controller
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
         ->whereNull('coas.deleted_at')
         ->selectRaw("
+          rkap_submissions.id as submission_id,
+          rkap_work_plans.id as rkap_work_plan_id,
+          rkap_work_plans.work_plan_id,
+          rkap_work_plans.activity_id,
           coas.code as coa_code,
           coas.title as coa_title,
-          rkap_work_plans.program_code,
-          rkap_work_plans.program_name,
+          COALESCE(work_plans.code, rkap_work_plans.program_code) as program_code,
+          COALESCE(work_plans.title, rkap_work_plans.program_name) as program_name,
+          COALESCE(activities.code, rkap_work_plans.program_code) as activity_code,
+          COALESCE(activities.title, rkap_work_plans.program_name) as activity_title,
           directorates.code as directorate_code,
           departments.code as department_code,
           bureaus.code as bureau_code,
@@ -1541,16 +1549,24 @@ class Analytics extends Controller
           SUM(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) as projection
         ")
         ->groupBy(
+          'rkap_submissions.id',
+          'rkap_work_plans.id',
+          'rkap_work_plans.work_plan_id',
+          'rkap_work_plans.activity_id',
           'coas.code',
           'coas.title',
+          'work_plans.code',
+          'work_plans.title',
           'rkap_work_plans.program_code',
           'rkap_work_plans.program_name',
+          'activities.code',
+          'activities.title',
           'directorates.code',
           'departments.code',
           'bureaus.code'
         )
         ->orderBy('coas.code')
-        ->orderBy('rkap_work_plans.program_code')
+        ->orderBy('rkap_work_plans.id')
         ->get();
     });
 

@@ -722,11 +722,11 @@
           <table class="table table-hover table-sm table-bordered mb-0 align-middle rkap-font-075">
             <thead class="table-primary">
               <tr>
-                <th class="ps-3 rkap-min-w-220">{{ __('COA') }}</th>
-                <th class="rkap-min-w-220">{{ __('Kegiatan') }}</th>
-                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Anggaran') }}</th>
-                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Realisasi YTD') }}</th>
-                <th class="text-end text-nowrap rkap-min-w-140">{{ __('Proyeksi') }}</th>
+                <th class="ps-3 rkap-min-w-180">{{ __('COA') }}</th>
+                <th class="rkap-min-w-220">{{ __('Program Kerja & Kegiatan') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-120">{{ __('Anggaran') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-120">{{ __('Realisasi YTD') }}</th>
+                <th class="text-end text-nowrap rkap-min-w-120">{{ __('Proyeksi') }}</th>
               </tr>
             </thead>
             <tbody id="coaGroupDetailTbody"></tbody>
@@ -878,6 +878,22 @@
               totalReal += r;
               totalProj += p;
 
+              const reviewUrl = row.submission_id 
+                ? `/rkap/submissions/${row.submission_id}/review#kegiatan-${row.rkap_work_plan_id}`
+                : '#';
+
+              const programDisplay = row.program_code 
+                ? `${row.program_code} - ${row.program_name || ''}`
+                : (row.program_name || '-');
+
+              const activityDisplay = (row.activity_code && row.activity_code !== row.program_code)
+                ? `${row.activity_code} - ${row.activity_title || ''}`
+                : (row.activity_title ? `${row.activity_code ? row.activity_code + ' - ' : ''}${row.activity_title}` : (row.program_name || '-'));
+
+              const activityContent = row.submission_id
+                ? `<a href="${reviewUrl}" target="_blank" class="text-primary text-decoration-none fw-medium" title="{{ __('Buka Review Submission RKAP') }}">${activityDisplay} <i class="bx bx-link-external ms-1 rkap-font-068"></i></a>`
+                : activityDisplay;
+
               tbodyHtml += `
                         <tr>
                             <td class="ps-3">
@@ -885,9 +901,15 @@
                                 <div class="text-muted rkap-font-072">${row.coa_title || '-'}</div>
                             </td>
                             <td>
-                                <div class="text-muted fw-semibold mb-1 rkap-font-068 rkap-ls-05">${row.directorate_code || '-'} - ${row.department_code || '-'} - ${row.bureau_code || '-'}</div>
-                                <div class="font-monospace fw-semibold text-primary rkap-font-072">${row.program_code || '-'}</div>
-                                <div class="text-muted rkap-font-072">${row.program_name || '-'}</div>
+                                <div class="text-muted fw-semibold mb-1 rkap-font-068 rkap-ls-05">
+                                  <i class="bx bx-building me-1"></i>${row.directorate_code || '-'} - ${row.department_code || '-'} - ${row.bureau_code || '-'}
+                                </div>
+                                <div class="fw-semibold text-dark rkap-font-072 mb-0.5">
+                                  ${programDisplay}
+                                </div>
+                                <div class="rkap-font-072">
+                                  ${activityContent}
+                                </div>
                             </td>
                             <td class="text-end font-monospace text-nowrap">${formatRp(b)}</td>
                             <td class="text-end font-monospace text-success text-nowrap">${formatRp(r)}</td>

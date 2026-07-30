@@ -238,7 +238,7 @@
       $programName = $workPlan ? $workPlan->title : ($firstWp->program_name ?: 'Program Tanpa Nama');
       $wpGroupSubtotal = $wpGroup->sum(fn($wp) => $wp->total_budget);
       @endphp
-      <div class="card mb-4 border-start border-primary border-3">
+      <div class="card mb-4 border-start border-primary border-3" id="program-kerja-{{ $wpId }}">
         <div class="card-header border-bottom py-3">
           <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex flex-column">
@@ -300,7 +300,7 @@
           $activityTitle = $activity ? $activity->title : ($wp->program_name ?: '-');
           $wpSubtotal = $wp->total_budget;
           @endphp
-          <div class="rkap-activity-card p-3 mb-3">
+          <div class="rkap-activity-card p-3 mb-3" id="kegiatan-{{ $wp->id }}">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
               <div class="d-flex align-items-center gap-2">
                 <span class="badge bg-label-primary rounded-circle p-2"><i class="bx bx-task"></i></span>
@@ -765,3 +765,21 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+      const targetEl = document.querySelector(window.location.hash);
+      if (targetEl) {
+        setTimeout(function() {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetEl.style.transition = 'all 0.5s ease-in-out';
+          targetEl.style.boxShadow = '0 0 0 3px rgba(115, 103, 240, 0.4)';
+          setTimeout(function() {
+            targetEl.style.boxShadow = '';
+          }, 3500);
+        }, 300);
+      }
+    }
+  });
+</script>
