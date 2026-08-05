@@ -6,8 +6,10 @@ use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemProjection;
 use App\Models\RkapPeriod;
 use App\Models\Setting;
+use App\Services\ProjectionAuditService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -355,12 +357,14 @@ class RkapProjectionUpload extends Component
 
     private function importRows(array $rows): void
     {
-        DB::transaction(function () use ($rows): void {
+        $batchId = (string) Str::uuid();
+
+        DB::transaction(function () use ($rows, $batchId): void {
             $updated = 0;
             $currentMonth = (int) date('n');
 
             $budgetItemIds = array_map(fn($r) => (int)$r['budget_item_id'], $rows);
-            $budgetItems = RkapBudgetItem::whereIn('id', $budgetItemIds)->get()->keyBy('id');
+            $budgetItems = RkapBudgetItem::with(['projections'])->whereIn('id', $budgetItemIds)->get()->keyBy('id');
 
             foreach ($rows as $row) {
                 $biId = (int) $row['budget_item_id'];
@@ -368,6 +372,13 @@ class RkapProjectionUpload extends Component
                 if (!$budgetItem) {
                     continue;
                 }
+
+                $oldMonthly = [];
+                for ($m = 1; $m <= 12; $m++) {
+                    $existing = $budgetItem->projections->where('month', $m)->first();
+                    $oldMonthly[$m] = $existing ? (float) $existing->amount : 0.00;
+                }
+                $oldTotal = (float) $budgetItem->projection;
 
                 $hasMonthly = false;
                 for ($m = 1; $m <= 12; $m++) {
@@ -378,14 +389,18 @@ class RkapProjectionUpload extends Component
                 }
 
                 $validPeriod = RkapPeriod::find($this->periodId);
+                $newMonthly = [];
+
                 if ($hasMonthly) {
                     for ($m = 1; $m <= 12; $m++) {
                         $isClosed = $validPeriod && $validPeriod->isMonthClosed($m);
                         if ($isClosed) {
+                            $newMonthly[$m] = $oldMonthly[$m];
                             continue;
                         }
 
                         $amount = $this->sanitizeAmount($row["m{$m}"] ?? '0');
+                        $newMonthly[$m] = $amount;
 
                         RkapBudgetItemProjection::updateOrCreate(
                             [
@@ -400,14 +415,32 @@ class RkapProjectionUpload extends Component
                         );
                     }
 
-                    $totalProj = RkapBudgetItemProjection::where('rkap_budget_item_id', $biId)->sum('amount');
+                    $totalProj = (float) RkapBudgetItemProjection::where('rkap_budget_item_id', $biId)->sum('amount');
                     $budgetItem->update(['projection' => $totalProj]);
+                    $newTotal = $totalProj;
                 } else {
                     $yearlyVal = $this->sanitizeAmount($row['yearly'] ?? '0');
                     $budgetItem->update(['projection' => $yearlyVal]);
 
                     RkapBudgetItemProjection::where('rkap_budget_item_id', $biId)->delete();
+                    $newMonthly = array_fill(1, 12, 0.00);
+                    $newTotal = $yearlyVal;
                 }
+
+                ProjectionAuditService::logChange(
+                    $budgetItem,
+                    $this->periodId,
+                    auth()->id(),
+                    $oldMonthly,
+                    $oldTotal,
+                    $newMonthly,
+                    $newTotal,
+                    'bulk_upload',
+                    $batchId,
+                    $hasMonthly ? 'monthly' : 'yearly',
+                    'Upload Massal Excel'
+                );
+
                 $updated++;
             }
 

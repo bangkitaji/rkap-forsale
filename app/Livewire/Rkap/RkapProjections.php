@@ -12,6 +12,7 @@ use App\Models\Bureau;
 use App\Models\Department;
 use App\Models\Directorate;
 use App\Services\AnalyticsCacheService;
+use App\Services\ProjectionAuditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
@@ -34,8 +35,13 @@ class RkapProjections extends Component
     public string $inputMode = 'monthly';
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
+    public ?string $projectionNotes = null;
     public string $activeTab = 'input';
     public $filterStatus = [];
+
+    public ?int $historyBudgetItemId = null;
+    public ?string $historyItemName = null;
+    public array $historyLogs = [];
 
     protected $queryString = [
         'activeTab' => ['except' => 'input'],
@@ -216,6 +222,7 @@ class RkapProjections extends Component
         }
 
         $this->selectedBudgetItemId = $id;
+        $this->projectionNotes = null;
         $budgetItem = RkapBudgetItem::with(['projections', 'monthlies', 'realizations'])->find($id);
 
         $this->editingProjections = [];
@@ -392,6 +399,13 @@ class RkapProjections extends Component
             return;
         }
 
+        $oldMonthly = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $existing = $selectedItem->projections->where('month', $m)->first();
+            $oldMonthly[$m] = $existing ? (float) $existing->amount : 0.00;
+        }
+        $oldTotal = (float) $selectedItem->projection;
+
         if ($this->inputMode === 'yearly') {
             // Check if any month in the active period is closed
             $hasClosedMonths = false;
@@ -419,11 +433,26 @@ class RkapProjections extends Component
                 return;
             }
 
-            DB::transaction(function () use ($selectedItem, $yearlyVal): void {
+            DB::transaction(function () use ($selectedItem, $yearlyVal, $oldMonthly, $oldTotal): void {
                 $selectedItem->update(['projection' => $yearlyVal]);
 
                 // Delete any monthly projections
                 RkapBudgetItemProjection::where('rkap_budget_item_id', $this->selectedBudgetItemId)->delete();
+
+                $newMonthly = array_fill(1, 12, 0.00);
+                ProjectionAuditService::logChange(
+                    $selectedItem,
+                    $this->activePeriodId,
+                    auth()->id(),
+                    $oldMonthly,
+                    $oldTotal,
+                    $newMonthly,
+                    $yearlyVal,
+                    'manual',
+                    null,
+                    'yearly',
+                    $this->projectionNotes
+                );
             });
         } else {
             $this->validate();
@@ -470,7 +499,8 @@ class RkapProjections extends Component
                 return;
             }
 
-            DB::transaction(function () use ($selectedItem, $period): void {
+            DB::transaction(function () use ($selectedItem, $period, $oldMonthly, $oldTotal): void {
+                $newMonthly = [];
                 for ($m = 1; $m <= 12; $m++) {
                     $realizationAmount = (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
                     $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
@@ -488,6 +518,8 @@ class RkapProjections extends Component
                             : (float) ($selectedItem->monthlies->where('month', $m)->first()?->amount ?? 0.00);
                     }
 
+                    $newMonthly[$m] = $amount;
+
                     \App\Models\RkapBudgetItemProjection::updateOrCreate(
                         [
                             'rkap_budget_item_id' => $this->selectedBudgetItemId,
@@ -504,9 +536,24 @@ class RkapProjections extends Component
                 // Update the yearly projection column in budget item table to match sum of all monthly projections
                 $totalProj = RkapBudgetItemProjection::where('rkap_budget_item_id', $this->selectedBudgetItemId)->sum('amount');
                 $selectedItem->update(['projection' => $totalProj]);
+
+                ProjectionAuditService::logChange(
+                    $selectedItem,
+                    $this->activePeriodId,
+                    auth()->id(),
+                    $oldMonthly,
+                    $oldTotal,
+                    $newMonthly,
+                    (float)$totalProj,
+                    'manual',
+                    null,
+                    'monthly',
+                    $this->projectionNotes
+                );
             });
         }
 
+        $this->projectionNotes = null;
         $this->dispatch('close-projection-modal');
         // Flush analytics cache so dashboard reflects updated projections
         if ($this->activePeriodId) {
@@ -514,6 +561,39 @@ class RkapProjections extends Component
         }
         session()->flash('message', __('Proyeksi RKAP berhasil disimpan.'));
         $this->dispatch('projections-saved');
+        $this->redirect(request()->header('Referer') ?: route('rkap-projections'), navigate: false);
+    }
+
+    public function viewHistory(int $budgetItemId): void
+    {
+        $budgetItem = RkapBudgetItem::find($budgetItemId);
+        if (!$budgetItem) {
+            return;
+        }
+
+        $this->historyBudgetItemId = $budgetItemId;
+        $this->historyItemName = ($budgetItem->account_code ? $budgetItem->account_code . ' — ' : '') . ($budgetItem->description ?? '');
+        $this->historyLogs = \App\Models\RkapProjectionLog::with(['user'])
+            ->where('rkap_budget_item_id', $budgetItemId)
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'created_at' => $log->created_at?->format('d M Y H:i:s'),
+                    'user_name' => $log->user?->name ?? 'Sistem',
+                    'source' => $log->source === 'bulk_upload' ? 'Upload Massal Excel' : 'Penginputan Manual',
+                    'input_mode' => $log->input_mode === 'yearly' ? 'Tahunan' : 'Bulanan',
+                    'old_total' => (float)$log->old_total,
+                    'new_total' => (float)$log->new_total,
+                    'old_monthly' => $log->old_monthly ?? [],
+                    'new_monthly' => $log->new_monthly ?? [],
+                    'notes' => $log->notes,
+                ];
+            })
+            ->toArray();
+
+        $this->dispatch('open-projection-history-modal');
     }
 
     public function getSummaryData(): array
