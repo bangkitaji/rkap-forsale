@@ -120,6 +120,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projections', \App\Livewire\Rkap\RkapProjections::class)
       ->middleware('permission:rkap.projection.view')
       ->name('rkap-projections');
+    Route::get('/projections/{budgetItemId}/history', \App\Livewire\Rkap\RkapProjectionHistory::class)
+      ->middleware('permission:rkap.projection.view')
+      ->name('rkap-projection-history');
     Route::get('/projections/upload', \App\Livewire\Rkap\RkapProjectionUpload::class)
       ->middleware('permission:rkap.projection.input')
       ->name('rkap-projection-upload');

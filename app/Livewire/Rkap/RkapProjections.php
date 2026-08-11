@@ -39,10 +39,6 @@ class RkapProjections extends Component
     public string $activeTab = 'input';
     public $filterStatus = [];
 
-    public ?int $historyBudgetItemId = null;
-    public ?string $historyItemName = null;
-    public array $historyLogs = [];
-
     protected $queryString = [
         'activeTab' => ['except' => 'input'],
         'filterStatus' => ['except' => []],
@@ -562,38 +558,6 @@ class RkapProjections extends Component
         session()->flash('message', __('Proyeksi RKAP berhasil disimpan.'));
         $this->dispatch('projections-saved');
         $this->redirect(request()->header('Referer') ?: route('rkap-projections'), navigate: false);
-    }
-
-    public function viewHistory(int $budgetItemId): void
-    {
-        $budgetItem = RkapBudgetItem::find($budgetItemId);
-        if (!$budgetItem) {
-            return;
-        }
-
-        $this->historyBudgetItemId = $budgetItemId;
-        $this->historyItemName = ($budgetItem->account_code ? $budgetItem->account_code . ' — ' : '') . ($budgetItem->description ?? '');
-        $this->historyLogs = \App\Models\RkapProjectionLog::with(['user'])
-            ->where('rkap_budget_item_id', $budgetItemId)
-            ->orderByDesc('id')
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'created_at' => $log->created_at?->format('d M Y H:i:s'),
-                    'user_name' => $log->user?->name ?? 'Sistem',
-                    'source' => $log->source === 'bulk_upload' ? 'Upload Massal Excel' : 'Penginputan Manual',
-                    'input_mode' => $log->input_mode === 'yearly' ? 'Tahunan' : 'Bulanan',
-                    'old_total' => (float)$log->old_total,
-                    'new_total' => (float)$log->new_total,
-                    'old_monthly' => $log->old_monthly ?? [],
-                    'new_monthly' => $log->new_monthly ?? [],
-                    'notes' => $log->notes,
-                ];
-            })
-            ->toArray();
-
-        $this->dispatch('open-projection-history-modal');
     }
 
     public function getSummaryData(): array
