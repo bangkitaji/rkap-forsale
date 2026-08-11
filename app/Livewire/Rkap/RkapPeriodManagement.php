@@ -122,6 +122,57 @@ class RkapPeriodManagement extends Component
         $this->resetValidation();
     }
 
+    // Bulk duplication properties
+    public bool $isBulkModalOpen = false;
+    public ?int $targetPeriodId = null;
+    public ?int $sourcePeriodId = null;
+    public ?array $bulkResult = null;
+
+    public function openBulkModal(int $targetPeriodId): void
+    {
+        $this->targetPeriodId = $targetPeriodId;
+        $this->sourcePeriodId = null;
+        $this->bulkResult = null;
+        $this->isBulkModalOpen = true;
+    }
+
+    public function closeBulkModal(): void
+    {
+        $this->isBulkModalOpen = false;
+        $this->targetPeriodId = null;
+        $this->sourcePeriodId = null;
+        $this->bulkResult = null;
+    }
+
+    public function executeBulkDuplicate(\App\Services\RkapBulkDuplicationService $service): void
+    {
+        if (!auth()->user()?->isAdmin()) {
+            session()->flash('error', __('Hanya Administrator yang dapat melakukan duplikasi massal.'));
+            return;
+        }
+
+        if (!$this->targetPeriodId || !$this->sourcePeriodId) {
+            session()->flash('error', __('Periode sumber dan periode tujuan wajib dipilih.'));
+            return;
+        }
+
+        $targetPeriod = RkapPeriod::find($this->targetPeriodId);
+        $sourcePeriod = RkapPeriod::find($this->sourcePeriodId);
+
+        if (!$targetPeriod || !$sourcePeriod) {
+            session()->flash('error', __('Periode tidak ditemukan.'));
+            return;
+        }
+
+        try {
+            $result = $service->duplicateAllSubmissions($sourcePeriod, $targetPeriod, auth()->user());
+            $this->bulkResult = $result;
+            session()->flash('message', __('Duplikasi massal berhasil dijalankan.'));
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render()
     {
         return view('livewire.rkap.rkap-period-management', [

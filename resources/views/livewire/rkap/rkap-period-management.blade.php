@@ -76,6 +76,11 @@
                             <i class="bx bx-check-double me-1"></i> Finalisasi
                         </button>
                         @endif
+                        @if($period->status === 'open' && auth()->user()?->isAdmin())
+                        <button wire:click="openBulkModal({{ $period->id }})" class="btn btn-sm btn-label-info" title="Duplikasi Massal dari Periode Lain">
+                            <i class="bx bx-copy-alt me-1"></i> Duplikasi Massal
+                        </button>
+                        @endif
                         @if($period->submissions_count == 0)
                         <button wire:click="delete({{ $period->id }})" wire:confirm="Hapus periode ini?" class="btn btn-sm btn-label-danger">
                             <i class="bx bx-trash"></i>
@@ -154,6 +159,80 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Modal Duplikasi Massal --}}
+    @if($isBulkModalOpen)
+    <div class="modal fade show rkap-modal-show" tabindex="-1" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bx bx-copy-alt text-info me-2"></i>Duplikasi Massal RKAP
+                    </h5>
+                    <button type="button" class="btn-close" wire:click="closeBulkModal()"></button>
+                </div>
+                <div class="modal-body">
+                    @php
+                        $targetPeriod = $periods->firstWhere('id', $targetPeriodId);
+                    @endphp
+
+                    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                        <i class="bx bx-info-circle me-2 fs-4"></i>
+                        <div>
+                            Fitur ini akan menduplikasi <strong>semua pengajuan RKAP</strong> (beserta rencana kerja, rincian anggaran, lampiran file, realisasi, dan proyeksi) dari periode sumber ke periode <strong>{{ $targetPeriod?->title }} ({{ $targetPeriod?->year }})</strong> yang sedang terbuka. Status pengajuan baru akan diset ke <strong>Draft</strong>.
+                        </div>
+                    </div>
+
+                    @if($bulkResult)
+                        <div class="card bg-label-success mb-4 border-0">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-success mb-2"><i class="bx bx-check-circle me-1"></i> Hasil Duplikasi Massal</h6>
+                                <ul class="mb-0">
+                                    <li><strong>{{ $bulkResult['duplicated'] }}</strong> pengajuan berhasil diduplikasi.</li>
+                                    <li><strong>{{ $bulkResult['skipped'] }}</strong> pengajuan di-skip (karena biro sudah memiliki pengajuan di periode tujuan).</li>
+                                </ul>
+                                @if(!empty($bulkResult['skipped_bureaus']))
+                                    <div class="small text-muted mt-2">
+                                        <strong>Daftar Biro yang di-skip:</strong>
+                                        <div class="mt-1">
+                                            @foreach($bulkResult['skipped_bureaus'] as $bureauName)
+                                                <span class="badge bg-secondary me-1 mb-1">{{ $bureauName }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Pilih Periode Sumber (Data Asal) <span class="text-danger">*</span></label>
+                            <select class="form-select" wire:model="sourcePeriodId">
+                                <option value="">-- Pilih Periode Sumber --</option>
+                                @foreach($periods->where('id', '!=', $targetPeriodId) as $srcPeriod)
+                                    <option value="{{ $srcPeriod->id }}">
+                                        {{ $srcPeriod->year }} — {{ $srcPeriod->title }} ({{ $srcPeriod->submissions_count }} pengajuan, Status: {{ ucfirst($srcPeriod->status) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Data dari seluruh biro pada periode ini akan dicopy ke periode {{ $targetPeriod?->title }}.</div>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" wire:click="closeBulkModal()">
+                        {{ $bulkResult ? __('Tutup') : __('Batal') }}
+                    </button>
+                    @if(!$bulkResult)
+                        <button type="button" class="btn btn-info" wire:click="executeBulkDuplicate" wire:confirm="Apakah Anda yakin ingin menduplikasi seluruh pengajuan RKAP dari periode yang dipilih? Biro yang sudah memiliki pengajuan di periode tujuan akan otomatis di-skip.">
+                            <span wire:loading.remove><i class="bx bx-copy me-1"></i> Jalankan Duplikasi</span>
+                            <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> Processing...</span>
+                        </button>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
