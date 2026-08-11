@@ -32,7 +32,9 @@ class RkapApprovalReview extends Component
 
     public function getIsSubmissionClosedProperty(): bool
     {
-        return Setting::get('rkap_submission_status', 'open') === 'closed';
+        $globalClosed = Setting::get('rkap_submission_status', 'open') === 'closed';
+        $periodClosed = $this->submission->period && !$this->submission->period->isOpen();
+        return $globalClosed || $periodClosed;
     }
 
     public function mount(int $id): void
@@ -126,8 +128,8 @@ class RkapApprovalReview extends Component
 
     public function approve(): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyetujui usulan.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menyetujui usulan.'));
             return;
         }
 
@@ -177,8 +179,8 @@ class RkapApprovalReview extends Component
 
     public function requestRevision(): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat meminta revisi.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat meminta revisi.'));
             return;
         }
 
@@ -1091,8 +1093,8 @@ class RkapApprovalReview extends Component
 
     public function saveEditMode(): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyimpan perubahan.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menyimpan perubahan.'));
             return;
         }
 
@@ -1223,8 +1225,8 @@ class RkapApprovalReview extends Component
 
     public function deleteWorkPlan(int $id): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menghapus kegiatan.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menghapus kegiatan.'));
             return;
         }
 
@@ -1263,8 +1265,8 @@ class RkapApprovalReview extends Component
 
     public function deleteBudgetItem(int $id): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menghapus item anggaran.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menghapus item anggaran.'));
             return;
         }
 

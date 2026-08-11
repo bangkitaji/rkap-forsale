@@ -79,6 +79,14 @@ class BudgetTransferCreate extends Component
             return;
         }
 
+        if ($this->periodId) {
+            $period = RkapPeriod::find($this->periodId);
+            if ($period && !$period->isOpen()) {
+                session()->flash('error', __('Periode RKAP tidak dalam status Open. Anda tidak dapat mengajukan transfer budget.'));
+                return;
+            }
+        }
+
         $user = Auth::user();
         if (!$user || !$user->bureau_id) {
             session()->flash('error', __('Anda harus terasosiasi dengan Biro untuk mengajukan transfer.'));

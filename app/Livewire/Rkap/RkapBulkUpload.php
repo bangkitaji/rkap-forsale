@@ -56,7 +56,9 @@ class RkapBulkUpload extends Component
 
     public function getIsSubmissionClosedProperty(): bool
     {
-        return Setting::get('rkap_submission_status', 'open') === 'closed';
+        $globalClosed = Setting::get('rkap_submission_status', 'open') === 'closed';
+        $periodClosed = $this->period && !$this->period->isOpen();
+        return $globalClosed || $periodClosed;
     }
 
     public function mount(int $periodId): void
@@ -339,8 +341,8 @@ class RkapBulkUpload extends Component
      */
     public function saveAsDraft(): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyimpan perubahan.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->period && !$this->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menyimpan perubahan.'));
             return;
         }
 

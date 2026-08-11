@@ -399,8 +399,20 @@ class RkapSubmission extends Model
 
   // ── Authorization Helpers ──
 
+  /**
+   * Check if the associated period is open for modifications.
+   */
+  public function isPeriodOpen(): bool
+  {
+    $period = $this->relationLoaded('period') ? $this->period : $this->period()->first();
+    return $period && $period->isOpen();
+  }
+
   public function canBeEditedBy(User $user): bool
   {
+    if (!$this->isPeriodOpen()) {
+      return false;
+    }
     if (!in_array($this->status, SubmissionStatus::values(SubmissionStatus::editableStatuses()))) {
       return false;
     }
@@ -409,6 +421,9 @@ class RkapSubmission extends Model
 
   public function canBeReviewedBy(User $user): bool
   {
+    if (!$this->isPeriodOpen()) {
+      return false;
+    }
     // Kepala Departemen
     if ($this->status === SubmissionStatus::Submitted->value && $user->hasRole('kepala_departemen')) {
       return $user->department_id === $this->bureau->department_id;

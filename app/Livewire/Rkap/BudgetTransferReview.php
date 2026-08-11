@@ -30,8 +30,8 @@ class BudgetTransferReview extends Component
 
     public function approve(BudgetTransferService $service): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menyetujui transfer budget.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->transfer->period && !$this->transfer->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menyetujui transfer budget.'));
             return;
         }
 
@@ -52,8 +52,8 @@ class BudgetTransferReview extends Component
 
     public function reject(BudgetTransferService $service): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat menolak transfer budget.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->transfer->period && !$this->transfer->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menolak transfer budget.'));
             return;
         }
 
@@ -80,8 +80,8 @@ class BudgetTransferReview extends Component
 
     public function deleteZeroBudgetTransferredItem(int $itemId, BudgetTransferService $service): void
     {
-        if (Setting::get('rkap_submission_status', 'open') === 'closed') {
-            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup. Anda tidak dapat melakukan perubahan.'));
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->transfer->period && !$this->transfer->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat melakukan perubahan.'));
             return;
         }
 

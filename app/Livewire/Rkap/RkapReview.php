@@ -7,6 +7,7 @@ use App\Models\RkapSubmission;
 use App\Models\RkapBudgetItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 class RkapReview extends Component
 {
@@ -37,6 +38,11 @@ class RkapReview extends Component
 
     public function approve(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat menyetujui usulan.'));
+            return;
+        }
+
         $user = Auth::user();
 
         match (true) {
@@ -67,6 +73,11 @@ class RkapReview extends Component
 
     public function requestRevision(): void
     {
+        if (Setting::get('rkap_submission_status', 'open') === 'closed' || ($this->submission->period && !$this->submission->period->isOpen())) {
+            session()->flash('error', __('Pengisian usulan RKAP sedang ditutup atau periode tidak dalam status Open. Anda tidak dapat meminta revisi.'));
+            return;
+        }
+
         $this->validate(['revisionReason' => 'required|string|min:10']);
 
         $user = Auth::user();
