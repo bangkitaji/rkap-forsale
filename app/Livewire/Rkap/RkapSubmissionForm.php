@@ -741,6 +741,11 @@ class RkapSubmissionForm extends Component
         $fileSize = $this->referenceFile->getSize();
         $filePath = $this->referenceFile->storeAs('rkap_files', $randomName);
 
+        if (!$filePath) {
+            $this->addError('referenceFile', __('Gagal mengupload file referensi. Silakan coba lagi.'));
+            return;
+        }
+
         $this->workPlans[$wpIdx]['activities'][$actIdx]['uploaded_files'][] = [
             'file_name' => $randomName,
             'original_name' => $originalName,

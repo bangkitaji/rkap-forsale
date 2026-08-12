@@ -1423,11 +1423,16 @@
               </div>
             </div>
 
-            @if ($wp['model'] && $wp['model']->activityFiles && $wp['model']->activityFiles->isNotEmpty())
+            @php
+                $existingFiles = ($wp['model'] && $wp['model']->activityFiles) ? $wp['model']->activityFiles->filter(function($f) {
+                    return \Illuminate\Support\Facades\Storage::exists($f->file_path);
+                }) : collect();
+            @endphp
+            @if ($existingFiles->isNotEmpty())
             <div class="mb-3" wire:key="act-view-files-approval-{{ $wp['model']->id }}">
               <label class="text-muted small d-block mb-1 fw-semibold"><i class="bx bx-paperclip me-1"></i>{{ __('File Referensi:') }}</label>
               <div class="d-flex flex-wrap gap-2">
-                @foreach ($wp['model']->activityFiles as $file)
+                @foreach ($existingFiles as $file)
                 @php
                 $isViewable = in_array(strtolower($file->file_type), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
                 @endphp

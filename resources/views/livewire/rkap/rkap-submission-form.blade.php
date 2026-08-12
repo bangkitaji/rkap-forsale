@@ -530,20 +530,31 @@
                 @foreach ($act['uploaded_files'] as $fileIdx => $file)
                 @php
                 $isViewable = in_array(strtolower($file['file_type'] ?? ''), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg']);
+                $fileExists = true;
+                if (isset($file['id']) && !empty($file['file_path'])) {
+                    $fileExists = \Illuminate\Support\Facades\Storage::exists($file['file_path']);
+                }
                 @endphp
                 <div class="d-flex align-items-center justify-content-between bg-light rounded px-2 py-1 rkap-file-list-item" wire:key="file-item-{{ $wp['_uid'] }}-{{ $actUid }}-{{ $fileIdx }}">
                   <div class="d-flex align-items-center gap-1 text-truncate rkap-file-name">
                     <i class="bx bx-file text-secondary flex-shrink-0"></i>
                     @if (isset($file['id']))
-                    @if ($isViewable)
-                    <a href="javascript:void(0)" class="text-truncate text-primary" data-bs-toggle="modal" data-bs-target="#viewFileModalForm-{{ $file['id'] }}">
-                      {{ $file['original_name'] }}
-                    </a>
-                    @else
-                    <a href="{{ route('rkap-files.download', $file['id']) }}" class="text-truncate text-primary" target="_blank">
-                      {{ $file['original_name'] }}
-                    </a>
-                    @endif
+                      @if (!$fileExists)
+                      <span class="text-truncate text-danger" title="{{ __('File tidak ditemukan di server') }}">
+                        <i class="bx bx-error-circle text-danger me-1"></i>{{ $file['original_name'] }}
+                        <span class="badge bg-label-danger ms-1" style="font-size: 0.65rem;">{{ __('Mohon upload ulang') }}</span>
+                      </span>
+                      @else
+                        @if ($isViewable)
+                        <a href="javascript:void(0)" class="text-truncate text-primary" data-bs-toggle="modal" data-bs-target="#viewFileModalForm-{{ $file['id'] }}">
+                          {{ $file['original_name'] }}
+                        </a>
+                        @else
+                        <a href="{{ route('rkap-files.download', $file['id']) }}" class="text-truncate text-primary" target="_blank">
+                          {{ $file['original_name'] }}
+                        </a>
+                        @endif
+                      @endif
                     @else
                     <span class="text-truncate text-muted" title="{{ __('Belum disimpan') }}">{{ $file['original_name'] }} (baru)</span>
                     @endif
