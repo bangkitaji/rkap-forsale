@@ -874,6 +874,8 @@
                                     7 => 'Juli', 8 => 'Agustus', 9 => 'September',
                                     10 => 'Oktober', 11 => 'November', 12 => 'Desember'
                                     ];
+                                    $totalMonthlyBudget = 0;
+                                    $totalRealization = 0;
                                     @endphp
                                     @for($m = 1; $m <= 12; $m++)
                                         @php
@@ -884,6 +886,9 @@
                                         $period = $selectedItem->workPlan->submission->period;
                                         $isClosed = $period && $period->isMonthClosed($m);
                                         $isLocked = $hasRealization || $isClosed;
+
+                                        $totalMonthlyBudget += $monthlyBudget;
+                                        $totalRealization += $realizationAmount;
                                         @endphp
                                         <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
                                             <td class="fw-semibold text-muted text-nowrap">
@@ -1034,6 +1039,43 @@
                                         </tr>
                                         @endfor
                                 </tbody>
+                                <tfoot class="table-light fw-bold" x-data="{
+                                    get totalProjection() {
+                                        let projs = $wire.editingProjections || {};
+                                        return Object.values(projs).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+                                    },
+                                    get totalCashOut() {
+                                        let cashOuts = $wire.editingProjectionCashOuts || {};
+                                        return Object.values(cashOuts).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+                                    },
+                                    get totalSelisih() {
+                                        return this.totalProjection - this.totalCashOut;
+                                    },
+                                    format(val) {
+                                        let num = Math.round(val);
+                                        return new Intl.NumberFormat('id-ID').format(num);
+                                    }
+                                }">
+                                    <tr>
+                                        <td class="fw-bold text-dark text-nowrap">Total</td>
+                                        <td class="text-end text-primary fw-bold text-nowrap">
+                                            Rp {{ number_format($totalMonthlyBudget, 0, ',', '.') }}
+                                        </td>
+                                        <td class="text-end text-success fw-bold text-nowrap">
+                                            Rp {{ number_format($totalRealization, 0, ',', '.') }}
+                                        </td>
+                                        <td class="text-end text-dark fw-bold text-nowrap">
+                                            Rp <span x-text="format(totalProjection)"></span>
+                                        </td>
+                                        <td class="text-end text-dark fw-bold text-nowrap">
+                                            Rp <span x-text="format(totalCashOut)"></span>
+                                        </td>
+                                        <td class="text-end fw-bold text-nowrap pe-1"
+                                            :class="totalSelisih < 0 ? 'text-danger' : (totalSelisih > 0 ? 'text-success' : 'text-muted')">
+                                            Rp <span x-text="format(totalSelisih)"></span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                         @endif
