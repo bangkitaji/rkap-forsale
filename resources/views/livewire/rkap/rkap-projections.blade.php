@@ -685,7 +685,7 @@
         tabindex="-1"
         aria-hidden="true"
         wire:ignore.self>
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header d-flex justify-content-between align-items-center">
                     <h5 class="modal-title mb-0">{{ __('Input Proyeksi Bulanan') }}</h5>
@@ -853,14 +853,16 @@
                                 </div>
                         </div>
                         @else
-                        <div class="border rounded p-1 mb-3 bg-white rkap-timeline-scroll d-block">
-                            <table class="table table-sm table-bordered align-middle mb-0">
+                        <div class="table-responsive border rounded p-1 mb-3 bg-white d-block">
+                            <table class="table table-sm table-bordered align-middle mb-0 text-nowrap">
                                 <thead class="table-light sticky-top rkap-z-10">
                                     <tr>
-                                        <th class="rkap-w-20p">{{ __('Bulan') }}</th>
-                                        <th class="text-end rkap-w-25p">{{ __('Rencana Anggaran') }}</th>
-                                        <th class="text-end rkap-w-25p">{{ __('Realisasi') }}</th>
-                                        <th class="text-end rkap-w-30p">{{ __('Proyeksi') }}</th>
+                                        <th class="text-nowrap">{{ __('Bulan') }}</th>
+                                        <th class="text-end text-nowrap">{{ __('Rencana Anggaran') }}</th>
+                                        <th class="text-end text-nowrap">{{ __('Realisasi') }}</th>
+                                        <th class="text-end text-nowrap" style="min-width: 150px;">{{ __('Proyeksi') }}</th>
+                                        <th class="text-end text-nowrap" style="min-width: 160px;">{{ __('Proyeksi Pendanaan') }}</th>
+                                        <th class="text-end text-nowrap">{{ __('Selisih') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -884,27 +886,25 @@
                                         $isLocked = $hasRealization || $isClosed;
                                         @endphp
                                         <tr wire:key="projection-row-{{ $m }}-{{ $selectedBudgetItemId }}">
-                                            <td class="fw-semibold text-muted">
+                                            <td class="fw-semibold text-muted text-nowrap">
                                                 {{ $monthNames[$m] }}
-                                                @if($hasRealization)
-                                                <span class="d-block text-warning small rkap-font-07">
-                                                    <i class="bx bx-lock-alt"></i> Terkunci (Realisasi Ada)
-                                                </span>
-                                                @elseif($isClosed)
-                                                <span class="d-block text-danger small rkap-font-07">
-                                                    <i class="bx bx-lock-alt"></i> Terkunci (Closing Periode)
-                                                </span>
-                                                @endif
                                             </td>
-                                            <td class="text-end text-primary fw-semibold">
+                                            <td class="text-end text-primary fw-semibold text-nowrap">
                                                 Rp {{ number_format($monthlyBudget, 0, ',', '.') }}
                                             </td>
-                                            <td class="text-end text-success fw-semibold">
+                                            <td class="text-end text-success fw-semibold text-nowrap">
                                                 Rp {{ number_format($realizationAmount, 0, ',', '.') }}
                                             </td>
-                                            <td>
+                                            <td class="text-nowrap">
+                                                @php
+                                                $isPastMonth = $m < $currentMonth;
+                                                $isReadonlyCashOut = $isPastMonth || $isClosed;
+                                                $existingCashOut = $selectedItem->projectionCashOuts->where('month', $m)->first();
+                                                @endphp
+                                                {{-- Proyeksi column --}}
                                                 <div x-data="{
                                                     raw: @entangle('editingProjections.' . $m),
+                                                    cashOutRaw: @entangle('editingProjectionCashOuts.' . $m),
                                                     display: '',
                                                     init() {
                                                         this.display = this.format(this.raw);
@@ -934,8 +934,18 @@
                                                     },
                                                     onBlur() {
                                                         this.$wire.set('editingProjections.{{ $m }}', this.raw);
+                                                    },
+                                                    get selisih() {
+                                                        let proj = parseFloat(this.raw) || 0;
+                                                        let cashOut = parseFloat(this.cashOutRaw) || 0;
+                                                        return proj - cashOut;
+                                                    },
+                                                    formatSelisih(val) {
+                                                        if (isNaN(val)) return 'Rp 0';
+                                                        return 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(val));
                                                     }
                                                 }" wire:key="proj-wrapper-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                                    {{-- Proyeksi input cell --}}
                                                     <div class="input-group input-group-sm">
                                                         <span class="input-group-text">Rp</span>
                                                         <input type="text"
@@ -945,15 +955,81 @@
                                                             @blur="onBlur"
                                                             @disabled($isLocked || $this->isProjectionClosed)>
                                                     </div>
+                                                    @error('editingProjections.'.$m)
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                    @enderror
                                                 </div>
-                                                @if($isLocked && $existingProj)
-                                                <div class="small text-muted text-end mt-1 rkap-font-07">
-                                                    Nilai Proyeksi: Rp {{ number_format($existingProj->amount, 0, ',', '.') }}
+                                            </td>
+                                            {{-- Proyeksi Pendanaan --}}
+                                            <td class="text-nowrap">
+                                                <div x-data="{
+                                                    raw: @entangle('editingProjectionCashOuts.' . $m),
+                                                    display: '',
+                                                    init() {
+                                                        this.display = this.format(this.raw);
+                                                        this.$watch('raw', v => {
+                                                            this.display = this.format(v);
+                                                        });
+                                                    },
+                                                    format(val) {
+                                                        if (val === null || val === undefined || val === '') return '0';
+                                                        let num = Math.round(parseFloat(val));
+                                                        if (isNaN(num)) return '0';
+                                                        return new Intl.NumberFormat('id-ID').format(num);
+                                                    },
+                                                    onInput(e) {
+                                                        let cursor = e.target.selectionStart;
+                                                        let originalLength = e.target.value.length;
+                                                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                                                        this.raw = clean === '' ? 0 : parseFloat(clean);
+                                                        this.display = this.format(clean);
+                                                        this.$nextTick(() => {
+                                                            let newLength = this.display.length;
+                                                            let diff = newLength - originalLength;
+                                                            e.target.setSelectionRange(cursor + diff, cursor + diff);
+                                                        });
+                                                    },
+                                                    onBlur() {
+                                                        this.$wire.set('editingProjectionCashOuts.{{ $m }}', this.raw);
+                                                    }
+                                                }" wire:key="cashout-wrapper-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text @if($isReadonlyCashOut) bg-light @endif">Rp</span>
+                                                        <input type="text"
+                                                            class="form-control form-control-sm text-end @error('editingProjectionCashOuts.'.$m) is-invalid @enderror @if($isReadonlyCashOut) bg-light text-muted @endif"
+                                                            x-model="display"
+                                                            @if(!$isReadonlyCashOut && !$this->isProjectionClosed)
+                                                            @input="onInput"
+                                                            @blur="onBlur"
+                                                            @endif
+                                                            @readonly($isReadonlyCashOut || $this->isProjectionClosed)
+                                                            title="@if($isReadonlyCashOut && $isPastMonth) Bulan sudah berlalu @elseif($isReadonlyCashOut) Periode closing @endif">
+                                                    </div>
+                                                    @error('editingProjectionCashOuts.'.$m)
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                    @enderror
                                                 </div>
-                                                @endif
-                                                @error('editingProjections.'.$m)
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                                @enderror
+                                            </td>
+                                            {{-- Selisih (Proyeksi - Proyeksi Pendanaan) --}}
+                                            <td class="text-nowrap">
+                                                <div x-data="{
+                                                    proj: @entangle('editingProjections.' . $m),
+                                                    cashOut: @entangle('editingProjectionCashOuts.' . $m),
+                                                    get selisih() {
+                                                        let p = parseFloat(this.proj) || 0;
+                                                        let c = parseFloat(this.cashOut) || 0;
+                                                        return p - c;
+                                                    },
+                                                    format(val) {
+                                                        let num = Math.round(val);
+                                                        return new Intl.NumberFormat('id-ID').format(num);
+                                                    }
+                                                }" wire:key="selisih-{{ $m }}-{{ $selectedBudgetItemId }}">
+                                                    <div class="text-end fw-semibold text-nowrap pe-1"
+                                                        :class="selisih < 0 ? 'text-danger' : (selisih > 0 ? 'text-success' : 'text-muted')">
+                                                        <span x-text="'Rp ' + format(selisih)"></span>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endfor

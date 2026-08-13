@@ -1401,10 +1401,10 @@ class RkapSubmissionForm extends Component
             $submission->workPlans()->whereNotIn('id', $existingWpIds)->where('approval_status', '!=', 'approved')->delete();
 
             $sortIdx = 0;
-            foreach ($this->workPlans as $wpGroup) {
+            foreach ($this->workPlans as $wpGroupIdx => $wpGroup) {
                 $workPlanId = $wpGroup['work_plan_id'];
 
-                foreach ($wpGroup['activities'] as $actData) {
+                foreach ($wpGroup['activities'] as $actDataIdx => $actData) {
                     if (!empty($actData['id'])) {
                         $dbWp = $rkapWorkPlansMap->get($actData['id']);
                         if ($dbWp) {
@@ -1458,15 +1458,17 @@ class RkapSubmissionForm extends Component
                     }
 
                     // Save newly uploaded reference files
-                    foreach ($actData['uploaded_files'] ?? [] as $fData) {
+                    foreach ($actData['uploaded_files'] ?? [] as $fIdx => $fData) {
                         if (empty($fData['id'])) {
-                            $workPlan->activityFiles()->create([
+                            $newFile = $workPlan->activityFiles()->create([
                                 'file_name' => $fData['file_name'],
                                 'original_name' => $fData['original_name'],
                                 'file_path' => $fData['file_path'],
                                 'file_type' => $fData['file_type'],
                                 'file_size' => $fData['file_size'],
                             ]);
+                            // Write the new DB id back to component state to prevent duplicates on next save
+                            $this->workPlans[$wpGroupIdx]['activities'][$actDataIdx]['uploaded_files'][$fIdx]['id'] = $newFile->id;
                         }
                     }
 

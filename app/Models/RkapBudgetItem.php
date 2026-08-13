@@ -91,6 +91,11 @@ class RkapBudgetItem extends Model
         return $this->hasMany(RkapBudgetItemProjection::class)->orderBy('month');
     }
 
+    public function projectionCashOuts(): HasMany
+    {
+        return $this->hasMany(RkapBudgetItemProjectionCashOut::class)->orderBy('month');
+    }
+
     public function projectionLogs(): HasMany
     {
         return $this->hasMany(RkapProjectionLog::class)->orderByDesc('created_at');

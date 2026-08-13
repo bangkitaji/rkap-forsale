@@ -7,6 +7,7 @@ use App\Models\RkapPeriod;
 use App\Models\RkapSubmission;
 use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemProjection;
+use App\Models\RkapBudgetItemProjectionCashOut;
 use App\Models\Setting;
 use App\Models\Bureau;
 use App\Models\Department;
@@ -32,6 +33,7 @@ class RkapProjections extends Component
 
     public ?int $selectedBudgetItemId = null;
     public array $editingProjections = [];
+    public array $editingProjectionCashOuts = [];
     public string $inputMode = 'monthly';
     public ?float $yearlyProjection = null;
     public bool $modeLocked = false;
@@ -47,12 +49,15 @@ class RkapProjections extends Component
     protected $rules = [
         'editingProjections' => 'array',
         'editingProjections.*' => 'nullable|numeric',
+        'editingProjectionCashOuts' => 'array',
+        'editingProjectionCashOuts.*' => 'nullable|numeric',
         'inputMode' => 'required|in:monthly,yearly',
         'yearlyProjection' => 'nullable|numeric',
     ];
 
     protected $validationAttributes = [
         'editingProjections.*' => 'Nilai proyeksi bulanan',
+        'editingProjectionCashOuts.*' => 'Nilai proyeksi pendanaan bulanan',
         'yearlyProjection' => 'Nilai proyeksi tahunan',
     ];
 
@@ -203,6 +208,7 @@ class RkapProjections extends Component
             'bureau',
             'workPlans.budgetItems.realizations',
             'workPlans.budgetItems.projections',
+            'workPlans.budgetItems.projectionCashOuts',
             'period'
         ])
             ->whereIn('bureau_id', $targetBureauIds)
@@ -219,11 +225,13 @@ class RkapProjections extends Component
 
         $this->selectedBudgetItemId = $id;
         $this->projectionNotes = null;
-        $budgetItem = RkapBudgetItem::with(['projections', 'monthlies', 'realizations'])->find($id);
+        $budgetItem = RkapBudgetItem::with(['projections', 'projectionCashOuts', 'monthlies', 'realizations'])->find($id);
 
         $this->editingProjections = [];
+        $this->editingProjectionCashOuts = [];
 
         $activePeriod = RkapPeriod::find($this->activePeriodId);
+        $currentMonth = (int) date('n');
 
         // Initialize projection values based on realization or closing period status
         for ($m = 1; $m <= 12; $m++) {
@@ -241,6 +249,19 @@ class RkapProjections extends Component
                 $existing = $budgetItem->projections->where('month', $m)->first();
                 $monthlyPlan = $budgetItem->monthlies->where('month', $m)->first();
                 $this->editingProjections[$m] = $existing ? (float) $existing->amount : (float) ($monthlyPlan?->amount ?? 0.00);
+            }
+
+            // Initialize projection cash out values
+            // Readonly if month has already passed (< current month) OR period is closed
+            $isPastMonth = $m < $currentMonth;
+            $isReadonlyCashOut = $isPastMonth || $isClosed;
+            $existingCashOut = $budgetItem->projectionCashOuts->where('month', $m)->first();
+
+            if ($isReadonlyCashOut) {
+                // Show stored value if exists, otherwise 0
+                $this->editingProjectionCashOuts[$m] = $existingCashOut ? (float) $existingCashOut->amount : 0.00;
+            } else {
+                $this->editingProjectionCashOuts[$m] = $existingCashOut ? (float) $existingCashOut->amount : 0.00;
             }
         }
 
@@ -353,6 +374,18 @@ class RkapProjections extends Component
 
         // Sync yearly projection total
         $this->yearlyProjection = $totalProjections;
+    }
+
+    public function updatedEditingProjectionCashOuts($value, $key): void
+    {
+        $monthVal = (int) $key;
+
+        if ($value !== '' && $value !== null && !is_numeric($value)) {
+            $this->addError("editingProjectionCashOuts.{$monthVal}", "Nilai proyeksi pendanaan bulanan harus berupa angka.");
+            return;
+        } else {
+            $this->resetErrorBag("editingProjectionCashOuts.{$monthVal}");
+        }
     }
 
     public function getIsProjectionClosedProperty(): bool
@@ -497,6 +530,7 @@ class RkapProjections extends Component
 
             DB::transaction(function () use ($selectedItem, $period, $oldMonthly, $oldTotal): void {
                 $newMonthly = [];
+                $currentMonth = (int) date('n');
                 for ($m = 1; $m <= 12; $m++) {
                     $realizationAmount = (float) ($selectedItem->realizations->where('month', $m)->sum('amount'));
                     $hasRealization = $selectedItem->realizations->where('month', $m)->count() > 0;
@@ -516,7 +550,7 @@ class RkapProjections extends Component
 
                     $newMonthly[$m] = $amount;
 
-                    \App\Models\RkapBudgetItemProjection::updateOrCreate(
+                    RkapBudgetItemProjection::updateOrCreate(
                         [
                             'rkap_budget_item_id' => $this->selectedBudgetItemId,
                             'month' => $m,
@@ -527,6 +561,27 @@ class RkapProjections extends Component
                             'inputted_by' => auth()->id(),
                         ]
                     );
+
+                    // Save projection cash out — only for non-readonly months
+                    $isPastMonth = $m < $currentMonth;
+                    $isReadonlyCashOut = $isPastMonth || $isClosed;
+                    if (!$isReadonlyCashOut) {
+                        $cashOutAmount = isset($this->editingProjectionCashOuts[$m]) && $this->editingProjectionCashOuts[$m] !== '' && $this->editingProjectionCashOuts[$m] !== null
+                            ? (float) $this->editingProjectionCashOuts[$m]
+                            : 0.00;
+
+                        RkapBudgetItemProjectionCashOut::updateOrCreate(
+                            [
+                                'rkap_budget_item_id' => $this->selectedBudgetItemId,
+                                'month' => $m,
+                            ],
+                            [
+                                'rkap_period_id' => $this->activePeriodId,
+                                'amount' => $cashOutAmount,
+                                'inputted_by' => auth()->id(),
+                            ]
+                        );
+                    }
                 }
 
                 // Update the yearly projection column in budget item table to match sum of all monthly projections
