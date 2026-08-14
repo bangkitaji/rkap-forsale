@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Livewire\Traits\WithCustomPagination;
 use App\Models\BudgetTransfer;
 use App\Models\RkapPeriod;
+use App\Enums\BudgetTransferStatus;
 use App\Services\BudgetTransferService;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -22,7 +23,7 @@ class BudgetTransferList extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        if (!$user || !$user->bureau_id) {
+        if (!$user || (!$user->bureau_id && !$user->department_id)) {
             $this->activeTab = 'outgoing';
         }
     }
@@ -47,23 +48,44 @@ class BudgetTransferList extends Component
     public function render()
     {
         $user = Auth::user();
-        $query = BudgetTransfer::with(['period', 'sourceBureau', 'targetBureau', 'requester', 'reviewer'])
-            ->latest();
+        $query = BudgetTransfer::with([
+            'period',
+            'sourceBureau.department',
+            'targetBureau.department',
+            'requester',
+            'reviewer',
+            'sourceDeptApprover',
+            'targetDeptApprover',
+        ])->latest();
 
-        // Filter by tab
+        $userDeptId = $user ? ($user->department_id ?: $user->bureau?->department_id) : null;
+
+        // Filter by tab according to role
         if ($this->activeTab === 'incoming') {
-            if ($user->bureau_id) {
+            if ($user && $user->bureau_id) {
                 $query->where('target_bureau_id', $user->bureau_id);
+            } elseif ($user && $userDeptId && !$user->isAdmin()) {
+                $query->whereHas('targetBureau', function ($q) use ($userDeptId) {
+                    $q->where('department_id', $userDeptId);
+                });
             }
         } else {
-            if ($user->bureau_id) {
+            if ($user && $user->bureau_id) {
                 $query->where('source_bureau_id', $user->bureau_id);
+            } elseif ($user && $userDeptId && !$user->isAdmin()) {
+                $query->whereHas('sourceBureau', function ($q) use ($userDeptId) {
+                    $q->where('department_id', $userDeptId);
+                });
             }
         }
 
         // Filter by status
         if ($this->filterStatus !== '') {
-            $query->where('status', $this->filterStatus);
+            if ($this->filterStatus === 'pending_all') {
+                $query->whereIn('status', BudgetTransferStatus::pendingStatuses());
+            } else {
+                $query->where('status', $this->filterStatus);
+            }
         }
 
         // Filter by period

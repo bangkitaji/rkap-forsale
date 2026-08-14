@@ -17,6 +17,8 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/analytics/reconciliation', [Analytics::class, 'reconciliation'])->name('analytics-reconciliation');
   Route::get('/analytics/capex', [Analytics::class, 'capex'])->name('analytics-capex');
   Route::get('/analytics/cds-report', \App\Livewire\Analytics\CdsReport::class)->name('analytics-cds-report');
+  Route::get('/analytics/opening-balance-form', \App\Livewire\Analytics\OpeningBalanceForm::class)->name('analytics-opening-balance-form');
+  Route::get('/analytics/balance-sheet', \App\Livewire\Analytics\BalanceSheet::class)->name('analytics-balance-sheet');
   Route::get('/analytics/summary-dept/pl-capex', [Analytics::class, 'summaryDeptPlCapex'])->name('analytics-summary-dept-pl-capex')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/summary-dept/cashflow', [Analytics::class, 'summaryDeptCashflow'])->name('analytics-summary-dept-cashflow')->middleware('permission:analytics.summary.dept');
   Route::get('/analytics/summary-dept/detail', [Analytics::class, 'summaryDeptDetail'])->name('analytics-summary-dept-detail')->middleware('permission:analytics.summary.dept');
@@ -107,7 +109,7 @@ Route::middleware(['auth'])->group(function () {
       ->middleware('permission:rkap.transfer.create')
       ->name('rkap-budget-transfers-create');
     Route::get('/budget-transfers/{id}/review', \App\Livewire\Rkap\BudgetTransferReview::class)
-      ->middleware('permission:rkap.transfer.review')
+      ->middleware('permission:rkap.transfer.view|rkap.transfer.review')
       ->name('rkap-budget-transfers-review');
     Route::get('/files/{fileId}/download', [App\Http\Controllers\RkapFileController::class, 'download'])->name('rkap-files.download');
     Route::get('/files/{fileId}/view', [App\Http\Controllers\RkapFileController::class, 'view'])->name('rkap-files.view');

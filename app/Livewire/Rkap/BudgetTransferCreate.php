@@ -62,7 +62,7 @@ class BudgetTransferCreate extends Component
             if ($wp->isLockedForTransfer()) continue;
             foreach ($wp->budgetItems as $bi) {
                 $isPending = \App\Models\BudgetTransferItem::where('rkap_budget_item_id', $bi->id)
-                    ->whereHas('transfer', fn($q) => $q->where('status', \App\Enums\BudgetTransferStatus::Pending->value))
+                    ->whereHas('transfer', fn($q) => $q->whereIn('status', \App\Enums\BudgetTransferStatus::pendingStatuses()))
                     ->exists();
                 if ($isPending) continue;
 
@@ -136,8 +136,11 @@ class BudgetTransferCreate extends Component
         }
 
         try {
-            $service->createTransfer($user, $this->periodId, $this->targetBureauId, $itemsData, $this->notes);
-            session()->flash('message', __('Pengajuan transfer budget berhasil dibuat dan menunggu approval dari biro tujuan.'));
+            $transfer = $service->createTransfer($user, $this->periodId, $this->targetBureauId, $itemsData, $this->notes);
+            $msg = $transfer->isCrossDepartment()
+                ? __('Pengajuan transfer budget antar departemen berhasil dibuat dan menunggu approval dari Kepala Departemen Anda.')
+                : __('Pengajuan transfer budget berhasil dibuat dan menunggu approval dari biro tujuan.');
+            session()->flash('message', $msg);
             return redirect()->route('rkap-budget-transfers');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
@@ -149,11 +152,12 @@ class BudgetTransferCreate extends Component
         $user = Auth::user();
         $currentYear = (int) date('Y');
 
-        if (!$user || !$user->bureau_id) {
+        if (!$user || !$user->bureau_id || !$user->bureau) {
             return view('livewire.rkap.budget-transfer-create', [
                 'periods' => collect(),
                 'targetBureaus' => collect(),
                 'workPlans' => collect(),
+                'selectedTargetBureau' => null,
             ])->layout('layouts.contentNavbarLayout');
         }
 
@@ -166,12 +170,22 @@ class BudgetTransferCreate extends Component
             ->orderByDesc('year')
             ->get();
 
-        // Target bureaus: active bureaus in same department, excluding own bureau
-        $targetBureaus = Bureau::active()
-            ->where('department_id', $user->bureau->department_id)
-            ->where('id', '!=', $user->bureau_id)
-            ->orderBy('name')
-            ->get();
+        // Target bureaus: active bureaus in SAME DIRECTORATE, excluding own bureau
+        $userDept = $user->bureau->department;
+        $targetBureaus = collect();
+        if ($userDept && $userDept->directorate_id) {
+            $targetBureaus = Bureau::active()
+                ->with('department')
+                ->whereHas('department', function ($q) use ($userDept) {
+                    $q->where('directorate_id', $userDept->directorate_id);
+                })
+                ->where('id', '!=', $user->bureau_id)
+                ->orderBy('department_id')
+                ->orderBy('name')
+                ->get();
+        }
+
+        $selectedTargetBureau = $this->targetBureauId ? Bureau::with('department')->find($this->targetBureauId) : null;
 
         // Load work plans of approved submission for selected period
         $workPlans = collect();
@@ -191,6 +205,7 @@ class BudgetTransferCreate extends Component
         return view('livewire.rkap.budget-transfer-create', [
             'periods' => $periods,
             'targetBureaus' => $targetBureaus,
+            'selectedTargetBureau' => $selectedTargetBureau,
             'workPlans' => $workPlans,
         ])->layout('layouts.contentNavbarLayout');
     }

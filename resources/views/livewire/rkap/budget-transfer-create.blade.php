@@ -40,13 +40,49 @@
               <label class="form-label fw-semibold small">{{ __('Biro Tujuan') }}</label>
               <select class="form-select form-select-sm @error('targetBureauId') is-invalid @enderror" wire:model.live="targetBureauId">
                 <option value="">-- {{ __('Pilih Biro Tujuan') }} --</option>
-                @foreach($targetBureaus as $tb)
-                <option value="{{ $tb->id }}">{{ $tb->code }} — {{ $tb->name }}</option>
+                @php
+                  $userBureau = auth()->user()->bureau;
+                  $groupedBureaus = $targetBureaus->groupBy(fn($b) => $b->department->name ?? 'Lainnya');
+                @endphp
+                @foreach($groupedBureaus as $deptName => $bureaus)
+                  @php
+                    $isSameDept = ($userBureau && $bureaus->first()->department_id === $userBureau->department_id);
+                  @endphp
+                  <optgroup label="{{ $deptName }} ({{ $isSameDept ? __('Departemen Anda') : __('Departemen Lain') }})">
+                    @foreach($bureaus as $tb)
+                    <option value="{{ $tb->id }}">
+                      {{ $tb->code }} — {{ $tb->name }}
+                    </option>
+                    @endforeach
+                  </optgroup>
                 @endforeach
               </select>
               @error('targetBureauId')
               <div class="invalid-feedback small">{{ $message }}</div>
               @enderror
+
+              @if($selectedTargetBureau && $userBureau)
+                @php
+                  $isCrossDept = ($selectedTargetBureau->department_id !== $userBureau->department_id);
+                @endphp
+                <div class="mt-2">
+                  @if($isCrossDept)
+                  <div class="alert alert-info py-2 px-3 mb-0 fs-7">
+                    <div class="fw-bold mb-1"><i class="bx bx-git-branch me-1"></i>{{ __('Transfer Antar Departemen (Satu Direktorat)') }}</div>
+                    <ol class="ps-3 mb-0 text-muted">
+                      <li>{{ __('Approval Kepala Departemen Pengusul') }} ({{ $userBureau->department->name ?? 'Dept Pengusul' }})</li>
+                      <li>{{ __('Approval Kepala Departemen Penerima') }} ({{ $selectedTargetBureau->department->name ?? 'Dept Penerima' }})</li>
+                      <li>{{ __('Penerimaan & Approval Kepala Biro Tujuan') }} ({{ $selectedTargetBureau->name }})</li>
+                    </ol>
+                  </div>
+                  @else
+                  <div class="alert alert-success py-2 px-3 mb-0 fs-7">
+                    <div class="fw-bold mb-1"><i class="bx bx-check-circle me-1"></i>{{ __('Transfer Antar Biro (Satu Departemen)') }}</div>
+                    <small class="text-muted">{{ __('Approval langsung oleh Kepala Biro Penerima (:bureau).', ['bureau' => $selectedTargetBureau->name]) }}</small>
+                  </div>
+                  @endif
+                </div>
+              @endif
             </div>
 
             <div class="mb-3">
@@ -118,7 +154,7 @@
                     $isSelected = !empty($selectedItems[$bi->id]);
                     $isPending = \App\Models\BudgetTransferItem::where('rkap_budget_item_id', $bi->id)
                         ->whereHas('transfer', function ($q) {
-                            $q->where('status', \App\Enums\BudgetTransferStatus::Pending->value);
+                            $q->whereIn('status', \App\Enums\BudgetTransferStatus::pendingStatuses());
                         })->exists();
                   @endphp
                   <tr class="{{ $isPending ? 'table-light text-muted' : '' }}">
@@ -188,6 +224,7 @@
                                   this.displayValue = this.fullAmount.toLocaleString('id-ID');
                                   this.isFull = true;
                               } else {
+                                  $wire.set('transferAmounts.{{ $bi->id }}', false);
                                   this.isFull = false;
                               }
                           }

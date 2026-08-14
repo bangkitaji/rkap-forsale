@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BudgetTransfer;
 use App\Models\BudgetTransferItem;
+use App\Models\BudgetTransferApproval;
 use App\Models\RkapPeriod;
 use App\Models\RkapSubmission;
 use App\Models\RkapWorkPlan;
@@ -20,17 +21,6 @@ class BudgetTransferService
 {
     /**
      * Create a new budget transfer request.
-     * $itemsData can be:
-     * 1. Array of work plan IDs: [1, 2]
-     * 2. Array of item data arrays:
-     *    [
-     *      [
-     *        'work_plan_id' => 1,
-     *        'budget_item_id' => 10,
-     *        'amount_transferred' => 2500000,
-     *      ],
-     *      ...
-     *    ]
      */
     public function createTransfer(User $user, int $periodId, int $targetBureauId, array $itemsData, ?string $notes): BudgetTransfer
     {
@@ -39,14 +29,23 @@ class BudgetTransferService
             throw new Exception("Anda harus terasosiasi dengan Biro untuk mengajukan transfer.");
         }
 
-        $targetBureau = Bureau::findOrFail($targetBureauId);
+        $targetBureau = Bureau::with('department')->findOrFail($targetBureauId);
         if ($sourceBureau->id === $targetBureau->id) {
             throw new Exception("Tidak dapat melakukan transfer budget ke biro sendiri.");
         }
 
-        if ($sourceBureau->department_id !== $targetBureau->department_id) {
-            throw new Exception("Biro asal dan biro tujuan harus berada dalam satu departemen.");
+        $sourceDept = $sourceBureau->department;
+        $targetDept = $targetBureau->department;
+
+        if (!$sourceDept || !$targetDept || $sourceDept->directorate_id !== $targetDept->directorate_id) {
+            throw new Exception("Transfer budget hanya dapat dilakukan antar biro dalam satu direktorat yang sama.");
         }
+
+        $isCrossDept = ($sourceBureau->department_id !== $targetBureau->department_id);
+        $transferType = $isCrossDept ? 'inter_department' : 'intra_department';
+        $initialStatus = $isCrossDept
+            ? BudgetTransferStatus::PendingSourceDept->value
+            : BudgetTransferStatus::Pending->value;
 
         $period = RkapPeriod::findOrFail($periodId);
         $currentYear = (int) date('Y');
@@ -122,11 +121,11 @@ class BudgetTransferService
             throw new Exception("Tidak ada item budget yang valid untuk ditransfer.");
         }
 
-        // Verify pending transfer for these budget items
+        // Verify pending transfer for these budget items across any in-flight pending status
         foreach ($normalizedItems as $nItem) {
             $isPending = BudgetTransferItem::where('rkap_budget_item_id', $nItem['budget_item_id'])
                 ->whereHas('transfer', function ($q) {
-                    $q->where('status', BudgetTransferStatus::Pending->value);
+                    $q->whereIn('status', BudgetTransferStatus::pendingStatuses());
                 })->exists();
 
             if ($isPending) {
@@ -134,7 +133,7 @@ class BudgetTransferService
             }
         }
 
-        return DB::transaction(function () use ($sourceSubmission, $sourceBureau, $targetBureau, $periodId, $normalizedItems, $user, $notes) {
+        return DB::transaction(function () use ($sourceSubmission, $sourceBureau, $targetBureau, $periodId, $normalizedItems, $user, $notes, $transferType, $initialStatus) {
             $totalAmount = 0;
             $itemsToCreate = [];
 
@@ -177,7 +176,8 @@ class BudgetTransferService
                 'target_bureau_id' => $targetBureau->id,
                 'source_submission_id' => $sourceSubmission->id,
                 'requested_by' => $user->id,
-                'status' => BudgetTransferStatus::Pending->value,
+                'status' => $initialStatus,
+                'transfer_type' => $transferType,
                 'notes' => $notes,
                 'total_amount' => $totalAmount,
             ]);
@@ -206,11 +206,67 @@ class BudgetTransferService
             throw new Exception("Hanya pengajuan transfer pending yang dapat disetujui.");
         }
 
+        if (!$transfer->canBeReviewedBy($reviewer)) {
+            throw new Exception("Anda tidak memiliki wewenang untuk menyetujui transfer budget pada tahap ini.");
+        }
+
+        // Cross-Department Stage 1: Approval by Source Department Head
+        if ($transfer->status === BudgetTransferStatus::PendingSourceDept->value) {
+            DB::transaction(function () use ($transfer, $reviewer, $reviewNotes) {
+                BudgetTransferApproval::create([
+                    'budget_transfer_id' => $transfer->id,
+                    'user_id' => $reviewer->id,
+                    'stage' => 'source_department',
+                    'action' => 'approved',
+                    'comments' => $reviewNotes,
+                ]);
+
+                $transfer->update([
+                    'status' => BudgetTransferStatus::PendingTargetDept->value,
+                    'source_dept_approved_by' => $reviewer->id,
+                    'source_dept_approved_at' => now(),
+                    'source_dept_review_notes' => $reviewNotes,
+                ]);
+            });
+            return;
+        }
+
+        // Cross-Department Stage 2: Approval by Target Department Head
+        if ($transfer->status === BudgetTransferStatus::PendingTargetDept->value) {
+            DB::transaction(function () use ($transfer, $reviewer, $reviewNotes) {
+                BudgetTransferApproval::create([
+                    'budget_transfer_id' => $transfer->id,
+                    'user_id' => $reviewer->id,
+                    'stage' => 'target_department',
+                    'action' => 'approved',
+                    'comments' => $reviewNotes,
+                ]);
+
+                $transfer->update([
+                    'status' => BudgetTransferStatus::PendingTargetBureau->value,
+                    'target_dept_approved_by' => $reviewer->id,
+                    'target_dept_approved_at' => now(),
+                    'target_dept_review_notes' => $reviewNotes,
+                ]);
+            });
+            return;
+        }
+
+        // Stage 3 / Final Approval (Target Bureau Head or Intra-Dept Target Bureau Head): Execute Budget Transfer
         $originalUser = Auth::user();
         Auth::login($reviewer);
 
         try {
             DB::transaction(function () use ($transfer, $reviewer, $reviewNotes) {
+                // Record approval audit log
+                BudgetTransferApproval::create([
+                    'budget_transfer_id' => $transfer->id,
+                    'user_id' => $reviewer->id,
+                    'stage' => 'target_bureau',
+                    'action' => 'approved',
+                    'comments' => $reviewNotes,
+                ]);
+
                 // Find or create target submission
                 $targetSubmission = RkapSubmission::where('rkap_period_id', $transfer->rkap_period_id)
                     ->where('bureau_id', $transfer->target_bureau_id)
@@ -361,12 +417,32 @@ class BudgetTransferService
             throw new Exception("Hanya pengajuan transfer pending yang dapat ditolak.");
         }
 
-        $transfer->update([
-            'status' => BudgetTransferStatus::Rejected->value,
-            'reviewed_by' => $reviewer->id,
-            'review_notes' => $reviewNotes,
-            'reviewed_at' => now(),
-        ]);
+        if (!$transfer->canBeReviewedBy($reviewer)) {
+            throw new Exception("Anda tidak memiliki wewenang untuk menolak transfer budget pada tahap ini.");
+        }
+
+        $stage = match ($transfer->status) {
+            BudgetTransferStatus::PendingSourceDept->value => 'source_department',
+            BudgetTransferStatus::PendingTargetDept->value => 'target_department',
+            default => 'target_bureau',
+        };
+
+        DB::transaction(function () use ($transfer, $reviewer, $reviewNotes, $stage) {
+            BudgetTransferApproval::create([
+                'budget_transfer_id' => $transfer->id,
+                'user_id' => $reviewer->id,
+                'stage' => $stage,
+                'action' => 'rejected',
+                'comments' => $reviewNotes,
+            ]);
+
+            $transfer->update([
+                'status' => BudgetTransferStatus::Rejected->value,
+                'reviewed_by' => $reviewer->id,
+                'review_notes' => $reviewNotes,
+                'reviewed_at' => now(),
+            ]);
+        });
     }
 
     /**
@@ -378,7 +454,7 @@ class BudgetTransferService
             throw new Exception("Hanya pengajuan transfer pending yang dapat dibatalkan.");
         }
 
-        if ($transfer->source_bureau_id !== $user->bureau_id) {
+        if ($transfer->source_bureau_id !== $user->bureau_id && !$user->isAdmin()) {
             throw new Exception("Hanya biro pengirim yang dapat membatalkan pengajuan transfer.");
         }
 

@@ -69,11 +69,15 @@
             @endforeach
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-5">
           <label class="form-label">{{ __('Status') }}</label>
           <select class="form-select" wire:model.live="filterStatus">
             <option value="">{{ __('Semua Status') }}</option>
-            <option value="pending">{{ __('Menunggu Approval') }}</option>
+            <option value="pending_all">{{ __('Semua Menunggu Approval') }}</option>
+            <option value="pending">{{ __('Menunggu Approval Biro (Satu Dept)') }}</option>
+            <option value="pending_source_dept">{{ __('Menunggu Approval Kadep Pengusul') }}</option>
+            <option value="pending_target_dept">{{ __('Menunggu Approval Kadep Penerima') }}</option>
+            <option value="pending_target_bureau">{{ __('Menunggu Konfirmasi Kabiro Penerima') }}</option>
             <option value="approved">{{ __('Disetujui') }}</option>
             <option value="rejected">{{ __('Ditolak') }}</option>
             <option value="cancelled">{{ __('Dibatalkan') }}</option>
@@ -91,6 +95,7 @@
           <tr>
             <th>{{ __('No') }}</th>
             <th>{{ __('Periode') }}</th>
+            <th>{{ __('Tipe Transfer') }}</th>
             <th>{{ $activeTab === 'incoming' ? __('Biro Asal') : __('Biro Tujuan') }}</th>
             <th>{{ __('Total Anggaran') }}</th>
             <th>{{ __('Status') }}</th>
@@ -104,22 +109,45 @@
           $statusEnum = \App\Enums\BudgetTransferStatus::tryFrom($t->status);
           $statusLabel = $statusEnum ? $statusEnum->label() : $t->status;
           $statusColor = $statusEnum ? $statusEnum->color() : 'secondary';
+          $isCross = $t->isCrossDepartment();
+          $canReview = $t->canBeReviewedBy(auth()->user());
           @endphp
           <tr>
             <td>{{ $transfers->firstItem() + $index }}</td>
             <td><strong>{{ $t->period->title }}</strong></td>
             <td>
-              @if($activeTab === 'incoming')
-              <span class="badge bg-label-info">{{ $t->sourceBureau->code }}</span> {{ $t->sourceBureau->name }}
+              @if($isCross)
+              <span class="badge bg-label-warning"><i class="bx bx-git-branch me-1"></i>{{ __('Antar Departemen') }}</span>
               @else
-              <span class="badge bg-label-primary">{{ $t->targetBureau->code }}</span> {{ $t->targetBureau->name }}
+              <span class="badge bg-label-info"><i class="bx bx-buildings me-1"></i>{{ __('Satu Departemen') }}</span>
+              @endif
+            </td>
+            <td>
+              @if($activeTab === 'incoming')
+              <div>
+                <span class="badge bg-label-info">{{ $t->sourceBureau->code }}</span>
+                <strong class="text-dark">{{ $t->sourceBureau->name }}</strong>
+                @if($isCross && $t->sourceBureau->department)
+                <small class="text-muted d-block">{{ $t->sourceBureau->department->name }}</small>
+                @endif
+              </div>
+              @else
+              <div>
+                <span class="badge bg-label-primary">{{ $t->targetBureau->code }}</span>
+                <strong class="text-dark">{{ $t->targetBureau->name }}</strong>
+                @if($isCross && $t->targetBureau->department)
+                <small class="text-muted d-block">{{ $t->targetBureau->department->name }}</small>
+                @endif
+              </div>
               @endif
             </td>
             <td><strong class="text-primary">Rp {{ number_format($t->total_amount, 0, ',', '.') }}</strong></td>
-            <td><span class="badge bg-label-{{ $statusColor }}">{{ $statusLabel }}</span></td>
+            <td>
+              <span class="badge bg-label-{{ $statusColor }}">{{ $statusLabel }}</span>
+            </td>
             <td>{{ $t->created_at->timezone('Asia/Jakarta')->format('d M Y, H:i') }}</td>
             <td class="text-center">
-              @if($activeTab === 'incoming' && $t->isPending() && auth()->user()->hasPermissionTo('rkap.transfer.review'))
+              @if($canReview)
               <a href="{{ route('rkap-budget-transfers-review', $t->id) }}" class="btn btn-xs btn-primary">
                 <i class="bx bx-edit-alt me-1"></i> {{ __('Review') }}
               </a>
@@ -129,7 +157,7 @@
               </a>
               @endif
 
-              @if($activeTab === 'outgoing' && $t->isPending())
+              @if($activeTab === 'outgoing' && $t->isPending() && ($t->source_bureau_id === auth()->user()->bureau_id || auth()->user()->isAdmin()))
               <button type="button" class="btn btn-xs btn-danger ms-1"
                 wire:click="cancelTransfer({{ $t->id }})"
                 wire:confirm="{{ __('Apakah Anda yakin ingin membatalkan pengajuan transfer ini?') }}">
@@ -140,7 +168,7 @@
           </tr>
           @empty
           <tr>
-            <td colspan="7" class="text-center py-4 text-muted">
+            <td colspan="8" class="text-center py-4 text-muted">
               <i class="bx bx-transfer fs-1 mb-2"></i>
               <p class="mb-0">{{ __('Tidak ada data transfer budget.') }}</p>
             </td>

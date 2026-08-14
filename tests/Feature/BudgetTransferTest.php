@@ -16,6 +16,7 @@ use App\Models\Directorate;
 use App\Models\User;
 use App\Models\BudgetTransfer;
 use App\Models\BudgetTransferItem;
+use App\Models\BudgetTransferApproval;
 use App\Enums\BudgetTransferStatus;
 use App\Enums\SubmissionStatus;
 use App\Services\BudgetTransferService;
@@ -30,6 +31,15 @@ class BudgetTransferTest extends TestCase
 
     protected User $userSource;
     protected User $userTarget;
+    protected User $kadeptSource;
+    protected User $kadeptTarget;
+    protected User $userDiffDir;
+    protected Bureau $bureauSource;
+    protected Bureau $bureauTarget;
+    protected Bureau $bureauOtherDept;
+    protected Department $deptSource;
+    protected Department $deptTarget;
+    protected Directorate $directorate;
     protected RkapPeriod $period;
     protected RkapSubmission $submissionSource;
     protected RkapWorkPlan $workPlan1;
@@ -43,55 +53,124 @@ class BudgetTransferTest extends TestCase
         Artisan::call('migrate');
 
         // Setup roles & permissions
-        $role = Role::firstOrCreate(['name' => 'kepala_biro', 'guard_name' => 'web']);
+        $roleKabiro = Role::firstOrCreate(['name' => 'kepala_biro', 'guard_name' => 'web']);
+        $roleKadept = Role::firstOrCreate(['name' => 'kepala_departemen', 'guard_name' => 'web']);
         $viewPerm = Permission::firstOrCreate(['name' => 'rkap.transfer.view', 'guard_name' => 'web']);
         $createPerm = Permission::firstOrCreate(['name' => 'rkap.transfer.create', 'guard_name' => 'web']);
         $reviewPerm = Permission::firstOrCreate(['name' => 'rkap.transfer.review', 'guard_name' => 'web']);
-        $role->givePermissionTo([$viewPerm, $createPerm, $reviewPerm]);
+        $roleKabiro->givePermissionTo([$viewPerm, $createPerm, $reviewPerm]);
+        $roleKadept->givePermissionTo([$viewPerm, $reviewPerm]);
 
         // Setup organization
-        $dir = Directorate::create([
+        $this->directorate = Directorate::create([
             'code' => 'DIR01',
             'name' => 'Directorate Test',
             'is_active' => true,
         ]);
 
-        $dept = Department::create([
-            'directorate_id' => $dir->id,
-            'code' => 'DEP01',
-            'name' => 'Department Test',
+        $otherDir = Directorate::create([
+            'code' => 'DIR02',
+            'name' => 'Directorate Other',
             'is_active' => true,
         ]);
 
-        $bureauSource = Bureau::create([
-            'department_id' => $dept->id,
+        $this->deptSource = Department::create([
+            'directorate_id' => $this->directorate->id,
+            'code' => 'DEP01',
+            'name' => 'Department Source',
+            'is_active' => true,
+        ]);
+
+        $this->deptTarget = Department::create([
+            'directorate_id' => $this->directorate->id,
+            'code' => 'DEP02',
+            'name' => 'Department Target (Same Dir)',
+            'is_active' => true,
+        ]);
+
+        $deptDiffDir = Department::create([
+            'directorate_id' => $otherDir->id,
+            'code' => 'DEP03',
+            'name' => 'Department Other Dir',
+            'is_active' => true,
+        ]);
+
+        $this->bureauSource = Bureau::create([
+            'department_id' => $this->deptSource->id,
             'code' => 'BUR01',
             'name' => 'Bureau Source',
             'is_active' => true,
         ]);
 
-        $bureauTarget = Bureau::create([
-            'department_id' => $dept->id,
+        $this->bureauTarget = Bureau::create([
+            'department_id' => $this->deptSource->id,
             'code' => 'BUR02',
-            'name' => 'Bureau Target',
+            'name' => 'Bureau Target (Same Dept)',
             'is_active' => true,
         ]);
 
+        $this->bureauOtherDept = Bureau::create([
+            'department_id' => $this->deptTarget->id,
+            'code' => 'BUR03',
+            'name' => 'Bureau Other Dept (Same Dir)',
+            'is_active' => true,
+        ]);
+
+        $bureauDiffDir = Bureau::create([
+            'department_id' => $deptDiffDir->id,
+            'code' => 'BUR04',
+            'name' => 'Bureau Other Dir',
+            'is_active' => true,
+        ]);
+
+        // Users
         $this->userSource = User::create([
             'name' => 'Source User',
             'email' => 'source@example.com',
             'password' => bcrypt('password'),
-            'bureau_id' => $bureauSource->id,
+            'bureau_id' => $this->bureauSource->id,
+            'department_id' => $this->deptSource->id,
+            'directorate_id' => $this->directorate->id,
         ]);
-        $this->userSource->assignRole($role);
+        $this->userSource->assignRole($roleKabiro);
 
         $this->userTarget = User::create([
             'name' => 'Target User',
             'email' => 'target@example.com',
             'password' => bcrypt('password'),
-            'bureau_id' => $bureauTarget->id,
+            'bureau_id' => $this->bureauTarget->id,
+            'department_id' => $this->deptSource->id,
+            'directorate_id' => $this->directorate->id,
         ]);
-        $this->userTarget->assignRole($role);
+        $this->userTarget->assignRole($roleKabiro);
+
+        $this->kadeptSource = User::create([
+            'name' => 'Kadept Source User',
+            'email' => 'kadept_source@example.com',
+            'password' => bcrypt('password'),
+            'department_id' => $this->deptSource->id,
+            'directorate_id' => $this->directorate->id,
+        ]);
+        $this->kadeptSource->assignRole($roleKadept);
+
+        $this->kadeptTarget = User::create([
+            'name' => 'Kadept Target User',
+            'email' => 'kadept_target@example.com',
+            'password' => bcrypt('password'),
+            'department_id' => $this->deptTarget->id,
+            'directorate_id' => $this->directorate->id,
+        ]);
+        $this->kadeptTarget->assignRole($roleKadept);
+
+        $this->userDiffDir = User::create([
+            'name' => 'User Diff Dir',
+            'email' => 'diffdir@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $bureauDiffDir->id,
+            'department_id' => $deptDiffDir->id,
+            'directorate_id' => $otherDir->id,
+        ]);
+        $this->userDiffDir->assignRole($roleKabiro);
 
         // Setup RKAP Period
         $this->period = RkapPeriod::create([
@@ -103,7 +182,7 @@ class BudgetTransferTest extends TestCase
         // Setup source submission (must be Approved to allow transfer)
         $this->submissionSource = RkapSubmission::create([
             'rkap_period_id' => $this->period->id,
-            'bureau_id' => $bureauSource->id,
+            'bureau_id' => $this->bureauSource->id,
             'created_by' => $this->userSource->id,
             'status' => SubmissionStatus::Approved->value,
             'total_budget' => 5000000,
@@ -145,7 +224,7 @@ class BudgetTransferTest extends TestCase
         $this->budgetItem1->cashOuts()->create(['month' => 1, 'amount' => 5000000]);
     }
 
-    public function test_can_create_transfer_request_legacy(): void
+    public function test_can_create_intra_department_transfer_request(): void
     {
         $service = new BudgetTransferService();
         $transfer = $service->createTransfer(
@@ -153,18 +232,20 @@ class BudgetTransferTest extends TestCase
             $this->period->id,
             $this->userTarget->bureau_id,
             [$this->workPlan1->id],
-            'Catatan Transfer'
+            'Catatan Transfer Satu Departemen'
         );
 
         $this->assertDatabaseHas('budget_transfers', [
             'id' => $transfer->id,
+            'transfer_type' => 'intra_department',
             'status' => BudgetTransferStatus::Pending->value,
             'total_amount' => 5000000,
-            'notes' => 'Catatan Transfer',
+            'notes' => 'Catatan Transfer Satu Departemen',
         ]);
+        $this->assertFalse($transfer->isCrossDepartment());
     }
 
-    public function test_can_create_partial_budget_transfer_request(): void
+    public function test_can_create_cross_department_transfer_in_same_directorate(): void
     {
         $service = new BudgetTransferService();
         $itemsData = [
@@ -178,27 +259,258 @@ class BudgetTransferTest extends TestCase
         $transfer = $service->createTransfer(
             $this->userSource,
             $this->period->id,
-            $this->userTarget->bureau_id,
+            $this->bureauOtherDept->id,
             $itemsData,
-            'Transfer Partial 2 Juta'
+            'Transfer Antar Departemen'
         );
 
         $this->assertDatabaseHas('budget_transfers', [
             'id' => $transfer->id,
-            'status' => BudgetTransferStatus::Pending->value,
+            'transfer_type' => 'inter_department',
+            'status' => BudgetTransferStatus::PendingSourceDept->value,
             'total_amount' => 2000000,
-            'notes' => 'Transfer Partial 2 Juta',
+            'notes' => 'Transfer Antar Departemen',
         ]);
+        $this->assertTrue($transfer->isCrossDepartment());
+    }
 
-        $this->assertDatabaseHas('budget_transfer_items', [
+    public function test_cross_department_transfer_to_different_directorate_fails(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Transfer budget hanya dapat dilakukan antar biro dalam satu direktorat yang sama.');
+
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 1000000,
+            ],
+        ];
+
+        $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userDiffDir->bureau_id,
+            $itemsData,
+            'Transfer Beda Dir'
+        );
+    }
+
+    public function test_cross_department_four_step_approval_workflow(): void
+    {
+        $service = new BudgetTransferService();
+        $targetUser = User::create([
+            'name' => 'Target Other Dept User',
+            'email' => 'otherdept@example.com',
+            'password' => bcrypt('password'),
+            'bureau_id' => $this->bureauOtherDept->id,
+            'department_id' => $this->deptTarget->id,
+            'directorate_id' => $this->directorate->id,
+        ]);
+        $targetUser->assignRole('kepala_biro');
+
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
+        // 1. Source Bureau submits transfer
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->bureauOtherDept->id,
+            $itemsData,
+            'Transfer Lintas Departemen'
+        );
+
+        $this->assertEquals(BudgetTransferStatus::PendingSourceDept->value, $transfer->status);
+
+        // Verification of authorization at stage 1
+        $this->assertTrue($transfer->canBeReviewedBy($this->kadeptSource));
+        $this->assertFalse($transfer->canBeReviewedBy($this->kadeptTarget));
+        $this->assertFalse($transfer->canBeReviewedBy($targetUser));
+
+        // 2. Source Department Head approves -> Status becomes pending_target_dept
+        $service->approveTransfer($transfer, $this->kadeptSource, 'Disetujui Kadep Pengusul');
+        $transfer->refresh();
+
+        $this->assertEquals(BudgetTransferStatus::PendingTargetDept->value, $transfer->status);
+        $this->assertEquals($this->kadeptSource->id, $transfer->source_dept_approved_by);
+        $this->assertNotNull($transfer->source_dept_approved_at);
+        $this->assertEquals('Disetujui Kadep Pengusul', $transfer->source_dept_review_notes);
+
+        // Verification of authorization at stage 2
+        $this->assertFalse($transfer->canBeReviewedBy($this->kadeptSource));
+        $this->assertTrue($transfer->canBeReviewedBy($this->kadeptTarget));
+        $this->assertFalse($transfer->canBeReviewedBy($targetUser));
+
+        // 3. Target Department Head approves -> Status becomes pending_target_bureau
+        $service->approveTransfer($transfer, $this->kadeptTarget, 'Disetujui Kadep Penerima');
+        $transfer->refresh();
+
+        $this->assertEquals(BudgetTransferStatus::PendingTargetBureau->value, $transfer->status);
+        $this->assertEquals($this->kadeptTarget->id, $transfer->target_dept_approved_by);
+        $this->assertNotNull($transfer->target_dept_approved_at);
+        $this->assertEquals('Disetujui Kadep Penerima', $transfer->target_dept_review_notes);
+
+        // Verification of authorization at stage 3
+        $this->assertFalse($transfer->canBeReviewedBy($this->kadeptSource));
+        $this->assertFalse($transfer->canBeReviewedBy($this->kadeptTarget));
+        $this->assertTrue($transfer->canBeReviewedBy($targetUser));
+
+        // Source budget not deducted yet before final stage
+        $this->assertEquals(5000000, (float) $this->budgetItem1->fresh()->total_price);
+
+        // 4. Target Bureau Head accepts / approves -> Status becomes approved, funds transferred!
+        $service->approveTransfer($transfer, $targetUser, 'Diterima oleh Kabiro Penerima');
+        $transfer->refresh();
+
+        $this->assertEquals(BudgetTransferStatus::Approved->value, $transfer->status);
+        $this->assertEquals($targetUser->id, $transfer->reviewed_by);
+        $this->assertEquals('Diterima oleh Kabiro Penerima', $transfer->review_notes);
+
+        // Check budget deducted at source and created at target
+        $this->assertEquals(3000000, (float) $this->budgetItem1->fresh()->total_price);
+
+        $targetSubmission = RkapSubmission::where('rkap_period_id', $this->period->id)
+            ->where('bureau_id', $this->bureauOtherDept->id)
+            ->first();
+        $this->assertNotNull($targetSubmission);
+        $this->assertEquals(2000000, (float) $targetSubmission->total_budget);
+
+        // Check approval audit trail table
+        $this->assertDatabaseHas('budget_transfer_approvals', [
             'budget_transfer_id' => $transfer->id,
-            'rkap_work_plan_id' => $this->workPlan1->id,
-            'rkap_budget_item_id' => $this->budgetItem1->id,
-            'amount_transferred' => 2000000,
+            'user_id' => $this->kadeptSource->id,
+            'stage' => 'source_department',
+            'action' => 'approved',
+        ]);
+        $this->assertDatabaseHas('budget_transfer_approvals', [
+            'budget_transfer_id' => $transfer->id,
+            'user_id' => $this->kadeptTarget->id,
+            'stage' => 'target_department',
+            'action' => 'approved',
+        ]);
+        $this->assertDatabaseHas('budget_transfer_approvals', [
+            'budget_transfer_id' => $transfer->id,
+            'user_id' => $targetUser->id,
+            'stage' => 'target_bureau',
+            'action' => 'approved',
         ]);
     }
 
-    public function test_partial_budget_transfer_approval_deducts_source_and_creates_target_budget(): void
+    public function test_cross_department_rejection_at_source_dept(): void
+    {
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->bureauOtherDept->id,
+            $itemsData,
+            'Transfer Antar Departemen'
+        );
+
+        $service->rejectTransfer($transfer, $this->kadeptSource, 'Ditolak oleh Kadep Pengusul karena prioritas');
+        $transfer->refresh();
+
+        $this->assertEquals(BudgetTransferStatus::Rejected->value, $transfer->status);
+        $this->assertEquals($this->kadeptSource->id, $transfer->reviewed_by);
+        $this->assertEquals('Ditolak oleh Kadep Pengusul karena prioritas', $transfer->review_notes);
+
+        $this->assertDatabaseHas('budget_transfer_approvals', [
+            'budget_transfer_id' => $transfer->id,
+            'user_id' => $this->kadeptSource->id,
+            'stage' => 'source_department',
+            'action' => 'rejected',
+        ]);
+    }
+
+    public function test_cross_department_rejection_at_target_dept(): void
+    {
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->bureauOtherDept->id,
+            $itemsData,
+            'Transfer Antar Departemen'
+        );
+
+        // Stage 1 approve
+        $service->approveTransfer($transfer, $this->kadeptSource, 'Ok');
+
+        // Stage 2 reject
+        $service->rejectTransfer($transfer, $this->kadeptTarget, 'Ditolak oleh Kadep Penerima');
+        $transfer->refresh();
+
+        $this->assertEquals(BudgetTransferStatus::Rejected->value, $transfer->status);
+        $this->assertDatabaseHas('budget_transfer_approvals', [
+            'budget_transfer_id' => $transfer->id,
+            'user_id' => $this->kadeptTarget->id,
+            'stage' => 'target_department',
+            'action' => 'rejected',
+        ]);
+    }
+
+    public function test_item_locked_during_cross_department_pending_stages(): void
+    {
+        $service = new BudgetTransferService();
+        $itemsData = [
+            [
+                'work_plan_id' => $this->workPlan1->id,
+                'budget_item_id' => $this->budgetItem1->id,
+                'amount_transferred' => 2000000,
+            ],
+        ];
+
+        $transfer = $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->bureauOtherDept->id,
+            $itemsData,
+            'Transfer 1'
+        );
+
+        $this->assertTrue($this->workPlan1->isLockedForTransfer());
+
+        // Advance to next stage
+        $service->approveTransfer($transfer, $this->kadeptSource, 'Approve stage 1');
+        $this->assertTrue($this->workPlan1->isLockedForTransfer());
+
+        // Attempting another transfer with same item must throw exception
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('sudah berada dalam proses transfer lain yang sedang pending');
+
+        $service->createTransfer(
+            $this->userSource,
+            $this->period->id,
+            $this->userTarget->bureau_id,
+            $itemsData,
+            'Transfer 2 overlapping'
+        );
+    }
+
+    public function test_intra_dept_partial_budget_transfer_approval_deducts_source_and_creates_target_budget(): void
     {
         $service = new BudgetTransferService();
         $itemsData = [
@@ -341,7 +653,7 @@ class BudgetTransferTest extends TestCase
 
     public function test_admin_can_delete_zero_budget_transferred_item(): void
     {
-        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $adminUser = User::create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -410,7 +722,7 @@ class BudgetTransferTest extends TestCase
 
     public function test_admin_cannot_delete_item_with_remaining_budget(): void
     {
-        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $adminUser = User::create([
             'name' => 'Admin User',
             'email' => 'admin2@example.com',

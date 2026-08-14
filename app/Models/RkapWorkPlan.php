@@ -100,7 +100,7 @@ class RkapWorkPlan extends Model
     {
         return \App\Models\BudgetTransferItem::where('rkap_work_plan_id', $this->id)
             ->whereHas('transfer', function ($query) {
-                $query->where('status', \App\Enums\BudgetTransferStatus::Pending->value);
+                $query->whereIn('status', \App\Enums\BudgetTransferStatus::pendingStatuses());
             })->exists();
     }
 

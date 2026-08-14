@@ -7,6 +7,7 @@ use App\Models\BudgetTransfer;
 use App\Services\BudgetTransferService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Setting;
+use App\Enums\BudgetTransferStatus;
 use Exception;
 
 class BudgetTransferReview extends Component
@@ -18,10 +19,13 @@ class BudgetTransferReview extends Component
     {
         $this->transfer = BudgetTransfer::with([
             'period',
-            'sourceBureau',
-            'targetBureau',
+            'sourceBureau.department',
+            'targetBureau.department',
             'requester',
             'reviewer',
+            'sourceDeptApprover',
+            'targetDeptApprover',
+            'approvals.user',
             'items.workPlan.activity.coas',
             'items.workPlan.budgetItems.monthlies',
             'items.budgetItem',
@@ -36,14 +40,23 @@ class BudgetTransferReview extends Component
         }
 
         $user = Auth::user();
-        if (!$user || $user->bureau_id !== $this->transfer->target_bureau_id) {
-            session()->flash('error', __('Hanya biro tujuan yang dapat menyetujui transfer ini.'));
+        if (!$user || !$this->canReview()) {
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk menyetujui transfer budget pada tahap ini.'));
             return;
         }
 
         try {
             $service->approveTransfer($this->transfer, $user, $this->reviewNotes);
-            session()->flash('message', __('Transfer budget berhasil disetujui. Program kerja dan kegiatan beserta anggarannya telah dipindahkan ke Biro Anda.'));
+            $newStatus = $this->transfer->fresh()->status;
+
+            $msg = match ($newStatus) {
+                BudgetTransferStatus::PendingTargetDept->value => __('Usulan transfer telah disetujui dan diteruskan ke Kepala Departemen Penerima.'),
+                BudgetTransferStatus::PendingTargetBureau->value => __('Usulan transfer telah disetujui dan diteruskan ke Kepala Biro Penerima.'),
+                BudgetTransferStatus::Approved->value => __('Transfer budget berhasil disetujui. Program kerja dan kegiatan beserta anggarannya telah dipindahkan ke Biro Penerima.'),
+                default => __('Aksi approval transfer budget berhasil diproses.'),
+            };
+
+            session()->flash('message', $msg);
             $this->redirectRoute('rkap-budget-transfers');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
@@ -58,8 +71,8 @@ class BudgetTransferReview extends Component
         }
 
         $user = Auth::user();
-        if (!$user || $user->bureau_id !== $this->transfer->target_bureau_id) {
-            session()->flash('error', __('Hanya biro tujuan yang dapat menolak transfer ini.'));
+        if (!$user || !$this->canReview()) {
+            session()->flash('error', __('Anda tidak memiliki wewenang untuk menolak transfer budget pada tahap ini.'));
             return;
         }
 
@@ -75,7 +88,11 @@ class BudgetTransferReview extends Component
     public function canReview(): bool
     {
         $user = Auth::user();
-        return $this->transfer->isPending() && $user && $user->bureau_id === $this->transfer->target_bureau_id && $user->hasPermissionTo('rkap.transfer.review');
+        if (!$user) {
+            return false;
+        }
+
+        return $this->transfer->canBeReviewedBy($user);
     }
 
     public function deleteZeroBudgetTransferredItem(int $itemId, BudgetTransferService $service): void
@@ -95,6 +112,11 @@ class BudgetTransferReview extends Component
             $service->deleteZeroBudgetTransferredItem($user, $itemId);
             session()->flash('message', __('Record kegiatan ber-budget Rp 0 di Biro Asal telah berhasil dibersihkan.'));
             $this->transfer->refresh()->load([
+                'sourceBureau.department',
+                'targetBureau.department',
+                'sourceDeptApprover',
+                'targetDeptApprover',
+                'approvals.user',
                 'items.workPlan.activity.coas',
                 'items.workPlan.budgetItems.monthlies',
                 'items.budgetItem',

@@ -17,11 +17,18 @@ class BudgetTransfer extends Model
         'target_submission_id',
         'requested_by',
         'reviewed_by',
+        'source_dept_approved_by',
+        'target_dept_approved_by',
         'status',
+        'transfer_type',
         'notes',
         'review_notes',
+        'source_dept_review_notes',
+        'target_dept_review_notes',
         'total_amount',
         'reviewed_at',
+        'source_dept_approved_at',
+        'target_dept_approved_at',
     ];
 
     protected function casts(): array
@@ -29,6 +36,8 @@ class BudgetTransfer extends Model
         return [
             'total_amount' => 'decimal:2',
             'reviewed_at' => 'datetime',
+            'source_dept_approved_at' => 'datetime',
+            'target_dept_approved_at' => 'datetime',
         ];
     }
 
@@ -69,16 +78,97 @@ class BudgetTransfer extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function sourceDeptApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'source_dept_approved_by');
+    }
+
+    public function targetDeptApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'target_dept_approved_by');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(BudgetTransferItem::class);
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(BudgetTransferApproval::class)->orderBy('created_at');
     }
 
     // ── Helper Methods ──
 
     public function isPending(): bool
     {
-        return $this->status === BudgetTransferStatus::Pending->value;
+        return in_array($this->status, BudgetTransferStatus::pendingStatuses(), true);
+    }
+
+    public function isCrossDepartment(): bool
+    {
+        if ($this->transfer_type === 'inter_department') {
+            return true;
+        }
+
+        if ($this->relationLoaded('sourceBureau') && $this->relationLoaded('targetBureau')) {
+            return $this->sourceBureau && $this->targetBureau && $this->sourceBureau->department_id !== $this->targetBureau->department_id;
+        }
+
+        return false;
+    }
+
+    public function canBeReviewedBy(User $user): bool
+    {
+        if (!$this->isPending()) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Intra-department transfer flow
+        if (!$this->isCrossDepartment()) {
+            return (int) $user->bureau_id === (int) $this->target_bureau_id
+                && $user->hasPermissionTo('rkap.transfer.review');
+        }
+
+        // Cross-department transfer flow
+        $userDeptId = $user->department_id ?: $user->bureau?->department_id;
+
+        return match ($this->status) {
+            BudgetTransferStatus::PendingSourceDept->value =>
+                $user->isKepalaDepartemen()
+                && (int) $userDeptId === (int) $this->sourceBureau->department_id
+                && $user->hasPermissionTo('rkap.transfer.review'),
+
+            BudgetTransferStatus::PendingTargetDept->value =>
+                $user->isKepalaDepartemen()
+                && (int) $userDeptId === (int) $this->targetBureau->department_id
+                && $user->hasPermissionTo('rkap.transfer.review'),
+
+            BudgetTransferStatus::PendingTargetBureau->value,
+            BudgetTransferStatus::Pending->value =>
+                (int) $user->bureau_id === (int) $this->target_bureau_id
+                && $user->hasPermissionTo('rkap.transfer.review'),
+
+            default => false,
+        };
+    }
+
+    public function getCurrentStageRoleNameAttribute(): string
+    {
+        return match ($this->status) {
+            BudgetTransferStatus::PendingSourceDept->value => 'Kepala Departemen Pengusul (' . ($this->sourceBureau->department->name ?? 'Dept Pengusul') . ')',
+            BudgetTransferStatus::PendingTargetDept->value => 'Kepala Departemen Penerima (' . ($this->targetBureau->department->name ?? 'Dept Penerima') . ')',
+            BudgetTransferStatus::PendingTargetBureau->value,
+            BudgetTransferStatus::Pending->value => 'Kepala Biro Penerima (' . ($this->targetBureau->name ?? 'Biro Penerima') . ')',
+            BudgetTransferStatus::Approved->value => 'Disetujui',
+            BudgetTransferStatus::Rejected->value => 'Ditolak',
+            BudgetTransferStatus::Cancelled->value => 'Dibatalkan',
+            default => $this->status_label,
+        };
     }
 
     public function getStatusLabelAttribute(): string
