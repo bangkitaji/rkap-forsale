@@ -11,6 +11,8 @@
         "analytics-reconciliation",
         "analytics-capex",
         "analytics-cds-report",
+        "analytics-opening-balance-form",
+        "analytics-balance-sheet",
         "analytics-summary-dept-pl-capex",
         "analytics-summary-dept-cashflow"
       ],
@@ -49,6 +51,20 @@
           "icon": "menu-icon icon-base bx bx-layer",
           "name": "Laporan CDS",
           "slug": "analytics-cds-report",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/opening-balance-form",
+          "icon": "menu-icon icon-base bx bx-wallet-alt",
+          "name": "Input Saldo Awal",
+          "slug": "analytics-opening-balance-form",
+          "permission": "dashboard.show"
+        },
+        {
+          "url": "analytics/balance-sheet",
+          "icon": "menu-icon icon-base bx bx-bar-chart-square",
+          "name": "Laporan Neraca",
+          "slug": "analytics-balance-sheet",
           "permission": "dashboard.show"
         },
         {
