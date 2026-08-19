@@ -701,7 +701,7 @@
                 </div>
                 @if($selectedBudgetItemId)
                 @php
-                $selectedItem = \App\Models\RkapBudgetItem::with(['workPlan.submission.bureau', 'monthlies', 'realizations', 'projections'])->find($selectedBudgetItemId);
+                $selectedItem = \App\Models\RkapBudgetItem::with(['workPlan.submission.bureau', 'monthlies', 'realizations', 'projections', 'projectionLogs.user'])->find($selectedBudgetItemId);
                 @endphp
                 <form wire:submit.prevent="saveMonthlyProjections">
                     <div class="modal-body">
@@ -1081,8 +1081,44 @@
                         @endif
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">{{ __('Catatan Perubahan (Opsional)') }}</label>
-                            <textarea class="form-control" rows="2" wire:model="projectionNotes" placeholder="{{ __('Tambahkan catatan atau alasan penyesuaian proyeksi (jika ada)...') }}"></textarea>
+                            <label class="form-label fw-semibold text-dark">{{ __('Catatan Perubahan') }}</label>
+                            
+                            @php
+                                $projectionLogsWithNotes = $selectedItem->projectionLogs
+                                    ? $selectedItem->projectionLogs->filter(fn($l) => !empty(trim($l->notes ?? '')))
+                                    : collect();
+                            @endphp
+
+                            <div class="p-3 bg-light rounded border mb-3">
+                                @if($projectionLogsWithNotes->isNotEmpty())
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach($projectionLogsWithNotes as $log)
+                                            <div class="d-flex flex-column @if(!$loop->last) pb-2 border-bottom @endif">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-semibold small text-primary d-flex align-items-center gap-1">
+                                                        <i class="bx bx-user"></i> {{ $log->user?->name ?? __('Sistem') }}
+                                                    </span>
+                                                    <span class="text-muted small d-flex align-items-center gap-1">
+                                                        <i class="bx bx-time-five"></i> {{ $log->created_at?->format('d/m/Y H:i') }}
+                                                    </span>
+                                                </div>
+                                                <p class="mb-0 text-dark small" style="white-space: pre-line;">{{ $log->notes }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mb-0 text-muted small fst-italic">
+                                        <i class="bx bx-info-circle me-1"></i>{{ __('Tidak ada catatan perubahan.') }}
+                                    </p>
+                                @endif
+                            </div>
+
+                            @if(!$this->isProjectionClosed)
+                            <div>
+                                <label class="form-label fw-semibold small text-muted">{{ __('Tambah Catatan (Opsional)') }}</label>
+                                <textarea class="form-control" rows="2" wire:model="projectionNotes" placeholder="{{ __('Tambahkan catatan atau alasan penyesuaian proyeksi (jika ada)...') }}"></textarea>
+                            </div>
+                            @endif
                         </div>
                     </div>
                     <div class="modal-footer">

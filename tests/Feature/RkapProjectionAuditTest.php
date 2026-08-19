@@ -149,10 +149,34 @@ class RkapProjectionAuditTest extends TestCase
             'created_at'          => now(),
         ]);
 
-        Livewire::test(RkapProjections::class)
-            ->call('viewHistory', $this->budgetItem->id)
-            ->assertSet('historyBudgetItemId', $this->budgetItem->id)
+        Livewire::test(\App\Livewire\Rkap\RkapProjectionHistory::class, ['budgetItemId' => $this->budgetItem->id])
+            ->assertSet('budgetItemId', $this->budgetItem->id)
             ->assertSet('historyItemName', $this->budgetItem->account_code . ' — ' . $this->budgetItem->description)
             ->assertCount('historyLogs', 1);
+    }
+
+    public function test_projection_modal_displays_previous_change_notes(): void
+    {
+        $this->actingAs($this->user);
+
+        RkapProjectionLog::create([
+            'rkap_budget_item_id' => $this->budgetItem->id,
+            'rkap_period_id'      => $this->activePeriod->id,
+            'user_id'             => $this->user->id,
+            'source'              => 'manual',
+            'input_mode'          => 'monthly',
+            'old_total'           => 0,
+            'new_total'           => 5000000,
+            'old_monthly'         => array_fill(1, 12, 0),
+            'new_monthly'         => array_merge([1 => 5000000], array_fill(2, 11, 0)),
+            'notes'               => 'Catatan Penyesuaian Anggaran Q2',
+            'created_at'          => now(),
+        ]);
+
+        Livewire::test(RkapProjections::class)
+            ->call('selectBudgetItem', $this->budgetItem->id)
+            ->assertSee('Catatan Perubahan')
+            ->assertSee('Catatan Penyesuaian Anggaran Q2')
+            ->assertSee($this->user->name);
     }
 }
