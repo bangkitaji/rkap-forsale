@@ -940,6 +940,10 @@ class Analytics extends Controller
         $realizationSubtotalMonthly = array_fill(1, 12, 0.0);
         $projectionSubtotalMonthly = array_fill(1, 12, 0.0);
 
+        $hasFareboxMerged = false;
+        $fareboxCg = $rg->coaGroups->first(fn($c) => $c->code === '5007' || strcasecmp($c->name, 'Kom Farebox') === 0);
+        $nonFareboxCg = $rg->coaGroups->first(fn($c) => $c->code === '5008' || strcasecmp(str_replace(' ', '', $c->name), 'KomNonFarebox') === 0);
+
         foreach ($rg->coaGroups as $idx => $cg) {
           $budget = $cgBudgetsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
           $realization = $cgRealizationsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
@@ -955,6 +959,59 @@ class Analytics extends Controller
               $budgetSubtotalMonthly[$m] += $budget[$m];
               $realizationSubtotalMonthly[$m] += $realization[$m];
               $projectionSubtotalMonthly[$m] += $projection[$m];
+            }
+          }
+
+          $isFareboxItem = ($cg->code === '5007' || strcasecmp($cg->name, 'Kom Farebox') === 0);
+          $isNonFareboxItem = ($cg->code === '5008' || strcasecmp(str_replace(' ', '', $cg->name), 'KomNonFarebox') === 0);
+
+          // In Direct Cost (PL0002), merge Kom Farebox and Kom Non Farebox into Komersial
+          if ($rg->code === 'PL0002' || strcasecmp($rg->name, 'Direct Cost') === 0) {
+            if ($isFareboxItem || $isNonFareboxItem) {
+              if ($hasFareboxMerged) {
+                continue; // Skip the second item since it's already merged
+              }
+              $hasFareboxMerged = true;
+
+              $mergedBudget = array_fill(1, 12, 0.0);
+              $mergedRealization = array_fill(1, 12, 0.0);
+              $mergedProjection = array_fill(1, 12, 0.0);
+              $mergedIds = [];
+
+              if ($fareboxCg) {
+                $mergedIds[] = $fareboxCg->id;
+                $fbB = $cgBudgetsMonthly[$fareboxCg->id] ?? [];
+                $fbR = $cgRealizationsMonthly[$fareboxCg->id] ?? [];
+                $fbP = $cgProjectionsMonthly[$fareboxCg->id] ?? [];
+                for ($m = 1; $m <= 12; $m++) {
+                  $mergedBudget[$m] += ($fbB[$m] ?? 0.0);
+                  $mergedRealization[$m] += ($fbR[$m] ?? 0.0);
+                  $mergedProjection[$m] += ($fbP[$m] ?? 0.0);
+                }
+              }
+
+              if ($nonFareboxCg) {
+                $mergedIds[] = $nonFareboxCg->id;
+                $nfbB = $cgBudgetsMonthly[$nonFareboxCg->id] ?? [];
+                $nfbR = $cgRealizationsMonthly[$nonFareboxCg->id] ?? [];
+                $nfbP = $cgProjectionsMonthly[$nonFareboxCg->id] ?? [];
+                for ($m = 1; $m <= 12; $m++) {
+                  $mergedBudget[$m] += ($nfbB[$m] ?? 0.0);
+                  $mergedRealization[$m] += ($nfbR[$m] ?? 0.0);
+                  $mergedProjection[$m] += ($nfbP[$m] ?? 0.0);
+                }
+              }
+
+              $itemsMonthly[] = [
+                'id' => implode(',', $mergedIds),
+                'key' => '5007_5008',
+                'label' => 'Komersial',
+                'color' => $colorPalette[$idx % count($colorPalette)],
+                'budget' => $mergedBudget,
+                'realization' => $mergedRealization,
+                'projection' => $mergedProjection,
+              ];
+              continue;
             }
           }
 
@@ -1129,6 +1186,10 @@ class Analytics extends Controller
         $realizationSubtotal = 0.0;
         $projectionSubtotal = 0.0;
 
+        $hasFareboxMerged = false;
+        $fareboxCg = $rg->coaGroups->first(fn($c) => $c->code === '5007' || strcasecmp($c->name, 'Kom Farebox') === 0);
+        $nonFareboxCg = $rg->coaGroups->first(fn($c) => $c->code === '5008' || strcasecmp(str_replace(' ', '', $c->name), 'KomNonFarebox') === 0);
+
         foreach ($rg->coaGroups as $idx => $cg) {
           $budget = (float) ($cgBudgets[$cg->id] ?? 0.0);
           $realization = (float) ($cgRealizations[$cg->id] ?? 0.0);
@@ -1143,6 +1204,49 @@ class Analytics extends Controller
             $budgetSubtotal += $budget;
             $realizationSubtotal += $realization;
             $projectionSubtotal += $projection;
+          }
+
+          $isFareboxItem = ($cg->code === '5007' || strcasecmp($cg->name, 'Kom Farebox') === 0);
+          $isNonFareboxItem = ($cg->code === '5008' || strcasecmp(str_replace(' ', '', $cg->name), 'KomNonFarebox') === 0);
+
+          // In Direct Cost (PL0002), merge Kom Farebox and Kom Non Farebox into Komersial
+          if ($rg->code === 'PL0002' || strcasecmp($rg->name, 'Direct Cost') === 0) {
+            if ($isFareboxItem || $isNonFareboxItem) {
+              if ($hasFareboxMerged) {
+                continue; // Skip the second item since it's already merged
+              }
+              $hasFareboxMerged = true;
+
+              $mergedBudget = 0.0;
+              $mergedRealization = 0.0;
+              $mergedProjection = 0.0;
+              $mergedIds = [];
+
+              if ($fareboxCg) {
+                $mergedIds[] = $fareboxCg->id;
+                $mergedBudget += (float) ($cgBudgets[$fareboxCg->id] ?? 0.0);
+                $mergedRealization += (float) ($cgRealizations[$fareboxCg->id] ?? 0.0);
+                $mergedProjection += (float) ($cgProjections[$fareboxCg->id] ?? 0.0);
+              }
+
+              if ($nonFareboxCg) {
+                $mergedIds[] = $nonFareboxCg->id;
+                $mergedBudget += (float) ($cgBudgets[$nonFareboxCg->id] ?? 0.0);
+                $mergedRealization += (float) ($cgRealizations[$nonFareboxCg->id] ?? 0.0);
+                $mergedProjection += (float) ($cgProjections[$nonFareboxCg->id] ?? 0.0);
+              }
+
+              $items[] = [
+                'id' => implode(',', $mergedIds),
+                'key' => '5007_5008',
+                'label' => 'Komersial',
+                'color' => $colorPalette[$idx % count($colorPalette)],
+                'budget' => $mergedBudget,
+                'realization' => $mergedRealization,
+                'projection' => $mergedProjection,
+              ];
+              continue;
+            }
           }
 
           $items[] = [
@@ -1489,10 +1593,15 @@ class Analytics extends Controller
       abort(403);
     }
 
-    $coaGroupId = (int) $request->query('coa_group_id');
+    $rawCoaGroupId = $request->query('coa_group_id');
     $periodId = (int) $request->query('period_id');
 
-    if (!$coaGroupId || !$periodId) {
+    if (!$rawCoaGroupId || !$periodId) {
+      return response()->json(['data' => []]);
+    }
+
+    $coaGroupIds = array_filter(array_map('intval', explode(',', (string) $rawCoaGroupId)));
+    if (empty($coaGroupIds)) {
       return response()->json(['data' => []]);
     }
 
@@ -1511,9 +1620,9 @@ class Analytics extends Controller
     $period = RkapPeriod::find($periodId);
     $includeAllStatuses = ($period && $period->status !== 'finalized');
 
-    $cacheKey = AnalyticsCacheService::detailKey('coa-group', $periodId, $coaGroupId, $bureauIds);
+    $cacheKey = AnalyticsCacheService::detailKey('coa-group', $periodId, implode('-', $coaGroupIds), $bureauIds);
 
-    $rows = Cache::remember($cacheKey, AnalyticsCacheService::DETAIL_TTL, function () use ($periodId, $coaGroupId, $bureauIds, $includeAllStatuses) {
+    $rows = Cache::remember($cacheKey, AnalyticsCacheService::DETAIL_TTL, function () use ($periodId, $coaGroupIds, $bureauIds, $includeAllStatuses) {
       return DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -1525,7 +1634,7 @@ class Analytics extends Controller
         ->leftJoin('activities', 'rkap_work_plans.activity_id', '=', 'activities.id')
         ->leftJoin('work_plans', 'rkap_work_plans.work_plan_id', '=', 'work_plans.id')
         ->leftJoin(DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as realization_total FROM rkap_budget_item_realizations WHERE rkap_period_id = ' . $periodId . ' GROUP BY rkap_budget_item_id) as rl'), 'rl.rkap_budget_item_id', '=', 'rkap_budget_items.id')
-        ->where('coa_groups.id', $coaGroupId)
+        ->whereIn('coa_groups.id', $coaGroupIds)
         ->where('rkap_submissions.rkap_period_id', $periodId)
         ->when(!$includeAllStatuses, fn($q) => $q->where('rkap_submissions.status', 'approved'))
         ->when($bureauIds, fn($q) => $q->whereIn('rkap_submissions.bureau_id', $bureauIds))
@@ -1571,8 +1680,12 @@ class Analytics extends Controller
     });
 
     if ($request->query('export') === 'excel') {
-      $coaGroup = \Illuminate\Support\Facades\DB::table('coa_groups')->find($coaGroupId);
-      $groupName = $coaGroup ? $coaGroup->name : 'Detail';
+      if (count($coaGroupIds) > 1) {
+        $groupName = 'Komersial';
+      } else {
+        $coaGroup = \Illuminate\Support\Facades\DB::table('coa_groups')->find($coaGroupIds[0]);
+        $groupName = $coaGroup ? $coaGroup->name : 'Detail';
+      }
       return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CoaGroupDetailExport($rows->toArray(), $groupName), 'coa_group_detail.xlsx');
     }
 

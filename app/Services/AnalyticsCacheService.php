@@ -38,7 +38,7 @@ class AnalyticsCacheService
     /**
      * Cache key for detail modal endpoints (coaGroupDetail, cashflowGroupDetail, etc.)
      */
-    public static function detailKey(string $type, int $periodId, int $groupId, ?array $bureauIds = null): string
+    public static function detailKey(string $type, int $periodId, int|string $groupId, ?array $bureauIds = null): string
     {
         $version   = self::periodVersion($periodId);
         $bureauKey = $bureauIds ? implode(',', $bureauIds) : 'all';
