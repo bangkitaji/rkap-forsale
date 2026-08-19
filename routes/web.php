@@ -188,6 +188,35 @@ Route::middleware(['auth'])->group(function () {
     })
       ->middleware('permission:rkap.realization.upload')
       ->name('rkap-realization-template-download-csv');
+
+    // Mass-update template: Admin only — Jan s.d. last closed month, pre-filled with existing data
+    Route::get('/realization-mass-update-template/download', function () {
+      $user = auth()->user();
+      $isAdmin = $user && ($user->isAdmin() || $user->hasRole(['admin', 'administrator', 'superadmin']) || $user->can('rkap.closing.manage'));
+      if (! $isAdmin) {
+        abort(403, 'Fitur ini hanya tersedia untuk Administrator.');
+      }
+
+      $periodId = request('period_id') ? (int) request('period_id') : null;
+      $lastClosedMonth = request('last_closed_month') ? (int) request('last_closed_month') : 1;
+
+      if ($periodId) {
+        $period = \App\Models\RkapPeriod::find($periodId);
+        if (!$period || $period->year !== (int) date('Y') || $period->status !== 'finalized') {
+          abort(403, 'Mass update realisasi hanya dapat dilakukan untuk periode RKAP tahun berjalan dengan status Finalized.');
+        }
+      }
+
+      $year = $periodId ? (\App\Models\RkapPeriod::find($periodId)?->year ?? date('Y')) : date('Y');
+      $filename = 'template_mass_update_realisasi_' . $year . '_' . now()->format('YmdHis') . '.xlsx';
+
+      return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\RkapRealizationMassUpdateTemplateExport($periodId, $lastClosedMonth),
+        $filename
+      );
+    })
+      ->middleware('permission:rkap.realization.upload')
+      ->name('rkap-realization-mass-update-template-download');
   });
 
   // Master Data Group

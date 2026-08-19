@@ -13,6 +13,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Exports\RkapRealizationsExport;
+use App\Exports\RkapRealizationMassUpdateTemplateExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RkapRealizationUpload extends Component
@@ -33,15 +34,33 @@ class RkapRealizationUpload extends Component
     public array $importSummary = [];
     public bool  $imported      = false;
 
+    // --- Mass Update (Admin only) ---
+    public $massUpdateFile;
+    public array $massUpdateErrorsList    = [];
+    public array $massUpdateImportSummary = [];
+    public bool  $massUpdateImported      = false;
+
     private array $requiredColumns = [
         'budget_item_id',
         'month',
         'amount',
     ];
 
+    public function getIsAdminUserProperty(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        return $user->isAdmin()
+            || $user->hasRole(['admin', 'administrator', 'superadmin'])
+            || $user->can('rkap.closing.manage');
+    }
+
     public function mount(): void
     {
-        if (! auth()->user()?->can('rkap.realization.upload')) {
+        if (! auth()->user()?->can('rkap.realization.upload') && ! $this->isAdminUser) {
             abort(403, __('Anda tidak memiliki akses untuk halaman ini.'));
         }
     }
@@ -119,6 +138,31 @@ class RkapRealizationUpload extends Component
         }
 
         return $options;
+    }
+
+    /**
+     * Returns the last month number (1–12) that is already closed for the selected period,
+     * or null if no month is closed yet.
+     */
+    public function getLastClosedMonthProperty(): ?int
+    {
+        if (! $this->periodId) {
+            return null;
+        }
+
+        $period = RkapPeriod::find($this->periodId);
+        if (! $period) {
+            return null;
+        }
+
+        $lastClosed = null;
+        for ($m = 1; $m <= 12; $m++) {
+            if ($period->isMonthClosed($m)) {
+                $lastClosed = $m;
+            }
+        }
+
+        return $lastClosed;
     }
 
     private function getMonthName(int $month): string
@@ -227,6 +271,232 @@ class RkapRealizationUpload extends Component
         $this->importSummary = [];
         $this->imported      = false;
         $this->importedMonthName = null;
+    }
+
+    // =========================================================================
+    // Mass Update (Admin only) — Jan s.d. bulan terakhir closing
+    // =========================================================================
+
+    /**
+     * Download the mass-update template pre-filled with existing realization data.
+     * Only available to admin users.
+     */
+    public function downloadMassUpdateTemplate()
+    {
+        if (! $this->isAdminUser) {
+            session()->flash('massUpdateError', __('Fitur ini hanya tersedia untuk Administrator.'));
+            return;
+        }
+
+        if (! $this->periodId) {
+            session()->flash('massUpdateError', __('Pilih periode RKAP terlebih dahulu.'));
+            return;
+        }
+
+        $lastClosed = $this->lastClosedMonth;
+        if (! $lastClosed) {
+            session()->flash('massUpdateError', __('Belum ada bulan yang sudah closing untuk periode ini.'));
+            return;
+        }
+
+        $currentYear = (int) date('Y');
+        $validPeriod = RkapPeriod::where('status', 'finalized')
+            ->where('year', $currentYear)
+            ->find($this->periodId);
+
+        if (! $validPeriod) {
+            session()->flash('massUpdateError', __('Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.'));
+            return;
+        }
+
+        $period   = $validPeriod;
+        $year     = $period->year;
+        $filename = 'template_mass_update_realisasi_' . $year . '_jan-' . $this->getMonthName($lastClosed) . '_' . date('YmdHis') . '.xlsx';
+
+        return Excel::download(
+            new RkapRealizationMassUpdateTemplateExport($this->periodId, $lastClosed),
+            $filename
+        );
+    }
+
+    /**
+     * Process the mass-update file uploaded by admin.
+     * Upserts realizations for months 1 s.d. lastClosedMonth.
+     */
+    public function massUpdateUpload(): void
+    {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
+        $this->resetMassUpdateState();
+
+        if (! $this->isAdminUser) {
+            $this->massUpdateErrorsList[] = 'Fitur ini hanya tersedia untuk Administrator.';
+            return;
+        }
+
+        $this->validate([
+            'periodId'       => 'required|integer|exists:rkap_periods,id',
+            'massUpdateFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+        ], [
+            'periodId.required'       => 'Periode RKAP wajib dipilih sebelum upload.',
+            'massUpdateFile.required' => 'File wajib dipilih sebelum upload.',
+        ]);
+
+        // Validate period is finalized and current year
+        $currentYear  = (int) date('Y');
+        $validPeriod  = RkapPeriod::where('status', 'finalized')
+            ->where('year', $currentYear)
+            ->find($this->periodId);
+
+        if (! $validPeriod) {
+            $this->massUpdateErrorsList[] = 'Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.';
+            return;
+        }
+
+        $lastClosed = $this->lastClosedMonth;
+        if (! $lastClosed) {
+            $this->massUpdateErrorsList[] = 'Belum ada bulan yang sudah closing. Mass update hanya dapat dilakukan setelah minimal satu bulan closing.';
+            return;
+        }
+
+        // Validate approved submission exists
+        $hasApproved = \App\Models\RkapSubmission::where('rkap_period_id', $validPeriod->id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (! $hasApproved) {
+            $this->massUpdateErrorsList[] = 'Tidak ditemukan pengajuan RKAP yang disetujui (final) pada periode ini.';
+            return;
+        }
+
+        $parsed = $this->parseFile(
+            $this->massUpdateFile->getRealPath(),
+            $this->massUpdateFile->getClientOriginalExtension()
+        );
+
+        if (empty($parsed)) {
+            $this->massUpdateErrorsList[] = 'File kosong atau tidak valid.';
+            return;
+        }
+
+        [$headers, $dataRows] = $parsed;
+
+        $missingColumns = array_values(array_diff($this->requiredColumns, $headers));
+        if (! empty($missingColumns)) {
+            $this->massUpdateErrorsList[] = 'Kolom wajib tidak ditemukan: ' . implode(', ', $missingColumns);
+            return;
+        }
+
+        $normalizedRows = $this->normalizeRows($headers, $dataRows);
+        $this->validateMassUpdateRows($normalizedRows, $lastClosed);
+
+        if (! empty($this->massUpdateErrorsList)) {
+            return;
+        }
+
+        $this->importMassUpdateRows($normalizedRows);
+
+        // Flush analytics cache since realization data changed
+        AnalyticsCacheService::flushPeriod($this->periodId);
+
+        $this->massUpdateFile = null;
+    }
+
+    private function resetMassUpdateState(): void
+    {
+        $this->massUpdateErrorsList    = [];
+        $this->massUpdateImportSummary = [];
+        $this->massUpdateImported      = false;
+    }
+
+    /**
+     * Validate rows for mass update:
+     * - budget_item_id must be valid in the selected period
+     * - month must be between 1 and $lastClosedMonth (inclusive)
+     * - No check for "already uploaded" — mass update is designed to overwrite
+     */
+    private function validateMassUpdateRows(array $rows, int $lastClosedMonth): void
+    {
+        $validBudgetItemIds = $this->getValidBudgetItemIds();
+
+        foreach ($rows as $row) {
+            $rowNo = $row['_row_number'];
+
+            // Required field checks
+            foreach ($this->requiredColumns as $col) {
+                if (! isset($row[$col]) || $row[$col] === '') {
+                    $this->massUpdateErrorsList[] = "Baris {$rowNo}: kolom {$col} wajib diisi.";
+                }
+            }
+
+            // budget_item_id must belong to the selected period
+            $biId = $row['budget_item_id'] ?? null;
+            if ($biId !== null && $biId !== '') {
+                if (! in_array((int) $biId, $validBudgetItemIds, true)) {
+                    $this->massUpdateErrorsList[] = "Baris {$rowNo}: budget_item_id {$biId} tidak ditemukan atau tidak termasuk dalam periode yang dipilih.";
+                }
+            }
+
+            // Month must be between 1 and lastClosedMonth
+            $month = (int) ($row['month'] ?? 0);
+            if ($month < 1 || $month > 12) {
+                $this->massUpdateErrorsList[] = "Baris {$rowNo}: month harus antara 1–12.";
+            } elseif ($month > $lastClosedMonth) {
+                $this->massUpdateErrorsList[] = "Baris {$rowNo}: bulan {$month} (" . $this->getMonthName($month) . ") melebihi batas bulan closing terakhir: {$lastClosedMonth} (" . $this->getMonthName($lastClosedMonth) . "). Mass update hanya untuk bulan yang sudah closing.";
+            }
+        }
+    }
+
+    /**
+     * Upsert rows: update existing realization if found, create new one if not.
+     * This intentionally overwrites existing data — that is the purpose of mass update.
+     */
+    private function importMassUpdateRows(array $rows): void
+    {
+        DB::transaction(function () use ($rows): void {
+            $created = 0;
+            $updated = 0;
+
+            foreach ($rows as $row) {
+                $biId     = (int) $row['budget_item_id'];
+                $month    = (int) $row['month'];
+                $amount   = $this->sanitizeAmount($row['amount'] ?? '0');
+                $periodId = $this->periodId;
+
+                $existing = RkapBudgetItemRealization::where('rkap_budget_item_id', $biId)
+                    ->where('rkap_period_id', $periodId)
+                    ->where('month', $month)
+                    ->first();
+
+                if ($existing) {
+                    $existing->update([
+                        'amount'      => $amount,
+                        'uploaded_by' => auth()->id(),
+                        'uploaded_at' => now(),
+                    ]);
+                    $updated++;
+                } else {
+                    RkapBudgetItemRealization::create([
+                        'rkap_budget_item_id' => $biId,
+                        'rkap_period_id'      => $periodId,
+                        'month'               => $month,
+                        'amount'              => $amount,
+                        'uploaded_by'         => auth()->id(),
+                        'uploaded_at'         => now(),
+                    ]);
+                    $created++;
+                }
+            }
+
+            $this->massUpdateImportSummary = [
+                'created' => $created,
+                'updated' => $updated,
+                'total'   => $created + $updated,
+            ];
+
+            $this->massUpdateImported = true;
+        });
     }
 
     /**

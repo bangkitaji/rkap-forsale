@@ -15,14 +15,22 @@
             <div class="col-lg-6 border-lg-end pe-lg-4 mb-4 mb-lg-0">
               {{-- Period selector --}}
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="periodSelect">Periode RKAP <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold" for="periodSelect">Periode RKAP (Tahun Berjalan) <span class="text-danger">*</span></label>
                 <select id="periodSelect" class="form-select" wire:model.live="periodId"
                   wire:loading.attr="disabled" wire:target="uploadAndImport">
-                  <option value="">— Pilih Periode —</option>
+                  <option value="">— Pilih Periode RKAP ({{ date('Y') }}) —</option>
                   @foreach ($periodOptions as $period)
-                  <option value="{{ $period->id }}">{{ $period->title ?? $period->year }}</option>
+                  <option value="{{ $period->id }}">{{ $period->title ?? $period->year }} (Tahun Berjalan {{ $period->year }})</option>
                   @endforeach
                 </select>
+                <div class="form-text text-muted small mt-1">
+                  <i class="bx bx-info-circle me-1"></i>Realisasi hanya dapat diinput untuk periode RKAP tahun berjalan (<strong>{{ date('Y') }}</strong>) dengan status <strong>Finalized</strong>.
+                </div>
+                @if($periodOptions->isEmpty())
+                <div class="alert alert-warning mt-2 mb-0 py-2 small" role="alert">
+                  <i class="bx bx-error-circle me-1"></i> Tidak ditemukan periode RKAP tahun berjalan ({{ date('Y') }}) yang berstatus <strong>Finalized</strong> dengan usulan yang telah disetujui.
+                </div>
+                @endif
                 @error('periodId')
                 <div class="text-danger mt-1">{{ $message }}</div>
                 @enderror
@@ -240,6 +248,172 @@
 
         </div>
       </div>
+
+      {{-- =====================================================================
+           MASS UPDATE CARD — Administrator
+           Covers Januari s.d. bulan terakhir closing dalam satu file
+      ====================================================================== --}}
+      @if($this->isAdminUser)
+      @php
+        $lastClosedMonth   = $this->lastClosedMonth;
+        $lastClosedMonthName = $lastClosedMonth ? match($lastClosedMonth) {
+          1  => 'Januari',  2  => 'Februari', 3  => 'Maret',
+          4  => 'April',    5  => 'Mei',       6  => 'Juni',
+          7  => 'Juli',     8  => 'Agustus',   9  => 'September',
+          10 => 'Oktober',  11 => 'November',  12 => 'Desember',
+          default => ''
+        } : null;
+      @endphp
+      <div class="card mt-4 border border-warning-subtle">
+        <h5 class="card-header d-flex align-items-center gap-2 bg-warning-subtle">
+          <i class="bx bx-refresh text-warning fs-5"></i>
+          <span>Update Massal Realisasi</span>
+          <span class="badge bg-warning text-dark ms-1 rkap-font-07">Administrator</span>
+        </h5>
+        <div class="card-body">
+          <p class="text-muted mb-3 small">
+            Fitur ini memungkinkan Administrator melakukan <strong>update massal</strong> data realisasi dari
+            <strong>Januari</strong> s.d. <strong>bulan terakhir yang sudah closing</strong>
+            dalam satu kali upload file Excel.
+            Data realisasi yang sudah ada akan <span class="text-warning fw-semibold">ditimpa (overwrite)</span> sesuai nilai di file.
+          </p>
+
+          @if(! $periodId)
+          <div class="alert alert-secondary shadow-none border-1 mb-0" role="alert">
+            <i class="bx bx-info-circle me-1"></i>
+            Silakan pilih <strong>Periode RKAP</strong> pada pilihan di atas terlebih dahulu untuk mengunduh template dan melakukan update massal.
+          </div>
+          @elseif(! $lastClosedMonth)
+          <div class="alert alert-info shadow-none border-1 mb-0" role="alert">
+            <i class="bx bx-info-circle me-1"></i>
+            Belum ada bulan yang sudah <em>closing</em> untuk periode ini (tanggal closing: tanggal {{ \App\Models\Setting::get('rkap_closing_day', 10) }} setiap bulannya). Mass update akan tersedia setelah minimal satu bulan melewati tanggal closing.
+          </div>
+          @else
+          {{-- Range info banner --}}
+          <div class="alert alert-warning shadow-none border-1 d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bx bx-calendar-check fs-4 text-warning flex-shrink-0"></i>
+            <div>
+              <strong>Cakupan bulan:</strong> Januari s.d. <strong>{{ $lastClosedMonthName }}</strong>
+              ({{ $lastClosedMonth }} bulan).<br>
+              <span class="small text-muted">Template berisi semua budget item × semua bulan di rentang tersebut, diisi dengan nilai realisasi terkini.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            {{-- Left column: template download + upload form --}}
+            <div class="col-lg-6 border-lg-end pe-lg-4 mb-4 mb-lg-0">
+
+              {{-- Template download --}}
+              <div class="mb-4">
+                <p class="fw-semibold mb-2 d-flex align-items-center gap-1">
+                  <i class="bx bx-download text-primary fs-5"></i>
+                  <span>{{ __('1. Download Template Mass Update') }}</span>
+                </p>
+                <a href="{{ route('rkap-realization-mass-update-template-download', ['period_id' => $periodId, 'last_closed_month' => $lastClosedMonth]) }}"
+                  class="btn btn-warning d-inline-flex align-items-center gap-1">
+                  <i class="bx bx-file"></i>
+                  Download Template (.xlsx) — Jan s.d. {{ $lastClosedMonthName }}
+                </a>
+                <div class="mt-2 small text-muted">
+                  File template sudah terisi dengan data realisasi terkini. Cukup edit kolom <code>amount</code> lalu upload kembali.
+                </div>
+              </div>
+
+              {{-- Upload form --}}
+              <p class="fw-semibold mb-2 d-flex align-items-center gap-1">
+                <i class="bx bx-upload text-primary fs-5"></i>
+                <span>{{ __('2. Upload File Mass Update') }}</span>
+              </p>
+              <form wire:submit.prevent="massUpdateUpload" class="mb-3">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold" for="massUpdateFile">File Excel (.xlsx, .xls, .csv)</label>
+                  <input id="massUpdateFile"
+                    type="file"
+                    class="form-control"
+                    wire:model="massUpdateFile"
+                    wire:loading.attr="disabled"
+                    wire:target="massUpdateFile, massUpdateUpload"
+                    accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+                  @error('massUpdateFile')
+                  <div class="text-danger mt-1">{{ $message }}</div>
+                  @enderror
+                </div>
+
+                <button type="submit"
+                  id="btnMassUpdateSubmit"
+                  class="btn btn-warning w-100"
+                  wire:loading.attr="disabled"
+                  wire:target="massUpdateFile, massUpdateUpload"
+                  onclick="return confirm('Yakin ingin melakukan mass update realisasi Jan s.d. {{ $lastClosedMonthName }}? Data realisasi yang sudah ada akan ditimpa sesuai file yang diupload.')">
+                  <span wire:loading.remove wire:target="massUpdateFile, massUpdateUpload">
+                    <i class="bx bx-refresh me-1"></i> Mass Update & Import
+                  </span>
+                  <span wire:loading wire:target="massUpdateFile, massUpdateUpload">
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    Processing...
+                  </span>
+                </button>
+              </form>
+
+              {{-- Mass update error list --}}
+              @if (!empty($massUpdateErrorsList))
+              <div class="alert alert-danger shadow-none border-1">
+                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>{{ __('Validasi gagal') }}</h6>
+                <ul class="mb-0 ps-3 small">
+                  @foreach ($massUpdateErrorsList as $err)
+                  <li>{{ $err }}</li>
+                  @endforeach
+                </ul>
+              </div>
+              @endif
+
+              {{-- Mass update success summary --}}
+              @if ($massUpdateImported)
+              <div class="alert alert-success shadow-none border-1">
+                <h6 class="alert-heading mb-2 text-success"><i class="bx bx-check-circle me-1"></i>{{ __('Mass Update berhasil') }}</h6>
+                <p class="mb-2 small">Realisasi RKAP berhasil di-update massal (Januari s.d. {{ $lastClosedMonthName }}).</p>
+                <ul class="mb-0 ps-3 small">
+                  <li>Baris baru: <strong>{{ $massUpdateImportSummary['created'] ?? 0 }}</strong></li>
+                  <li>Baris diperbarui: <strong>{{ $massUpdateImportSummary['updated'] ?? 0 }}</strong></li>
+                  <li>Total diproses: <strong>{{ $massUpdateImportSummary['total'] ?? 0 }}</strong></li>
+                </ul>
+              </div>
+              @endif
+
+              @if (session()->has('massUpdateError'))
+              <div class="alert alert-danger shadow-none border-1">
+                <h6 class="alert-heading mb-2 text-danger"><i class="bx bx-error-circle me-1"></i>{{ __('Kesalahan') }}</h6>
+                <p class="mb-0 small">{{ session('massUpdateError') }}</p>
+              </div>
+              @endif
+
+            </div>
+
+            {{-- Right column: Info / Petunjuk --}}
+            <div class="col-lg-6 ps-lg-4">
+              <div class="border rounded p-3 bg-lighter rkap-border-dashed-muted">
+                <p class="mb-2 fw-semibold d-flex align-items-center gap-1">
+                  <i class="bx bx-info-circle text-warning fs-5"></i>
+                  <span>{{ __('Petunjuk Mass Update:') }}</span>
+                </p>
+                <ol class="small text-muted ps-3 mb-3">
+                  <li class="mb-1">Download template dengan tombol di kiri. Template sudah berisi <strong>semua budget item × semua bulan</strong> (Jan s.d. {{ $lastClosedMonthName }}) beserta nilai realisasi terkini.</li>
+                  <li class="mb-1">Edit kolom <code>amount</code> sesuai nilai realisasi yang benar. <strong>Jangan ubah kolom lain</strong> (terutama <code>budget_item_id</code> dan <code>month</code>).</li>
+                  <li class="mb-1">Upload file yang sudah diedit menggunakan form di kiri.</li>
+                  <li class="mb-1">Sistem akan <span class="text-warning fw-semibold">menimpa (overwrite)</span> data realisasi yang sudah ada dan menambah yang belum ada.</li>
+                </ol>
+                <div class="alert alert-warning shadow-none border-1 mb-0 small">
+                  <i class="bx bx-error me-1"></i>
+                  <strong>Perhatian:</strong> Bulan di luar rentang Januari–{{ $lastClosedMonthName }} akan <strong>ditolak</strong> saat upload. Hanya bulan yang sudah melewati tanggal closing yang dapat di-update secara massal.
+                </div>
+              </div>
+            </div>
+          </div>
+          @endif
+
+        </div>
+      </div>
+      @endif
 
       {{-- Department Accumulation Summary Card --}}
       @if($periodId && $this->departmentAccumulations->isNotEmpty())

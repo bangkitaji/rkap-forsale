@@ -32,8 +32,10 @@ class RkapRealizationUploadTest extends TestCase
 
         // Create role and permission
         $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $permRealizationUpload = Permission::firstOrCreate(['name' => 'rkap.realization.upload', 'guard_name' => 'web']);
         $roleVerifikator->givePermissionTo($permRealizationUpload);
+        $roleAdmin->givePermissionTo($permRealizationUpload);
 
         $this->verifikator = User::create([
             'name' => 'Verifikator User',
@@ -531,4 +533,281 @@ class RkapRealizationUploadTest extends TestCase
             $response->effects !== null
         );
     }
+
+    // =========================================================================
+    // Mass Update Tests
+    // =========================================================================
+
+    /**
+     * Helper: create the common org + submission + budget item structure.
+     */
+    private function createBudgetItemStructure(string $suffix = ''): array
+    {
+        $directorate = \App\Models\Directorate::create(['code' => 'D_MU' . $suffix, 'name' => 'Dir MU ' . $suffix]);
+        $department  = \App\Models\Department::create(['directorate_id' => $directorate->id, 'code' => 'DP_MU' . $suffix, 'name' => 'Dept MU ' . $suffix]);
+        $bureau      = \App\Models\Bureau::create(['department_id' => $department->id, 'code' => 'B_MU' . $suffix, 'name' => 'Bur MU ' . $suffix]);
+
+        $submission = RkapSubmission::create([
+            'rkap_period_id' => $this->period->id,
+            'bureau_id'      => $bureau->id,
+            'created_by'     => $this->verifikator->id,
+            'status'         => 'approved',
+            'total_budget'   => 100000,
+        ]);
+
+        $wpMaster = \App\Models\WorkPlan::create(['code' => 'WP_MU' . $suffix, 'title' => 'WP MU ' . $suffix]);
+        $workPlan = \App\Models\RkapWorkPlan::create([
+            'rkap_submission_id' => $submission->id,
+            'work_plan_id'       => $wpMaster->id,
+            'program_code'       => 'WP_MU' . $suffix,
+            'program_name'       => 'Work Plan MU ' . $suffix,
+        ]);
+
+        $budgetItem = RkapBudgetItem::create([
+            'rkap_work_plan_id' => $workPlan->id,
+            'account_code'      => '521200',
+            'description'       => 'Mass Update Item ' . $suffix,
+            'quantity'          => 1,
+            'unit_price'        => 50000,
+        ]);
+
+        return compact('directorate', 'department', 'bureau', 'submission', 'workPlan', 'budgetItem');
+    }
+
+    public function test_admin_can_see_mass_update_section(): void
+    {
+        $this->actingAs($this->verifikator); // verifikator also has admin role via seeder? No — use admin user.
+
+        // Create an admin user
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::create([
+            'name'     => 'Admin User',
+            'email'    => 'admin_mu@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $admin->assignRole($adminRole);
+
+        $this->actingAs($admin);
+
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->assertSee('Update Massal Realisasi');
+    }
+
+    public function test_non_admin_cannot_see_mass_update_section(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->assertDontSee('Update Massal Realisasi');
+    }
+
+    public function test_mass_update_rejected_when_no_closed_months(): void
+    {
+        // Ensure no closing day is configured (so no month is closed)
+        \App\Models\Setting::set('rkap_closing_day', 0);
+
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::create([
+            'name'     => 'Admin MU',
+            'email'    => 'admin_mu2@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $admin->assignRole($adminRole);
+        $this->actingAs($admin);
+
+        $this->createBudgetItemStructure('NC');
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('mass_update.xlsx', 100);
+
+        $component = Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('massUpdateFile', $file)
+            ->call('massUpdateUpload');
+
+        $errors = $component->get('massUpdateErrorsList');
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('Belum ada bulan yang sudah closing', $errors[0]);
+    }
+
+    public function test_mass_update_rejects_month_beyond_last_closed(): void
+    {
+        // Set closing day = 1 so months up to last month are closed
+        \App\Models\Setting::set('rkap_closing_day', 1);
+
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::create([
+            'name'     => 'Admin MU3',
+            'email'    => 'admin_mu3@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $admin->assignRole($adminRole);
+        $this->actingAs($admin);
+
+        $structure  = $this->createBudgetItemStructure('BYN');
+        $budgetItem = $structure['budgetItem'];
+
+        // Determine lastClosedMonth dynamically
+        $component   = Livewire::test(RkapRealizationUpload::class)->set('periodId', $this->period->id);
+        $lastClosed  = $component->get('lastClosedMonth');
+
+        if (! $lastClosed || $lastClosed >= 12) {
+            $this->markTestSkipped('Cannot test beyond-range month when lastClosedMonth is null or 12.');
+        }
+
+        $beyondMonth = $lastClosed + 1;
+
+        // Build a minimal CSV with a row for the month beyond closing
+        $csvContent = "budget_item_id,month,amount\n{$budgetItem->id},{$beyondMonth},99999\n";
+        $csvFile    = \Illuminate\Http\UploadedFile::fake()->createWithContent('mass_update.csv', $csvContent);
+
+        $component
+            ->set('massUpdateFile', $csvFile)
+            ->call('massUpdateUpload');
+
+        $errors = $component->get('massUpdateErrorsList');
+        $this->assertNotEmpty($errors);
+        $this->assertTrue(collect($errors)->contains(fn ($e) => str_contains($e, 'melebihi batas bulan closing terakhir')));
+    }
+
+    public function test_mass_update_creates_and_updates_realizations(): void
+    {
+        // Set closing day = 1 so at least some months are closed
+        \App\Models\Setting::set('rkap_closing_day', 1);
+
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::create([
+            'name'     => 'Admin MU4',
+            'email'    => 'admin_mu4@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $admin->assignRole($adminRole);
+        $this->actingAs($admin);
+
+        $structure  = $this->createBudgetItemStructure('CU');
+        $budgetItem = $structure['budgetItem'];
+
+        // Determine lastClosedMonth
+        $component  = Livewire::test(RkapRealizationUpload::class)->set('periodId', $this->period->id);
+        $lastClosed = $component->get('lastClosedMonth');
+
+        if (! $lastClosed) {
+            $this->markTestSkipped('No closed months available for this test run.');
+        }
+
+        // Pre-create a realization for month 1 (will be updated by mass update)
+        $existing = RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id'      => $this->period->id,
+            'month'               => 1,
+            'amount'              => 1000,
+            'uploaded_by'         => $admin->id,
+            'uploaded_at'         => now(),
+        ]);
+
+        // Build CSV covering months 1..$lastClosed
+        $csvRows = ["budget_item_id,month,amount"];
+        for ($m = 1; $m <= $lastClosed; $m++) {
+            $amount    = $m * 5000;
+            $csvRows[] = "{$budgetItem->id},{$m},{$amount}";
+        }
+        $csvContent = implode("\n", $csvRows) . "\n";
+        $csvFile    = \Illuminate\Http\UploadedFile::fake()->createWithContent('mass_update.csv', $csvContent);
+
+        $component
+            ->set('massUpdateFile', $csvFile)
+            ->call('massUpdateUpload');
+
+        $component->assertHasNoErrors();
+
+        $summary = $component->get('massUpdateImportSummary');
+        $this->assertTrue($component->get('massUpdateImported'));
+
+        // Month 1 should have been updated (not created)
+        $this->assertGreaterThanOrEqual(1, $summary['updated']);
+
+        // All months 1..$lastClosed should now exist in DB with correct amounts
+        for ($m = 1; $m <= $lastClosed; $m++) {
+            $expectedAmount = $m * 5000;
+            $this->assertDatabaseHas('rkap_budget_item_realizations', [
+                'rkap_budget_item_id' => $budgetItem->id,
+                'rkap_period_id'      => $this->period->id,
+                'month'               => $m,
+                'amount'              => $expectedAmount,
+            ]);
+        }
+
+        // Month 1 old value should be gone
+        $this->assertDatabaseMissing('rkap_budget_item_realizations', [
+            'id'     => $existing->id,
+            'amount' => '1000.00',
+        ]);
+    }
+
+    public function test_mass_update_template_contains_existing_realization_data(): void
+    {
+        \App\Models\Setting::set('rkap_closing_day', 1);
+
+        $structure  = $this->createBudgetItemStructure('TMP');
+        $budgetItem = $structure['budgetItem'];
+
+        // Pre-create realization for month 1
+        RkapBudgetItemRealization::create([
+            'rkap_budget_item_id' => $budgetItem->id,
+            'rkap_period_id'      => $this->period->id,
+            'month'               => 1,
+            'amount'              => 12345,
+            'uploaded_by'         => $this->verifikator->id,
+            'uploaded_at'         => now(),
+        ]);
+
+        // Determine lastClosedMonth via component
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::create([
+            'name' => 'Admin TMP', 'email' => 'admin_tmp@example.com', 'password' => bcrypt('p'),
+        ]);
+        $admin->assignRole($adminRole);
+        $this->actingAs($admin);
+
+        $component  = Livewire::test(RkapRealizationUpload::class)->set('periodId', $this->period->id);
+        $lastClosed = $component->get('lastClosedMonth');
+
+        if (! $lastClosed) {
+            $this->markTestSkipped('No closed months available for this test run.');
+        }
+
+        $export = new \App\Exports\RkapRealizationMassUpdateTemplateExport($this->period->id, $lastClosed);
+        $rows   = $export->array();
+
+        // Row 0 = headers, Row 1 = hints, Row 2+ = data
+        $this->assertEquals('budget_item_id', $rows[0][0]);
+        $this->assertGreaterThan(2, count($rows));
+
+        // Find the row for our budget item + month 1
+        $dataRows = array_slice($rows, 2);
+        $found    = collect($dataRows)->first(
+            fn ($r) => (int) $r[0] === $budgetItem->id && (int) $r[12] === 1
+        );
+
+        $this->assertNotNull($found, 'Template should contain a row for budget_item_id=' . $budgetItem->id . ' month=1');
+        $this->assertEquals(12345.0, (float) $found[13], 'Template amount for month 1 should match existing realization');
+    }
+
+    public function test_non_admin_mass_update_upload_is_rejected(): void
+    {
+        $this->actingAs($this->verifikator);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('mass_update.xlsx', 100);
+
+        $component = Livewire::test(RkapRealizationUpload::class)
+            ->set('periodId', $this->period->id)
+            ->set('massUpdateFile', $file)
+            ->call('massUpdateUpload');
+
+        $errors = $component->get('massUpdateErrorsList');
+        $this->assertNotEmpty($errors);
+        $this->assertStringContainsString('hanya tersedia untuk Administrator', $errors[0]);
+    }
 }
+
