@@ -53,6 +53,9 @@ class RoleAndUserSeeder extends Seeder
         $permSettingsDifferenceGroupManage = Permission::firstOrCreate(['name' => 'settings.differencegroup.manage', 'guard_name' => 'web']);
         $permSettingsCdsGroupManage = Permission::firstOrCreate(['name' => 'settings.cdsgroup.manage', 'guard_name' => 'web']);
         $permAnalyticsSummaryDept = Permission::firstOrCreate(['name' => 'analytics.summary.dept', 'guard_name' => 'web']);
+        $permAnalyticsCdsView = Permission::firstOrCreate(['name' => 'analytics.cds.view', 'guard_name' => 'web']);
+        $permAnalyticsOpeningBalanceManage = Permission::firstOrCreate(['name' => 'analytics.openingbalance.manage', 'guard_name' => 'web']);
+        $permAnalyticsBalanceSheetView = Permission::firstOrCreate(['name' => 'analytics.balancesheet.view', 'guard_name' => 'web']);
 
         // create roles
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
@@ -91,6 +94,9 @@ class RoleAndUserSeeder extends Seeder
             $permSettingsDifferenceGroupManage,
             $permSettingsCdsGroupManage,
             $permAnalyticsSummaryDept,
+            $permAnalyticsCdsView,
+            $permAnalyticsOpeningBalanceManage,
+            $permAnalyticsBalanceSheetView,
         ]);
 
         $roleUser->givePermissionTo([
@@ -121,6 +127,9 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataActivityManage,
             $permRkapClosingManage,
             $permAnalyticsSummaryDept,
+            $permAnalyticsCdsView,
+            $permAnalyticsOpeningBalanceManage,
+            $permAnalyticsBalanceSheetView,
         ]);
 
         $roleDireksi->givePermissionTo([

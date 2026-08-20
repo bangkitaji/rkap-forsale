@@ -1005,7 +1005,7 @@ class Analytics extends Controller
               $itemsMonthly[] = [
                 'id' => implode(',', $mergedIds),
                 'key' => '5007_5008',
-                'label' => 'Komersial',
+                'label' => 'KOMERSIAL',
                 'color' => $colorPalette[$idx % count($colorPalette)],
                 'budget' => $mergedBudget,
                 'realization' => $mergedRealization,
@@ -1239,7 +1239,7 @@ class Analytics extends Controller
               $items[] = [
                 'id' => implode(',', $mergedIds),
                 'key' => '5007_5008',
-                'label' => 'Komersial',
+                'label' => 'KOMERSIAL',
                 'color' => $colorPalette[$idx % count($colorPalette)],
                 'budget' => $mergedBudget,
                 'realization' => $mergedRealization,
@@ -1562,7 +1562,7 @@ class Analytics extends Controller
 
   public function index(Request $request)
   {
-    $user     = Auth::user();
+    $user = Auth::user();
     $periodId = (int) ($request->query('period_id') ?: 0);
     $cacheKey = AnalyticsCacheService::key($periodId, $user->id, false);
 
@@ -1575,7 +1575,7 @@ class Analytics extends Controller
 
   public function report(Request $request)
   {
-    $user     = Auth::user();
+    $user = Auth::user();
     $periodId = (int) ($request->query('period_id') ?: 0);
     $cacheKey = AnalyticsCacheService::key($periodId, $user->id, true);
 
@@ -1741,7 +1741,7 @@ class Analytics extends Controller
       $cashflowGroups = \App\Models\CashflowGroup::orderBy('code')->get();
 
       $cf0b9GroupId = $cashflowGroups->firstWhere('code', 'CF0B9')?->id;
- 
+
       $cfBudgetsRaw = DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -1752,14 +1752,14 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) ELSE rkap_budget_items.total_price END) as total"
-            : "coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.total_price ELSE rkap_budget_items.total_price END) ELSE rkap_budget_items.total_price END) as total"
+          : "coas.cashflow_group_id, SUM(rkap_budget_items.total_price) as total"
         )
         ->groupBy('coas.cashflow_group_id')
         ->pluck('total', 'cashflow_group_id')
         ->toArray();
- 
+
       $cfRealizationsRaw = DB::table('rkap_budget_item_realizations')
         ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
@@ -1771,14 +1771,14 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) ELSE rkap_budget_item_realizations.amount END) as total"
-            : "coas.cashflow_group_id, SUM(rkap_budget_item_realizations.amount) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) ELSE rkap_budget_item_realizations.amount END) as total"
+          : "coas.cashflow_group_id, SUM(rkap_budget_item_realizations.amount) as total"
         )
         ->groupBy('coas.cashflow_group_id')
         ->pluck('total', 'cashflow_group_id')
         ->toArray();
- 
+
       $cfProjectionsRaw = DB::table('rkap_budget_items')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -1789,9 +1789,9 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) ELSE rkap_budget_items.projection END) as total"
-            : "coas.cashflow_group_id, SUM(rkap_budget_items.projection) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_items.projection ELSE rkap_budget_items.projection END) ELSE rkap_budget_items.projection END) as total"
+          : "coas.cashflow_group_id, SUM(rkap_budget_items.projection) as total"
         )
         ->groupBy('coas.cashflow_group_id')
         ->pluck('total', 'cashflow_group_id')
@@ -1868,7 +1868,7 @@ class Analytics extends Controller
       // --- Monthly CF Calculations ---
 
       // 1. Monthly budget grouped by cashflow_group_id + month
-       $cfBudgetsMonthlyRaw = DB::table('rkap_budget_item_monthlies')
+      $cfBudgetsMonthlyRaw = DB::table('rkap_budget_item_monthlies')
         ->join('rkap_budget_items', 'rkap_budget_item_monthlies.rkap_budget_item_id', '=', 'rkap_budget_items.id')
         ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
@@ -1879,13 +1879,13 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, rkap_budget_item_monthlies.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_monthlies.amount ELSE rkap_budget_item_monthlies.amount END) ELSE rkap_budget_item_monthlies.amount END) as total"
-            : "coas.cashflow_group_id, rkap_budget_item_monthlies.month, SUM(rkap_budget_item_monthlies.amount) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, rkap_budget_item_monthlies.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_monthlies.amount ELSE rkap_budget_item_monthlies.amount END) ELSE rkap_budget_item_monthlies.amount END) as total"
+          : "coas.cashflow_group_id, rkap_budget_item_monthlies.month, SUM(rkap_budget_item_monthlies.amount) as total"
         )
         ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_monthlies.month')
         ->get();
- 
+
       // 2. Monthly realizations grouped by cashflow_group_id + month
       $cfRealizationsMonthlyRaw = DB::table('rkap_budget_item_realizations')
         ->join('rkap_budget_items', 'rkap_budget_item_realizations.rkap_budget_item_id', '=', 'rkap_budget_items.id')
@@ -1898,13 +1898,13 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, rkap_budget_item_realizations.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) ELSE rkap_budget_item_realizations.amount END) as total"
-            : "coas.cashflow_group_id, rkap_budget_item_realizations.month, SUM(rkap_budget_item_realizations.amount) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, rkap_budget_item_realizations.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_realizations.amount ELSE rkap_budget_item_realizations.amount END) ELSE rkap_budget_item_realizations.amount END) as total"
+          : "coas.cashflow_group_id, rkap_budget_item_realizations.month, SUM(rkap_budget_item_realizations.amount) as total"
         )
         ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_realizations.month')
         ->get();
- 
+
       // 3. Monthly projections grouped by cashflow_group_id + month
       $cfProjectionsMonthlyRaw = DB::table('rkap_budget_item_projections')
         ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
@@ -1917,9 +1917,9 @@ class Analytics extends Controller
         ->whereNull('coas.deleted_at')
         ->whereNotNull('coas.cashflow_group_id')
         ->selectRaw(
-            $cf0b9GroupId
-            ? "coas.cashflow_group_id, rkap_budget_item_projections.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_projections.amount ELSE rkap_budget_item_projections.amount END) ELSE rkap_budget_item_projections.amount END) as total"
-            : "coas.cashflow_group_id, rkap_budget_item_projections.month, SUM(rkap_budget_item_projections.amount) as total"
+          $cf0b9GroupId
+          ? "coas.cashflow_group_id, rkap_budget_item_projections.month, SUM(CASE WHEN coas.cashflow_group_id = {$cf0b9GroupId} THEN (CASE WHEN rkap_budget_items.flow_direction = 'OUT' THEN -rkap_budget_item_projections.amount ELSE rkap_budget_item_projections.amount END) ELSE rkap_budget_item_projections.amount END) as total"
+          : "coas.cashflow_group_id, rkap_budget_item_projections.month, SUM(rkap_budget_item_projections.amount) as total"
         )
         ->groupBy('coas.cashflow_group_id', 'rkap_budget_item_projections.month')
         ->get();
@@ -1979,7 +1979,7 @@ class Analytics extends Controller
           'coas.cashflow_group_id'
         )
         ->get();
- 
+
       $cfYearlyItemIds = $cfYearlyItems->pluck('id')->toArray();
       $cfMonthlyPlans = [];
       if (!empty($cfYearlyItemIds)) {
@@ -1989,7 +1989,7 @@ class Analytics extends Controller
           ->get()
           ->groupBy('rkap_budget_item_id');
       }
- 
+
       foreach ($cfYearlyItems as $item) {
         $itemId = $item->id;
         $cgId = $item->cashflow_group_id;
@@ -2022,60 +2022,60 @@ class Analytics extends Controller
 
       // 5. Build $cfGroupsMonthly
       $cfGroupsMonthly = [
-        'inflow'  => ['items' => [], 'budget_subtotal' => array_fill(1, 12, 0.0), 'realization_subtotal' => array_fill(1, 12, 0.0), 'projection_subtotal' => array_fill(1, 12, 0.0)],
+        'inflow' => ['items' => [], 'budget_subtotal' => array_fill(1, 12, 0.0), 'realization_subtotal' => array_fill(1, 12, 0.0), 'projection_subtotal' => array_fill(1, 12, 0.0)],
         'outflow' => ['items' => [], 'budget_subtotal' => array_fill(1, 12, 0.0), 'realization_subtotal' => array_fill(1, 12, 0.0), 'projection_subtotal' => array_fill(1, 12, 0.0)],
       ];
 
       foreach ($cashflowGroups as $idx => $cg) {
-        $budget      = $cfBudgetsMonthly[$cg->id]      ?? array_fill(1, 12, 0.0);
+        $budget = $cfBudgetsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
         $realization = $cfRealizationsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
-        $projection  = $cfProjectionsMonthly[$cg->id]  ?? array_fill(1, 12, 0.0);
+        $projection = $cfProjectionsMonthly[$cg->id] ?? array_fill(1, 12, 0.0);
 
         $monthlyItem = [
-          'id'          => $cg->id,
-          'code'        => $cg->code,
-          'name'        => $cg->name,
-          'color'       => $colorPalette[$idx % count($colorPalette)],
-          'budget'      => $budget,
+          'id' => $cg->id,
+          'code' => $cg->code,
+          'name' => $cg->name,
+          'color' => $colorPalette[$idx % count($colorPalette)],
+          'budget' => $budget,
           'realization' => $realization,
-          'projection'  => $projection,
+          'projection' => $projection,
         ];
 
         $isInflow = str_starts_with($cg->code, 'CF0A') || $cg->code === 'CF0B10';
         $side = $isInflow ? 'inflow' : 'outflow';
- 
+
         $cfGroupsMonthly[$side]['items'][] = $monthlyItem;
         for ($m = 1; $m <= 12; $m++) {
           if ($cg->code === 'CF0B9') {
-            $cfGroupsMonthly[$side]['budget_subtotal'][$m]      -= $budget[$m];
+            $cfGroupsMonthly[$side]['budget_subtotal'][$m] -= $budget[$m];
             $cfGroupsMonthly[$side]['realization_subtotal'][$m] -= $realization[$m];
-            $cfGroupsMonthly[$side]['projection_subtotal'][$m]  -= $projection[$m];
+            $cfGroupsMonthly[$side]['projection_subtotal'][$m] -= $projection[$m];
           } else {
-            $cfGroupsMonthly[$side]['budget_subtotal'][$m]      += $budget[$m];
+            $cfGroupsMonthly[$side]['budget_subtotal'][$m] += $budget[$m];
             $cfGroupsMonthly[$side]['realization_subtotal'][$m] += $realization[$m];
-            $cfGroupsMonthly[$side]['projection_subtotal'][$m]  += $projection[$m];
+            $cfGroupsMonthly[$side]['projection_subtotal'][$m] += $projection[$m];
           }
         }
       }
 
       // 6. Build $cfSummaryMonthly
       $cfSummaryMonthly = [
-        'inflow'  => [
-          'budget'      => $cfGroupsMonthly['inflow']['budget_subtotal'],
+        'inflow' => [
+          'budget' => $cfGroupsMonthly['inflow']['budget_subtotal'],
           'realization' => $cfGroupsMonthly['inflow']['realization_subtotal'],
-          'projection'  => $cfGroupsMonthly['inflow']['projection_subtotal'],
+          'projection' => $cfGroupsMonthly['inflow']['projection_subtotal'],
         ],
         'outflow' => [
-          'budget'      => $cfGroupsMonthly['outflow']['budget_subtotal'],
+          'budget' => $cfGroupsMonthly['outflow']['budget_subtotal'],
           'realization' => $cfGroupsMonthly['outflow']['realization_subtotal'],
-          'projection'  => $cfGroupsMonthly['outflow']['projection_subtotal'],
+          'projection' => $cfGroupsMonthly['outflow']['projection_subtotal'],
         ],
-        'net'     => ['budget' => array_fill(1, 12, 0.0), 'realization' => array_fill(1, 12, 0.0), 'projection' => array_fill(1, 12, 0.0)],
+        'net' => ['budget' => array_fill(1, 12, 0.0), 'realization' => array_fill(1, 12, 0.0), 'projection' => array_fill(1, 12, 0.0)],
       ];
       for ($m = 1; $m <= 12; $m++) {
-        $cfSummaryMonthly['net']['budget'][$m]      = $cfGroupsMonthly['inflow']['budget_subtotal'][$m]      - $cfGroupsMonthly['outflow']['budget_subtotal'][$m];
+        $cfSummaryMonthly['net']['budget'][$m] = $cfGroupsMonthly['inflow']['budget_subtotal'][$m] - $cfGroupsMonthly['outflow']['budget_subtotal'][$m];
         $cfSummaryMonthly['net']['realization'][$m] = $cfGroupsMonthly['inflow']['realization_subtotal'][$m] - $cfGroupsMonthly['outflow']['realization_subtotal'][$m];
-        $cfSummaryMonthly['net']['projection'][$m]  = $cfGroupsMonthly['inflow']['projection_subtotal'][$m]  - $cfGroupsMonthly['outflow']['projection_subtotal'][$m];
+        $cfSummaryMonthly['net']['projection'][$m] = $cfGroupsMonthly['inflow']['projection_subtotal'][$m] - $cfGroupsMonthly['outflow']['projection_subtotal'][$m];
       }
     }
 
@@ -2096,7 +2096,7 @@ class Analytics extends Controller
     if (!$user) {
       abort(403);
     }
- 
+
     if ($user->isKepalaBiro()) {
       abort(403, __('Anda tidak memiliki akses untuk melihat laporan ini.'));
     }
@@ -2276,11 +2276,11 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->leftJoin('difference_group_coa', function ($join) {
-            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
-                 ->whereNull('rkap_budget_items.difference_group_id');
+          $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+            ->whereNull('rkap_budget_items.difference_group_id');
         })
         ->join('difference_groups', function ($join) {
-            $join->on('difference_groups.id', '=', DB::raw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id)'));
+          $join->on('difference_groups.id', '=', DB::raw('COALESCE(rkap_budget_items.difference_group_id, difference_group_coa.difference_group_id)'));
         })
         ->where('rkap_submissions.rkap_period_id', $activePeriod->id)
         ->where('rkap_submissions.status', 'approved')
@@ -2296,8 +2296,8 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->leftJoin('difference_group_coa', function ($join) {
-            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
-                 ->whereNull('rkap_budget_items.difference_group_id');
+          $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+            ->whereNull('rkap_budget_items.difference_group_id');
         })
         ->where('rkap_budget_item_realizations.rkap_period_id', $activePeriod->id)
         ->where('rkap_submissions.status', 'approved')
@@ -2365,8 +2365,8 @@ class Analytics extends Controller
         ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
         ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
         ->leftJoin('difference_group_coa', function ($join) {
-            $join->on('coas.id', '=', 'difference_group_coa.coa_id')
-                 ->whereNull('rkap_budget_items.difference_group_id');
+          $join->on('coas.id', '=', 'difference_group_coa.coa_id')
+            ->whereNull('rkap_budget_items.difference_group_id');
         })
         ->join('bureaus', 'rkap_submissions.bureau_id', '=', 'bureaus.id')
         ->join('departments', 'bureaus.department_id', '=', 'departments.id')
@@ -2770,7 +2770,7 @@ class Analytics extends Controller
     $plReportGroups = \App\Models\ReportGroup::where('type', 'PL')
       ->orderBy('code')
       ->get();
-    
+
     $matrix = [];
     $deptTotals = [];
     $groupTotals = [];
@@ -3094,12 +3094,12 @@ class Analytics extends Controller
     // Classify each cashflow group as inflow or outflow based on dominant COA cf_type
     $cgTypeMap = []; // cashflow_group_id => 'inflow' | 'outflow'
     foreach ($cfTypeMap as $cgId => $rows) {
-      $cashIn  = $rows->where('cf_type', 'CASH IN')->sum('cnt');
+      $cashIn = $rows->where('cf_type', 'CASH IN')->sum('cnt');
       $cashOut = $rows->where('cf_type', 'CASH OUT')->sum('cnt');
       $cgTypeMap[$cgId] = ($cashIn >= $cashOut) ? 'inflow' : 'outflow';
     }
 
-    $inflowGroups  = $cashflowGroups->filter(fn($g) => ($cgTypeMap[$g->id] ?? 'outflow') === 'inflow');
+    $inflowGroups = $cashflowGroups->filter(fn($g) => ($cgTypeMap[$g->id] ?? 'outflow') === 'inflow');
     $outflowGroups = $cashflowGroups->filter(fn($g) => ($cgTypeMap[$g->id] ?? 'outflow') === 'outflow');
 
     $matrix = [];
@@ -3108,9 +3108,15 @@ class Analytics extends Controller
 
     foreach ($departments as $dept) {
       $deptTotals[$dept->id] = [
-        'inflow_budget' => 0.0, 'inflow_realization' => 0.0, 'inflow_projection' => 0.0,
-        'outflow_budget' => 0.0, 'outflow_realization' => 0.0, 'outflow_projection' => 0.0,
-        'net_budget' => 0.0, 'net_realization' => 0.0, 'net_projection' => 0.0,
+        'inflow_budget' => 0.0,
+        'inflow_realization' => 0.0,
+        'inflow_projection' => 0.0,
+        'outflow_budget' => 0.0,
+        'outflow_realization' => 0.0,
+        'outflow_projection' => 0.0,
+        'net_budget' => 0.0,
+        'net_realization' => 0.0,
+        'net_projection' => 0.0,
       ];
     }
     foreach ($cashflowGroups as $group) {
@@ -3156,42 +3162,42 @@ class Analytics extends Controller
       }
 
       foreach ($budgetsRaw as $b) {
-        $deptId     = $b->department_id;
-        $cgId       = $b->cashflow_group_id;
-        $cfType     = $b->cf_type; // 'CASH IN' or 'CASH OUT'
-        $isInflow   = $cfType === 'CASH IN';
-        $budget      = (float) $b->budget;
-        $projection  = (float) $b->projection;
+        $deptId = $b->department_id;
+        $cgId = $b->cashflow_group_id;
+        $cfType = $b->cf_type; // 'CASH IN' or 'CASH OUT'
+        $isInflow = $cfType === 'CASH IN';
+        $budget = (float) $b->budget;
+        $projection = (float) $b->projection;
         $realization = $realMap[$deptId . '_' . $cgId] ?? 0.0;
 
         // Matrix cell: accumulate per (group, dept)
         if (!isset($matrix[$cgId][$deptId])) {
           $matrix[$cgId][$deptId] = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
         }
-        $matrix[$cgId][$deptId]['budget']      += $budget;
+        $matrix[$cgId][$deptId]['budget'] += $budget;
         $matrix[$cgId][$deptId]['realization'] += $realization;
-        $matrix[$cgId][$deptId]['projection']  += $projection;
+        $matrix[$cgId][$deptId]['projection'] += $projection;
 
         if (isset($groupTotals[$cgId])) {
-          $groupTotals[$cgId]['budget']      += $budget;
+          $groupTotals[$cgId]['budget'] += $budget;
           $groupTotals[$cgId]['realization'] += $realization;
-          $groupTotals[$cgId]['projection']  += $projection;
+          $groupTotals[$cgId]['projection'] += $projection;
         }
 
         if (isset($deptTotals[$deptId])) {
           if ($isInflow) {
-            $deptTotals[$deptId]['inflow_budget']      += $budget;
+            $deptTotals[$deptId]['inflow_budget'] += $budget;
             $deptTotals[$deptId]['inflow_realization'] += $realization;
-            $deptTotals[$deptId]['inflow_projection']  += $projection;
+            $deptTotals[$deptId]['inflow_projection'] += $projection;
           } else {
-            $deptTotals[$deptId]['outflow_budget']      += $budget;
+            $deptTotals[$deptId]['outflow_budget'] += $budget;
             $deptTotals[$deptId]['outflow_realization'] += $realization;
-            $deptTotals[$deptId]['outflow_projection']  += $projection;
+            $deptTotals[$deptId]['outflow_projection'] += $projection;
           }
 
-          $deptTotals[$deptId]['net_budget']      = $deptTotals[$deptId]['inflow_budget']      - $deptTotals[$deptId]['outflow_budget'];
+          $deptTotals[$deptId]['net_budget'] = $deptTotals[$deptId]['inflow_budget'] - $deptTotals[$deptId]['outflow_budget'];
           $deptTotals[$deptId]['net_realization'] = $deptTotals[$deptId]['inflow_realization'] - $deptTotals[$deptId]['outflow_realization'];
-          $deptTotals[$deptId]['net_projection']  = $deptTotals[$deptId]['inflow_projection']  - $deptTotals[$deptId]['outflow_projection'];
+          $deptTotals[$deptId]['net_projection'] = $deptTotals[$deptId]['inflow_projection'] - $deptTotals[$deptId]['outflow_projection'];
         }
       }
     }
@@ -3205,41 +3211,42 @@ class Analytics extends Controller
     $reportData = [];
     foreach ($cfReportGroups as $rg) {
       $reportData[$rg->id] = [
-        'label'    => $rg->name,
-        'rows'     => [],
+        'label' => $rg->name,
+        'rows' => [],
         'subtotal' => ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0],
       ];
     }
 
     foreach ($cashflowGroups as $cg) {
       $rgId = $cg->report_group_id;
-      if (!$rgId || !isset($reportData[$rgId])) continue;
+      if (!$rgId || !isset($reportData[$rgId]))
+        continue;
 
-      $gTot     = $groupTotals[$cg->id] ?? ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
+      $gTot = $groupTotals[$cg->id] ?? ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
       $isInflow = ($cgTypeMap[$cg->id] ?? 'outflow') === 'inflow';
-      $sign     = $isInflow ? 1 : -1;
+      $sign = $isInflow ? 1 : -1;
 
       $reportData[$rgId]['rows'][] = [
-        'code'        => $cg->code,
-        'name'        => $cg->name,
-        'is_inflow'   => $isInflow,
-        'budget'      => $gTot['budget'],
+        'code' => $cg->code,
+        'name' => $cg->name,
+        'is_inflow' => $isInflow,
+        'budget' => $gTot['budget'],
         'realization' => $gTot['realization'],
-        'projection'  => $gTot['projection'],
+        'projection' => $gTot['projection'],
       ];
 
       // Subtotal: inflow adds, outflow subtracts
-      $reportData[$rgId]['subtotal']['budget']      += $sign * $gTot['budget'];
+      $reportData[$rgId]['subtotal']['budget'] += $sign * $gTot['budget'];
       $reportData[$rgId]['subtotal']['realization'] += $sign * $gTot['realization'];
-      $reportData[$rgId]['subtotal']['projection']  += $sign * $gTot['projection'];
+      $reportData[$rgId]['subtotal']['projection'] += $sign * $gTot['projection'];
     }
 
     // Grand total kenaikan/penurunan netto kas
     $grandTotal = ['budget' => 0.0, 'realization' => 0.0, 'projection' => 0.0];
     foreach ($reportData as $section) {
-      $grandTotal['budget']      += $section['subtotal']['budget'];
+      $grandTotal['budget'] += $section['subtotal']['budget'];
       $grandTotal['realization'] += $section['subtotal']['realization'];
-      $grandTotal['projection']  += $section['subtotal']['projection'];
+      $grandTotal['projection'] += $section['subtotal']['projection'];
     }
 
     return view('content.dashboard.analytics-summary-dept-cashflow', compact(
@@ -3363,14 +3370,80 @@ class Analytics extends Controller
   public static function getCapexCoaCodes(): array
   {
     return [
-      '1105000001', '1201010001', '1201020001', '1201030001', '1201040001', '1201050001', '1201060001', '1201070001', '1201080001', '1201090001',
-      '1201100001', '1201990001', '1201999999', '1203010001', '1203010101', '1203010201', '1203010202', '1203010203', '1203010204', '1203010205',
-      '1203010206', '1203010207', '1203010299', '1203010301', '1203010302', '1203010303', '1203010304', '1203010399', '1203010401', '1203010402',
-      '1203010403', '1203010501', '1203010601', '1203010701', '1203019901', '1203020001', '1203020101', '1203020201', '1203020202', '1203020299',
-      '1203020301', '1203020302', '1203020303', '1203020399', '1203020401', '1203020402', '1203020403', '1203029901', '1203030101', '1203030201',
-      '1203030301', '1203030399', '1203030401', '1203030402', '1203040301', '1203030403', '1203030501', '1203030502', '1203030503', '1203030504',
-      '1203030505', '1203030506', '1203040101', '1203040102', '1203040103', '1203040201', '1203040302', '1203049901', '1204000001', '1204000002',
-      '1204000003', '1204000004', '1206000001', '1299000001'
+      '1105000001',
+      '1201010001',
+      '1201020001',
+      '1201030001',
+      '1201040001',
+      '1201050001',
+      '1201060001',
+      '1201070001',
+      '1201080001',
+      '1201090001',
+      '1201100001',
+      '1201990001',
+      '1201999999',
+      '1203010001',
+      '1203010101',
+      '1203010201',
+      '1203010202',
+      '1203010203',
+      '1203010204',
+      '1203010205',
+      '1203010206',
+      '1203010207',
+      '1203010299',
+      '1203010301',
+      '1203010302',
+      '1203010303',
+      '1203010304',
+      '1203010399',
+      '1203010401',
+      '1203010402',
+      '1203010403',
+      '1203010501',
+      '1203010601',
+      '1203010701',
+      '1203019901',
+      '1203020001',
+      '1203020101',
+      '1203020201',
+      '1203020202',
+      '1203020299',
+      '1203020301',
+      '1203020302',
+      '1203020303',
+      '1203020399',
+      '1203020401',
+      '1203020402',
+      '1203020403',
+      '1203029901',
+      '1203030101',
+      '1203030201',
+      '1203030301',
+      '1203030399',
+      '1203030401',
+      '1203030402',
+      '1203040301',
+      '1203030403',
+      '1203030501',
+      '1203030502',
+      '1203030503',
+      '1203030504',
+      '1203030505',
+      '1203030506',
+      '1203040101',
+      '1203040102',
+      '1203040103',
+      '1203040201',
+      '1203040302',
+      '1203049901',
+      '1204000001',
+      '1204000002',
+      '1204000003',
+      '1204000004',
+      '1206000001',
+      '1299000001'
     ];
   }
 }

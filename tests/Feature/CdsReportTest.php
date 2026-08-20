@@ -20,18 +20,30 @@ use App\Models\Bureau;
 use Livewire\Livewire;
 use App\Livewire\Analytics\CdsReport;
 
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+
 class CdsReportTest extends TestCase
 {
     use RefreshDatabase;
 
     protected User $user;
+    protected User $unauthorizedUser;
     protected RkapPeriod $period;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        // Setup permissions and roles
+        $perm = Permission::firstOrCreate(['name' => 'analytics.cds.view', 'guard_name' => 'web']);
+        $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
+        $roleVerifikator->givePermissionTo($perm);
+
         $this->user = User::factory()->create();
+        $this->user->assignRole($roleVerifikator);
+
+        $this->unauthorizedUser = User::factory()->create();
 
         $this->period = RkapPeriod::create([
             'year' => 2026,
@@ -42,7 +54,13 @@ class CdsReportTest extends TestCase
         ]);
     }
 
-    public function test_authenticated_user_can_access_cds_report_page(): void
+    public function test_user_without_permission_cannot_access_cds_report_page(): void
+    {
+        $response = $this->actingAs($this->unauthorizedUser)->get(route('analytics-cds-report'));
+        $response->assertStatus(403);
+    }
+
+    public function test_authorized_user_can_access_cds_report_page(): void
     {
         $response = $this->actingAs($this->user)->get(route('analytics-cds-report'));
         $response->assertStatus(200);
