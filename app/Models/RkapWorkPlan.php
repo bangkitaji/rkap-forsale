@@ -69,6 +69,16 @@ class RkapWorkPlan extends Model
         return $this->hasMany(RkapActivityFile::class);
     }
 
+    public function trendJustifications(): HasMany
+    {
+        return $this->hasMany(RkapTrendJustification::class, 'rkap_work_plan_id');
+    }
+
+    public function trendJustification(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RkapTrendJustification::class, 'rkap_work_plan_id')->latestOfMany();
+    }
+
     public function getTotalBudgetAttribute(): float
     {
         $total = 0;

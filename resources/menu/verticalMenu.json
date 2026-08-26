@@ -110,6 +110,7 @@
       "icon": "menu-icon icon-base bx bx-git-merge",
       "slug": [
         "rkap-submissions",
+        "rkap-trend",
         "rkap-submissions-compilation",
         "rkap-projections",
         "rkap-projection-upload",
@@ -132,6 +133,13 @@
             "rkap-submissions-approval-review",
             "rkap-submissions-versions"
           ],
+          "permission": "rkap.show"
+        },
+        {
+          "url": "rkap/trend",
+          "icon": "menu-icon icon-base bx bx-trending-up",
+          "name": "Trend",
+          "slug": "rkap-trend",
           "permission": "rkap.show"
         },
         {

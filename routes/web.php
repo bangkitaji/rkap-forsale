@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
       ->middleware('permission:rkap.closing.manage')
       ->name('rkap-closing-periods');
     Route::get('/submissions', \App\Livewire\Rkap\RkapSubmissionList::class)->name('rkap-submissions');
+    Route::get('/trend', \App\Livewire\Rkap\RkapTrend::class)->name('rkap-trend');
     Route::get('/requests', \App\Livewire\Rkap\RkapRequests::class)->name('rkap-requests');
     Route::get('/submissions/create/{periodId}', \App\Livewire\Rkap\RkapSubmissionForm::class)->name('rkap-submissions-create');
     Route::get('/submissions/bulk-upload/{periodId}', \App\Livewire\Rkap\RkapBulkUpload::class)->name('rkap-submissions-bulk-upload');
