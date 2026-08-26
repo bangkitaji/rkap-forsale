@@ -6,6 +6,7 @@ use App\Models\RkapBudgetItem;
 use App\Models\RkapBudgetItemRealization;
 use App\Models\RkapPeriod;
 use App\Services\AnalyticsCacheService;
+use App\Services\ProjectionRecalculationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -457,6 +458,7 @@ class RkapRealizationUpload extends Component
         DB::transaction(function () use ($rows): void {
             $created = 0;
             $updated = 0;
+            $affectedBudgetItemIds = [];
 
             foreach ($rows as $row) {
                 $biId     = (int) $row['budget_item_id'];
@@ -487,7 +489,18 @@ class RkapRealizationUpload extends Component
                     ]);
                     $created++;
                 }
+
+                $affectedBudgetItemIds[] = $biId;
             }
+
+            // Recalculate and synchronize projections for affected budget items
+            ProjectionRecalculationService::recalculateForBudgetItems(
+                $affectedBudgetItemIds,
+                $this->periodId,
+                auth()->id(),
+                null,
+                'realization_mass_update'
+            );
 
             $this->massUpdateImportSummary = [
                 'created' => $created,
@@ -659,6 +672,7 @@ class RkapRealizationUpload extends Component
         DB::transaction(function () use ($rows): void {
             $created = 0;
             $updated = 0;
+            $affectedBudgetItemIds = [];
 
             foreach ($rows as $row) {
                 $biId     = (int) $row['budget_item_id'];
@@ -691,7 +705,18 @@ class RkapRealizationUpload extends Component
                     ]);
                     $created++;
                 }
+
+                $affectedBudgetItemIds[] = $biId;
             }
+
+            // Recalculate and synchronize projections for affected budget items
+            ProjectionRecalculationService::recalculateForBudgetItems(
+                $affectedBudgetItemIds,
+                $this->periodId,
+                auth()->id(),
+                null,
+                'realization_upload'
+            );
 
             $this->importSummary = [
                 'created' => $created,
@@ -723,8 +748,22 @@ class RkapRealizationUpload extends Component
                 session()->flash('error', __('Realisasi untuk bulan ') . $this->getMonthName($realization->month) . ' tidak dapat dihapus karena periode pengisian realisasi telah ditutup (' . $closingDateStr . ').');
                 return;
             }
+
+            $budgetItemId = $realization->rkap_budget_item_id;
+            $periodId = $realization->rkap_period_id;
+
             $realization->delete();
-            AnalyticsCacheService::flushPeriod($realization->rkap_period_id);
+
+            // Recalculate and synchronize projections for affected budget item
+            ProjectionRecalculationService::recalculateForBudgetItems(
+                [$budgetItemId],
+                $periodId,
+                auth()->id(),
+                null,
+                'realization_delete'
+            );
+
+            AnalyticsCacheService::flushPeriod($periodId);
             session()->flash('message', __('Data realisasi berhasil dihapus.'));
         }
     }

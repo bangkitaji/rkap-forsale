@@ -29,7 +29,11 @@ class RkapProjectionHistory extends Component
                     'id' => $log->id,
                     'created_at' => $log->created_at?->format('d M Y H:i:s'),
                     'user_name' => $log->user?->name ?? 'Sistem',
-                    'source' => $log->source === 'bulk_upload' ? 'Upload Massal Excel' : 'Penginputan Manual',
+                    'source' => match ($log->source) {
+                        'bulk_upload' => 'Upload Massal Excel',
+                        'realization_upload', 'realization_mass_update', 'realization_delete', 'realization_sync' => 'Sinkronisasi Realisasi',
+                        default => 'Penginputan Manual',
+                    },
                     'input_mode' => $log->input_mode === 'yearly' ? 'Tahunan' : 'Bulanan',
                     'old_total' => (float)$log->old_total,
                     'new_total' => (float)$log->new_total,

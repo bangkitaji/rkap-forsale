@@ -36,7 +36,7 @@
                 <div class="card mb-3 border shadow-none" x-data="{ expanded: false }">
                     <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center cursor-pointer" @click="expanded = !expanded">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <span class="badge {{ $log['source'] === 'Upload Massal Excel' ? 'bg-info' : 'bg-primary' }}">
+                            <span class="badge {{ $log['source'] === 'Upload Massal Excel' ? 'bg-info' : ($log['source'] === 'Sinkronisasi Realisasi' ? 'bg-warning' : 'bg-primary') }}">
                                 {{ $log['source'] }}
                             </span>
                             <span class="fw-semibold text-dark">{{ $log['created_at'] }}</span>
