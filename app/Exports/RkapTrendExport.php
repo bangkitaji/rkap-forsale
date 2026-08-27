@@ -38,6 +38,8 @@ class RkapTrendExport implements FromArray, WithEvents, ShouldAutoSize, WithStyl
         $rows[] = [
             'No',
             'Biro',
+            'Kode Program',
+            'Nama Program',
             'Kode Kegiatan',
             'Nama Kegiatan',
             $this->currentPeriodTitle,
@@ -57,6 +59,8 @@ class RkapTrendExport implements FromArray, WithEvents, ShouldAutoSize, WithStyl
             $rows[] = [
                 $no++,
                 $item['bureau_name'],
+                $item['program_code'] ?? '-',
+                $item['program_name'] ?? '-',
                 $item['code'],
                 $item['name'],
                 $item['rkap_current'],
@@ -75,6 +79,8 @@ class RkapTrendExport implements FromArray, WithEvents, ShouldAutoSize, WithStyl
         // Summary Total Row
         $rows[] = [
             'TOTAL',
+            '',
+            '',
             '',
             '',
             '',
@@ -119,18 +125,18 @@ class RkapTrendExport implements FromArray, WithEvents, ShouldAutoSize, WithStyl
                 $sheet = $event->sheet->getDelegate();
                 $lastRow = 7 + count($this->items) + 1;
 
-                // Format number columns (E, F, G, I, J)
+                // Format number columns (G, H, I, K, L)
                 $numberFormat = '#,##0.00;(#,##0.00);"-"';
-                $sheet->getStyle("E8:G{$lastRow}")->getNumberFormat()->setFormatCode($numberFormat);
-                $sheet->getStyle("I8:J{$lastRow}")->getNumberFormat()->setFormatCode($numberFormat);
+                $sheet->getStyle("G8:I{$lastRow}")->getNumberFormat()->setFormatCode($numberFormat);
+                $sheet->getStyle("K8:L{$lastRow}")->getNumberFormat()->setFormatCode($numberFormat);
 
                 // Border around data table
-                $sheet->getStyle("A7:N{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle("A7:P{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
                 // Highlight Total Row
-                $sheet->getStyle("A{$lastRow}:N{$lastRow}")->getFont()->setBold(true);
-                $sheet->getStyle("A{$lastRow}:N{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F4F8');
-                $sheet->mergeCells("A{$lastRow}:D{$lastRow}");
+                $sheet->getStyle("A{$lastRow}:P{$lastRow}")->getFont()->setBold(true);
+                $sheet->getStyle("A{$lastRow}:P{$lastRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F4F8');
+                $sheet->mergeCells("A{$lastRow}:F{$lastRow}");
                 $sheet->getStyle("A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             },
         ];

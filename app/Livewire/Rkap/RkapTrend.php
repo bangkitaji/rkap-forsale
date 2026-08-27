@@ -368,6 +368,8 @@ class RkapTrend extends Component
             ->whereIn('bureau_id', $targetBureauIds)
             ->with([
                 'bureau.department.directorate',
+                'workPlans.activity',
+                'workPlans.workPlan',
                 'workPlans.budgetItems',
                 'workPlans.trendJustifications' => fn($q) => $q->where('current_period_id', $this->currentPeriodId)
                     ->where('proposal_period_id', $this->proposalPeriodId)
@@ -477,8 +479,10 @@ class RkapTrend extends Component
                 $items[] = [
                     'work_plan_id' => $pWp->id,
                     'activity_id' => $pWp->activity_id,
-                    'code' => $pWp->program_code ?? '-',
-                    'name' => $pWp->program_name ?? '-',
+                    'program_code' => $pWp->workPlan ? $pWp->workPlan->code : ($pWp->program_code ?? '-'),
+                    'program_name' => $pWp->workPlan ? $pWp->workPlan->title : ($pWp->program_name ?? '-'),
+                    'code' => $pWp->activity ? $pWp->activity->code : ($pWp->workPlan ? $pWp->workPlan->code : ($pWp->program_code ?? '-')),
+                    'name' => $pWp->activity ? $pWp->activity->title : ($pWp->workPlan ? $pWp->workPlan->title : ($pWp->program_name ?? '-')),
                     'description' => $pWp->description,
                     'bureau_id' => $bId,
                     'bureau_name' => $bureauName,
