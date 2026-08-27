@@ -724,7 +724,7 @@ class RkapSubmissionForm extends Component
     public function handleFileUpload(): void
     {
         $this->validate([
-            'referenceFile' => 'required|file|mimes:doc,docx,xls,xlsx,pdf,zip,jpg,jpeg,png,gif,svg|max:2048',
+            'referenceFile' => 'required|file|mimes:doc,docx,xls,xlsx,pdf,zip,jpg,jpeg,png,gif,svg|max:5120',
         ]);
 
         $wpIdx = $this->uploadWpIdx;
