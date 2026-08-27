@@ -241,33 +241,28 @@
   <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+        <table class="table table-hover align-middle mb-0 w-100" style="font-size: 0.85rem; width: 100%;">
           <thead class="table-light">
-            <tr class="text-nowrap">
-              <th class="text-center" style="width: 40px;">#</th>
-              <th style="min-width: 250px;">{{ __('KEGIATAN') }}</th>
-              <th class="text-end" style="min-width: 140px;">
-                <div>{{ $currentPeriodTitle ?? 'RKAP Berjalan' }}</div>
-                <small class="text-muted fw-normal">({{ __('RKAP') }})</small>
+            <tr>
+              <th style="width: 28%;">{{ __('KEGIATAN') }}</th>
+              <th class="text-end" style="width: 15%;">
+                <div>{{ __('RKAP') }} {{ $currentPeriodYear ?? '' }}</div>
+                <small class="text-muted fw-normal">{{ __('PROYEKSI') }} {{ $currentPeriodYear ?? '' }}</small>
               </th>
-              <th class="text-end" style="min-width: 140px;">
-                <div>{{ __('PROYEKSI') }}</div>
-                <small class="text-muted fw-normal">({{ $currentPeriodTitle ?? 'Berjalan' }})</small>
-              </th>
-              <th class="text-end" style="min-width: 150px;">
+              <th class="text-end" style="width: 14%;">
                 <div>{{ __('Deviasi') }}</div>
                 <small class="text-muted fw-normal">(RKAP - Proyeksi)</small>
               </th>
-              <th class="text-end" style="min-width: 140px;">
+              <th class="text-end" style="width: 14%;">
                 <div>{{ $proposalPeriodTitle ?? 'RKAP Usulan' }}</div>
                 <small class="text-muted fw-normal">({{ __('Usulan') }})</small>
               </th>
-              <th class="text-end" style="min-width: 160px;">
+              <th class="text-end" style="width: 14%;">
                 <div>{{ __('Deviasi') }}</div>
                 <small class="text-muted fw-normal">(Usulan - Berjalan)</small>
               </th>
-              <th class="text-center" style="min-width: 130px;">{{ __('STATUS') }}</th>
-              <th class="text-center" style="width: 70px;">{{ __('AKSI') }}</th>
+              <th class="text-center" style="width: 10%;">{{ __('STATUS') }}</th>
+              <th class="text-center" style="width: 5%; min-width: 45px;">{{ __('AKSI') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -278,20 +273,15 @@
               {{-- Main Row --}}
               <tr class="{{ $isExpanded ? 'table-active' : '' }}" style="cursor: pointer;"
                 wire:key="row-{{ $item['work_plan_id'] }}">
-                <td class="text-center text-muted" wire:click="toggleRow({{ $item['work_plan_id'] }})">
-                  {{ $index + 1 }}
-                </td>
                 <td wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   <div class="text-primary fw-semibold small">{{ $item['code'] }}</div>
-                  <div class="fw-bold text-dark">{{ $item['name'] }}</div>
+                  <div class="fw-bold text-dark text-break">{{ $item['name'] }}</div>
                 </td>
-                <td class="text-end fw-semibold text-nowrap" wire:click="toggleRow({{ $item['work_plan_id'] }})">
-                  Rp {{ number_format($item['rkap_current'], 0, ',', '.') }}
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
+                  <div class="fw-bold text-dark text-nowrap">Rp {{ number_format($item['rkap_current'], 0, ',', '.') }}</div>
+                  <div class="text-muted small text-nowrap">Rp {{ number_format($item['projection_current'], 0, ',', '.') }}</div>
                 </td>
-                <td class="text-end text-nowrap" wire:click="toggleRow({{ $item['work_plan_id'] }})">
-                  Rp {{ number_format($item['projection_current'], 0, ',', '.') }}
-                </td>
-                <td class="text-end text-nowrap" wire:click="toggleRow({{ $item['work_plan_id'] }})">
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($item['dev_projection'] > 0)
                     <span class="badge bg-label-success">
                       +Rp {{ number_format($item['dev_projection'], 0, ',', '.') }} <i class="bx bx-up-arrow-alt"></i>
@@ -305,11 +295,11 @@
                     <span class="badge bg-label-secondary">Rp 0</span>
                   @endif
                 </td>
-                <td class="text-end fw-bold text-primary text-nowrap"
+                <td class="text-end fw-bold text-primary"
                   wire:click="toggleRow({{ $item['work_plan_id'] }})">
-                  Rp {{ number_format($item['rkap_proposed'], 0, ',', '.') }}
+                  <span class="text-nowrap">Rp {{ number_format($item['rkap_proposed'], 0, ',', '.') }}</span>
                 </td>
-                <td class="text-end text-nowrap" wire:click="toggleRow({{ $item['work_plan_id'] }})">
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($item['dev_proposal'] > 0)
                     <span class="badge bg-label-primary">
                       +Rp {{ number_format($item['dev_proposal'], 0, ',', '.') }} <i class="bx bx-up-arrow-alt"></i>
@@ -346,14 +336,14 @@
               {{-- Accordion Expanded Detail Form --}}
               @if ($isExpanded)
                 <tr class="bg-light" wire:key="detail-{{ $item['work_plan_id'] }}">
-                  <td colspan="9" class="p-3 p-md-4 border-bottom shadow-inner">
+                  <td colspan="7" class="p-3 p-md-4 border-bottom shadow-inner">
                     <div class="card border border-primary border-opacity-25 shadow-sm bg-white">
                       <div
-                        class="card-header bg-white d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
-                        <div class="d-flex align-items-center gap-2">
+                        class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                           <span class="badge bg-label-primary"><i
                               class="bx bx-message-square-detail me-1"></i>{{ __('Justifikasi Deviasi') }}</span>
-                          <span class="fw-bold text-dark">{{ $item['code'] }} — {{ $item['name'] }}</span>
+                          <span class="fw-bold text-dark text-break">{{ $item['code'] }} — {{ $item['name'] }}</span>
                           <span class="text-muted small">({{ $item['bureau_name'] }})</span>
                         </div>
                         @if ($item['updater_name'])
@@ -376,7 +366,7 @@
                           {{-- Deviation 1: RKAP vs Proyeksi --}}
                           <div class="col-12">
                             <div class="p-3 bg-white rounded border shadow-xs">
-                              <div class="d-flex justify-content-between align-items-center mb-2">
+                              <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                                 <label class="form-label fw-bold text-dark mb-0">
                                   1. {{ __('Deviasi RKAP dengan Proyeksi') }} ({{ $currentPeriodTitle ?? '2026' }})
                                 </label>
@@ -405,7 +395,7 @@
                           {{-- Deviation 2: RKAP Berjalan vs RKAP Usulan --}}
                           <div class="col-12">
                             <div class="p-3 bg-white rounded border shadow-xs">
-                              <div class="d-flex justify-content-between align-items-center mb-2">
+                              <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                                 <label class="form-label fw-bold text-dark mb-0">
                                   2. {{ __('Deviasi RKAP Berjalan dengan RKAP Usulan') }}
                                   ({{ $proposalPeriodTitle ?? '2027' }})
@@ -434,7 +424,7 @@
                         </div>
 
                         {{-- Action Buttons --}}
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top gap-2">
                           <div class="text-muted fs-tiny">
                             @if ($item['can_edit'])
                               <i class="bx bx-edit text-primary me-1"></i>
@@ -473,7 +463,7 @@
               @endif
             @empty
               <tr>
-                <td colspan="9" class="text-center py-5">
+                <td colspan="7" class="text-center py-5">
                   <div class="d-flex flex-column align-items-center justify-content-center">
                     <div
                       class="avatar avatar-xl bg-label-secondary mb-3 rounded-circle p-3 d-flex align-items-center justify-content-center">
@@ -495,19 +485,21 @@
           {{-- Table Footer Summary --}}
           @if (count($trendData['items']) > 0)
             <tfoot class="table-light fw-bold">
-              <tr class="text-nowrap">
-                <td colspan="2" class="text-center">{{ __('TOTAL') }} ({{ count($trendData['items']) }}
-                  {{ __('Kegiatan') }})</td>
-                <td class="text-end">Rp {{ number_format($summary['total_rkap_current'], 0, ',', '.') }}</td>
-                <td class="text-end">Rp {{ number_format($summary['total_proj_current'], 0, ',', '.') }}</td>
+              <tr>
+                <td>{{ __('TOTAL') }} ({{ count($trendData['items']) }} {{ __('Kegiatan') }})</td>
+                <td class="text-end">
+                  <div class="fw-bold text-dark text-nowrap">Rp {{ number_format($summary['total_rkap_current'], 0, ',', '.') }}</div>
+                  <div class="text-muted small fw-normal text-nowrap">Rp {{ number_format($summary['total_proj_current'], 0, ',', '.') }}</div>
+                </td>
                 <td class="text-end">
                   <span class="badge {{ $summary['total_dev_proj'] >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
                     {{ $summary['total_dev_proj'] >= 0 ? '+' : '' }}Rp
                     {{ number_format($summary['total_dev_proj'], 0, ',', '.') }}
                   </span>
                 </td>
-                <td class="text-end text-primary">Rp
-                  {{ number_format($summary['total_rkap_proposed'], 0, ',', '.') }}</td>
+                <td class="text-end text-primary">
+                  <span class="text-nowrap">Rp {{ number_format($summary['total_rkap_proposed'], 0, ',', '.') }}</span>
+                </td>
                 <td class="text-end">
                   <span
                     class="badge {{ $summary['total_dev_prop'] >= 0 ? 'bg-label-primary' : 'bg-label-warning' }}">

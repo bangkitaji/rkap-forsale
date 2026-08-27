@@ -21,6 +21,8 @@ class RkapTrend extends Component
     public ?int $proposalPeriodId = null;
     public ?string $currentPeriodTitle = null;
     public ?string $proposalPeriodTitle = null;
+    public ?int $currentPeriodYear = null;
+    public ?int $proposalPeriodYear = null;
 
     public ?int $directorateId = null;
     public ?int $departmentId = null;
@@ -54,6 +56,7 @@ class RkapTrend extends Component
         if ($currentPeriod) {
             $this->currentPeriodId = $currentPeriod->id;
             $this->currentPeriodTitle = $currentPeriod->title;
+            $this->currentPeriodYear = (int) $currentPeriod->year;
         }
 
         // 2. Auto-detect Proposal Period (RKAP Usulan - e.g. 2027 Open)
@@ -66,6 +69,7 @@ class RkapTrend extends Component
         if ($proposalPeriod) {
             $this->proposalPeriodId = $proposalPeriod->id;
             $this->proposalPeriodTitle = $proposalPeriod->title;
+            $this->proposalPeriodYear = (int) $proposalPeriod->year;
         }
 
         // 3. Organization Filter Scoping based on Role
