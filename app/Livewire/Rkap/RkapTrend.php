@@ -434,11 +434,9 @@ class RkapTrend extends Component
         if ($cWp->activity_id) {
           $mapKey = $bId . '_a_' . $cWp->activity_id;
           $currentWorkPlansMap[$mapKey] = $wpData;
-        }
-        if ($cWp->program_code) {
+        } elseif ($cWp->program_code) {
           $mapKey = $bId . '_c_' . $cWp->program_code;
-          // Jangan timpa jika sudah ada dari activity_id
-          $currentWorkPlansMap[$mapKey] ??= $wpData;
+          $currentWorkPlansMap[$mapKey] = $wpData;
         }
         // Selalu simpan juga per ID agar pass-2 tidak kehilangan data
         $currentWorkPlansMap['id_' . $cWp->id] = $wpData;
@@ -460,12 +458,13 @@ class RkapTrend extends Component
       $bureauInfo = $bureauInfoMap[$bId] ?? ['bureau_name' => '-', 'department_name' => '-', 'directorate_name' => '-'];
 
       foreach ($pSub->workPlans as $pWp) {
-        // Cari pasangan di RKAP berjalan (activity_id lebih prioritas)
+        // Cari pasangan di RKAP berjalan
+        // Harus strict: jika ada activity_id, gunakan activity_id.
+        // Jika tidak ada activity_id, baru gunakan program_code.
         $currData = null;
         if ($pWp->activity_id) {
           $currData = $currentWorkPlansMap[$bId . '_a_' . $pWp->activity_id] ?? null;
-        }
-        if (!$currData && $pWp->program_code) {
+        } elseif ($pWp->program_code) {
           $currData = $currentWorkPlansMap[$bId . '_c_' . $pWp->program_code] ?? null;
         }
 
@@ -473,11 +472,10 @@ class RkapTrend extends Component
         if ($currData) {
           $cWpId = $currData['wp']->id;
           $matchedWpIds[$cWpId] = true;
-          // Tandai di semua map key agar tidak muncul dobel di pass 2
+          // Tandai di map key agar tidak muncul dobel di pass 2
           if ($currData['wp']->activity_id) {
             $currentWorkPlansMap[$bId . '_a_' . $currData['wp']->activity_id]['matched'] = true;
-          }
-          if ($currData['wp']->program_code) {
+          } elseif ($currData['wp']->program_code) {
             $currentWorkPlansMap[$bId . '_c_' . $currData['wp']->program_code]['matched'] = true;
           }
           $currentWorkPlansMap['id_' . $cWpId]['matched'] = true;
