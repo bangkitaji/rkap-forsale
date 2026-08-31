@@ -42,8 +42,12 @@ class RkapTrendJustification extends Model
             || !empty(trim((string)$this->justification_deviation_proposal));
     }
 
-    public function isFullyFilled(): bool
+    public function isFullyFilled(string $itemType = 'matched'): bool
     {
+        if ($itemType === 'new') {
+            return !empty(trim((string)$this->justification_deviation_proposal));
+        }
+
         return !empty(trim((string)$this->justification_deviation_projection))
             && !empty(trim((string)$this->justification_deviation_proposal));
     }

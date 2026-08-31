@@ -348,4 +348,27 @@ class RkapTrendJustificationTest extends TestCase
             'justification_deviation_proposal' => 'Mencoba ubah tanpa hak akses',
         ]);
     }
+
+    public function test_new_activity_justification_status_is_complete_when_proposal_justification_is_filled(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $newWpId = $this->proposalWorkPlanNew->id;
+
+        // Fill only proposal justification for new activity
+        $testComponent = Livewire::test(RkapTrend::class)
+            ->set("justificationForm.{$newWpId}.proposal", 'Urgensi kegiatan baru 2027')
+            ->call('saveJustification', $newWpId);
+
+        $items = collect($testComponent->get('trendData')['items']);
+        $newItem = $items->firstWhere('work_plan_id', $newWpId);
+
+        $this->assertNotNull($newItem);
+        $this->assertEquals('new', $newItem['item_type']);
+        $this->assertTrue($newItem['is_filled']);
+        $this->assertTrue($newItem['is_fully_filled']);
+
+        // Check HTML renders 'Lengkap' badge
+        $testComponent->assertSee('Lengkap');
+    }
 }

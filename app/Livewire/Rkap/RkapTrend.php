@@ -487,9 +487,10 @@ class RkapTrend extends Component
         $rkapProposed = (float) $pWp->total_budget;
         $devProp = $projCurrent > 0 ? ($rkapProposed - $projCurrent) : ($rkapProposed - $rkapCurrent);
 
+        $itemType = $currData ? 'matched' : 'new';
         $justification = $pWp->trendJustifications->first();
         $isFilled = $justification ? $justification->isFilled() : false;
-        $isFullyFilled = $justification ? $justification->isFullyFilled() : false;
+        $isFullyFilled = $justification ? $justification->isFullyFilled($itemType) : false;
 
         if ($isFilled) {
           $filledCount++;
@@ -534,7 +535,7 @@ class RkapTrend extends Component
           'can_edit'                 => $this->canEditJustification($bId),
           // 'matched'  = ada di kedua periode
           // 'new'      = kegiatan baru (hanya di usulan, tidak ada di berjalan)
-          'item_type'                => $currData ? 'matched' : 'new',
+          'item_type'                => $itemType,
         ];
       }
     }
