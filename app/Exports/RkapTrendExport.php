@@ -32,9 +32,9 @@ class RkapTrendExport implements FromArray, WithEvents, ShouldAutoSize, WithStyl
         $rows[] = ['Periode Berjalan', $this->currentPeriodTitle];
         $rows[] = ['Periode Usulan', $this->proposalPeriodTitle];
         $rows[] = ['Tanggal Cetak', now()->format('d/m/Y H:i')];
-        $rows[] = []; // Empty separator
+        $rows[] = ['']; // Empty separator row
 
-        // Table Header
+        // Table Header (Row 7)
         $rows[] = [
             'No',
             'Biro',

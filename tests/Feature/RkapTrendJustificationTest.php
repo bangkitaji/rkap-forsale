@@ -371,4 +371,83 @@ class RkapTrendJustificationTest extends TestCase
         // Check HTML renders 'Lengkap' badge
         $testComponent->assertSee('Lengkap');
     }
+
+    public function test_summary_tab_displays_progress_per_bureau_accurately(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // Initially: bureau has 3 activities (1 matched, 1 discontinued, 1 new)
+        // None is filled yet
+        $test = Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary')
+            ->assertSee('Ringkasan Trend')
+            ->assertSee('Progress Pengisian Justifikasi Trend per Biro');
+
+        $summaryData = $test->get('summaryData');
+        $this->assertNotEmpty($summaryData['rows']);
+        $this->assertEquals(3, $summaryData['stats']['total_activities']);
+        $this->assertEquals(0, $summaryData['stats']['filled_activities']);
+        $this->assertEquals(3, $summaryData['stats']['unfilled_activities']);
+        $this->assertEquals(0.0, $summaryData['stats']['percentage']);
+
+        // Now save justification for 1 activity
+        $newWpId = $this->proposalWorkPlanNew->id;
+        Livewire::test(RkapTrend::class)
+            ->set("justificationForm.{$newWpId}.proposal", 'Alasan kegiatan baru')
+            ->call('saveJustification', $newWpId);
+
+        // Check summary tab again
+        $testUpdated = Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary');
+
+        $updatedSummaryData = $testUpdated->get('summaryData');
+        $this->assertEquals(3, $updatedSummaryData['stats']['total_activities']);
+        $this->assertEquals(1, $updatedSummaryData['stats']['filled_activities']);
+        $this->assertEquals(2, $updatedSummaryData['stats']['unfilled_activities']);
+        $this->assertEquals(33.3, $updatedSummaryData['stats']['percentage']);
+    }
+
+    public function test_summary_tab_multi_select_status_filter_works(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        // When none filled, bureau status is 'Belum Diisi'
+        $test = Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary')
+            ->set('filterSummaryStatus', ['Belum Diisi']);
+
+        $rows = $test->get('summaryData')['rows'];
+        $this->assertCount(1, $rows);
+        $this->assertEquals('Belum Diisi', $rows[0]['status']);
+
+        // Filter for 'Selesai' should return empty rows
+        $testSelesai = Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary')
+            ->set('filterSummaryStatus', ['Selesai']);
+
+        $this->assertEmpty($testSelesai->get('summaryData')['rows']);
+    }
+
+    public function test_user_can_drill_down_from_summary_tab_to_trend_detail(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary')
+            ->call('viewBureauDetail', $this->bureau->id)
+            ->assertSet('activeTab', 'trend')
+            ->assertSet('bureauId', $this->bureau->id)
+            ->assertSee('Kegiatan Lama Berlanjut')
+            ->assertSee('Kegiatan Baru 2027');
+    }
+
+    public function test_summary_export_downloads_excel_file(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        Livewire::test(RkapTrend::class)
+            ->set('activeTab', 'summary')
+            ->call('exportExcel')
+            ->assertFileDownloaded();
+    }
 }

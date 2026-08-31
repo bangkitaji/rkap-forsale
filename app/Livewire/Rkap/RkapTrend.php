@@ -11,12 +11,15 @@ use App\Models\Bureau;
 use App\Models\Department;
 use App\Models\Directorate;
 use App\Exports\RkapTrendExport;
+use App\Exports\RkapTrendSummaryExport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RkapTrend extends Component
 {
+  public string $activeTab = 'trend'; // 'trend' | 'summary'
+
   public ?int $currentPeriodId = null;
   public ?int $proposalPeriodId = null;
   public ?string $currentPeriodTitle = null;
@@ -30,13 +33,16 @@ class RkapTrend extends Component
 
   public string $search = '';
   public string $filterStatus = 'all'; // 'all', 'filled', 'unfilled'
+  public array $filterSummaryStatus = []; // Multi-select: ['Selesai', 'Sedang Diisi', 'Belum Diisi']
 
   public array $expandedRows = [];
   public array $justificationForm = [];
 
   protected $queryString = [
+    'activeTab' => ['except' => 'trend'],
     'search' => ['except' => ''],
     'filterStatus' => ['except' => 'all'],
+    'filterSummaryStatus' => ['except' => []],
   ];
 
   public function mount(): void
@@ -307,8 +313,48 @@ class RkapTrend extends Component
   /**
    * Export current trend view data to Excel.
    */
+  /**
+   * Drilldown from summary row to trend detail tab for a specific bureau.
+   */
+  public function viewBureauDetail(int $bureauId): void
+  {
+    $bureau = Bureau::with('department')->find($bureauId);
+    if ($bureau) {
+      $this->directorateId = $bureau->department?->directorate_id ?? $this->directorateId;
+      $this->departmentId = $bureau->department_id ?? $this->departmentId;
+      $this->bureauId = $bureau->id;
+    }
+    $this->activeTab = 'trend';
+    $this->search = '';
+    $this->filterStatus = 'all';
+    $this->expandedRows = [];
+  }
+
+  /**
+   * Export current view data (Trend Details or Summary Progress) to Excel.
+   */
   public function exportExcel()
   {
+    $user = Auth::user();
+    if (!$user || !$user->can('rkap.show')) {
+      abort(403, __('Anda tidak memiliki akses untuk mengekspor data ini.'));
+    }
+
+    if ($this->activeTab === 'summary') {
+      $data = $this->summaryData;
+      $filename = 'Ringkasan_Progres_Justifikasi_RKAP_' . now()->format('YmdHis') . '.xlsx';
+
+      return Excel::download(
+        new RkapTrendSummaryExport(
+          $data,
+          $this->currentPeriodTitle ?? 'RKAP Berjalan',
+          $this->proposalPeriodTitle ?? 'RKAP Usulan',
+          Auth::user()->organization_name
+        ),
+        $filename
+      );
+    }
+
     $data = $this->trendData;
     $filename = 'Trend_Justifikasi_RKAP_' . now()->format('YmdHis') . '.xlsx';
 
@@ -325,19 +371,17 @@ class RkapTrend extends Component
   }
 
   /**
-   * Get computed trend data and summary metrics.
-   * Menggunakan strategi union: menampilkan semua work plan dari KEDUA periode
-   * (berjalan & usulan) sehingga tidak ada data yang tertinggal.
+   * Get raw unfiltered trend items for both periods (Pass 1 and Pass 2 union).
    */
-  public function getTrendDataProperty(): array
+  public function getRawTrendItems(): array
   {
     if (!$this->proposalPeriodId || !$this->currentPeriodId) {
-      return $this->emptyTrendResult();
+      return [];
     }
 
     $targetBureauIds = $this->getTargetBureauIds();
     if (empty($targetBureauIds)) {
-      return $this->emptyTrendResult();
+      return [];
     }
 
     $validStatuses = [
@@ -407,8 +451,7 @@ class RkapTrend extends Component
     }
 
     // 4. Bangun map work plan berjalan: key = bureauId_activityId atau bureauId_c_programCode
-    //    Kunci ganda (activity_id DAN program_code) agar pencocokan lebih fleksibel
-    $currentWorkPlansMap = []; // key => wpData
+    $currentWorkPlansMap = [];
     foreach ($currentSubmissions as $cSub) {
       $bId = $cSub->bureau_id;
       foreach ($cSub->workPlans as $cWp) {
@@ -438,19 +481,12 @@ class RkapTrend extends Component
           $mapKey = $bId . '_c_' . $cWp->program_code;
           $currentWorkPlansMap[$mapKey] = $wpData;
         }
-        // Selalu simpan juga per ID agar pass-2 tidak kehilangan data
         $currentWorkPlansMap['id_' . $cWp->id] = $wpData;
       }
     }
 
     $items = [];
-    $totalRkapCurrent = 0.0;
-    $totalProjCurrent = 0.0;
-    $totalDevProj = 0.0;
-    $totalRkapProposed = 0.0;
-    $totalDevProp = 0.0;
-    $filledCount = 0;
-    $matchedWpIds = []; // mencatat work plan berjalan yang sudah dipakai
+    $matchedWpIds = [];
 
     // ── PASS 1: Dari sisi RKAP Usulan ─────────────────────────────────────
     foreach ($proposedSubmissions as $pSub) {
@@ -458,9 +494,6 @@ class RkapTrend extends Component
       $bureauInfo = $bureauInfoMap[$bId] ?? ['bureau_name' => '-', 'department_name' => '-', 'directorate_name' => '-'];
 
       foreach ($pSub->workPlans as $pWp) {
-        // Cari pasangan di RKAP berjalan
-        // Harus strict: jika ada activity_id, gunakan activity_id.
-        // Jika tidak ada activity_id, baru gunakan program_code.
         $currData = null;
         if ($pWp->activity_id) {
           $currData = $currentWorkPlansMap[$bId . '_a_' . $pWp->activity_id] ?? null;
@@ -468,11 +501,9 @@ class RkapTrend extends Component
           $currData = $currentWorkPlansMap[$bId . '_c_' . $pWp->program_code] ?? null;
         }
 
-        // Tandai work plan berjalan yang sudah dicocokkan
         if ($currData) {
           $cWpId = $currData['wp']->id;
           $matchedWpIds[$cWpId] = true;
-          // Tandai di map key agar tidak muncul dobel di pass 2
           if ($currData['wp']->activity_id) {
             $currentWorkPlansMap[$bId . '_a_' . $currData['wp']->activity_id]['matched'] = true;
           } elseif ($currData['wp']->program_code) {
@@ -491,16 +522,6 @@ class RkapTrend extends Component
         $justification = $pWp->trendJustifications->first();
         $isFilled = $justification ? $justification->isFilled() : false;
         $isFullyFilled = $justification ? $justification->isFullyFilled($itemType) : false;
-
-        if ($isFilled) {
-          $filledCount++;
-        }
-
-        $totalRkapCurrent += $rkapCurrent;
-        $totalProjCurrent += $projCurrent;
-        $totalDevProj += $devProj;
-        $totalRkapProposed += $rkapProposed;
-        $totalDevProp += $devProp;
 
         if (!isset($this->justificationForm[$pWp->id])) {
           $this->justificationForm[$pWp->id] = [
@@ -533,18 +554,14 @@ class RkapTrend extends Component
           'updated_at'               => $justification?->updated_at?->format('d/m/Y H:i'),
           'updater_name'             => $justification?->updater?->name,
           'can_edit'                 => $this->canEditJustification($bId),
-          // 'matched'  = ada di kedua periode
-          // 'new'      = kegiatan baru (hanya di usulan, tidak ada di berjalan)
           'item_type'                => $itemType,
         ];
       }
     }
 
     // ── PASS 2: Work plan berjalan yang tidak ada di RKAP Usulan ──────────
-    // Ditampilkan dengan rkap_proposed = 0 sehingga deviation = -projCurrent
-    $seenCurrentIds = []; // hindari duplikat jika satu WP terdaftar di dua key
+    $seenCurrentIds = [];
     foreach ($currentWorkPlansMap as $mapKey => $cwpData) {
-      // Hanya proses entry per-ID, bukan per activity/code (hindari dobel)
       if (!str_starts_with($mapKey, 'id_')) {
         continue;
       }
@@ -566,21 +583,11 @@ class RkapTrend extends Component
       $projCurrent = (float) $cwpData['total_projection'];
       $devProj = $rkapCurrent - $projCurrent;
       $rkapProposed = 0.0;
-      $devProp = -$projCurrent; // tidak ada usulan = selisih negatif sebesar proyeksi
-
-      $totalRkapCurrent += $rkapCurrent;
-      $totalProjCurrent += $projCurrent;
-      $totalDevProj += $devProj;
-      $totalDevProp += $devProp;
-      // $totalRkapProposed tidak bertambah (tidak ada usulan)
+      $devProp = -$projCurrent;
 
       $justification = $cWp->trendJustifications->first();
       $isFilled = $justification ? $justification->isFilled() : false;
       $isFullyFilled = $justification ? $justification->isFullyFilled() : false;
-
-      if ($isFilled) {
-        $filledCount++;
-      }
 
       if (!isset($this->justificationForm[$cWpId])) {
         $this->justificationForm[$cWpId] = [
@@ -613,12 +620,42 @@ class RkapTrend extends Component
         'updated_at'               => $justification?->updated_at?->format('d/m/Y H:i'),
         'updater_name'             => $justification?->updater?->name,
         'can_edit'                 => $this->canEditJustification($bId),
-        // 'discontinued' = kegiatan tidak diusulkan kembali (hanya di berjalan)
         'item_type'                => 'discontinued',
       ];
     }
 
+    return $items;
+  }
+
+  /**
+   * Get computed trend data and summary metrics for Detail Trend tab.
+   */
+  public function getTrendDataProperty(): array
+  {
+    $items = $this->getRawTrendItems();
+    if (empty($items)) {
+      return $this->emptyTrendResult();
+    }
+
     $totalActivities = count($items);
+    $filledCount = 0;
+    $totalRkapCurrent = 0.0;
+    $totalProjCurrent = 0.0;
+    $totalDevProj = 0.0;
+    $totalRkapProposed = 0.0;
+    $totalDevProp = 0.0;
+
+    foreach ($items as $item) {
+      if ($item['is_filled']) {
+        $filledCount++;
+      }
+      $totalRkapCurrent += $item['rkap_current'];
+      $totalProjCurrent += $item['projection_current'];
+      $totalDevProj += $item['dev_projection'];
+      $totalRkapProposed += $item['rkap_proposed'];
+      $totalDevProp += $item['dev_proposal'];
+    }
+
     $unfilledCount = $totalActivities - $filledCount;
     $percentage = $totalActivities > 0 ? round(($filledCount / $totalActivities) * 100) : 0;
 
@@ -658,6 +695,119 @@ class RkapTrend extends Component
   }
 
   /**
+   * Get progress report summary data per bureau for Ringkasan Trend tab.
+   */
+  public function getSummaryDataProperty(): array
+  {
+    if (!$this->proposalPeriodId || !$this->currentPeriodId) {
+      return [
+        'stats' => [
+          'total_bureaus' => 0,
+          'total_activities' => 0,
+          'filled_activities' => 0,
+          'unfilled_activities' => 0,
+          'percentage' => 0,
+        ],
+        'rows' => [],
+      ];
+    }
+
+    $targetBureauIds = $this->getTargetBureauIds();
+    if (empty($targetBureauIds)) {
+      return [
+        'stats' => [
+          'total_bureaus' => 0,
+          'total_activities' => 0,
+          'filled_activities' => 0,
+          'unfilled_activities' => 0,
+          'percentage' => 0,
+        ],
+        'rows' => [],
+      ];
+    }
+
+    $rawTrendItems = $this->getRawTrendItems();
+    $itemsByBureau = collect($rawTrendItems)->groupBy('bureau_id');
+
+    $bureaus = Bureau::with('department.directorate')
+      ->whereIn('id', $targetBureauIds)
+      ->orderBy('code')
+      ->get();
+
+    $rows = [];
+    foreach ($bureaus as $bur) {
+      $bureauItems = $itemsByBureau->get($bur->id, collect());
+      $bureauTotalActivities = $bureauItems->count();
+      $bureauFilledActivities = $bureauItems->filter(fn($item) => $item['is_filled'])->count();
+      $bureauUnfilledActivities = $bureauTotalActivities - $bureauFilledActivities;
+      $percent = $bureauTotalActivities > 0
+        ? round(($bureauFilledActivities / $bureauTotalActivities) * 100, 1)
+        : 0.0;
+
+      if ($bureauTotalActivities === 0) {
+        $status = 'Belum Ada Kegiatan';
+        $statusClass = 'bg-label-secondary';
+      } elseif ($percent === 100.0) {
+        $status = 'Selesai';
+        $statusClass = 'bg-label-success';
+      } elseif ($percent > 0.0) {
+        $status = 'Sedang Diisi';
+        $statusClass = 'bg-label-warning';
+      } else {
+        $status = 'Belum Diisi';
+        $statusClass = 'bg-label-secondary';
+      }
+
+      $rows[] = [
+        'bureau_id' => $bur->id,
+        'directorate' => $bur->department?->directorate?->name ?? '-',
+        'department' => $bur->department?->name ?? '-',
+        'bureau_code' => $bur->code,
+        'bureau_name' => $bur->name,
+        'total_activities' => $bureauTotalActivities,
+        'filled_activities' => $bureauFilledActivities,
+        'unfilled_activities' => $bureauUnfilledActivities,
+        'percentage' => $percent,
+        'status' => $status,
+        'status_class' => $statusClass,
+      ];
+    }
+
+    // Apply multi-select status filter if active
+    $collection = collect($rows);
+    $validStatuses = ['Selesai', 'Sedang Diisi', 'Belum Diisi', 'Belum Ada Kegiatan'];
+    $statuses = is_array($this->filterSummaryStatus)
+      ? $this->filterSummaryStatus
+      : (is_string($this->filterSummaryStatus) && $this->filterSummaryStatus !== '' ? [$this->filterSummaryStatus] : []);
+    $activeFilters = array_filter($statuses, fn($s) => in_array($s, $validStatuses));
+
+    if (!empty($activeFilters)) {
+      $collection = $collection->filter(fn($row) => in_array($row['status'], $activeFilters));
+    }
+
+    $sortedRows = $collection->sortBy('bureau_code')->values()->all();
+
+    $totalBureaus = count($sortedRows);
+    $grandTotalActivities = collect($sortedRows)->sum('total_activities');
+    $grandFilledActivities = collect($sortedRows)->sum('filled_activities');
+    $grandUnfilledActivities = collect($sortedRows)->sum('unfilled_activities');
+    $grandPercent = $grandTotalActivities > 0
+      ? round(($grandFilledActivities / $grandTotalActivities) * 100, 1)
+      : 0.0;
+
+    return [
+      'stats' => [
+        'total_bureaus' => $totalBureaus,
+        'total_activities' => $grandTotalActivities,
+        'filled_activities' => $grandFilledActivities,
+        'unfilled_activities' => $grandUnfilledActivities,
+        'percentage' => $grandPercent,
+      ],
+      'rows' => $sortedRows,
+    ];
+  }
+
+  /**
    * Return empty trend result structure.
    */
   private function emptyTrendResult(): array
@@ -682,6 +832,7 @@ class RkapTrend extends Component
   {
     return view('livewire.rkap.rkap-trend', [
       'trendData' => $this->trendData,
+      'summaryData' => $this->summaryData,
       'directorateOptions' => $this->directorateOptions,
       'departmentOptions' => $this->departmentOptions,
       'bureauOptions' => $this->bureauOptions,
