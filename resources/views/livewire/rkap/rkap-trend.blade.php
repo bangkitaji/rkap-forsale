@@ -92,6 +92,13 @@
     </div>
   </div>
 
+  @if (session()->has('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-sm" role="alert">
+      <i class="bx bx-error-circle me-1"></i> {{ session('error') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   {{-- Stats / Resume KPI Cards --}}
   @php
     $summary = $trendData['summary'];
@@ -106,7 +113,7 @@
             </div>
             <div>
               <div class="fw-bold fs-4">{{ number_format($summary['total_activities']) }}</div>
-              <div class="text-muted small">{{ __('Total Kegiatan Usulan') }}</div>
+              <div class="text-muted small">{{ __('Total Kegiatan') }}</div>
             </div>
           </div>
         </div>
@@ -231,7 +238,7 @@
           </div>
         </div>
         <div class="col-md-4 text-md-end text-muted small">
-          {{ __('Menampilkan') }} <strong>{{ count($trendData['items']) }}</strong> {{ __('kegiatan usulan') }}
+          {{ __('Menampilkan') }} <strong>{{ count($trendData['items']) }}</strong> {{ __('kegiatan') }}
         </div>
       </div>
     </div>
@@ -269,8 +276,7 @@
             @forelse ($trendData['items'] as $index => $item)
               @php
                 $itemType   = $item['item_type'] ?? 'matched'; // 'matched' | 'new' | 'discontinued'
-                $isEditable = $itemType !== 'discontinued';     // discontinued tidak bisa diedit
-                $isExpanded = $isEditable && in_array($item['work_plan_id'], $expandedRows);
+                $isExpanded = in_array($item['work_plan_id'], $expandedRows);
 
                 $rowClass = match($itemType) {
                     'new'          => 'table-success',        // hijau muda = kegiatan baru
@@ -280,11 +286,11 @@
               @endphp
               {{-- Main Row --}}
               <tr class="{{ $isExpanded ? 'table-active' : $rowClass }}"
-                style="cursor: {{ $isEditable ? 'pointer' : 'default' }};"
+                style="cursor: pointer;"
                 wire:key="row-{{ $item['work_plan_id'] }}">
 
                 {{-- Kolom: Kode & Nama Kegiatan --}}
-                <td {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
+                <td wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   <div class="text-primary fw-semibold small">{{ $item['code'] }}</div>
                   <div class="fw-bold text-dark text-break">{{ $item['name'] }}</div>
                   @if ($itemType === 'new')
@@ -305,7 +311,7 @@
                 </td>
 
                 {{-- Kolom: RKAP Berjalan & Proyeksi --}}
-                <td class="text-end" {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($itemType === 'new')
                     <div class="text-muted small fst-italic">{{ __('Tidak ada') }}</div>
                     <div class="text-muted small fst-italic">{{ __('Tidak ada') }}</div>
@@ -316,7 +322,7 @@
                 </td>
 
                 {{-- Kolom: Deviasi RKAP vs Proyeksi --}}
-                <td class="text-end" {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($itemType === 'new')
                     <span class="badge bg-label-secondary">-</span>
                   @elseif ($item['dev_projection'] > 0)
@@ -334,7 +340,7 @@
 
                 {{-- Kolom: RKAP Usulan --}}
                 <td class="text-end fw-bold text-primary"
-                  {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
+                  wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($itemType === 'discontinued')
                     <span class="text-muted fst-italic small">{{ __('Tidak diusulkan') }}</span>
                   @else
@@ -343,7 +349,7 @@
                 </td>
 
                 {{-- Kolom: Deviasi Usulan vs Berjalan --}}
-                <td class="text-end" {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
+                <td class="text-end" wire:click="toggleRow({{ $item['work_plan_id'] }})">
                   @if ($itemType === 'discontinued')
                     <span class="badge bg-label-secondary">-</span>
                   @elseif ($item['dev_proposal'] > 0)
@@ -360,21 +366,8 @@
                 </td>
 
                 {{-- Kolom: Status Justifikasi --}}
-                <td class="text-center" {{ $isEditable ? 'wire:click="toggleRow(' . $item['work_plan_id'] . ')"' : '' }}>
-                  @if ($itemType === 'discontinued')
-                    <span class="badge bg-label-warning"
-                      title="{{ __('Kegiatan tidak diusulkan kembali di periode berikutnya') }}">
-                      {{ __('Tidak Diusulkan Kembali') }}
-                    </span>
-                  @elseif ($itemType === 'new')
-                    @if ($item['is_fully_filled'])
-                      <span class="badge bg-success shadow-sm"><i class="bx bx-check me-1"></i>{{ __('Lengkap') }}</span>
-                    @elseif ($item['is_filled'])
-                      <span class="badge bg-info shadow-sm">{{ __('Sebagian') }}</span>
-                    @else
-                      <span class="badge bg-label-danger">{{ __('Belum Diisi') }}</span>
-                    @endif
-                  @elseif ($item['is_fully_filled'])
+                <td class="text-center" wire:click="toggleRow({{ $item['work_plan_id'] }})">
+                  @if ($item['is_fully_filled'])
                     <span class="badge bg-success shadow-sm"><i class="bx bx-check me-1"></i>{{ __('Lengkap') }}</span>
                   @elseif ($item['is_filled'])
                     <span class="badge bg-info shadow-sm">{{ __('Sebagian') }}</span>
@@ -385,18 +378,12 @@
 
                 {{-- Kolom: Aksi --}}
                 <td class="text-center">
-                  @if ($isEditable)
-                    <button type="button"
-                      class="btn btn-icon btn-sm {{ $isExpanded ? 'btn-primary' : 'btn-outline-secondary' }}"
-                      wire:click="toggleRow({{ $item['work_plan_id'] }})"
-                      title="{{ $isExpanded ? __('Tutup Justifikasi') : __('Isi/Lihat Justifikasi') }}">
-                      <i class="bx {{ $isExpanded ? 'bx-chevron-up' : 'bx-edit' }}"></i>
-                    </button>
-                  @else
-                    <span class="text-muted" title="{{ __('Tidak ada data usulan untuk dijustifikasi') }}">
-                      <i class="bx bx-minus"></i>
-                    </span>
-                  @endif
+                  <button type="button"
+                    class="btn btn-icon btn-sm {{ $isExpanded ? 'btn-primary' : 'btn-outline-secondary' }}"
+                    wire:click="toggleRow({{ $item['work_plan_id'] }})"
+                    title="{{ $isExpanded ? __('Tutup Justifikasi') : __('Isi/Lihat Justifikasi') }}">
+                    <i class="bx {{ $isExpanded ? 'bx-chevron-up' : 'bx-edit' }}"></i>
+                  </button>
                 </td>
               </tr>
 
@@ -408,8 +395,16 @@
                       <div
                         class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom gap-2">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                          <span class="badge bg-label-primary"><i
-                              class="bx bx-message-square-detail me-1"></i>{{ __('Justifikasi Deviasi') }}</span>
+                          <span class="badge {{ $itemType === 'discontinued' ? 'bg-label-danger' : ($itemType === 'new' ? 'bg-label-success' : 'bg-label-primary') }}">
+                            <i class="bx {{ $itemType === 'discontinued' ? 'bx-x-circle' : ($itemType === 'new' ? 'bx-plus-circle' : 'bx-message-square-detail') }} me-1"></i>
+                            @if ($itemType === 'discontinued')
+                              {{ __('Justifikasi Kegiatan Tidak Diusulkan Kembali') }}
+                            @elseif ($itemType === 'new')
+                              {{ __('Justifikasi Kegiatan Baru') }}
+                            @else
+                              {{ __('Justifikasi Deviasi') }}
+                            @endif
+                          </span>
                           <span class="fw-bold text-dark text-break">{{ $item['code'] }} — {{ $item['name'] }}</span>
                           <span class="text-muted small">({{ $item['bureau_name'] }})</span>
                         </div>
@@ -437,53 +432,84 @@
                                 <label class="form-label fw-bold text-dark mb-0">
                                   1. {{ __('Deviasi RKAP dengan Proyeksi') }} ({{ $currentPeriodTitle ?? '2026' }})
                                 </label>
-                                <span
-                                  class="badge {{ $item['dev_projection'] >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
-                                  {{ $item['dev_projection'] >= 0 ? '+' : '' }}Rp
-                                  {{ number_format($item['dev_projection'], 0, ',', '.') }}
-                                </span>
+                                @if ($itemType === 'new')
+                                  <span class="badge bg-label-secondary">-</span>
+                                @else
+                                  <span
+                                    class="badge {{ $item['dev_projection'] >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
+                                    {{ $item['dev_projection'] >= 0 ? '+' : '' }}Rp
+                                    {{ number_format($item['dev_projection'], 0, ',', '.') }}
+                                  </span>
+                                @endif
                               </div>
                               <p class="text-muted fs-tiny mb-2">
-                                {{ __('Jelaskan penyebab selisih antara pagu anggaran RKAP berjalan dengan proyeksi akhir tahun.') }}
+                                @if ($itemType === 'new')
+                                  {{ __('Kegiatan baru tidak memiliki data anggaran dan proyeksi pada tahun berjalan.') }}
+                                @else
+                                  {{ __('Jelaskan penyebab selisih antara pagu anggaran RKAP berjalan dengan proyeksi akhir tahun.') }}
+                                @endif
                               </p>
-                              @if ($item['can_edit'])
-                                <textarea wire:model.defer="justificationForm.{{ $item['work_plan_id'] }}.projection" rows="3"
-                                  class="form-control bg-white text-dark" style="background-color: #ffffff !important;"
-                                  placeholder="{{ __('Tuliskan keterangan justifikasi deviasi RKAP dengan Proyeksi di sini...') }}"></textarea>
-                              @else
-                                <div class="p-2 bg-white rounded border min-vh-25 text-dark"
-                                  style="min-height: 80px; background-color: #ffffff !important;">
-                                  {{ $item['justification_projection'] ?: __('(Belum ada keterangan justifikasi)') }}
-                                </div>
+                              @if ($itemType !== 'new')
+                                @if ($item['can_edit'])
+                                  <textarea wire:model.defer="justificationForm.{{ $item['work_plan_id'] }}.projection" rows="3"
+                                    class="form-control bg-white text-dark" style="background-color: #ffffff !important;"
+                                    placeholder="{{ __('Tuliskan keterangan justifikasi deviasi RKAP dengan Proyeksi di sini...') }}"></textarea>
+                                @else
+                                  <div class="p-2 bg-white rounded border min-vh-25 text-dark"
+                                    style="min-height: 80px; background-color: #ffffff !important;">
+                                    {{ $item['justification_projection'] ?: __('(Belum ada keterangan justifikasi)') }}
+                                  </div>
+                                @endif
                               @endif
                             </div>
                           </div>
 
-                          {{-- Deviation 2: RKAP Berjalan vs RKAP Usulan --}}
+                          {{-- Deviation 2: RKAP Berjalan vs RKAP Usulan / Alasan Tidak Diusulkan --}}
                           <div class="col-12">
                             <div class="p-3 bg-white rounded border shadow-xs">
                               <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                                 <label class="form-label fw-bold text-dark mb-0">
-                                  2. {{ __('Deviasi RKAP Berjalan dengan RKAP Usulan') }}
-                                  ({{ $proposalPeriodTitle ?? '2027' }})
+                                  @if ($itemType === 'discontinued')
+                                    2. {{ __('Alasan Tidak Diusulkan Kembali') }} ({{ $proposalPeriodTitle ?? '2027' }})
+                                  @elseif ($itemType === 'new')
+                                    2. {{ __('Justifikasi Pengusulan Kegiatan Baru') }} ({{ $proposalPeriodTitle ?? '2027' }})
+                                  @else
+                                    2. {{ __('Deviasi RKAP Berjalan dengan RKAP Usulan') }} ({{ $proposalPeriodTitle ?? '2027' }})
+                                  @endif
                                 </label>
-                                <span
-                                  class="badge {{ $item['dev_proposal'] >= 0 ? 'bg-label-primary' : 'bg-label-warning' }}">
-                                  {{ $item['dev_proposal'] >= 0 ? '+' : '' }}Rp
-                                  {{ number_format($item['dev_proposal'], 0, ',', '.') }}
-                                </span>
+                                @if ($itemType === 'discontinued')
+                                  <span class="badge bg-label-danger">
+                                    {{ __('Tidak Diusulkan Kembali') }}
+                                  </span>
+                                @elseif ($itemType === 'new')
+                                  <span class="badge bg-label-success">
+                                    Rp {{ number_format($item['rkap_proposed'], 0, ',', '.') }}
+                                  </span>
+                                @else
+                                  <span
+                                    class="badge {{ $item['dev_proposal'] >= 0 ? 'bg-label-primary' : 'bg-label-warning' }}">
+                                    {{ $item['dev_proposal'] >= 0 ? '+' : '' }}Rp
+                                    {{ number_format($item['dev_proposal'], 0, ',', '.') }}
+                                  </span>
+                                @endif
                               </div>
                               <p class="text-muted fs-tiny mb-2">
-                                {{ __('Jelaskan pertimbangan kenaikan / penurunan anggaran yang diusulkan untuk periode berikutnya.') }}
+                                @if ($itemType === 'discontinued')
+                                  {{ __('Jelaskan alasan mengapa kegiatan ini tidak diusulkan kembali untuk periode RKAP berikutnya (misal: pekerjaan telah selesai, program dialihkan, atau efisiensi).') }}
+                                @elseif ($itemType === 'new')
+                                  {{ __('Jelaskan latar belakang, urgensi, dan pertimbangan anggaran pengusulan kegiatan baru ini.') }}
+                                @else
+                                  {{ __('Jelaskan pertimbangan kenaikan / penurunan anggaran yang diusulkan untuk periode berikutnya.') }}
+                                @endif
                               </p>
                               @if ($item['can_edit'])
                                 <textarea wire:model.defer="justificationForm.{{ $item['work_plan_id'] }}.proposal" rows="3"
                                   class="form-control bg-white text-dark" style="background-color: #ffffff !important;"
-                                  placeholder="{{ __('Tuliskan keterangan justifikasi deviasi RKAP berjalan dengan RKAP usulan di sini...') }}"></textarea>
+                                  placeholder="{{ $itemType === 'discontinued' ? __('Tuliskan alasan mengapa kegiatan tidak diusulkan kembali di sini...') : ($itemType === 'new' ? __('Tuliskan alasan/urgensi pengusulan kegiatan baru di sini...') : __('Tuliskan keterangan justifikasi deviasi RKAP berjalan dengan RKAP usulan di sini...')) }}"></textarea>
                               @else
                                 <div class="p-2 bg-white rounded border min-vh-25 text-dark"
                                   style="min-height: 80px; background-color: #ffffff !important;">
-                                  {{ $item['justification_proposal'] ?: __('(Belum ada keterangan justifikasi)') }}
+                                  {{ $item['justification_proposal'] ?: ($itemType === 'discontinued' ? __('(Belum ada alasan mengapa tidak diusulkan kembali)') : __('(Belum ada keterangan justifikasi)')) }}
                                 </div>
                               @endif
                             </div>

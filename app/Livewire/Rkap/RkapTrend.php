@@ -214,7 +214,6 @@ class RkapTrend extends Component
 
   /**
    * Toggle accordion expansion for a specific work plan.
-   * ID negatif = work plan berjalan tanpa pasangan usulan (tidak dapat diedit).
    */
   public function toggleRow(int $workPlanId): void
   {
@@ -223,8 +222,7 @@ class RkapTrend extends Component
     } else {
       $this->expandedRows[] = $workPlanId;
 
-      // Hanya load justifikasi untuk work plan usulan (ID positif)
-      if ($workPlanId > 0 && !isset($this->justificationForm[$workPlanId])) {
+      if (!isset($this->justificationForm[$workPlanId])) {
         $justification = RkapTrendJustification::where('rkap_work_plan_id', $workPlanId)
           ->where('current_period_id', $this->currentPeriodId)
           ->where('proposal_period_id', $this->proposalPeriodId)
@@ -240,13 +238,11 @@ class RkapTrend extends Component
 
   /**
    * Expand all rows.
-   * Hanya expand work plan usulan (ID positif) yang dapat dijustifikasi.
    */
   public function expandAll(): void
   {
     $allIds = collect($this->trendData['items'])
       ->pluck('work_plan_id')
-      ->filter(fn($id) => $id > 0) // hanya ID positif (work plan usulan)
       ->toArray();
     $this->expandedRows = $allIds;
 
@@ -376,7 +372,7 @@ class RkapTrend extends Component
       ])
       ->get();
 
-    // 2. Fetch RKAP Berjalan beserta proyeksi
+    // 2. Fetch RKAP Berjalan beserta proyeksi & justifikasi trend
     $currentSubmissions = RkapSubmission::where('rkap_period_id', $this->currentPeriodId)
       ->whereIn('bureau_id', $targetBureauIds)
       ->whereIn('status', $validStatuses)
@@ -386,6 +382,10 @@ class RkapTrend extends Component
         'workPlans.workPlan',
         'workPlans.budgetItems.projections',
         'workPlans.budgetItems.monthlies',
+        'workPlans.trendJustifications' => fn($q) => $q
+          ->where('current_period_id', $this->currentPeriodId)
+          ->where('proposal_period_id', $this->proposalPeriodId)
+          ->with('updater'),
       ])
       ->get();
 
@@ -573,18 +573,23 @@ class RkapTrend extends Component
       $totalDevProp += $devProp;
       // $totalRkapProposed tidak bertambah (tidak ada usulan)
 
-      // Gunakan ID negatif agar tidak bentrok dengan work plan usulan
-      $pseudoId = -$cWpId;
+      $justification = $cWp->trendJustifications->first();
+      $isFilled = $justification ? $justification->isFilled() : false;
+      $isFullyFilled = $justification ? $justification->isFullyFilled() : false;
 
-      if (!isset($this->justificationForm[$pseudoId])) {
-        $this->justificationForm[$pseudoId] = [
-          'projection' => '',
-          'proposal' => '',
+      if ($isFilled) {
+        $filledCount++;
+      }
+
+      if (!isset($this->justificationForm[$cWpId])) {
+        $this->justificationForm[$cWpId] = [
+          'projection' => $justification?->justification_deviation_projection ?? '',
+          'proposal' => $justification?->justification_deviation_proposal ?? '',
         ];
       }
 
       $items[] = [
-        'work_plan_id'             => $pseudoId,
+        'work_plan_id'             => $cWpId,
         'activity_id'              => $cWp->activity_id,
         'program_code'             => $cWp->workPlan ? $cWp->workPlan->code : ($cWp->program_code ?? '-'),
         'program_name'             => $cWp->workPlan ? $cWp->workPlan->title : ($cWp->program_name ?? '-'),
@@ -600,13 +605,13 @@ class RkapTrend extends Component
         'dev_projection'           => $devProj,
         'rkap_proposed'            => $rkapProposed,
         'dev_proposal'             => $devProp,
-        'is_filled'                => false,
-        'is_fully_filled'          => false,
-        'justification_projection' => '',
-        'justification_proposal'   => '',
-        'updated_at'               => null,
-        'updater_name'             => null,
-        'can_edit'                 => false,
+        'is_filled'                => $isFilled,
+        'is_fully_filled'          => $isFullyFilled,
+        'justification_projection' => $justification?->justification_deviation_projection ?? '',
+        'justification_proposal'   => $justification?->justification_deviation_proposal ?? '',
+        'updated_at'               => $justification?->updated_at?->format('d/m/Y H:i'),
+        'updater_name'             => $justification?->updater?->name,
+        'can_edit'                 => $this->canEditJustification($bId),
         // 'discontinued' = kegiatan tidak diusulkan kembali (hanya di berjalan)
         'item_type'                => 'discontinued',
       ];
