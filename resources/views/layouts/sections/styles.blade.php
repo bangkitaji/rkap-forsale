@@ -19,4 +19,7 @@
 
 <!-- app CSS -->
 @vite(['resources/css/app.css'])
+
+<!-- Dynamic Brand Theme CSS -->
+@include('layouts.sections.brand-theme')
 <!-- END: app CSS-->

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
     <!-- ! Hide app brand if navbar-full -->
     <div class="app-brand demo">
         <a href="{{url('/')}}" class="app-brand-link">
-            <img src="{{ asset('assets/img/kcic/logo_kbudgeting.png') }}" alt="KCIC Logo" class="rkap-logo-vertical">
+            <img src="{{ \App\Helpers\BrandHelper::logo('sidebar') }}" alt="{{ \App\Helpers\BrandHelper::companyName() }}" class="rkap-logo-vertical">
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">

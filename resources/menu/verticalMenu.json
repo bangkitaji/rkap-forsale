@@ -284,10 +284,18 @@
         "settings-difference-groups",
         "settings-cds-groups",
         "settings-satuans",
-        "settings-data-migration-upload"
+        "settings-data-migration-upload",
+        "settings-brand"
       ],
       "permission": "settings.show",
       "submenu": [
+        {
+          "url": "settings/brand",
+          "icon": "menu-icon icon-base bx bx-palette",
+          "name": "Brand & Logo",
+          "slug": "settings-brand",
+          "permission": "settings.show"
+        },
         {
           "url": "rkap/periods",
           "icon": "menu-icon icon-base bx bx-calendar",

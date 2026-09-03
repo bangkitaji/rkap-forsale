@@ -23,12 +23,22 @@ class RkapSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ── 1. Roles ──
-        $roleAdmin         = Role::firstOrCreate(['name' => 'admin']);
-        $roleKepalaBiro    = Role::firstOrCreate(['name' => 'kepala_biro']);
-        $roleKepalaDept    = Role::firstOrCreate(['name' => 'kepala_departemen']);
-        $roleDireksi       = Role::firstOrCreate(['name' => 'direksi']);
-        $roleVerifikator   = Role::firstOrCreate(['name' => 'verifikator']);
-        $rolePresident     = Role::firstOrCreate(['name' => 'direktur_utama']);
+        $roleNames = config('rkap.roles', [
+            'admin'             => 'admin',
+            'user'              => 'user',
+            'kepala_biro'       => 'kepala_biro',
+            'kepala_departemen' => 'kepala_departemen',
+            'direksi'           => 'direksi',
+            'verifikator'       => 'verifikator',
+            'direktur_utama'    => 'direktur_utama',
+        ]);
+
+        $roleAdmin         = Role::firstOrCreate(['name' => $roleNames['admin'] ?? 'admin']);
+        $roleKepalaBiro    = Role::firstOrCreate(['name' => $roleNames['kepala_biro'] ?? 'kepala_biro']);
+        $roleKepalaDept    = Role::firstOrCreate(['name' => $roleNames['kepala_departemen'] ?? 'kepala_departemen']);
+        $roleDireksi       = Role::firstOrCreate(['name' => $roleNames['direksi'] ?? 'direksi']);
+        $roleVerifikator   = Role::firstOrCreate(['name' => $roleNames['verifikator'] ?? 'verifikator']);
+        $rolePresident     = Role::firstOrCreate(['name' => $roleNames['direktur_utama'] ?? 'direktur_utama']);
 
         // ── 2. Permissions ──
         $permissions = [
@@ -185,9 +195,40 @@ class RkapSeeder extends Seeder
         ]);
 
         // Assign rkap.show to all roles
-        $rkapShowPerm = Permission::firstOrCreate(['name' => 'rkap.show']);
-        foreach (Role::all() as $role) {
-            $role->givePermissionTo($rkapShowPerm);
+        // ── 3b. Seed Standard Period and Reference COA Groups ──
+        $currentYear = (int) date('Y');
+        \App\Models\RkapPeriod::firstOrCreate(
+            ['year' => $currentYear],
+            [
+                'title' => "RKAP Tahun $currentYear",
+                'description' => "Periode Penyusunan RKAP Tahun $currentYear",
+                'status' => 'draft',
+                'submission_start' => now()->startOfYear()->toDateString(),
+                'submission_end' => now()->endOfYear()->toDateString(),
+            ]
+        );
+
+        $coaGroups = [
+            ['code' => '100000', 'name' => 'Aset (Assets)', 'description' => 'Sumber daya ekonomi yang dikendalikan oleh perusahaan (Kas, Piutang, Aset Tetap, dll).'],
+            ['code' => '200000', 'name' => 'Liabilitas (Liabilities)', 'description' => 'Kewajiban finansial perusahaan masa kini (Utang Usaha, Pinjaman Bank, dll).'],
+            ['code' => '300000', 'name' => 'Ekuitas (Equity)', 'description' => 'Hak residual atas aset perusahaan setelah dikurangi semua liabilitas (Modal Saham, Laba Ditahan, dll).'],
+            ['code' => '400000', 'name' => 'Pendapatan (Revenue)', 'description' => 'Penerimaan/Arus masuk bruto dari aktivitas normal entitas (Pendapatan Operasional, Penjualan, dll).'],
+            ['code' => '510000', 'name' => 'Beban Pegawai (Employee Expenses)', 'description' => 'Seluruh pengeluaran untuk gaji, tunjangan, jaminan sosial, dan fasilitas karyawan.'],
+            ['code' => '520000', 'name' => 'Beban Operasional (Operating Expenses / OPEX)', 'description' => 'Biaya operasional rutin non-kepegawaian seperti sewa, listrik, air, perlengkapan kantor, perbaikan.'],
+            ['code' => '530000', 'name' => 'Beban Investasi / Modal (Capital Expenditures / CAPEX)', 'description' => 'Pengeluaran untuk perolehan atau peningkatan kapasitas aset tetap/investasi modal jangka panjang.'],
+            ['code' => '600000', 'name' => 'Pendapatan/Beban Non-Operasional (Non-Operating)', 'description' => 'Pendapatan dan beban dari aktivitas di luar kegiatan usaha utama (Pendapatan bunga, denda, pajak, dll).'],
+        ];
+
+        foreach ($coaGroups as $group) {
+            \App\Models\CoaGroup::firstOrCreate(
+                ['code' => $group['code']],
+                ['name' => $group['name'], 'description' => $group['description']]
+            );
+        }
+
+        if (!config('rkap.seed_sample_data', false)) {
+            $this->command->info('RKAP baseline initialized (roles, permissions, period, COA groups). Sample org & users skipped (RKAP_SEED_SAMPLE_DATA=false).');
+            return;
         }
 
         // ── 4. Sample Organization ──
@@ -366,11 +407,14 @@ class RkapSeeder extends Seeder
         }
 
         // ── 5. Seed Users from Org Structure ──
+        $adminEmail = config('rkap.admin_email', 'admin@rkap.com');
+        $domain     = config('rkap.email_domain', 'example.com');
+
         // Reset non-admin users first to keep db clean
-        User::where('email', '!=', 'admin@kcic.co.id')->delete();
+        User::where('email', '!=', $adminEmail)->delete();
 
         // Admin (already created by RoleAndUserSeeder, just update org if needed)
-        $admin = User::where('email', 'admin@kcic.co.id')->first();
+        $admin = User::where('email', $adminEmail)->first();
         if ($admin) {
             $admin->update(['directorate_id' => $dirHU->id, 'position' => 'Administrator Sistem']);
         }
@@ -386,7 +430,7 @@ class RkapSeeder extends Seeder
 
         // 1. Seed Directorate Users (Direksi & President Director)
         foreach (Directorate::all() as $dir) {
-            $email = strtolower($dir->code) . '@kcic.co.id';
+            $email = strtolower($dir->code) . '@' . $domain;
 
             if ($dir->code === 'HU') {
                 $position = $dir->name; // President Director
@@ -401,7 +445,7 @@ class RkapSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $dir->code,
-                    'password' => Hash::make(config('rkap.seed_default_password')),
+                    'password' => Hash::make(config('rkap.seed_default_password', 'P@ssw0rd!')),
                     'directorate_id' => $dir->id,
                     'position' => $position,
                 ]
@@ -411,14 +455,14 @@ class RkapSeeder extends Seeder
 
         // 2. Seed Department Users (Kepala Departemen)
         foreach (Department::all() as $dept) {
-            $email = strtolower($dept->code) . '@kcic.co.id';
+            $email = strtolower($dept->code) . '@' . $domain;
             $position = "GM of " . $formatTitle($dept->name);
 
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
                     'name' => $dept->code,
-                    'password' => Hash::make(config('rkap.seed_default_password')),
+                    'password' => Hash::make(config('rkap.seed_default_password', 'P@ssw0rd!')),
                     'department_id' => $dept->id,
                     'directorate_id' => $dept->directorate_id,
                     'position' => $position,
@@ -429,7 +473,7 @@ class RkapSeeder extends Seeder
 
         // 3. Seed Bureau Users (Kepala Biro)
         foreach (Bureau::all() as $bureau) {
-            $email = strtolower($bureau->code) . '@kcic.co.id';
+            $email = strtolower($bureau->code) . '@' . $domain;
             $cleanName = preg_replace('/^(senior\s+)?manager\s+of\s+/i', '', $bureau->name);
             $position = "Manager of " . $formatTitle($cleanName);
 
@@ -437,7 +481,7 @@ class RkapSeeder extends Seeder
                 ['email' => $email],
                 [
                     'name' => $bureau->code,
-                    'password' => Hash::make(config('rkap.seed_default_password')),
+                    'password' => Hash::make(config('rkap.seed_default_password', 'P@ssw0rd!')),
                     'bureau_id' => $bureau->id,
                     'department_id' => $bureau->department_id,
                     'directorate_id' => $bureau->department?->directorate_id,
@@ -447,17 +491,17 @@ class RkapSeeder extends Seeder
             $user->syncRoles([$roleKepalaBiro]);
         }
 
-        // 4. Seed Specialist User (Sony Suseno)
+        // 4. Seed Specialist User
         $bureauBusinessAnalysis = Bureau::where('code', 'HFAB')->first();
         $specialist = User::firstOrCreate(
-            ['email' => 'sony.suseno@kcic.co.id'],
+            ['email' => 'specialist@' . $domain],
             [
-                'name' => 'Sony Suseno',
-                'password' => Hash::make(config('rkap.seed_default_password')),
+                'name' => 'Specialist User',
+                'password' => Hash::make(config('rkap.seed_default_password', 'P@ssw0rd!')),
                 'bureau_id' => $bureauBusinessAnalysis?->id,
                 'department_id' => $bureauBusinessAnalysis?->department_id,
                 'directorate_id' => $bureauBusinessAnalysis?->department?->directorate_id,
-                'position' => 'Specialist Of Business Analityc',
+                'position' => 'Specialist Of Business Analytic',
             ]
         );
         $specialist->syncRoles([$roleVerifikator]);

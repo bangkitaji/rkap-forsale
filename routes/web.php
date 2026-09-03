@@ -58,6 +58,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings/data-migration-upload', \App\Livewire\Settings\DataMigrationUpload::class)
       ->name('settings-data-migration-upload')
       ->middleware('permission:settings.show');
+
+    Route::get('/settings/brand', \App\Livewire\Settings\BrandSettings::class)
+      ->name('settings-brand')
+      ->middleware('permission:settings.show');
   });
 
   Route::get('/settings/report-groups', \App\Livewire\Settings\ReportGroups::class)

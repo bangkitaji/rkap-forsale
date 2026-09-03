@@ -14,6 +14,11 @@ class MasterDataSeeder extends Seeder
      */
     public function run(): void
     {
+        if (!config('rkap.seed_sample_data', false)) {
+            $this->command->info('Sample master data (COA, Activities, Work Plans) skipped (RKAP_SEED_SAMPLE_DATA=false). Companies can import their own COA via Excel.');
+            return;
+        }
+
         Schema::disableForeignKeyConstraints();
 
         // 1. Clear tables in reverse dependency order (use delete instead of truncate to prevent cascade deletes on pgsql)

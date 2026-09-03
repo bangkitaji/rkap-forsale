@@ -3,26 +3,23 @@
 
     <div class="login-wrapper">
 
-        {{-- ═══ LEFT HERO PANEL — WHOOSH Train ═══ --}}
+        {{-- ═══ LEFT HERO PANEL ═══ --}}
         <div class="login-hero">
             <img
                 class="login-hero__image"
-                src="{{ asset('assets/img/kcic/login_hero_train.png') }}"
-                alt="WHOOSH High-Speed Train" />
+                src="{{ \App\Helpers\BrandHelper::logo('login_hero') }}"
+                alt="{{ \App\Helpers\BrandHelper::companyName() }}" />
             <div class="login-hero__overlay"></div>
 
-            <div class="login-hero__badge">PT. Kereta Cepat Indonesia China</div>
+            <div class="login-hero__badge">{{ \App\Helpers\BrandHelper::companyName() }}</div>
 
             <div class="login-hero__brand">
                 <div class="d-flex align-items-center gap-12px">
-                    <!-- <div class="login-hero__logo">
-                        <img src="{{ asset('assets/img/kcic/logo_whoosh.png') }}" alt="WHOOSH Logo" />
-                    </div> -->
-                    <!-- <h1 class="login-hero__title">
-                        RKAP<span>.</span>
-                    </h1> -->
+                    <h1 class="login-hero__title">
+                        {{ \App\Helpers\BrandHelper::companyShortName() }}<span>.</span>
+                    </h1>
                 </div>
-                <p class="login-hero__subtitle">Sistem Rencana Kerja &amp; Anggaran Perusahaan</p>
+                <p class="login-hero__subtitle">{{ \App\Helpers\BrandHelper::companyTagline() }}</p>
             </div>
         </div>
 
@@ -33,15 +30,7 @@
                 {{-- Brand header --}}
                 <div class="form-brand">
                     <div class="form-brand__header">
-                        <!-- <img
-                            class="form-brand__logo"
-                            src="{{ asset('assets/img/kcic/logo_kbudgeting.png') }}"
-                            alt="WHOOSH" /> -->
-                        <!-- <div class="form-brand__name">
-                            Budgeting
-                        </div> -->
                     </div>
-                    <!-- <div class="form-brand__tagline">Rencana Kerja &amp; Anggaran Perusahaan</div> -->
                 </div>
 
                 {{-- Card --}}
@@ -49,11 +38,8 @@
                     <div class="form-brand__header">
                         <img
                             class="form-brand__logo"
-                            src="{{ asset('assets/img/kcic/logo_kbudgeting.png') }}"
-                            alt="WHOOSH" />
-                        <!-- <div class="form-brand__name">
-                            Budgeting
-                        </div> -->
+                            src="{{ \App\Helpers\BrandHelper::logo('login') }}"
+                            alt="{{ \App\Helpers\BrandHelper::companyName() }}" />
                     </div>
                     <h2 class="login-card__heading text-center">{{ __('Selamat datang!') }}</h2>
                     <p class="login-card__sub text-center">{{ __('Silakan masuk ke akun Anda untuk melanjutkan.') }}</p>
@@ -82,7 +68,7 @@
                                     id="email"
                                     wire:model="email"
                                     class="form-input-rkap @error('email') is-error @enderror"
-                                    placeholder="{{ __('nama@kcic.co.id') }}"
+                                    placeholder="nama@{{ config('rkap.email_domain', 'perusahaan.com') }}"
                                     autofocus
                                     autocomplete="email" />
                             </div>
@@ -150,7 +136,7 @@
 
                 {{-- Footer --}}
                 <div class="login-footer">
-                    &copy; {{ date('Y') }} <strong>PT. Kereta Cepat Indonesia China</strong>. All rights reserved.
+                    &copy; {{ date('Y') }} <strong>{{ \App\Helpers\BrandHelper::companyName() }}</strong>. All rights reserved.
                 </div>
             </div>
         </div>

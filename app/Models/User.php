@@ -89,32 +89,39 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        $role = config('rkap.roles.admin', 'admin');
+        return $this->hasRole($role) || $this->hasRole(['admin', 'administrator', 'superadmin']);
     }
 
     public function isKepalaBiro(): bool
     {
-        return $this->hasRole('kepala_biro') || $this->hasRole('user');
+        $biroRole = config('rkap.roles.kepala_biro', 'kepala_biro');
+        $userRole = config('rkap.roles.user', 'user');
+        return $this->hasRole($biroRole) || $this->hasRole($userRole);
     }
 
     public function isKepalaDepartemen(): bool
     {
-        return $this->hasRole('kepala_departemen');
+        $deptRole = config('rkap.roles.kepala_departemen', 'kepala_departemen');
+        return $this->hasRole($deptRole);
     }
 
     public function isDireksi(): bool
     {
-        return $this->hasRole('direksi');
+        $dirRole = config('rkap.roles.direksi', 'direksi');
+        return $this->hasRole($dirRole);
     }
 
     public function isVerifikator(): bool
     {
-        return $this->hasRole('verifikator');
+        $verifRole = config('rkap.roles.verifikator', 'verifikator');
+        return $this->hasRole($verifRole);
     }
 
     public function isDirekturUtama(): bool
     {
-        return $this->hasRole('direktur_utama');
+        $pdirRole = config('rkap.roles.direktur_utama', 'direktur_utama');
+        return $this->hasRole($pdirRole);
     }
 
     public function isPresidentDirector(): bool

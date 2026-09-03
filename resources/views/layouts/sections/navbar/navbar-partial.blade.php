@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Route;
         <!-- <span class="app-brand-logo">
             <img src="{{ asset('assets/img/kcic/logo_kcic.png') }}" alt="KCIC Logo" class="img-fluid rkap-logo-navbar">
         </span> -->
-        <img class="app-brand-logo" width="30%" src="{{ asset('assets/img/kcic/logo_kcic.png') }}" />
-        <span class="app-brand-text demo menu-text fw-bold text-heading">{{config('variables.templateName')}}</span>
+        <img class="app-brand-logo" width="30%" src="{{ \App\Helpers\BrandHelper::logo('navbar') }}" alt="{{ \App\Helpers\BrandHelper::companyName() }}" />
+        <span class="app-brand-text demo menu-text fw-bold text-heading">{{ \App\Helpers\BrandHelper::companyShortName() }}</span>
     </a>
 </div>
 @endif
@@ -70,7 +70,7 @@ use Illuminate\Support\Facades\Route;
         <li class="nav-item navbar-dropdown dropdown-user dropdown">
             <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                 <div class="avatar avatar-online">
-                    <img src="{{ asset('assets/img/avatars/kcic_avatar.jpg') }}" alt class="w-px-40 h-auto rounded-circle">
+                    <img src="{{ \App\Helpers\BrandHelper::logo('avatar') }}" alt class="w-px-40 h-auto rounded-circle">
                 </div>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -79,7 +79,7 @@ use Illuminate\Support\Facades\Route;
                         <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                                 <div class="avatar avatar-online">
-                                    <img src="{{ asset('assets/img/avatars/kcic_avatar.jpg') }}" alt class="w-px-40 h-auto rounded-circle">
+                                    <img src="{{ \App\Helpers\BrandHelper::logo('avatar') }}" alt class="w-px-40 h-auto rounded-circle">
                                 </div>
                             </div>
                             <div class="flex-grow-1">

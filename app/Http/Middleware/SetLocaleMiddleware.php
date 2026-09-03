@@ -19,8 +19,8 @@ class SetLocaleMiddleware
         if (session()->has('locale')) {
             App::setLocale(session()->get('locale'));
         } else {
-            // Default to app locale (which we will configure to 'id')
-            App::setLocale(config('app.locale', 'id'));
+            // Default to app locale (which is configured to 'en')
+            App::setLocale(config('app.locale', 'en'));
         }
 
         return $next($request);

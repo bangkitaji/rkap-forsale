@@ -32,7 +32,7 @@ class ReportGroupTest extends TestCase
         $this->seed(RoleAndUserSeeder::class);
 
         // Fetch seeded users and assign them
-        $this->adminUser = User::where('email', 'admin@kcic.co.id')->first();
+        $this->adminUser = User::where('email', config('rkap.admin_email', 'admin@rkap.com'))->first() ?? User::first();
 
         // Create verifikator user
         $roleVerifikator = Role::where('name', 'verifikator')->first();
@@ -90,7 +90,7 @@ class ReportGroupTest extends TestCase
         Livewire::test(ReportGroups::class)
             ->set('perPage', 100)
             ->assertStatus(200)
-            ->assertSee('Daftar Report Group')
+            ->assertSee(__('Daftar Report Group'))
             ->assertSee('Revenue')
             ->assertSee('Direct Cost')
             ->assertSee('Aset Lancar')
@@ -167,7 +167,7 @@ class ReportGroupTest extends TestCase
 
         Livewire::test(ReportGroups::class)
             ->call('delete', $group->id)
-            ->assertSee('Gagal menghapus. Report Group ini masih digunakan oleh beberapa COA Group.');
+            ->assertSee(__('Gagal menghapus. Report Group ini masih digunakan oleh beberapa COA Group.'));
 
         $this->assertDatabaseHas('report_groups', [
             'id' => $group->id
@@ -240,7 +240,7 @@ class ReportGroupTest extends TestCase
         Livewire::test(ReportGroups::class)
             ->set('activeTab', 'cashflow-mapping')
             ->assertStatus(200)
-            ->assertSee('Pemetaan Cashflow Group ke Report Group')
+            ->assertSee(__('Pemetaan Cashflow Group ke Report Group'))
             ->assertSee('CF0A1B')
             ->assertSee('Arus Kas Aktivitas Operasi');
     }

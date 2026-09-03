@@ -58,11 +58,23 @@ class RoleAndUserSeeder extends Seeder
         $permAnalyticsBalanceSheetView = Permission::firstOrCreate(['name' => 'analytics.balancesheet.view', 'guard_name' => 'web']);
 
         // create roles
-        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
-        $roleUser = Role::firstOrCreate(['name' => 'user']);
-        $roleVerifikator = Role::firstOrCreate(['name' => 'verifikator']);
-        $roleDireksi = Role::firstOrCreate(['name' => 'direksi']);
-        $rolePresident = Role::firstOrCreate(['name' => 'direktur_utama']);
+        $roleNames = config('rkap.roles', [
+            'admin'             => 'admin',
+            'user'              => 'user',
+            'kepala_biro'       => 'kepala_biro',
+            'kepala_departemen' => 'kepala_departemen',
+            'direksi'           => 'direksi',
+            'verifikator'       => 'verifikator',
+            'direktur_utama'    => 'direktur_utama',
+        ]);
+
+        $roleAdmin       = Role::firstOrCreate(['name' => $roleNames['admin'] ?? 'admin']);
+        $roleUser        = Role::firstOrCreate(['name' => $roleNames['user'] ?? 'user']);
+        $roleKepalaBiro  = Role::firstOrCreate(['name' => $roleNames['kepala_biro'] ?? 'kepala_biro']);
+        $roleKepalaDept  = Role::firstOrCreate(['name' => $roleNames['kepala_departemen'] ?? 'kepala_departemen']);
+        $roleVerifikator = Role::firstOrCreate(['name' => $roleNames['verifikator'] ?? 'verifikator']);
+        $roleDireksi     = Role::firstOrCreate(['name' => $roleNames['direksi'] ?? 'direksi']);
+        $rolePresident   = Role::firstOrCreate(['name' => $roleNames['direktur_utama'] ?? 'direktur_utama']);
 
         // assign permissions to roles
         $roleAdmin->givePermissionTo([
@@ -108,6 +120,23 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataActivityView,
         ]);
 
+        $roleKepalaBiro->givePermissionTo([
+            $permDashboardShow,
+            $permRkapShow,
+            $permRkapProjectionInput,
+            $permRkapProjectionView,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
+        ]);
+
+        $roleKepalaDept->givePermissionTo([
+            $permDashboardShow,
+            $permRkapShow,
+            $permRkapSubmissionsDept,
+            $permMasterDataWorkplanView,
+            $permMasterDataActivityView,
+        ]);
+
         $roleVerifikator->givePermissionTo([
             $permDashboardShow,
             $permRkapShow,
@@ -139,7 +168,6 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataActivityView,
         ]);
 
-
         $rolePresident->givePermissionTo([
             $permDashboardShow,
             $permRkapShow,
@@ -150,22 +178,23 @@ class RoleAndUserSeeder extends Seeder
             $permMasterDataActivityView,
         ]);
 
-        // Assign rkap.show to all roles
+        // Assign rkap.show and masterdata view to all roles
         foreach (Role::all() as $role) {
             $role->givePermissionTo($permRkapShow);
             $role->givePermissionTo($permMasterDataWorkplanView);
             $role->givePermissionTo($permMasterDataActivityView);
         }
 
-        // create admin user
+        // create admin user from config
+        $adminEmail = config('rkap.admin_email', 'admin@rkap.com');
         $admin = User::updateOrCreate(
-            ['email' => 'admin@kcic.co.id'],
+            ['email' => $adminEmail],
             [
                 'name' => 'Administrator',
-                'password' => Hash::make(config('rkap.seed_default_password', 'password')),
+                'password' => Hash::make(config('rkap.seed_default_password', 'P@ssw0rd!')),
             ]
         );
 
-        $admin->assignRole($roleAdmin);
+        $admin->syncRoles([$roleAdmin]);
     }
 }

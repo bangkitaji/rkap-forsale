@@ -12,12 +12,12 @@ enum ApprovalRole: string
 
     public function label(): string
     {
-        return match ($this) {
+        return config("rkap.role_labels.{$this->value}", match ($this) {
             self::KepalaDepartemen => 'Kepala Departemen',
             self::Direksi => 'Direksi',
             self::Verifikator => 'Verifikator',
             self::DirekturUtama => 'Direktur Utama',
             self::DirekturKeuangan => 'Direktur Keuangan',
-        };
+        });
     }
 }

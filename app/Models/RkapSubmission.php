@@ -425,15 +425,15 @@ class RkapSubmission extends Model
       return false;
     }
     // Kepala Departemen
-    if ($this->status === SubmissionStatus::Submitted->value && $user->hasRole('kepala_departemen')) {
+    if ($this->status === SubmissionStatus::Submitted->value && $user->isKepalaDepartemen()) {
       return $user->department_id === $this->bureau->department_id;
     }
     // Direksi
-    if ($this->status === SubmissionStatus::DirReview->value && $user->hasRole('direksi')) {
+    if ($this->status === SubmissionStatus::DirReview->value && $user->isDireksi()) {
       return $user->directorate_id === $this->bureau->department->directorate_id;
     }
     // Verifikator
-    if ($this->status === SubmissionStatus::FinalReview->value && $user->hasRole('verifikator')) {
+    if ($this->status === SubmissionStatus::FinalReview->value && $user->isVerifikator()) {
       return true;
     }
     // President Director & Direktur Finance

@@ -11,18 +11,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Core seeders (always required for every company installation)
         $this->call([
             RoleAndUserSeeder::class,
             RkapSeeder::class,
             SatuanSeeder::class,
-            CashflowGroupSeeder::class,
-            DifferenceGroupSeeder::class,
-            MasterDataSeeder::class,
-            CoaCfTypeMappingSeeder::class,
             CoaProfitLossMappingSeeder::class,
-            CashflowReportGroupMappingSeeder::class,
-            CashFlowSeeder::class,
-            CdsGroupSeeder::class,
         ]);
+
+        // Optional / Sample dataset seeders (useful for demo/development environments)
+        if (config('rkap.seed_sample_data', false)) {
+            $this->command->info('Seeding sample datasets and mappings (RKAP_SEED_SAMPLE_DATA=true)...');
+            $this->call([
+                CashflowGroupSeeder::class,
+                DifferenceGroupSeeder::class,
+                MasterDataSeeder::class,
+                CoaCfTypeMappingSeeder::class,
+                CashflowReportGroupMappingSeeder::class,
+                CashFlowSeeder::class,
+                CdsGroupSeeder::class,
+            ]);
+        } else {
+            $this->command->info('Sample datasets skipped (RKAP_SEED_SAMPLE_DATA=false). Clean baseline ready.');
+        }
     }
 }
