@@ -243,5 +243,11 @@ class CashFlowSeeder extends Seeder
         }, $facts);
 
         DB::table('cash_flow_facts')->insert($facts);
+
+        // Reset PostgreSQL sequences if using pgsql
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("SELECT setval('financial_versions_version_id_seq', (SELECT MAX(version_id) FROM financial_versions))");
+            DB::statement("SELECT setval('cf_categories_category_id_seq', (SELECT MAX(category_id) FROM cf_categories))");
+        }
     }
 }

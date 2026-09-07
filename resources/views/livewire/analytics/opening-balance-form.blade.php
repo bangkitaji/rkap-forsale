@@ -1,5 +1,5 @@
 <div>
-    <h4 class="mb-4">Form Input Saldo Awal Neraca</h4>
+    <h4 class="mb-4">{{ __('Form Input Saldo Awal Neraca') }}</h4>
 
     <div class="card mb-4">
         <div class="card-body">
@@ -25,7 +25,7 @@
                     <div class="col-md-8 d-flex align-items-end justify-content-end">
                         <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="save">{{ __('Simpan Saldo Awal') }}</span>
-                            <span wire:loading wire:target="save">Menyimpan...</span>
+                            <span wire:loading wire:target="save">{{ __('Menyimpan...') }}</span>
                         </button>
                     </div>
                 </div>
@@ -34,22 +34,22 @@
                     <table class="table table-bordered table-sm table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th>Report Group</th>
-                                <th>COA Group</th>
-                                <th>Kode COA</th>
-                                <th>Nama Akun</th>
-                                <th style="width: 250px;">Saldo Awal (Rp)</th>
+                                <th>{{ __('Report Group') }}</th>
+                                <th>{{ __('COA Group') }}</th>
+                                <th>{{ __('Kode COA') }}</th>
+                                <th>{{ __('Nama Akun') }}</th>
+                                <th style="width: 250px;">{{ __('Saldo Awal (Rp)') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($bsReportGroups as $rg)
                                 <tr class="table-secondary fw-bold">
-                                    <td colspan="5">{{ $rg->name }} ({{ $rg->code }})</td>
+                                    <td colspan="5">{{ __($rg->name) }} ({{ $rg->code }})</td>
                                 </tr>
                                 @foreach($rg->coaGroups as $cg)
                                     <tr class="table-light fw-semibold">
                                         <td></td>
-                                        <td colspan="4">{{ $cg->name }} ({{ $cg->code }})</td>
+                                        <td colspan="4">{{ __($cg->name) }} ({{ $cg->code }})</td>
                                     </tr>
                                     @foreach($cg->coas as $coa)
                                         <tr>

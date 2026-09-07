@@ -101,6 +101,11 @@ class RkapSubmission extends Model
     return $total;
   }
 
+  public function recalculateTotalBudget(): float
+  {
+    return $this->calculateTotalBudget();
+  }
+
   // ── Version Control ──
 
   public function createVersion(string $changeType, ?string $changeReason = null): RkapVersion

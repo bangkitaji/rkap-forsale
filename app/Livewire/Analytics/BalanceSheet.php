@@ -22,8 +22,12 @@ class BalanceSheet extends Component
     {
         $this->availablePeriods = RkapPeriod::orderBy('year', 'desc')->get();
         
-        if (count($this->availablePeriods) > 0) {
-            $this->periodId = $this->availablePeriods->first()->id;
+        $activePeriod = RkapPeriod::where('status', 'finalized')->latest('year')->first()
+            ?? RkapPeriod::where('year', (int) date('Y'))->first()
+            ?? $this->availablePeriods->first();
+
+        if ($activePeriod) {
+            $this->periodId = $activePeriod->id;
         }
 
         $this->loadBalanceSheet();
@@ -78,22 +82,99 @@ class BalanceSheet extends Component
             ->groupBy('coas.id')
             ->pluck('total', 'coa_id')->toArray();
 
-        // Projections can come from actual projection inputs or budget (if no projection input)
-        // For simplicity in this example, we take existing projections
-        $projections = DB::table('rkap_budget_item_projections')
-            ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        // Projections: prioritize monthly projection records, fallback to item projection column, fallback to total_price
+        $projections = DB::table('rkap_budget_items')
             ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
             ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
             ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+            ->leftJoin(
+                DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as proj_total FROM rkap_budget_item_projections GROUP BY rkap_budget_item_id) as p'),
+                'p.rkap_budget_item_id', '=', 'rkap_budget_items.id'
+            )
             ->where('rkap_submissions.rkap_period_id', $this->periodId)
-            ->select('coas.id as coa_id', DB::raw('SUM(rkap_budget_item_projections.amount) as total'))
+            ->select('coas.id as coa_id', DB::raw('SUM(COALESCE(p.proj_total, rkap_budget_items.projection, rkap_budget_items.total_price)) as total'))
             ->groupBy('coas.id')
             ->pluck('total', 'coa_id')->toArray();
 
         // Calculate PL (Net Profit) to inject into Equity
         $netProfit = $this->calculateNetProfit($this->periodId);
 
+        // Identify Cash & Bank account (Aset Lancar) and Current Year Earnings account (Ekuitas)
+        $cashCoaId = null;
+        $cyeCoaId = null;
+
+        foreach ($bsReportGroups as $rg) {
+            foreach ($rg->coaGroups as $cg) {
+                foreach ($cg->coas as $coa) {
+                    if (!$cashCoaId && $rg->code === 'BS0001') {
+                        if ($coa->code === '110201' || str_starts_with($coa->code, '1102') || str_starts_with($coa->code, '1101')) {
+                            $cashCoaId = $coa->id;
+                        }
+                    }
+                    if (!$cyeCoaId && $rg->code === 'BS0005') {
+                        if ($coa->code === '322101' || str_contains(strtolower($coa->title), 'tahun berjalan')) {
+                            $cyeCoaId = $coa->id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback for Cash COA if not matched by specific code
+        if (!$cashCoaId && count($bsReportGroups) > 0) {
+            $firstRg = $bsReportGroups->firstWhere('code', 'BS0001');
+            if ($firstRg && $firstRg->coaGroups->isNotEmpty()) {
+                $firstCg = $firstRg->coaGroups->first();
+                if ($firstCg && $firstCg->coas->isNotEmpty()) {
+                    $cashCoaId = $firstCg->coas->first()->id;
+                }
+            }
+        }
+
+        // Calculate other BS mutations to determine net cash movement (Assets = Liabilities + Equity)
+        $nonCashAssetMut = ['budget' => 0, 'realization' => 0, 'projection' => 0];
+        $liabilityMut = ['budget' => 0, 'realization' => 0, 'projection' => 0];
+        $otherEquityMut = ['budget' => 0, 'realization' => 0, 'projection' => 0];
+
+        foreach ($bsReportGroups as $rg) {
+            foreach ($rg->coaGroups as $cg) {
+                foreach ($cg->coas as $coa) {
+                    if ($coa->id === $cashCoaId || $coa->id === $cyeCoaId) {
+                        continue;
+                    }
+
+                    $b = (float) ($budgets[$coa->id] ?? 0);
+                    $r = (float) ($realizations[$coa->id] ?? 0);
+                    $p = (float) ($projections[$coa->id] ?? 0);
+
+                    if (in_array($rg->code, ['BS0001', 'BS0002'])) {
+                        $nonCashAssetMut['budget'] += $b;
+                        $nonCashAssetMut['realization'] += $r;
+                        $nonCashAssetMut['projection'] += $p;
+                    } elseif (in_array($rg->code, ['BS0003', 'BS0004'])) {
+                        $liabilityMut['budget'] += $b;
+                        $liabilityMut['realization'] += $r;
+                        $liabilityMut['projection'] += $p;
+                    } elseif ($rg->code === 'BS0005') {
+                        $otherEquityMut['budget'] += $b;
+                        $otherEquityMut['realization'] += $r;
+                        $otherEquityMut['projection'] += $p;
+                    }
+                }
+            }
+        }
+
+        // Cash Mutation = Net Profit + Liabilities Mutation + Other Equity Mutation - Non-Cash Asset Mutation
+        // This guarantees standard accounting balance: Total Assets = Total Liabilities + Total Equity
+        $cashMut = [
+            'budget' => $netProfit['budget'] + $liabilityMut['budget'] + $otherEquityMut['budget'] - $nonCashAssetMut['budget'],
+            'realization' => $netProfit['realization'] + $liabilityMut['realization'] + $otherEquityMut['realization'] - $nonCashAssetMut['realization'],
+            'projection' => $netProfit['projection'] + $liabilityMut['projection'] + $otherEquityMut['projection'] - $nonCashAssetMut['projection'],
+        ];
+
         // 4. Build Hierarchical Data
+        $cyeProcessed = false;
+
         foreach ($bsReportGroups as $rg) {
             $rgType = (in_array($rg->code, ['BS0001', 'BS0002'])) ? 'aset' : 'liabilitas_ekuitas';
             
@@ -123,9 +204,21 @@ class BalanceSheet extends Component
 
                 foreach ($cg->coas as $coa) {
                     $opening = (float) ($openingBalances[$coa->id] ?? 0);
-                    $budgetMut = (float) ($budgets[$coa->id] ?? 0);
-                    $realMut = (float) ($realizations[$coa->id] ?? 0);
-                    $projMut = (float) ($projections[$coa->id] ?? 0);
+
+                    if ($coa->id === $cashCoaId) {
+                        $budgetMut = $cashMut['budget'];
+                        $realMut = $cashMut['realization'];
+                        $projMut = $cashMut['projection'];
+                    } elseif ($coa->id === $cyeCoaId) {
+                        $budgetMut = $netProfit['budget'];
+                        $realMut = $netProfit['realization'];
+                        $projMut = $netProfit['projection'];
+                        $cyeProcessed = true;
+                    } else {
+                        $budgetMut = (float) ($budgets[$coa->id] ?? 0);
+                        $realMut = (float) ($realizations[$coa->id] ?? 0);
+                        $projMut = (float) ($projections[$coa->id] ?? 0);
+                    }
                     
                     // Base ending balance
                     $budget = $opening + $budgetMut;
@@ -158,8 +251,8 @@ class BalanceSheet extends Component
                 $rgData['projection'] += $cgData['projection'];
             }
 
-            // Inject Current Year Earnings into Equity (BS0005)
-            if ($rg->code === 'BS0005') {
+            // Fallback: If Current Year Earnings COA was not in the COA tree under BS0005, inject synthetic group
+            if ($rg->code === 'BS0005' && !$cyeProcessed) {
                 $rgData['groups'][] = [
                     'id' => 'cye',
                     'code' => '',
@@ -231,14 +324,17 @@ class BalanceSheet extends Component
             ->groupBy('coas.id')
             ->pluck('total', 'coa_id')->toArray();
 
-        $projections = DB::table('rkap_budget_item_projections')
-            ->join('rkap_budget_items', 'rkap_budget_item_projections.rkap_budget_item_id', '=', 'rkap_budget_items.id')
+        $projections = DB::table('rkap_budget_items')
             ->join('rkap_work_plans', 'rkap_budget_items.rkap_work_plan_id', '=', 'rkap_work_plans.id')
             ->join('rkap_submissions', 'rkap_work_plans.rkap_submission_id', '=', 'rkap_submissions.id')
             ->join('coas', 'rkap_budget_items.account_code', '=', 'coas.code')
+            ->leftJoin(
+                DB::raw('(SELECT rkap_budget_item_id, SUM(amount) as proj_total FROM rkap_budget_item_projections GROUP BY rkap_budget_item_id) as p'),
+                'p.rkap_budget_item_id', '=', 'rkap_budget_items.id'
+            )
             ->where('rkap_submissions.rkap_period_id', $periodId)
             ->whereIn('coas.id', $plCoaIds)
-            ->select('coas.id as coa_id', DB::raw('SUM(rkap_budget_item_projections.amount) as total'))
+            ->select('coas.id as coa_id', DB::raw('SUM(COALESCE(p.proj_total, rkap_budget_items.projection, rkap_budget_items.total_price)) as total'))
             ->groupBy('coas.id')
             ->pluck('total', 'coa_id')->toArray();
 

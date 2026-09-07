@@ -3375,7 +3375,21 @@ class Analytics extends Controller
 
   public static function getCapexCoaCodes(): array
   {
-    return [
+    $dbCodes = [];
+    try {
+      $dbCodes = DB::table('coas')
+        ->where(function ($q) {
+          $q->where('code', 'LIKE', '12%')
+            ->orWhere('code', 'LIKE', '13%');
+        })
+        ->whereNull('deleted_at')
+        ->pluck('code')
+        ->toArray();
+    } catch (\Throwable $e) {
+      // Ignore if table/database is not ready
+    }
+
+    $legacyCodes = [
       '1105000001',
       '1201010001',
       '1201020001',
@@ -3451,5 +3465,7 @@ class Analytics extends Controller
       '1206000001',
       '1299000001'
     ];
+
+    return array_values(array_unique(array_merge($legacyCodes, $dbCodes)));
   }
 }

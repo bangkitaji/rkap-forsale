@@ -26,8 +26,12 @@ class OpeningBalanceForm extends Component
     {
         $this->availablePeriods = RkapPeriod::orderBy('year', 'desc')->get();
         
-        if (count($this->availablePeriods) > 0) {
-            $this->periodId = $this->availablePeriods->first()->id;
+        $activePeriod = RkapPeriod::where('status', 'finalized')->latest('year')->first()
+            ?? RkapPeriod::where('year', (int) date('Y'))->first()
+            ?? $this->availablePeriods->first();
+
+        if ($activePeriod) {
+            $this->periodId = $activePeriod->id;
         }
 
         $this->loadReportStructure();
@@ -100,7 +104,7 @@ class OpeningBalanceForm extends Component
             }
         }
 
-        session()->flash('message', 'Opening balances saved successfully.');
+        session()->flash('message', __('Saldo awal neraca berhasil disimpan.'));
     }
 
     public function render()
