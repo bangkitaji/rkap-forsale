@@ -230,6 +230,43 @@
                         </div>
                     </div>
 
+                    {{-- 6. Favicon Browser --}}
+                    <div class="p-3 mb-3 rounded border bg-lighter">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-semibold mb-0">{{ __('Favicon Browser (Tab)') }}</label>
+                            @if($isCustomFavicon)
+                                <span class="badge bg-label-success">{{ __('Kustom') }}</span>
+                            @else
+                                <span class="badge bg-label-secondary">{{ __('Default (.env)') }}</span>
+                            @endif
+                        </div>
+                        <p class="small text-muted mb-3">{{ __('Ikon kecil yang muncul di tab browser pengguna (Format PNG / ICO, 1:1, disarankan 64x64 atau 128x128).') }}</p>
+                        <div class="row align-items-center g-3">
+                            <div class="col-auto">
+                                <div class="border rounded p-2 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                    <img src="{{ $activeFavicon }}" alt="Favicon" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                </div>
+                            </div>
+                            <div class="col">
+                                <form wire:submit.prevent="uploadLogo('favicon')" class="d-flex gap-2 align-items-center">
+                                    <input type="file" wire:model="fileFavicon" class="form-control form-control-sm" accept="image/*">
+                                    <button type="submit" class="btn btn-sm btn-primary text-nowrap" wire:loading.attr="disabled" wire:target="fileFavicon, uploadLogo">
+                                        <i class="bx bx-upload me-1"></i> {{ __('Upload') }}
+                                    </button>
+                                    @if($isCustomFavicon)
+                                        <button type="button" wire:click="resetLogo('favicon')" class="btn btn-sm btn-outline-secondary" title="{{ __('Kembalikan ke .env') }}">
+                                            <i class="bx bx-undo"></i>
+                                        </button>
+                                    @endif
+                                </form>
+                                @error('fileFavicon') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                                @if (session()->has('success_favicon'))
+                                    <small class="text-success d-block mt-1"><i class="bx bx-check"></i> {{ session('success_favicon') }}</small>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -246,7 +283,7 @@
                     <form wire:submit.prevent="saveDetails">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">{{ __('Nama Perusahaan') }} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('companyName') is-invalid @enderror" wire:model="companyName" placeholder="PT Maju Makmur">
+                            <input type="text" class="form-control @error('companyName') is-invalid @enderror" wire:model="companyName" placeholder="{{ __('contoh: PT Maju Makmur') }}">
                             @error('companyName') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
@@ -258,7 +295,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">{{ __('Tagline Aplikasi') }}</label>
-                            <input type="text" class="form-control @error('companyTagline') is-invalid @enderror" wire:model="companyTagline" placeholder="Sistem Rencana Kerja & Anggaran Perusahaan">
+                            <input type="text" class="form-control @error('companyTagline') is-invalid @enderror" wire:model="companyTagline" placeholder="{{ __('Sistem Rencana Kerja & Anggaran Perusahaan') }}">
                             @error('companyTagline') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
@@ -279,7 +316,7 @@
                             @error('themePrimary') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label fw-semibold d-flex justify-content-between">
                                 <span>{{ __('Warna Gelap / Sidebar') }}</span>
                                 <span class="badge" style="background-color: {{ $themeDark }}; color: #fff;">{{ $themeDark }}</span>
@@ -292,15 +329,31 @@
                             @error('themeDark') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
                         </div>
 
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold d-flex justify-content-between">
+                                <span>{{ __('Warna Aksen Brand') }}</span>
+                                <span class="badge" style="background-color: {{ $themeAccent }}; color: #fff;">{{ $themeAccent }}</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color" wire:model.live="themeAccent" style="max-width: 60px;">
+                                <input type="text" class="form-control @error('themeAccent') is-invalid @enderror" wire:model.live="themeAccent" placeholder="#b91c1c">
+                            </div>
+                            <small class="text-muted">{{ __('Warna aksen kedua (digunakan untuk gradien tombol dan sorotan visual).') }}</small>
+                            @error('themeAccent') <div class="text-danger mt-1 small">{{ $message }}</div> @enderror
+                        </div>
+
                         {{-- Preview Box --}}
                         <div class="p-3 mb-4 rounded border text-center" style="background-color: rgba(0,0,0,0.02);">
                             <small class="text-muted d-block mb-2">{{ __('Pratinjau Tombol:') }}</small>
-                            <div class="d-flex justify-content-center gap-2">
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <button type="button" class="btn btn-sm text-white" style="background-color: {{ $themePrimary }}; border-color: {{ $themePrimary }};">
                                     {{ __('Tombol Primer') }}
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" style="border-color: {{ $themePrimary }}; color: {{ $themePrimary }};">
                                     {{ __('Outline') }}
+                                </button>
+                                <button type="button" class="btn btn-sm text-white" style="background: linear-gradient(135deg, {{ $themePrimary }} 0%, {{ $themeAccent }} 100%); border: none;">
+                                    {{ __('Gradien Login') }}
                                 </button>
                             </div>
                         </div>
@@ -319,10 +372,12 @@
                 <div class="card-body">
                     <h6 class="fw-bold mb-2"><i class="bx bx-info-circle me-1 text-info"></i> {{ __('Konfigurasi via .env') }}</h6>
                     <p class="small text-muted mb-2">
-                        {{ __('Anda juga dapat mengonfigurasi variabel-variabel ini secara permanen melalui file ') }}<code>.env</code>:
+                        {{ __('Anda juga dapat mengonfigurasi variabel-variabel ini secara permanen melalui file') }} <code>.env</code>:
                     </p>
                     <pre class="bg-dark text-white p-2 rounded small mb-0"><code>RKAP_COMPANY_NAME="{{ $companyName }}"
 RKAP_THEME_PRIMARY="{{ $themePrimary }}"
+RKAP_THEME_DARK="{{ $themeDark }}"
+RKAP_THEME_ACCENT="{{ $themeAccent }}"
 RKAP_LOGO_SIDEBAR="assets/img/brand/logo_sidebar.png"</code></pre>
                 </div>
             </div>

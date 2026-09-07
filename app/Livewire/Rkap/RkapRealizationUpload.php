@@ -201,7 +201,7 @@ class RkapRealizationUpload extends Component
             ->find($this->periodId);
 
         if (!$validPeriod) {
-            $this->errorsList[] = 'Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.';
+            $this->errorsList[] = __('Realisasi hanya dapat diunggah untuk periode RKAP tahun berjalan (:year) dengan status Finalized.', ['year' => $currentYear]);
             return;
         }
 
@@ -209,7 +209,10 @@ class RkapRealizationUpload extends Component
         if ($validPeriod->isMonthClosed($this->month)) {
             $closingDate = $validPeriod->getClosingDateForMonth($this->month);
             $closingDateStr = $closingDate ? $closingDate->format('d M Y') : '';
-            $this->errorsList[] = 'Pemberitahuan: Pengunggahan realisasi untuk bulan ' . $this->getMonthName($this->month) . ' telah ditutup karena melewati batas closing periode (' . $closingDateStr . ').';
+            $this->errorsList[] = __('Pemberitahuan: Pengunggahan realisasi untuk bulan :month telah ditutup karena melewati batas closing periode (:date).', [
+                'month' => $this->getMonthName($this->month),
+                'date' => $closingDateStr
+            ]);
             return;
         }
 
@@ -306,7 +309,7 @@ class RkapRealizationUpload extends Component
             ->find($this->periodId);
 
         if (! $validPeriod) {
-            session()->flash('massUpdateError', __('Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.'));
+            session()->flash('massUpdateError', __('Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (:year) dengan status Finalized.', ['year' => $currentYear]));
             return;
         }
 
@@ -332,7 +335,7 @@ class RkapRealizationUpload extends Component
         $this->resetMassUpdateState();
 
         if (! $this->isAdminUser) {
-            $this->massUpdateErrorsList[] = 'Fitur ini hanya tersedia untuk Administrator.';
+            $this->massUpdateErrorsList[] = __('Fitur ini hanya tersedia untuk Administrator.');
             return;
         }
 
@@ -340,8 +343,8 @@ class RkapRealizationUpload extends Component
             'periodId'       => 'required|integer|exists:rkap_periods,id',
             'massUpdateFile' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ], [
-            'periodId.required'       => 'Periode RKAP wajib dipilih sebelum upload.',
-            'massUpdateFile.required' => 'File wajib dipilih sebelum upload.',
+            'periodId.required'       => __('Periode RKAP wajib dipilih sebelum upload.'),
+            'massUpdateFile.required' => __('File wajib dipilih sebelum upload.'),
         ]);
 
         // Validate period is finalized and current year
@@ -351,13 +354,13 @@ class RkapRealizationUpload extends Component
             ->find($this->periodId);
 
         if (! $validPeriod) {
-            $this->massUpdateErrorsList[] = 'Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (' . $currentYear . ') dengan status Finalized.';
+            $this->massUpdateErrorsList[] = __('Realisasi hanya dapat di-update untuk periode RKAP tahun berjalan (:year) dengan status Finalized.', ['year' => $currentYear]);
             return;
         }
 
         $lastClosed = $this->lastClosedMonth;
         if (! $lastClosed) {
-            $this->massUpdateErrorsList[] = 'Belum ada bulan yang sudah closing. Mass update hanya dapat dilakukan setelah minimal satu bulan closing.';
+            $this->massUpdateErrorsList[] = __('Belum ada bulan yang sudah closing. Mass update hanya dapat dilakukan setelah minimal satu bulan closing.');
             return;
         }
 

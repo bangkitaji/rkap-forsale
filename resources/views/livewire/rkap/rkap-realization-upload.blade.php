@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-12">
       <div class="card mb-4">
-        <h5 class="card-header">Upload Realisasi RKAP</h5>
+        <h5 class="card-header">{{ __('Upload Realisasi RKAP') }}</h5>
         <div class="card-body">
           <p class="text-muted mb-3">
             Upload file Excel (.xlsx, .xls) atau CSV untuk memperbarui data realisasi anggaran per item per bulan.
@@ -15,10 +15,10 @@
             <div class="col-lg-6 border-lg-end pe-lg-4 mb-4 mb-lg-0">
               {{-- Period selector --}}
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="periodSelect">Periode RKAP (Tahun Berjalan) <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold" for="periodSelect">{{ __('Periode RKAP (Tahun Berjalan)') }} <span class="text-danger">*</span></label>
                 <select id="periodSelect" class="form-select" wire:model.live="periodId"
                   wire:loading.attr="disabled" wire:target="uploadAndImport">
-                  <option value="">— Pilih Periode RKAP ({{ date('Y') }}) —</option>
+                  <option value="">— {{ __('Pilih Periode RKAP') }} ({{ date('Y') }}) —</option>
                   @foreach ($periodOptions as $period)
                   <option value="{{ $period->id }}">{{ $period->title ?? $period->year }} (Tahun Berjalan {{ $period->year }})</option>
                   @endforeach
@@ -39,7 +39,7 @@
               {{-- Month selector --}}
               @if ($periodId)
               <div class="mb-3">
-                <label class="form-label fw-semibold" for="monthSelect">Bulan Realisasi <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold" for="monthSelect">{{ __('Bulan Realisasi') }} <span class="text-danger">*</span></label>
                 @if (empty($this->monthOptions))
                 <div class="alert alert-warning mb-0" role="alert">
                   <i class="bx bx-info-circle me-1"></i> Semua bulan pada periode RKAP ini sudah memiliki realisasi terunggah.
@@ -47,7 +47,7 @@
                 @else
                 <select id="monthSelect" class="form-select" wire:model.live="month"
                   wire:loading.attr="disabled" wire:target="uploadAndImport">
-                  <option value="">— Pilih Bulan —</option>
+                  <option value="">— {{ __('Pilih Bulan') }} —</option>
                   @foreach ($this->monthOptions as $num => $name)
                   <option value="{{ $num }}">{{ $name }}</option>
                   @endforeach
@@ -267,7 +267,7 @@
       <div class="card mt-4 border border-warning-subtle">
         <h5 class="card-header d-flex align-items-center gap-2 bg-warning-subtle">
           <i class="bx bx-refresh text-warning fs-5"></i>
-          <span>Update Massal Realisasi</span>
+          <span>{{ __('Update Massal Realisasi') }}</span>
           <span class="badge bg-warning text-dark ms-1 rkap-font-07">Administrator</span>
         </h5>
         <div class="card-body">
@@ -427,7 +427,7 @@
             <thead class="table-light">
               <tr>
                 <th>{{ __('Departemen') }}</th>
-                <th class="text-end rkap-mw-250">Total Realisasi (Rp)</th>
+                <th class="text-end rkap-mw-250">{{ __('Total Realisasi (Rp)') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -471,25 +471,25 @@
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
               <i class="bx bx-download"></i>
-              <span wire:loading.remove wire:target="exportExcel">Download Excel Realisasi</span>
+              <span wire:loading.remove wire:target="exportExcel">{{ __('Download Excel Realisasi') }}</span>
               <span wire:loading wire:target="exportExcel">Downloading...</span>
             </button>
             {{-- Month filter for list --}}
             <div class="rkap-min-w-160">
               <select class="form-select form-select-sm" wire:model.live="filterMonth">
-                <option value="">— Semua Bulan —</option>
-                <option value="1">Januari</option>
-                <option value="2">Februari</option>
-                <option value="3">Maret</option>
-                <option value="4">April</option>
-                <option value="5">Mei</option>
-                <option value="6">Juni</option>
-                <option value="7">Juli</option>
-                <option value="8">Agustus</option>
-                <option value="9">September</option>
-                <option value="10">Oktober</option>
-                <option value="11">November</option>
-                <option value="12">Desember</option>
+                <option value="">— {{ __('Semua Bulan') }} —</option>
+                <option value="1">{{ __('Januari') }}</option>
+                <option value="2">{{ __('Februari') }}</option>
+                <option value="3">{{ __('Maret') }}</option>
+                <option value="4">{{ __('April') }}</option>
+                <option value="5">{{ __('Mei') }}</option>
+                <option value="6">{{ __('Juni') }}</option>
+                <option value="7">{{ __('Juli') }}</option>
+                <option value="8">{{ __('Agustus') }}</option>
+                <option value="9">{{ __('September') }}</option>
+                <option value="10">{{ __('Oktober') }}</option>
+                <option value="11">{{ __('November') }}</option>
+                <option value="12">{{ __('Desember') }}</option>
               </select>
             </div>
 
@@ -519,13 +519,13 @@
             <table class="table table-hover table-striped align-middle">
               <thead>
                 <tr>
-                  <th>Biro</th>
+                  <th>{{ __('Biro') }}</th>
                   <th>{{ __('Akun Belanja / COA') }}</th>
                   <th>{{ __('Detail Belanja') }}</th>
                   <th class="text-center">{{ __('Bulan') }}</th>
-                  <th class="text-end">Jumlah Realisasi (Rp)</th>
+                  <th class="text-end">{{ __('Jumlah Realisasi (Rp)') }}</th>
                   <th>{{ __('Pengunggah') }}</th>
-                  <th class="text-center">Aksi</th>
+                  <th class="text-center">{{ __('Aksi') }}</th>
                 </tr>
               </thead>
               <tbody class="table-border-bottom-0">
@@ -569,7 +569,7 @@
                       class="btn btn-sm btn-icon btn-outline-danger"
                       onclick="confirm('Apakah Anda yakin ingin menghapus data realisasi ini?') || event.stopImmediatePropagation()"
                       wire:click="deleteRealization({{ $real->id }})"
-                      title="Hapus Realisasi">
+                      title="{{ __('Hapus Realisasi') }}">
                       <i class="bx bx-trash"></i>
                     </button>
                   </td>

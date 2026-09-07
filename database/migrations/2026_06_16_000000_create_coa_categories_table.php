@@ -11,12 +11,12 @@ return new class extends Migration
      * The 12 P&L categories migrated from the hardcoded PHP constant.
      */
     private const CATEGORIES = [
-        ['key' => 'revenue_passenger',         'label' => 'Pendapatan Tiket Penumpang',            'group' => 'Revenue',       'color' => 'success',   'sort_order' => 1],
-        ['key' => 'revenue_non_passenger',     'label' => 'Pendapatan Non-Tiket / Komersial',      'group' => 'Revenue',       'color' => 'success',   'sort_order' => 2],
-        ['key' => 'direct_cost_traction',      'label' => 'Beban Energi Listrik Traksi',           'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 3],
-        ['key' => 'direct_cost_maintenance',   'label' => 'Beban Pemeliharaan Sarana & Prasarana',  'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 4],
-        ['key' => 'direct_cost_crew',          'label' => 'Beban Awak KA & Staf Stasiun',          'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 5],
-        ['key' => 'direct_cost_passenger',     'label' => 'Beban Pelayanan Penumpang',              'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 6],
+        ['key' => 'revenue_passenger',         'label' => 'Pendapatan Usaha Utama',                'group' => 'Revenue',       'color' => 'success',   'sort_order' => 1],
+        ['key' => 'revenue_non_passenger',     'label' => 'Pendapatan Lain-lain / Komersial',      'group' => 'Revenue',       'color' => 'success',   'sort_order' => 2],
+        ['key' => 'direct_cost_traction',      'label' => 'Beban Energi & Utilitas Operasional',   'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 3],
+        ['key' => 'direct_cost_maintenance',   'label' => 'Beban Pemeliharaan Sarana & Aset',      'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 4],
+        ['key' => 'direct_cost_crew',          'label' => 'Beban Tenaga Kerja Operasional Langsung', 'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 5],
+        ['key' => 'direct_cost_passenger',     'label' => 'Beban Pelayanan & Konsumen',            'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 6],
         ['key' => 'direct_cost_others',        'label' => 'Beban Langsung Lainnya',                 'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 7],
         ['key' => 'indirect_cost_marketing',   'label' => 'Beban Pemasaran & Penjualan',            'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 8],
         ['key' => 'indirect_cost_admin',       'label' => 'Beban Umum & Administrasi',              'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 9],

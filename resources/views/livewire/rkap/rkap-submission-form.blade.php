@@ -283,7 +283,7 @@
                       $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
                       $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
                       $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                      if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
+                      if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? '') && $isGain) {
                           $itemTotal = -$itemTotal;
                       }
                       $wpSubtotal += $itemTotal;
@@ -650,7 +650,7 @@
                       $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
                       $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
                       $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                      if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
+                      if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? '') && $isGain) {
                           $itemTotal = -$itemTotal;
                       }
                       $actSubtotal += $itemTotal;
@@ -878,7 +878,7 @@
                                   $isGain = isset($bi['is_gain'])
                                       ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN)
                                       : true;
-                                  if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
+                                  if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? '') && $isGain) {
                                       $itemTotal = -$itemTotal;
                                   }
                                   return $itemTotal;
@@ -1241,7 +1241,7 @@
                               @endif
                             </div>
                           </div>
-                          @if (($bi['account_code'] ?? '') === '7603000001')
+                          @if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? ''))
                             <div class="mb-3 d-flex align-items-center gap-2 mt-2">
                               <span class="small fw-semibold text-muted">{{ __('Sifat Selisih Kurs:') }}</span>
                               <div class="btn-group btn-group-sm" role="group">

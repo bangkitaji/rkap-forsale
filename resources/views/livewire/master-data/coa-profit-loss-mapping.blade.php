@@ -116,9 +116,9 @@
                         <select class="form-select form-select-sm"
                             wire:key="filter-pl-group"
                             wire:model.live="filterProfitLossGroup">
-                            <option value="">Semua Status / Kategori</option>
+                            <option value="">{{ __('Semua Status / Kategori') }}</option>
                             <option value="unmapped">{{ __('Belum Dipetakan') }}</option>
-                            <option value="mapped">Sudah Dipetakan (Semua)</option>
+                            <option value="mapped">{{ __('Sudah Dipetakan (Semua)') }}</option>
                             @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                             <optgroup label="{{ $groupName }}">
                                 @foreach($groupCats as $cat)
@@ -160,8 +160,8 @@
                     <select class="form-select form-select-sm w-auto bg-white"
                         x-data
                         @change="$wire.bulkMap($event.target.value); $event.target.value = '';">
-                        <option value="">-- Pilih Kategori --</option>
-                        <option value="__reset__">-- Hapus Pemetaan (Reset) --</option>
+                        <option value="">-- {{ __('Pilih Kategori') }} --</option>
+                        <option value="__reset__">-- {{ __('Hapus Pemetaan (Reset)') }} --</option>
                         @foreach(collect($coaCategories)->groupBy('group') as $groupName => $groupCats)
                         <optgroup label="{{ $groupName }}">
                             @foreach($groupCats as $cat)

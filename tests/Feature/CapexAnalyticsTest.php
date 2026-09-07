@@ -33,6 +33,8 @@ class CapexAnalyticsTest extends TestCase
 
     public function test_user_can_access_capex_analytics(): void
     {
+        app()->setLocale('id');
+
         // Create a period
         RkapPeriod::create([
             'title' => 'Periode RKAP 2026',

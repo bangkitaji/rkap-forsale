@@ -29,6 +29,7 @@ return [
     'logo_login'      => env('RKAP_LOGO_LOGIN', 'assets/img/brand/logo_login.png'),
     'logo_login_hero' => env('RKAP_LOGO_LOGIN_HERO', 'assets/img/brand/login_hero.png'),
     'avatar_default'  => env('RKAP_AVATAR_DEFAULT', 'assets/img/brand/default_avatar.png'),
+    'favicon'         => env('RKAP_FAVICON', 'assets/img/favicon/favicon.png'),
 
     /*
     |--------------------------------------------------------------------------
@@ -129,11 +130,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | COA Group Fallback Code
+    | Demo Mode & Credentials
     |--------------------------------------------------------------------------
     |
-    | Fallback COA group code when a budget item has no matching COA group.
+    | Configuration for demo / showcase environment.
     |
     */
-    'coa_group_fallback_code' => env('RKAP_COA_GROUP_FALLBACK', '999'),
+    'demo_password'   => env('RKAP_DEMO_PASSWORD', 'Demo123!'),
+    'seed_demo_data'  => (bool) env('RKAP_SEED_DEMO_DATA', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Forex Difference / Gain-Loss Accounts
+    |--------------------------------------------------------------------------
+    |
+    | COA codes that represent foreign exchange difference and support
+    | the gain/loss sign inversion toggle (is_gain).
+    |
+    */
+    'forex_coa_codes' => env('RKAP_FOREX_COA_CODES')
+        ? array_filter(array_map('trim', explode(',', env('RKAP_FOREX_COA_CODES'))))
+        : ['760301', '7603000001'],
 ];
+

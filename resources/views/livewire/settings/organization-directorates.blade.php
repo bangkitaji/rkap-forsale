@@ -1,7 +1,7 @@
 <div>
   <div class="d-flex justify-content-between align-items-start mb-4">
     <h4 class="py-2 mb-0">
-      <span class="text-muted fw-light">Settings /</span> Manajemen Organisasi
+      <span class="text-muted fw-light">{{ __('Settings /') }}</span> {{ __('Manajemen Organisasi') }}
     </h4>
   </div>
   <div class="row">
@@ -9,13 +9,13 @@
       <div class="nav-align-top">
         <ul class="nav nav-pills flex-column flex-md-row mb-6 gap-md-0 gap-2">
           <li class="nav-item">
-            <a class="nav-link active" href="javascript:void(0);"><i class="icon-base bx bx-building icon-sm me-1_5"></i> Direktorat</a>
+            <a class="nav-link active" href="javascript:void(0);"><i class="icon-base bx bx-building icon-sm me-1_5"></i> {{ __('Direktorat') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ route('settings-organization-departments') }}"><i class="icon-base bx bx-sitemap icon-sm me-1_5"></i> Departemen</a>
+            <a class="nav-link" href="{{ route('settings-organization-departments') }}"><i class="icon-base bx bx-sitemap icon-sm me-1_5"></i> {{ __('Departemen') }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ route('settings-organization-bureaus') }}"><i class="icon-base bx bx-folder icon-sm me-1_5"></i> Biro</a>
+            <a class="nav-link" href="{{ route('settings-organization-bureaus') }}"><i class="icon-base bx bx-folder icon-sm me-1_5"></i> {{ __('Biro') }}</a>
           </li>
         </ul>
       </div>

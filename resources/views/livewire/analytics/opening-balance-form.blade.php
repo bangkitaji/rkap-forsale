@@ -13,9 +13,9 @@
             <form wire:submit.prevent="save">
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="periodId" class="form-label">Tahun / Periode RKAP</label>
+                        <label for="periodId" class="form-label">{{ __('Tahun / Periode RKAP') }}</label>
                         <select wire:model.live="periodId" id="periodId" class="form-select">
-                            <option value="">-- Pilih Periode --</option>
+                            <option value="">-- {{ __('Pilih Periode') }} --</option>
                             @foreach($availablePeriods as $period)
                                 <option value="{{ $period->id }}">{{ $period->year }} - {{ $period->title }}</option>
                             @endforeach
@@ -24,7 +24,7 @@
                     </div>
                     <div class="col-md-8 d-flex align-items-end justify-content-end">
                         <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="save">Simpan Saldo Awal</span>
+                            <span wire:loading.remove wire:target="save">{{ __('Simpan Saldo Awal') }}</span>
                             <span wire:loading wire:target="save">Menyimpan...</span>
                         </button>
                     </div>

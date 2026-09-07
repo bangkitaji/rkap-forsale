@@ -17,6 +17,7 @@ class BrandSettings extends Component
     public $fileLogin;
     public $fileLoginHero;
     public $fileAvatar;
+    public $fileFavicon;
 
     // Company Information
     public string $companyName = '';
@@ -26,6 +27,7 @@ class BrandSettings extends Component
     // Theme Colors
     public string $themePrimary = '#960b10';
     public string $themeDark = '#1a1f5e';
+    public string $themeAccent = '#b91c1c';
 
     public function mount(): void
     {
@@ -39,6 +41,7 @@ class BrandSettings extends Component
         $this->companyTagline = BrandHelper::companyTagline();
         $this->themePrimary = BrandHelper::themePrimary();
         $this->themeDark = BrandHelper::themeDark();
+        $this->themeAccent = BrandHelper::themeAccent();
     }
 
     /**
@@ -52,6 +55,7 @@ class BrandSettings extends Component
             'companyTagline'   => 'nullable|string|max:255',
             'themePrimary'     => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
             'themeDark'        => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
+            'themeAccent'      => ['required', 'regex:/^#([a-f0-9]{6}|[a-f0-9]{3})$/i'],
         ]);
 
         Setting::set('brand_company_name', $this->companyName);
@@ -59,6 +63,7 @@ class BrandSettings extends Component
         Setting::set('brand_company_tagline', $this->companyTagline);
         Setting::set('brand_theme_primary', $this->themePrimary);
         Setting::set('brand_theme_dark', $this->themeDark);
+        Setting::set('brand_theme_accent', $this->themeAccent);
 
         session()->flash('success_details', __('Informasi brand & warna berhasil disimpan!'));
     }
@@ -74,6 +79,7 @@ class BrandSettings extends Component
             'login'      => 'fileLogin',
             'login_hero' => 'fileLoginHero',
             'avatar'     => 'fileAvatar',
+            'favicon'    => 'fileFavicon',
         ];
 
         $prop = $propMap[$type] ?? null;
@@ -114,14 +120,16 @@ class BrandSettings extends Component
             'brand_company_tagline',
             'brand_theme_primary',
             'brand_theme_dark',
+            'brand_theme_accent',
             'brand_logo_sidebar',
             'brand_logo_navbar',
             'brand_logo_login',
             'brand_logo_login_hero',
             'brand_logo_avatar',
+            'brand_logo_favicon',
         ];
 
-        foreach (['sidebar', 'navbar', 'login', 'login_hero', 'avatar'] as $t) {
+        foreach (['sidebar', 'navbar', 'login', 'login_hero', 'avatar', 'favicon'] as $t) {
             BrandHelper::resetLogo($t);
         }
 
@@ -141,11 +149,13 @@ class BrandSettings extends Component
             'activeLogin'     => BrandHelper::logo('login'),
             'activeLoginHero' => BrandHelper::logo('login_hero'),
             'activeAvatar'    => BrandHelper::logo('avatar'),
+            'activeFavicon'   => BrandHelper::logo('favicon'),
             'isCustomSidebar' => BrandHelper::isCustom('sidebar'),
             'isCustomNavbar'  => BrandHelper::isCustom('navbar'),
             'isCustomLogin'   => BrandHelper::isCustom('login'),
             'isCustomHero'    => BrandHelper::isCustom('login_hero'),
             'isCustomAvatar'  => BrandHelper::isCustom('avatar'),
+            'isCustomFavicon' => BrandHelper::isCustom('favicon'),
         ])->layout('layouts.contentNavbarLayout');
     }
 }

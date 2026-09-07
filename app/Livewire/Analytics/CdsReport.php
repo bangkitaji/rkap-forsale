@@ -152,7 +152,8 @@ class CdsReport extends Component
             }
         }
 
-        return "(CASE WHEN rkap_budget_items.account_code = '7603000001' AND rkap_budget_items.is_gain = false THEN -1 WHEN rkap_budget_items.flow_direction = 'IN' THEN 1 WHEN rkap_budget_items.flow_direction = 'OUT' THEN -1 WHEN coa_categories.group = 'Revenue' OR coa_categories.key = 'non_operating_revenue' OR coas.code LIKE '4%' OR coas.code LIKE '71%' THEN 1 ELSE -1 END)";
+        $forexCond = \App\Models\Coa::forexSqlCondition('rkap_budget_items.account_code');
+        return "(CASE WHEN {$forexCond} AND rkap_budget_items.is_gain = false THEN -1 WHEN rkap_budget_items.flow_direction = 'IN' THEN 1 WHEN rkap_budget_items.flow_direction = 'OUT' THEN -1 WHEN coa_categories.group = 'Revenue' OR coa_categories.key = 'non_operating_revenue' OR coas.code LIKE '4%' OR coas.code LIKE '71%' THEN 1 ELSE -1 END)";
     }
 
     private function calculateCashFlowBudget(array $coaCodes, int $periodId, $monthFilter = null, ?string $cdsGroupCode = null): float

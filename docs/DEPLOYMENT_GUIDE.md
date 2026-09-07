@@ -47,6 +47,13 @@ Wizard ini akan secara interaktif menanyakan:
 5. Pilihan data sampel (pilih *No/Tidak* untuk instalasi bersih)
 6. Menjalankan migrasi dan seeding database
 
+### Mode Presentasi & Setup Demo Cepat:
+Jika Anda menyiapkan instance untuk keperluan demo/presentasi ke calon klien:
+```bash
+php artisan rkap:demo
+```
+Perintah ini otomatis menginisialisasi akun login per peran alur bisnis (`demo.*@rkap.com`), simulasi pengajuan multi-status, data realisasi bulanan, dan pergeseran anggaran. Lihat panduan lengkap di [docs/DEMO_GUIDE.md](file:///docs/DEMO_GUIDE.md).
+
 ---
 
 ## 3. Cara Manual: Instalasi Langkah-demi-Langkah

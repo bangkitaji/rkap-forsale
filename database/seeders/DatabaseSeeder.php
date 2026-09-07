@@ -34,5 +34,11 @@ class DatabaseSeeder extends Seeder
         } else {
             $this->command->info('Sample datasets skipped (RKAP_SEED_SAMPLE_DATA=false). Clean baseline ready.');
         }
+
+        // Optional / Demo showcase seeder
+        if (config('rkap.seed_demo_data', false)) {
+            $this->command->info('Seeding full demo showcase dataset (RKAP_SEED_DEMO_DATA=true)...');
+            $this->call(DemoSeeder::class);
+        }
     }
 }

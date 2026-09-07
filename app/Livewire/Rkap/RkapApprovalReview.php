@@ -569,7 +569,7 @@ class RkapApprovalReview extends Component
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
             $isGain = isset($item->is_gain) ? filter_var($item->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
-            if ($item->account_code === '7603000001' && $isGain) {
+            if (\App\Models\Coa::isForexAccount($item->account_code) && $isGain) {
                 $totalPrice = -$totalPrice;
             }
 
@@ -625,7 +625,7 @@ class RkapApprovalReview extends Component
             $coa = $item->coa;
             $totalPrice = (float) $item->total_price;
             $isGain = isset($item->is_gain) ? filter_var($item->is_gain, FILTER_VALIDATE_BOOLEAN) : true;
-            if ($item->account_code === '7603000001' && $isGain) {
+            if (\App\Models\Coa::isForexAccount($item->account_code) && $isGain) {
                 $totalPrice = -$totalPrice;
             }
 

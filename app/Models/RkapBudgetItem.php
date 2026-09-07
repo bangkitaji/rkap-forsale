@@ -106,6 +106,14 @@ class RkapBudgetItem extends Model
         return $this->belongsTo(DifferenceGroup::class, 'difference_group_id');
     }
 
+    /**
+     * Check if this budget item belongs to a forex gain/loss toggleable account.
+     */
+    public function isForexAccount(): bool
+    {
+        return Coa::isForexAccount($this->account_code);
+    }
+
     protected static function booted(): void
     {
         static::saving(function (RkapBudgetItem $item) {

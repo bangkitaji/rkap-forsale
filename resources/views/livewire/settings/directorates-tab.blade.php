@@ -40,7 +40,7 @@
                     <th>{{ __('Departemen') }}</th>
                     <th>Users</th>
                     <th>{{ __('Status') }}</th>
-                    <th>Aksi</th>
+                    <th>{{ __('Aksi') }}</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
@@ -64,7 +64,7 @@
                         <button wire:click="toggleActive({{ $directorate->id }})" class="btn btn-sm btn-icon btn-text-warning rounded-pill waves-effect" title="Toggle Status">
                             <i class="bx bx-toggle-{{ $directorate->is_active ? 'right' : 'left' }}"></i>
                         </button>
-                        <button wire:click="delete({{ $directorate->id }})" wire:confirm="Yakin ingin menghapus direktorat ini?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect" title="Hapus">
+                        <button wire:click="delete({{ $directorate->id }})" wire:confirm="Yakin ingin menghapus direktorat ini?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect" title="{{ __('Hapus') }}">
                             <i class="bx bx-trash"></i>
                         </button>
                     </td>
@@ -107,7 +107,7 @@
                                 @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-8 mb-3">
-                                <label for="dir-name" class="form-label">Nama Direktorat <span class="text-danger">*</span></label>
+                                <label for="dir-name" class="form-label">{{ __('Nama Direktorat') }} <span class="text-danger">*</span></label>
                                 <input type="text" id="dir-name" class="form-control @error('name') is-invalid @enderror"
                                     wire:model="name" placeholder="{{ __('Nama direktorat') }}" autofocus>
                                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror

@@ -211,7 +211,7 @@
 @if ($activeTab === 'report')
 @php
   $categoryColors = [
-    'Arus Kas Aktivitas Operasi'   => ['bg' => '#0d6efd', 'badge' => 'bg-primary'],
+    'Arus Kas Aktivitas Operasi'   => ['bg' => \App\Helpers\BrandHelper::themePrimary(), 'badge' => 'bg-primary'],
     'Arus Kas Aktivitas Investasi' => ['bg' => '#fd7e14', 'badge' => 'bg-warning'],
     'Arus Kas Aktivitas Pendanaan' => ['bg' => '#198754', 'badge' => 'bg-success'],
   ];

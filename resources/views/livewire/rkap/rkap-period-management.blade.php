@@ -2,7 +2,7 @@
     <div class="d-flex justify-content-between align-items-center py-3 mb-4">
         <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Periode Anggaran</h4>
         <button wire:click="create()" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> Buat Periode
+            <i class="bx bx-plus me-1"></i> {{ __('Buat Periode') }}
         </button>
     </div>
 
@@ -56,7 +56,7 @@
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <i class="bx bx-file text-primary"></i>
                         <span class="fw-semibold">{{ $period->submissions_count }}</span>
-                        <span class="text-muted small">pengajuan</span>
+                        <span class="text-muted small">{{ __('pengajuan') }}</span>
                     </div>
 
                     <div class="d-flex gap-2 flex-wrap">
@@ -65,20 +65,20 @@
                         </button>
                         @if($period->status === 'draft')
                         <button wire:click="openPeriod({{ $period->id }})" wire:confirm="Buka periode ini untuk pengajuan?" class="btn btn-sm btn-success">
-                            <i class="bx bx-lock-open me-1"></i> Buka
+                            <i class="bx bx-lock-open me-1"></i> {{ __('Buka') }}
                         </button>
                         @elseif($period->status === 'open')
                         <button wire:click="closePeriod({{ $period->id }})" wire:confirm="Tutup periode ini?" class="btn btn-sm btn-warning">
-                            <i class="bx bx-lock me-1"></i> Tutup
+                            <i class="bx bx-lock me-1"></i> {{ __('Tutup') }}
                         </button>
                         @elseif($period->status === 'closed')
                         <button wire:click="finalizePeriod({{ $period->id }})" wire:confirm="Finalisasi periode ini?" class="btn btn-sm btn-primary">
-                            <i class="bx bx-check-double me-1"></i> Finalisasi
+                            <i class="bx bx-check-double me-1"></i> {{ __('Finalisasi') }}
                         </button>
                         @endif
                         @if($period->status === 'open' && auth()->user()?->isAdmin())
-                        <button wire:click="openBulkModal({{ $period->id }})" class="btn btn-sm btn-label-info" title="Duplikasi Massal dari Periode Lain">
-                            <i class="bx bx-copy-alt me-1"></i> Duplikasi Massal
+                        <button wire:click="openBulkModal({{ $period->id }})" class="btn btn-sm btn-label-info" title="{{ __('Duplikasi Massal dari Periode Lain') }}">
+                            <i class="bx bx-copy-alt me-1"></i> {{ __('Duplikasi Massal') }}
                         </button>
                         @endif
                         @if($period->submissions_count == 0)
@@ -115,12 +115,12 @@
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Tahun <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('Tahun') }} <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('year') is-invalid @enderror" wire:model="year" min="2000" max="2100">
                                 @error('year') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-9 mb-3">
-                                <label class="form-label">Judul Periode <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('Judul Periode') }} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" wire:model="title" placeholder="RKAP {{ date('Y') + 1 }}">
                                 @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
@@ -140,12 +140,12 @@
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Tanggal Buka</label>
+                                <label class="form-label">{{ __('Tanggal Buka') }}</label>
                                 <input type="date" class="form-control @error('submission_start') is-invalid @enderror" wire:model="submission_start">
                                 @error('submission_start') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Tanggal Tutup</label>
+                                <label class="form-label">{{ __('Tanggal Tutup') }}</label>
                                 <input type="date" class="form-control @error('submission_end') is-invalid @enderror" wire:model="submission_end">
                                 @error('submission_end') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
@@ -171,7 +171,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bx bx-copy-alt text-info me-2"></i>Duplikasi Massal RKAP
+                        <i class="bx bx-copy-alt text-info me-2"></i>{{ __('Duplikasi Massal RKAP') }}
                     </h5>
                     <button type="button" class="btn-close" wire:click="closeBulkModal()"></button>
                 </div>
@@ -209,9 +209,9 @@
                         </div>
                     @else
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Pilih Periode Sumber (Data Asal) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">{{ __('Pilih Periode Sumber (Data Asal)') }} <span class="text-danger">*</span></label>
                             <select class="form-select" wire:model="sourcePeriodId">
-                                <option value="">-- Pilih Periode Sumber --</option>
+                                <option value="">-- {{ __('Pilih Periode Sumber') }} --</option>
                                 @foreach($periods->where('id', '!=', $targetPeriodId) as $srcPeriod)
                                     <option value="{{ $srcPeriod->id }}">
                                         {{ $srcPeriod->year }} — {{ $srcPeriod->title }} ({{ $srcPeriod->submissions_count }} pengajuan, Status: {{ ucfirst($srcPeriod->status) }})
@@ -228,7 +228,7 @@
                     </button>
                     @if(!$bulkResult)
                         <button type="button" class="btn btn-info" wire:click="executeBulkDuplicate" wire:confirm="Apakah Anda yakin ingin menduplikasi seluruh pengajuan RKAP dari periode yang dipilih? Biro yang sudah memiliki pengajuan di periode tujuan akan otomatis di-skip.">
-                            <span wire:loading.remove><i class="bx bx-copy me-1"></i> Jalankan Duplikasi</span>
+                            <span wire:loading.remove><i class="bx bx-copy me-1"></i> {{ __('Jalankan Duplikasi') }}</span>
                             <span wire:loading><span class="spinner-border spinner-border-sm me-1"></span> Processing...</span>
                         </button>
                     @endif

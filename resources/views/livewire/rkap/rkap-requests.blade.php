@@ -1,11 +1,11 @@
 <div>
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
     <h4 class="mb-0">
-      <span class="text-muted fw-light">RKAP /</span> Usulan Program & Kegiatan Baru
+      <span class="text-muted fw-light">RKAP /</span> {{ __('Usulan Program & Kegiatan Baru') }}
     </h4>
     @if(!Auth::user()->can('masterdata.request.approve'))
     <button class="btn btn-primary" wire:click="openRequestModal">
-      <i class="bx bx-plus me-1"></i> Buat Usulan Baru
+      <i class="bx bx-plus me-1"></i> {{ __('Buat Usulan Baru') }}
     </button>
     @endif
   </div>
@@ -32,12 +32,12 @@
         <ul class="nav nav-tabs card-header-tabs" role="tablist">
           <li class="nav-item">
             <button class="nav-link @if($activeTab === 'work_plan') active @endif" wire:click="$set('activeTab', 'work_plan')">
-              <i class="bx bx-task me-1"></i> Usulan Program Kerja
+              <i class="bx bx-task me-1"></i> {{ __('Usulan Program Kerja') }}
             </button>
           </li>
           <li class="nav-item">
             <button class="nav-link @if($activeTab === 'activity') active @endif" wire:click="$set('activeTab', 'activity')">
-              <i class="bx bx-list-check me-1"></i> Usulan Kegiatan
+              <i class="bx bx-list-check me-1"></i> {{ __('Usulan Kegiatan') }}
             </button>
           </li>
         </ul>
@@ -47,7 +47,7 @@
           <div class="form-check form-switch mb-0">
             <input class="form-check-input" type="checkbox" id="onlyPending" wire:model.live="onlyPending" style="cursor:pointer">
             <label class="form-check-label small fw-semibold text-nowrap" for="onlyPending" style="cursor:pointer">
-              <i class="bx bx-time-five me-1 text-warning"></i>Belum ditanggapi
+              <i class="bx bx-time-five me-1 text-warning"></i>{{ __('Belum ditanggapi') }}
             </label>
           </div>
           <div class="rkap-w-300 w-100">
@@ -66,7 +66,7 @@
         <i class="bx bx-filter-alt flex-shrink-0"></i>
         Menampilkan usulan yang <strong class="ms-1">belum ditanggapi (menunggu persetujuan)</strong>.
         <button wire:click="$set('onlyPending', false)" class="btn btn-xs btn-link p-0 ms-2 text-warning">
-          Tampilkan semua
+          {{ __('Tampilkan semua') }}
         </button>
       </div>
     </div>
@@ -78,26 +78,26 @@
         <thead>
           @if($activeTab === 'work_plan')
           <tr>
-            <th>Kode</th>
+            <th>{{ __('Kode') }}</th>
             <th>{{ __('Nama Program Kerja') }}</th>
             <th>{{ __('Status') }}</th>
             <th>{{ __('Biro Pengusul') }}</th>
             <th>{{ __('Tanggal Diusulkan') }}</th>
             @if($isApprover)
-            <th class="text-center rkap-w-150">Aksi</th>
+            <th class="text-center rkap-w-150">{{ __('Aksi') }}</th>
             @endif
           </tr>
           @else
           <tr>
-            <th>Program Kerja</th>
-            <th>Kode</th>
+            <th>{{ __('Program Kerja') }}</th>
+            <th>{{ __('Kode') }}</th>
             <th>{{ __('Nama Kegiatan') }}</th>
             <th>{{ __('Deskripsi') }}</th>
             <th>{{ __('Status') }}</th>
             <th>{{ __('Biro Pengusul') }}</th>
             <th>{{ __('Tanggal Diusulkan') }}</th>
             @if($isApprover)
-            <th class="text-center rkap-w-150">Aksi</th>
+            <th class="text-center rkap-w-150">{{ __('Aksi') }}</th>
             @endif
           </tr>
           @endif
@@ -137,10 +137,10 @@
               @if($req->approval_status === 'pending')
               <div class="d-flex justify-content-center gap-1">
                 <button class="btn btn-xs btn-success" wire:click="openApproveModal('work_plan', {{ $req->id }})">
-                  <i class="bx bx-check me-0.5"></i> Setuju
+                  <i class="bx bx-check me-0.5"></i> {{ __('Setuju') }}
                 </button>
                 <button class="btn btn-xs btn-danger" wire:click="openRejectModal('work_plan', {{ $req->id }})">
-                  <i class="bx bx-x me-0.5"></i> Tolak
+                  <i class="bx bx-x me-0.5"></i> {{ __('Tolak') }}
                 </button>
               </div>
               @else
@@ -188,10 +188,10 @@
               @if($req->approval_status === 'pending')
               <div class="d-flex justify-content-center gap-1">
                 <button class="btn btn-xs btn-success" wire:click="openApproveModal('activity', {{ $req->id }})">
-                  <i class="bx bx-check me-0.5"></i> Setuju
+                  <i class="bx bx-check me-0.5"></i> {{ __('Setuju') }}
                 </button>
                 <button class="btn btn-xs btn-danger" wire:click="openRejectModal('activity', {{ $req->id }})">
-                  <i class="bx bx-x me-0.5"></i> Tolak
+                  <i class="bx bx-x me-0.5"></i> {{ __('Tolak') }}
                 </button>
               </div>
               @else

@@ -122,7 +122,7 @@
                         <div class="mb-3">
                             <label class="form-label">Organisasi</label>
                             <select class="form-select mb-2" wire:model.live="organization_type">
-                                <option value="">-- Pilih Tipe Organisasi --</option>
+                                <option value="">-- {{ __('Pilih Tipe Organisasi') }} --</option>
                                 <option value="bureau">Biro</option>
                                 <option value="department">{{ __('Departemen') }}</option>
                                 <option value="directorate">{{ __('Direktorat') }}</option>
@@ -130,7 +130,7 @@
 
                             @if($organization_type === 'bureau')
                             <select class="form-select @error('bureau_id') is-invalid @enderror" wire:model="bureau_id">
-                                <option value="">-- Pilih Biro --</option>
+                                <option value="">-- {{ __('Pilih Biro') }} --</option>
                                 @foreach($bureaus as $bureau)
                                 <option value="{{ $bureau->id }}">{{ $bureau->name }}</option>
                                 @endforeach
@@ -138,7 +138,7 @@
                             @error('bureau_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             @elseif($organization_type === 'department')
                             <select class="form-select @error('department_id') is-invalid @enderror" wire:model="department_id">
-                                <option value="">-- Pilih Departemen --</option>
+                                <option value="">-- {{ __('Pilih Departemen') }} --</option>
                                 @foreach($departments as $department)
                                 <option value="{{ $department->id }}">{{ $department->name }}</option>
                                 @endforeach
@@ -146,7 +146,7 @@
                             @error('department_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             @elseif($organization_type === 'directorate')
                             <select class="form-select @error('directorate_id') is-invalid @enderror" wire:model="directorate_id">
-                                <option value="">-- Pilih Direktorat --</option>
+                                <option value="">-- {{ __('Pilih Direktorat') }} --</option>
                                 @foreach($directorates as $directorate)
                                 <option value="{{ $directorate->id }}">{{ $directorate->name }}</option>
                                 @endforeach

@@ -13,7 +13,7 @@
         <div class="d-flex align-items-center gap-2">
             <button type="button" wire:click="exportExcel" wire:loading.attr="disabled" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
                 <i class="bx bx-download"></i>
-                <span wire:loading.remove wire:target="exportExcel">Download Excel Proyeksi</span>
+                <span wire:loading.remove wire:target="exportExcel">{{ __('Download Excel Proyeksi') }}</span>
                 <span wire:loading wire:target="exportExcel">Downloading...</span>
             </button>
             @can('rkap.projection.input')
@@ -23,7 +23,7 @@
                 <i class="bx bx-upload"></i> Upload Massal Proyeksi
             </a>
             @else
-            <button type="button" class="btn btn-secondary btn-sm d-flex align-items-center gap-1" disabled title="Upload Massal Proyeksi Ditutup">
+            <button type="button" class="btn btn-secondary btn-sm d-flex align-items-center gap-1" disabled title="{{ __('Upload Massal Proyeksi Ditutup') }}">
                 <i class="bx bx-lock-alt"></i> Upload Massal Proyeksi
             </button>
             @endif
@@ -231,7 +231,7 @@
 
                 {{-- Bureau Filter --}}
                 <div class="{{ $activeTab === 'summary' ? 'col-md-3' : 'col-md-4' }}">
-                    <label class="form-label fw-semibold">Biro</label>
+                    <label class="form-label fw-semibold">{{ __('Biro') }}</label>
                     <div class="position-relative" x-data="{
                         open: false,
                         search: '',
@@ -490,8 +490,8 @@
                                 <th class="text-center text-nowrap">{{ __('Volume & Satuan') }}</th>
                                 <th class="text-end text-nowrap">{{ __('Anggaran RKAP') }}</th>
                                 <th class="text-end text-nowrap">{{ __('Realisasi YTD') }}</th>
-                                <th class="text-center rkap-w-100">Status</th>
-                                <th class="text-end text-nowrap">Proyeksi (Total)</th>
+                                <th class="text-center rkap-w-100">{{ __('Status') }}</th>
+                                <th class="text-end text-nowrap">{{ __('Proyeksi (Total)') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -534,14 +534,14 @@
                                         <span class="fw-bold text-dark me-1">Rp {{ number_format($bi->projection, 0, ',', '.') }}</span>
                                         <a href="{{ route('rkap-projection-history', $bi->id) }}"
                                             class="btn btn-xs btn-icon btn-outline-info p-1"
-                                            title="Riwayat Perubahan Proyeksi">
+                                            title="{{ __('Riwayat Perubahan Proyeksi') }}">
                                             <i class="bx bx-history"></i>
                                         </a>
                                         @can('rkap.projection.input')
                                         <button type="button"
                                             class="btn btn-xs btn-icon btn-outline-primary p-1"
                                             wire:click="selectBudgetItem({{ $bi->id }})"
-                                            title="Input/Edit Proyeksi">
+                                            title="{{ __('Input/Edit Proyeksi') }}">
                                             <i class="bx bx-edit-alt"></i>
                                         </button>
                                         @endcan
@@ -629,13 +629,13 @@
                 <thead class="table-light">
                     <tr>
                         <th class="rkap-w-50">No</th>
-                        <th>Direktorat / Departemen</th>
-                        <th>Biro (Unit Kerja)</th>
+                        <th>{{ __('Direktorat / Departemen') }}</th>
+                        <th>{{ __('Biro (Unit Kerja)') }}</th>
                         <th class="text-center">{{ __('Jumlah Item') }}</th>
                         <th class="text-center">{{ __('Terisi') }}</th>
                         <th class="text-center">{{ __('Belum Terisi') }}</th>
                         <th class="rkap-w-150">{{ __('Progres') }}</th>
-                        <th class="text-center rkap-w-100">Status</th>
+                        <th class="text-center rkap-w-100">{{ __('Status') }}</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
@@ -714,7 +714,7 @@
                                 @endif
                             </div>
                             <div class="text-end border-start ps-3 rkap-min-w-220">
-                                <span class="text-muted d-block small mb-1 fw-semibold">Rencana Anggaran (Total)</span>
+                                <span class="text-muted d-block small mb-1 fw-semibold">{{ __('Rencana Anggaran (Total)') }}</span>
                                 <span class="fw-bold text-primary fs-6">Rp {{ number_format($selectedItem->total_price, 0, ',', '.') }}</span>
                                 <span class="text-muted d-block small mt-2 mb-1 fw-semibold">{{ __('Akumulasi Proyeksi') }}</span>
                                 @php

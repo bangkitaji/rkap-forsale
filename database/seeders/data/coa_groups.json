@@ -11,8 +11,8 @@
     },
     {
         "id": 2,
-        "code": "1001C",
-        "name": "Dana Dibatasi Penggunaannya CO",
+        "code": "1001",
+        "name": "Dana Dibatasi Penggunaannya & Kas Khusus",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
@@ -21,8 +21,8 @@
     },
     {
         "id": 3,
-        "code": "1001B",
-        "name": "Dana Dibatasi Penggunaannya DSAA",
+        "code": "1200",
+        "name": "Piutang Usaha & Piutang Operasional",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
@@ -31,8 +31,8 @@
     },
     {
         "id": 4,
-        "code": "1001",
-        "name": "Dana Dibatasi Penggunaannya",
+        "code": "1300",
+        "name": "Piutang Lain-lain & Karyawan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
@@ -41,18 +41,18 @@
     },
     {
         "id": 5,
-        "code": "1005",
-        "name": "Aset lain-lain",
+        "code": "1400",
+        "name": "Persediaan Barang Dagang & Perlengkapan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 6
+        "report_group_id": 5
     },
     {
         "id": 6,
-        "code": "1001A",
-        "name": "Dana Dibatasi Penggunaannya DSRA",
+        "code": "1500",
+        "name": "Biaya Dibayar di Muka & Uang Muka",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
@@ -61,38 +61,38 @@
     },
     {
         "id": 7,
-        "code": "1003",
-        "name": "Piutang lain-lain - Pihak Ketiga",
+        "code": "1600",
+        "name": "Aset Tetap - Perolehan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 5
+        "report_group_id": 6
     },
     {
         "id": 8,
-        "code": "1004",
-        "name": "Biaya dibayar di muka dan uang muka",
+        "code": "1690",
+        "name": "Akumulasi Penyusutan Aset Tetap",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 5
+        "report_group_id": 6
     },
     {
         "id": 9,
-        "code": "1011",
-        "name": "Persediaan",
+        "code": "1700",
+        "name": "Aset Hak Guna & Tak Berwujud",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 5
+        "report_group_id": 6
     },
     {
         "id": 10,
-        "code": "1006",
-        "name": "Uang Muka Jangka Panjang",
+        "code": "1800",
+        "name": "Aset Tidak Lancar Lainnya",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
@@ -101,97 +101,27 @@
     },
     {
         "id": 11,
-        "code": "1002",
-        "name": "Pendapatan yang akan diterima",
+        "code": "2100",
+        "name": "Utang Usaha & Pemasok",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 5
+        "report_group_id": 7
     },
     {
         "id": 12,
-        "code": "1007",
-        "name": "Asset Tetap - Bersih",
+        "code": "2200",
+        "name": "Beban Akrual & Utang Operasional",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 6
+        "report_group_id": 7
     },
     {
         "id": 13,
-        "code": "1009",
-        "name": "Aset hak guna",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 6
-    },
-    {
-        "id": 14,
-        "code": "1008",
-        "name": "Hak Pengusahaan Kereta Cepat",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 6
-    },
-    {
-        "id": 15,
-        "code": "1010",
-        "name": "Aset Tidak Berwujud",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 6
-    },
-    {
-        "id": 16,
-        "code": "2005",
-        "name": "Utang Lain-lain",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 7
-    },
-    {
-        "id": 17,
-        "code": "2001",
-        "name": "Pendapatan diterima dimuka",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 7
-    },
-    {
-        "id": 18,
-        "code": "2000A",
-        "name": "Biaya yang masih harus dibayar - Employee",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 7
-    },
-    {
-        "id": 19,
-        "code": "2000C",
-        "name": "Biaya yang masih harus dibayar - Operational",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 7
-    },
-    {
-        "id": 20,
-        "code": "2004",
+        "code": "2300",
         "name": "Utang Pajak",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
@@ -200,493 +130,283 @@
         "report_group_id": 7
     },
     {
-        "id": 21,
-        "code": "2000B",
-        "name": "Biaya yang masih harus dibayar - interest",
+        "id": 14,
+        "code": "2400",
+        "name": "Pendapatan Diterima di Muka",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
         "report_group_id": 7
+    },
+    {
+        "id": 15,
+        "code": "2500",
+        "name": "Pinjaman Bank Jangka Pendek",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 7
+    },
+    {
+        "id": 16,
+        "code": "2600",
+        "name": "Pinjaman Bank Jangka Panjang",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 8
+    },
+    {
+        "id": 17,
+        "code": "2700",
+        "name": "Liabilitas Imbalan Pasca Kerja & Jangka Panjang Lain",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 8
+    },
+    {
+        "id": 18,
+        "code": "3100",
+        "name": "Modal Saham & Agio Saham",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 9
+    },
+    {
+        "id": 19,
+        "code": "3200",
+        "name": "Saldo Laba Ditahan",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 9
+    },
+    {
+        "id": 20,
+        "code": "4000",
+        "name": "Pendapatan Usaha Utama",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 1
+    },
+    {
+        "id": 21,
+        "code": "4200",
+        "name": "Pendapatan Jasa & Pemeliharaan (SLA)",
+        "description": null,
+        "created_at": "2026-06-19 13:37:34",
+        "updated_at": "2026-06-19 13:37:34",
+        "deleted_at": null,
+        "report_group_id": 1
     },
     {
         "id": 22,
-        "code": "2013",
-        "name": "Akrual Bunga Cost Overrun PSBI",
+        "code": "4300",
+        "name": "Pendapatan Komersial & Usaha Lainnya",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 1
     },
     {
         "id": 23,
-        "code": "2017",
-        "name": "Akrual Bunga CDS PSBI",
+        "code": "4400",
+        "name": "Potongan & Diskon Penjualan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 1
     },
     {
         "id": 24,
-        "code": "2015",
-        "name": "Akrual Bunga Cost Overrun BY",
+        "code": "5000",
+        "name": "Beban Tenaga Kerja Operasional Langsung",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 2
     },
     {
         "id": 25,
-        "code": "2002",
-        "name": "Utang kontraktor",
+        "code": "5200",
+        "name": "Beban Bahan Baku & Material Langsung",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 7
+        "report_group_id": 2
     },
     {
         "id": 26,
-        "code": "2000D",
-        "name": "Biaya yang masih harus dibayar - Construction",
+        "code": "5300",
+        "name": "Beban Pemeliharaan & Operasional Lapangan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 7
+        "report_group_id": 2
     },
     {
         "id": 27,
-        "code": "2007",
-        "name": "Hutang Jangka Panjang ke CDB",
+        "code": "5400",
+        "name": "Beban Subkontraktor & Jasa Langsung",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 2
     },
     {
         "id": 28,
-        "code": "2009",
-        "name": "Hutang COR PSBI",
+        "code": "5500",
+        "name": "Beban Logistik & Pengiriman",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 2
     },
     {
         "id": 29,
-        "code": "2011",
-        "name": "Hutang COR BY",
+        "code": "5600",
+        "name": "Beban Cloud, Server & Lisensi Sistem Inti",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 2
     },
     {
         "id": 30,
-        "code": "2008",
-        "name": "Hutang CDS PSBI",
+        "code": "5700",
+        "name": "Beban Penyusutan Operasional Langsung",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 2
     },
     {
         "id": 31,
-        "code": "2007A",
-        "name": "Security Deposit",
+        "code": "6100",
+        "name": "Beban Gaji & Kesejahteraan Karyawan Kantor",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 8
+        "report_group_id": 3
     },
     {
         "id": 32,
-        "code": "8000",
-        "name": "Modal Saham",
+        "code": "6200",
+        "name": "Beban Umum & Administrasi Kantor",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 9
+        "report_group_id": 3
     },
     {
         "id": 33,
-        "code": "8001",
-        "name": "Uang muka setoran saham",
+        "code": "6300",
+        "name": "Beban Sewa & Utilitas Kantor",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 9
+        "report_group_id": 3
     },
     {
         "id": 34,
-        "code": "8002",
-        "name": "Saldo Laba",
+        "code": "6400",
+        "name": "Beban Pemasaran, Promosi & Penjualan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 9
+        "report_group_id": 3
     },
     {
         "id": 35,
-        "code": "4000",
-        "name": "PENDAPATAN PENUMPANG",
+        "code": "6500",
+        "name": "Beban Teknologi Informasi & Software Perkantoran",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 1
+        "report_group_id": 3
     },
     {
         "id": 36,
-        "code": "4100",
-        "name": "PENDAPATAN NON PENUMPANG",
+        "code": "6600",
+        "name": "Beban Pelatihan, Legal & Jasa Profesional",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 1
+        "report_group_id": 3
     },
     {
         "id": 37,
-        "code": "5002",
-        "name": "SARANA PERKERETAAPIAN",
+        "code": "6700",
+        "name": "Beban Penyusutan & Amortisasi Kantor",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
-        "report_group_id": 2
+        "report_group_id": 3
     },
     {
         "id": 38,
-        "code": "5000",
-        "name": "PEGAWAI LANGSUNG",
+        "code": "7100",
+        "name": "Pendapatan Bunga, Jasa Giro & Non-Operasional",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
         "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 39,
-        "code": "5001",
-        "name": "LISTRIK",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 40,
-        "code": "5004",
-        "name": "PRASARANA PERKERETAAPIAN",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 41,
-        "code": "5003",
-        "name": "BANGUNAN (STASIUN & BANGUNAN LAINNYA)",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 42,
-        "code": "5009",
-        "name": "OPERASI",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 43,
-        "code": "6003",
-        "name": "ASURANSI NON PENUMPANG",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:01:21",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 44,
-        "code": "5005",
-        "name": "GSM-R",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 45,
-        "code": "5006",
-        "name": "PENYUSUTAN & AMORTISASI",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 46,
-        "code": "5007",
-        "name": "Kom Farebox",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 47,
-        "code": "5008",
-        "name": "Kom Non Farebox",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 48,
-        "code": "5010",
-        "name": "PELAYANAN",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 49,
-        "code": "5012",
-        "name": "ASURANSI PENUMPANG",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 50,
-        "code": "5011",
-        "name": "KEAMANAN",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 2
-    },
-    {
-        "id": 51,
-        "code": "6009",
-        "name": "BEBAN UMUM ADMINISTRASI IT PENDIDIKAN",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 52,
-        "code": "6000",
-        "name": "PEGAWAI HEAD OFFICE",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 53,
-        "code": "6004",
-        "name": "PENDIDIKAN",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 54,
-        "code": "6002",
-        "name": "OPTIMALISASI ASET",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 10:15:08",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 55,
-        "code": "6005",
-        "name": "PENYUSUTAN DAN AMORTISASI TIDAK LANGSUNG",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 56,
-        "code": "6001",
-        "name": "BEBAN SEWA",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 57,
-        "code": "6006",
-        "name": "TEKNOLOGI INFORMASI",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-19 13:37:34",
-        "deleted_at": null,
-        "report_group_id": 3
-    },
-    {
-        "id": 58,
-        "code": "7003",
-        "name": "Pendapatan Bunga",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:30:35",
         "deleted_at": null,
         "report_group_id": 4
     },
     {
-        "id": 59,
-        "code": "7005",
-        "name": "LAINNYA",
+        "id": 39,
+        "code": "7600",
+        "name": "Beban Bunga & Biaya Keuangan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:47:47",
+        "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
         "report_group_id": 10
     },
     {
-        "id": 60,
-        "code": "7000",
-        "name": "FINANCING COST",
+        "id": 40,
+        "code": "7700",
+        "name": "Selisih Kurs Mata Uang Asing",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:30:44",
+        "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
         "report_group_id": 10
     },
     {
-        "id": 61,
-        "code": "7001",
-        "name": "BUNGA SHAREHOLDER LOAN COST OVERRUN PSBI",
+        "id": 41,
+        "code": "7900",
+        "name": "Beban Pajak Penghasilan Badan",
         "description": null,
         "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:30:49",
+        "updated_at": "2026-06-19 13:37:34",
         "deleted_at": null,
         "report_group_id": 10
-    },
-    {
-        "id": 62,
-        "code": "7001A",
-        "name": "BUNGA SHAREHOLDER LOAN COST OVERRUN BY",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:30:53",
-        "deleted_at": null,
-        "report_group_id": 10
-    },
-    {
-        "id": 63,
-        "code": "7002",
-        "name": "BUNGA SHAREHOLDER LOAN CDS PSBI",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:30:59",
-        "deleted_at": null,
-        "report_group_id": 10
-    },
-    {
-        "id": 64,
-        "code": "7002A",
-        "name": "BUNGA SHAREHOLDER LOAN CDS BY",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:31:02",
-        "deleted_at": null,
-        "report_group_id": 10
-    },
-    {
-        "id": 65,
-        "code": "7004",
-        "name": "Kerugian Kurs",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 11:31:11",
-        "deleted_at": null,
-        "report_group_id": 10
-    },
-    {
-        "id": 66,
-        "code": "2010",
-        "name": "Long term Debt CDS BY",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 10:13:12",
-        "deleted_at": null,
-        "report_group_id": 8
-    },
-    {
-        "id": 67,
-        "code": "2014",
-        "name": "Long term Debt Interest CDS BY",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 10:13:45",
-        "deleted_at": null,
-        "report_group_id": 8
-    },
-    {
-        "id": 68,
-        "code": "2006",
-        "name": "Utang retensi",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 10:12:56",
-        "deleted_at": null,
-        "report_group_id": 7
-    },
-    {
-        "id": 69,
-        "code": "2003",
-        "name": "Accounts Payable",
-        "description": null,
-        "created_at": "2026-06-19 13:37:34",
-        "updated_at": "2026-06-23 10:12:41",
-        "deleted_at": null,
-        "report_group_id": 7
     }
 ]

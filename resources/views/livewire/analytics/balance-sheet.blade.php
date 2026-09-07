@@ -5,9 +5,9 @@
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="periodId" class="form-label">Tahun / Periode RKAP</label>
+                    <label for="periodId" class="form-label">{{ __('Tahun / Periode RKAP') }}</label>
                     <select wire:model.live="periodId" id="periodId" class="form-select">
-                        <option value="">-- Pilih Periode --</option>
+                        <option value="">-- {{ __('Pilih Periode') }} --</option>
                         @foreach($availablePeriods as $period)
                             <option value="{{ $period->id }}">{{ $period->year }} - {{ $period->title }}</option>
                         @endforeach
@@ -21,9 +21,9 @@
                         <tr>
                             <th>Akun</th>
                             <th class="text-end">Saldo Awal</th>
-                            <th class="text-end">Anggaran (RKAP)</th>
-                            <th class="text-end">Realisasi YTD</th>
-                            <th class="text-end">Proyeksi Akhir</th>
+                            <th class="text-end">{{ __('Anggaran (RKAP)') }}</th>
+                            <th class="text-end">{{ __('Realisasi YTD') }}</th>
+                            <th class="text-end">{{ __('Proyeksi Akhir') }}</th>
                             <th class="text-center">Pencapaian (%)</th>
                         </tr>
                     </thead>
@@ -87,7 +87,7 @@
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td class="text-end">TOTAL ASET</td>
+                            <td class="text-end">{{ __('TOTAL ASET') }}</td>
                             <td class="text-end">{{ number_format($totals['aset']['opening'], 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($totals['aset']['budget'], 0, ',', '.') }}</td>
                             <td class="text-end text-success">{{ number_format($totals['aset']['realization'], 0, ',', '.') }}</td>
@@ -95,7 +95,7 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td class="text-end">TOTAL LIABILITAS & EKUITAS</td>
+                            <td class="text-end">{{ __('TOTAL LIABILITAS & EKUITAS') }}</td>
                             <td class="text-end">{{ number_format($totals['liabilitas_ekuitas']['opening'], 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($totals['liabilitas_ekuitas']['budget'], 0, ',', '.') }}</td>
                             <td class="text-end text-success">{{ number_format($totals['liabilitas_ekuitas']['realization'], 0, ',', '.') }}</td>
@@ -109,7 +109,7 @@
                             $balProj = $totals['aset']['projection'] - $totals['liabilitas_ekuitas']['projection'];
                         @endphp
                         <tr class="{{ ($balOpening == 0 && $balBudget == 0 && $balReal == 0 && $balProj == 0) ? 'table-success' : 'table-danger' }}">
-                            <td class="text-end">CHECK BALANCE (Selisih)</td>
+                            <td class="text-end">{{ __('CHECK BALANCE (Selisih)') }}</td>
                             <td class="text-end">{{ number_format($balOpening, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($balBudget, 0, ',', '.') }}</td>
                             <td class="text-end">{{ number_format($balReal, 0, ',', '.') }}</td>

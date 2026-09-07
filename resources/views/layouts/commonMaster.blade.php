@@ -23,7 +23,7 @@
     <!-- Canonical SEO -->
     <link rel="canonical" href="{{ config('variables.productPage') ? config('variables.productPage') : '' }}" />
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.png') }}" />
+    <link rel="icon" type="image/png" href="{{ \App\Helpers\BrandHelper::logo('favicon') }}" />
 
     <!-- Include Styles -->
     @include('layouts/sections/styles')

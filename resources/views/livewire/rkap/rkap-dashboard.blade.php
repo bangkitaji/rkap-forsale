@@ -2,10 +2,10 @@
     <div class="py-3 mb-4">
         <h4 class="mb-1"><span class="text-muted fw-light">RKAP /</span> Dashboard</h4>
         @if($activePeriod)
-        <p class="text-muted mb-0">Menampilkan data untuk periode aktif: <strong>{{ $activePeriod->title }}</strong></p>
+        <p class="text-muted mb-0">{{ __('Menampilkan data untuk periode aktif:') }} <strong>{{ $activePeriod->title }}</strong></p>
         @else
         <div class="alert alert-warning mt-2 mb-0 py-2">
-            <i class="bx bx-info-circle me-1"></i> Belum ada periode RKAP yang aktif (Open). <a href="{{ route('rkap-periods') }}" class="alert-link">Kelola Periode</a>.
+            <i class="bx bx-info-circle me-1"></i> {{ __('Belum ada periode RKAP yang aktif (Open).') }} <a href="{{ route('rkap-periods') }}" class="alert-link">{{ __('Kelola Periode') }}</a>.
         </div>
         @endif
     </div>
@@ -21,7 +21,7 @@
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 me-2">{{ $stats['total'] }}</h4>
                             </div>
-                            <small class="text-muted">Dalam periode aktif</small>
+                            <small class="text-muted">{{ __('Dalam periode aktif') }}</small>
                         </div>
                         <span class="badge bg-label-primary rounded p-2">
                             <i class="bx bx-file bx-sm"></i>
@@ -39,7 +39,7 @@
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 me-2">{{ $stats['pending'] }}</h4>
                             </div>
-                            <small class="text-warning">Perlu tindak lanjut</small>
+                            <small class="text-warning">{{ __('Perlu tindak lanjut') }}</small>
                         </div>
                         <span class="badge bg-label-warning rounded p-2">
                             <i class="bx bx-time-five bx-sm"></i>
@@ -53,11 +53,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Disetujui Final</span>
+                            <span>{{ __('Disetujui Final') }}</span>
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 me-2">{{ $stats['approved'] }}</h4>
                             </div>
-                            <small class="text-success">Telah diverifikasi</small>
+                            <small class="text-success">{{ __('Telah diverifikasi') }}</small>
                         </div>
                         <span class="badge bg-label-success rounded p-2">
                             <i class="bx bx-check-circle bx-sm"></i>
@@ -71,11 +71,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span class="text-white opacity-75">Total Anggaran (Milyar)</span>
+                            <span class="text-white opacity-75">{{ __('Total Anggaran (Milyar)') }}</span>
                             <div class="d-flex align-items-end mt-2">
                                 <h4 class="mb-0 text-white me-2">Rp {{ number_format($stats['total_budget'] / 1000000000, 2, ',', '.') }}</h4>
                             </div>
-                            <small class="text-white opacity-75">Estimasi keseluruhan</small>
+                            <small class="text-white opacity-75">{{ __('Estimasi keseluruhan') }}</small>
                         </div>
                         <span class="badge bg-white text-primary rounded p-2">
                             <i class="bx bx-money bx-sm"></i>
@@ -96,8 +96,8 @@
         <div class="{{ $colClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Tugas Saya</h5>
-                    <small class="text-muted">Butuh Perhatian</small>
+                    <h5 class="mb-0">{{ __('Tugas Saya') }}</h5>
+                    <small class="text-muted">{{ __('Butuh Perhatian') }}</small>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
@@ -108,14 +108,14 @@
                         ? route('rkap-submissions-edit', $action->id)
                         : route('rkap-submissions-approval-review', $action->id);
 
-                        $badgeText = 'Perlu Review';
+                        $badgeText = __('Perlu Review');
                         $badgeColor = 'warning';
 
                         if ($action->status === 'draft') {
-                        $badgeText = 'Draf';
+                        $badgeText = __('Draf');
                         $badgeColor = 'secondary';
                         } elseif (in_array($action->status, ['dept_revision', 'dir_revision', 'final_revision', 'pdir_revision'])) {
-                        $badgeText = 'Perlu Revisi';
+                        $badgeText = __('Perlu Revisi');
                         $badgeColor = 'danger';
                         }
                         @endphp
@@ -137,13 +137,13 @@
                         @empty
                         <li class="text-center text-muted py-4">
                             <i class="bx bx-check-circle bx-lg text-success mb-2 opacity-50"></i>
-                            <p class="mb-0">Tidak ada tugas yang menunggu Anda saat ini.</p>
+                            <p class="mb-0">{{ __('Tidak ada tugas yang menunggu Anda saat ini.') }}</p>
                         </li>
                         @endforelse
                     </ul>
                     @if($myActions->count() > 0)
                     <div class="mt-3 text-center">
-                        <a href="{{ route('rkap-submissions') }}" class="btn btn-sm btn-label-secondary w-100">Lihat Semua Pengajuan</a>
+                        <a href="{{ route('rkap-submissions') }}" class="btn btn-sm btn-label-secondary w-100">{{ __('Lihat Semua Pengajuan') }}</a>
                     </div>
                     @endif
                 </div>
@@ -155,12 +155,12 @@
         <div class="{{ $colClass }}">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <h5 class="card-title mb-1">Status Pengajuan Departemen</h5>
-                    <p class="text-muted small">Status verifikasi RKAP per departemen</p>
+                    <h5 class="card-title mb-1">{{ __('Status Pengajuan Departemen') }}</h5>
+                    <p class="text-muted small">{{ __('Status verifikasi RKAP per departemen') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
-                        <span class="fw-semibold">Terverifikasi</span>
-                        <span class="badge bg-label-success">{{ $verifiedDeptCount }} dari {{ $totalDeptCount }} Departemen</span>
+                        <span class="fw-semibold">{{ __('Terverifikasi') }}</span>
+                        <span class="badge bg-label-success">{{ $verifiedDeptCount }} {{ __('dari') }} {{ $totalDeptCount }} {{ __('Departemen') }}</span>
                     </div>
 
                     @php
@@ -172,8 +172,8 @@
                     </div>
 
                     <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
-                        <span class="fw-semibold">Presentasi Pengajuan</span>
-                        <span class="badge bg-label-primary">Rata-rata {{ number_format($averagePresentation, 2, ',', '.') }}%</span>
+                        <span class="fw-semibold">{{ __('Presentasi Pengajuan') }}</span>
+                        <span class="badge bg-label-primary">{{ __('Rata-rata') }} {{ number_format($averagePresentation, 2, ',', '.') }}%</span>
                     </div>
 
                     <div class="progress mb-3 rkap-h-12">
@@ -183,12 +183,12 @@
                     @if($verifiedDeptCount < $totalDeptCount)
                         <div class="alert alert-warning py-2 px-3 mb-0 rkap-font-075">
                         <i class="bx bx-lock-alt me-1"></i>
-                        Persetujuan akhir oleh Direktur Utama ditangguhkan hingga seluruh {{ $totalDeptCount }} departemen terverifikasi.
+                        {{ __('Persetujuan akhir oleh Direktur Utama ditangguhkan hingga seluruh departemen terverifikasi.') }}
                 </div>
                 @else
                 <div class="alert alert-success py-2 px-3 mb-0 rkap-font-075">
                     <i class="bx bx-check-double me-1"></i>
-                    Seluruh departemen telah terverifikasi. Direktur Utama dapat memberikan persetujuan akhir.
+                    {{ __('Seluruh departemen telah terverifikasi. Direktur Utama dapat memberikan persetujuan akhir.') }}
                 </div>
                 @endif
             </div>
@@ -200,7 +200,7 @@
     <div class="{{ $colClass }}">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header d-flex justify-content-between align-items-center border-bottom">
-                <h5 class="mb-0">Aktivitas Terbaru</h5>
+                <h5 class="mb-0">{{ __('Aktivitas Terbaru') }}</h5>
             </div>
             <div class="card-body mt-3 rkap-timeline-scroll">
                 <ul class="timeline mb-0">
@@ -209,20 +209,20 @@
                         <span class="timeline-point timeline-point-{{ $activity->status_color }}"></span>
                         <div class="timeline-event">
                             <div class="timeline-header mb-1">
-                                <h6 class="mb-0">Status: {{ $activity->status_label }}</h6>
+                                <h6 class="mb-0">{{ __('Status:') }} {{ $activity->status_label }}</h6>
                                 <small class="text-muted">{{ $activity->updated_at->diffForHumans() }}</small>
                             </div>
-                            <p class="mb-0 small">Biro: <strong>{{ $activity->bureau->name ?? '-' }}</strong></p>
+                            <p class="mb-0 small">{{ __('Biro:') }} <strong>{{ $activity->bureau->name ?? '-' }}</strong></p>
                             <div class="mt-2">
                                 <a href="{{ route('rkap-submissions-review', $activity->id) }}" class="text-body small d-flex align-items-center">
-                                    <i class="bx bx-link me-1"></i> Lihat Detail
+                                    <i class="bx bx-link me-1"></i> {{ __('Lihat Detail') }}
                                 </a>
                             </div>
                         </div>
                     </li>
                     @empty
                     <li class="text-center text-muted py-4 list-unstyled">
-                        <p class="mb-0">Belum ada aktivitas.</p>
+                        <p class="mb-0">{{ __('Belum ada aktivitas.') }}</p>
                     </li>
                     @endforelse
                 </ul>
@@ -242,22 +242,22 @@
                     <ul class="nav nav-tabs" role="tablist">
                         <li class="nav-item">
                             <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#tab-dept-status" aria-controls="tab-dept-status" aria-selected="true">
-                                <i class="bx bx-buildings me-1"></i> Status Departemen
+                                <i class="bx bx-buildings me-1"></i> {{ __('Status Departemen') }}
                             </button>
                         </li>
                         <li class="nav-item">
                             <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-verified" aria-controls="tab-verified" aria-selected="false">
-                                <i class="bx bx-check-shield me-1"></i> Terverifikasi ({{ $submissionsByStatus['verified']->count() }})
+                                <i class="bx bx-check-shield me-1"></i> {{ __('Terverifikasi') }} ({{ $submissionsByStatus['verified']->count() }})
                             </button>
                         </li>
                         <li class="nav-item">
                             <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-review" aria-controls="tab-review" aria-selected="false">
-                                <i class="bx bx-hourglass me-1"></i> Direview ({{ $submissionsByStatus['review']->count() }})
+                                <i class="bx bx-hourglass me-1"></i> {{ __('Direview') }} ({{ $submissionsByStatus['review']->count() }})
                             </button>
                         </li>
                         <li class="nav-item">
                             <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-draft" aria-controls="tab-draft" aria-selected="false">
-                                <i class="bx bx-edit me-1"></i> Draf/Revisi ({{ $submissionsByStatus['draft']->count() }})
+                                <i class="bx bx-edit me-1"></i> {{ __('Draf/Revisi') }} ({{ $submissionsByStatus['draft']->count() }})
                             </button>
                         </li>
                     </ul>
@@ -271,12 +271,12 @@
                         <table class="table table-hover table-striped align-middle mb-0 rkap-font-085">
                             <thead>
                                 <tr>
-                                    <th>Kode</th>
+                                    <th>{{ __('Kode') }}</th>
                                     <th>{{ __('Nama Departemen') }}</th>
-                                    <th>Presentasi Pengajuan</th>
-                                    <th>Status Pengajuan</th>
+                                    <th>{{ __('Presentasi Pengajuan') }}</th>
+                                    <th>{{ __('Status Pengajuan') }}</th>
                                     <th class="text-end">{{ __('Total Anggaran') }}</th>
-                                    <th class="text-start">Aksi</th>
+                                    <th class="text-start">{{ __('Aksi') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -334,19 +334,19 @@
                     @if($submissionsByStatus['verified']->isEmpty())
                     <div class="text-center py-4 text-muted">
                         <i class="bx bx-check-shield bx-md opacity-50 mb-2"></i>
-                        <p class="mb-0">Belum ada pengajuan yang diverifikasi oleh verifikator.</p>
+                        <p class="mb-0">{{ __('Belum ada pengajuan yang diverifikasi oleh verifikator.') }}</p>
                     </div>
                     @else
                     <div class="table-responsive text-nowrap">
                         <table class="table table-hover table-striped mb-0 rkap-font-085">
                             <thead>
                                 <tr>
-                                    <th>Biro / Departemen</th>
+                                    <th>{{ __('Biro / Departemen') }}</th>
                                     <th class="text-center">{{ __('Versi') }}</th>
-                                    <th>Diajukan Oleh</th>
+                                    <th>{{ __('Diajukan Oleh') }}</th>
                                     <th class="text-end">{{ __('Total Anggaran') }}</th>
                                     <th>{{ __('Status') }}</th>
-                                    <th class="text-center">Aksi</th>
+                                    <th class="text-center">{{ __('Aksi') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -362,7 +362,7 @@
                                     <td><span class="badge bg-label-{{ $sub->status_color }}">{{ $sub->status_label }}</span></td>
                                     <td class="text-center">
                                         <a href="{{ route('rkap-submissions-approval-review', $sub->id) }}" class="btn btn-xs btn-primary">
-                                            <i class="bx bx-search-alt"></i> Buka Review
+                                            <i class="bx bx-search-alt"></i> {{ __('Buka Review') }}
                                         </a>
                                     </td>
                                 </tr>
@@ -378,19 +378,19 @@
                     @if($submissionsByStatus['review']->isEmpty())
                     <div class="text-center py-4 text-muted">
                         <i class="bx bx-hourglass bx-md opacity-50 mb-2"></i>
-                        <p class="mb-0">Tidak ada pengajuan yang sedang berada dalam proses review.</p>
+                        <p class="mb-0">{{ __('Tidak ada pengajuan yang sedang berada dalam proses review.') }}</p>
                     </div>
                     @else
                     <div class="table-responsive text-nowrap">
                         <table class="table table-hover table-striped mb-0 rkap-font-085">
                             <thead>
                                 <tr>
-                                    <th>Biro / Departemen</th>
+                                    <th>{{ __('Biro / Departemen') }}</th>
                                     <th class="text-center">{{ __('Versi') }}</th>
-                                    <th>Diajukan Oleh</th>
+                                    <th>{{ __('Diajukan Oleh') }}</th>
                                     <th class="text-end">{{ __('Total Anggaran') }}</th>
                                     <th>{{ __('Status') }}</th>
-                                    <th class="text-center">Aksi</th>
+                                    <th class="text-center">{{ __('Aksi') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -422,19 +422,19 @@
                     @if($submissionsByStatus['draft']->isEmpty())
                     <div class="text-center py-4 text-muted">
                         <i class="bx bx-edit bx-md opacity-50 mb-2"></i>
-                        <p class="mb-0">Tidak ada pengajuan dengan status draf atau revisi.</p>
+                        <p class="mb-0">{{ __('Tidak ada pengajuan dengan status draf atau revisi.') }}</p>
                     </div>
                     @else
                     <div class="table-responsive text-nowrap">
                         <table class="table table-hover table-striped mb-0 rkap-font-085">
                             <thead>
                                 <tr>
-                                    <th>Biro / Departemen</th>
+                                    <th>{{ __('Biro / Departemen') }}</th>
                                     <th class="text-center">{{ __('Versi') }}</th>
-                                    <th>Diajukan Oleh</th>
+                                    <th>{{ __('Diajukan Oleh') }}</th>
                                     <th class="text-end">{{ __('Total Anggaran') }}</th>
                                     <th>{{ __('Status') }}</th>
-                                    <th class="text-center">Aksi</th>
+                                    <th class="text-center">{{ __('Aksi') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -472,7 +472,7 @@
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center border-bottom">
-                <h5 class="mb-0">Rekapitulasi Anggaran per Direktorat</h5>
+                <h5 class="mb-0">{{ __('Rekapitulasi Anggaran per Direktorat') }}</h5>
             </div>
             <div class="card-body mt-4">
                 <div class="table-responsive">
@@ -480,8 +480,8 @@
                         <thead>
                             <tr>
                                 <th>{{ __('Direktorat') }}</th>
-                                <th class="text-end">Total Anggaran (Rp)</th>
-                                <th>Proporsi</th>
+                                <th class="text-end">{{ __('Total Anggaran (Rp)') }}</th>
+                                <th>{{ __('Proporsi') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -502,13 +502,13 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-4">Belum ada data anggaran.</td>
+                                <td colspan="3" class="text-center text-muted py-4">{{ __('Belum ada data anggaran.') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
                         <tfoot class="table-light fw-bold">
                             <tr>
-                                <td>TOTAL KESELURUHAN</td>
+                                <td>{{ __('TOTAL KESELURUHAN') }}</td>
                                 <td class="text-end text-primary fs-5">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
                                 <td></td>
                             </tr>

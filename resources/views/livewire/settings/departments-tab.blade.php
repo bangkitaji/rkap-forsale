@@ -41,7 +41,7 @@
                     <th>Biro</th>
                     <th>{{ __('Verifikator') }}</th>
                     <th>{{ __('Status') }}</th>
-                    <th>Aksi</th>
+                    <th>{{ __('Aksi') }}</th>
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
@@ -71,7 +71,7 @@
                         <button wire:click="edit({{ $dept->id }})" class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect" title="Edit">
                             <i class="bx bx-edit-alt"></i>
                         </button>
-                        <button wire:click="delete({{ $dept->id }})" wire:confirm="Yakin ingin menghapus departemen ini?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect" title="Hapus">
+                        <button wire:click="delete({{ $dept->id }})" wire:confirm="Yakin ingin menghapus departemen ini?" class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect" title="{{ __('Hapus') }}">
                             <i class="bx bx-trash"></i>
                         </button>
                     </td>
@@ -107,9 +107,9 @@
                 <form wire:submit.prevent="store">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="dept-directorate" class="form-label">Direktorat <span class="text-danger">*</span></label>
+                            <label for="dept-directorate" class="form-label">{{ __('Direktorat') }} <span class="text-danger">*</span></label>
                             <select id="dept-directorate" class="form-select @error('directorate_id') is-invalid @enderror" wire:model="directorate_id">
-                                <option value="">-- Pilih Direktorat --</option>
+                                <option value="">-- {{ __('Pilih Direktorat') }} --</option>
                                 @foreach($directorates as $dir)
                                 <option value="{{ $dir->id }}">{{ $dir->name }}</option>
                                 @endforeach
@@ -124,7 +124,7 @@
                                 @error('code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-8 mb-3">
-                                <label for="dept-name" class="form-label">Nama Departemen <span class="text-danger">*</span></label>
+                                <label for="dept-name" class="form-label">{{ __('Nama Departemen') }} <span class="text-danger">*</span></label>
                                 <input type="text" id="dept-name" class="form-control @error('name') is-invalid @enderror"
                                     wire:model="name" placeholder="{{ __('Nama departemen') }}" autofocus>
                                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror

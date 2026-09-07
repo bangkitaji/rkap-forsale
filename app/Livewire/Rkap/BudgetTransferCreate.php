@@ -120,11 +120,14 @@ class BudgetTransferCreate extends Component
                 : (float) $bi->total_price;
 
             if ($amount <= 0) {
-                session()->flash('error', __('Nominal transfer untuk kegiatan "' . $bi->description . '" harus lebih besar dari 0.'));
+                session()->flash('error', __('Nominal transfer untuk kegiatan ":description" harus lebih besar dari 0.', ['description' => $bi->description]));
                 return;
             }
             if ($amount > (float) $bi->total_price) {
-                session()->flash('error', __('Nominal transfer untuk kegiatan "' . $bi->description . '" tidak boleh melebihi budget yang tersedia (Rp ' . number_format($bi->total_price, 0, ',', '.') . ').'));
+                session()->flash('error', __('Nominal transfer untuk kegiatan ":description" tidak boleh melebihi budget yang tersedia (Rp :total).', [
+                    'description' => $bi->description,
+                    'total' => number_format($bi->total_price, 0, ',', '.')
+                ]));
                 return;
             }
 

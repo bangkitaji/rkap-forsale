@@ -47,7 +47,11 @@ class BrandHelper
         }
 
         // 2. Check config / .env
-        $configKey = $type === 'avatar' ? 'avatar_default' : 'logo_' . $type;
+        $configKey = match ($type) {
+            'avatar'  => 'avatar_default',
+            'favicon' => 'favicon',
+            default   => 'logo_' . $type,
+        };
         $fromConfig = config('rkap.' . $configKey);
 
         if (!empty($fromConfig)) {
@@ -60,6 +64,7 @@ class BrandHelper
             'login'      => 'assets/img/brand/logo_login.png',
             'login_hero' => 'assets/img/brand/login_hero.png',
             'avatar'     => 'assets/img/brand/default_avatar.png',
+            'favicon'    => 'assets/img/favicon/favicon.png',
             default      => 'assets/img/brand/logo_sidebar.png',
         };
     }
@@ -153,6 +158,22 @@ class BrandHelper
 
         return (string) config('rkap.theme_dark', '#1a1f5e');
     }
+
+    /**
+     * Get accent theme color hex.
+     */
+    public static function themeAccent(): string
+    {
+        try {
+            $fromDb = Setting::get('brand_theme_accent');
+            if (!empty($fromDb)) {
+                return $fromDb;
+            }
+        } catch (\Throwable) {}
+
+        return (string) config('rkap.theme_accent', '#b91c1c');
+    }
+
 
     /**
      * Save an uploaded logo file and persist to Setting table.

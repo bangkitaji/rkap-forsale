@@ -380,7 +380,7 @@
         },
         dataLabels: { enabled: false },
         stroke: { show: true, width: 2, colors: ['transparent'] },
-        colors: ['#696cff', '#71dd37', '#ffab00'],
+        colors: ['{{ \App\Helpers\BrandHelper::themeDark() }}', '{{ \App\Helpers\BrandHelper::themePrimary() }}', '#ffab00'],
         xaxis: {
           categories: categories,
           labels: {
@@ -467,7 +467,7 @@
           stops: [0, 100]
         }
       },
-      colors: ['#696cff'],
+      colors: ['{{ \App\Helpers\BrandHelper::themePrimary() }}'],
       stroke: { dashArray: 4 },
       labels: ["{{ __('Tingkat Penyerapan') }}"]
     };

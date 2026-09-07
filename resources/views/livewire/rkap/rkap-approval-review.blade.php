@@ -228,7 +228,7 @@
               'danger' => '#ea5455',
               'warning' => '#ff9f43',
               'secondary' => '#8592a3',
-              default => '#7367f0',
+              default => \App\Helpers\BrandHelper::themePrimary(),
               };
               @endphp
 
@@ -910,7 +910,7 @@
                   $qty2 = !empty($bi['unit_2']) ? (float) ($bi['quantity_2'] ?? 1) : 1;
                   $itemTotal = ((float) ($bi['quantity'] ?? 0)) * $qty2 * ((float) ($bi['unit_price'] ?? 0));
                   $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                  if (($bi['account_code'] ?? '') === '7603000001' && $isGain) {
+                  if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? '') && $isGain) {
                       $itemTotal = -$itemTotal;
                   }
                   return $itemTotal;
@@ -1521,7 +1521,7 @@
                   } elseif (isset($bi['is_gain'])) {
                       $isGain = filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN);
                   }
-                  if ($code === '7603000001' && $isGain) {
+                  if (\App\Models\Coa::isForexAccount($code) && $isGain) {
                       $price = -$price;
                   }
                   return $price;
@@ -1664,7 +1664,7 @@
                         class="@if ($isBiVirtual) text-danger text-decoration-line-through @endif">
                         {{ $bi['remarks'] ?: $bi['description'] }}
                       </span>
-                      @if (($bi['account_code'] ?? '') === '7603000001')
+                      @if (\App\Models\Coa::isForexAccount($bi['account_code'] ?? ''))
                       @if (filter_var($bi['is_gain'] ?? true, FILTER_VALIDATE_BOOLEAN))
                       <span class="badge bg-success ms-1"><i class="bx bx-trending-up me-1"></i>Gain</span>
                       @else

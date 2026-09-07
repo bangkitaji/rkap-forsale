@@ -12,12 +12,12 @@ class CoaProfitLossMappingSeeder extends Seeder
      * The 12 P&L categories.
      */
     private const CATEGORIES = [
-        ['key' => 'revenue_passenger',         'label' => 'Pendapatan Tiket Penumpang',            'group' => 'Revenue',       'color' => 'success',   'sort_order' => 1],
-        ['key' => 'revenue_non_passenger',     'label' => 'Pendapatan Non-Tiket / Komersial',      'group' => 'Revenue',       'color' => 'success',   'sort_order' => 2],
-        ['key' => 'direct_cost_traction',      'label' => 'Beban Energi Listrik Traksi',           'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 3],
-        ['key' => 'direct_cost_maintenance',   'label' => 'Beban Pemeliharaan Sarana & Prasarana',  'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 4],
-        ['key' => 'direct_cost_crew',          'label' => 'Beban Awak KA & Staf Stasiun',          'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 5],
-        ['key' => 'direct_cost_passenger',     'label' => 'Beban Pelayanan Penumpang',              'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 6],
+        ['key' => 'revenue_passenger',         'label' => 'Pendapatan Usaha Utama',                'group' => 'Revenue',       'color' => 'success',   'sort_order' => 1],
+        ['key' => 'revenue_non_passenger',     'label' => 'Pendapatan Lain-lain / Komersial',      'group' => 'Revenue',       'color' => 'success',   'sort_order' => 2],
+        ['key' => 'direct_cost_traction',      'label' => 'Beban Energi & Utilitas Operasional',   'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 3],
+        ['key' => 'direct_cost_maintenance',   'label' => 'Beban Pemeliharaan Sarana & Aset',      'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 4],
+        ['key' => 'direct_cost_crew',          'label' => 'Beban Tenaga Kerja Operasional Langsung', 'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 5],
+        ['key' => 'direct_cost_passenger',     'label' => 'Beban Pelayanan & Konsumen',            'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 6],
         ['key' => 'direct_cost_others',        'label' => 'Beban Langsung Lainnya',                 'group' => 'Direct Cost',   'color' => 'info',      'sort_order' => 7],
         ['key' => 'indirect_cost_marketing',   'label' => 'Beban Pemasaran & Penjualan',            'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 8],
         ['key' => 'indirect_cost_admin',       'label' => 'Beban Umum & Administrasi',              'group' => 'Indirect Cost', 'color' => 'warning',   'sort_order' => 9],
@@ -34,20 +34,20 @@ class CoaProfitLossMappingSeeder extends Seeder
      */
     private const PREFIX_RULES = [
         // Revenue
-        '41' => 'revenue_passenger',         // Passenger ticket revenue
-        '43' => 'revenue_passenger',         // Supplementary transport (baggage)
-        '42' => 'revenue_non_passenger',     // Property, commercial
+        '41' => 'revenue_passenger',         // Core business revenue
+        '43' => 'revenue_passenger',         // Supplementary service revenue
+        '42' => 'revenue_non_passenger',     // Commercial & other revenue
         '44' => 'revenue_non_passenger',     // Discount revenue
 
         // Direct Cost
-        '51' => 'direct_cost_maintenance',   // EMU/CIT/infra maintenance labor
-        '52' => 'direct_cost_maintenance',   // Infrastructure maint material
-        '53' => 'direct_cost_others',        // Communication fees (GSM-R)
-        '55' => 'direct_cost_others',        // Ticketing admin, payment gateway
-        '56' => 'direct_cost_crew',          // Service employees train/station
-        '57' => 'direct_cost_passenger',     // Passenger service on train
-        '58' => 'direct_cost_others',        // Construction/consultant/investment
-        '59' => 'direct_cost_others',        // Operational tools/inventory
+        '51' => 'direct_cost_maintenance',   // Maintenance labor & services
+        '52' => 'direct_cost_maintenance',   // Maintenance materials
+        '53' => 'direct_cost_others',        // Communication & operational fees
+        '55' => 'direct_cost_others',        // Transaction administration & gateway
+        '56' => 'direct_cost_crew',          // Operational staff & frontline personnel
+        '57' => 'direct_cost_passenger',     // Customer services & delivery
+        '58' => 'direct_cost_others',        // Technical consultant & direct project services
+        '59' => 'direct_cost_others',        // Operational tools & inventory
 
         // Depreciation & Amortization
         '54' => 'depreciation_amortization',
@@ -55,15 +55,17 @@ class CoaProfitLossMappingSeeder extends Seeder
         // Indirect Cost
         '61' => 'indirect_cost_admin',       // General & admin
         '62' => 'indirect_cost_admin',       // Office building maintenance
-        '63' => 'indirect_cost_admin',       // Insurance, office depreciation
+        '63' => 'indirect_cost_admin',       // Utilities & insurance
         '64' => 'indirect_cost_admin',       // Salary & benefits
-        '65' => 'indirect_cost_admin',       // Rent (land, building, equipment)
-        '66' => 'indirect_cost_admin',       // Training & development
-        '67' => 'indirect_cost_admin',       // IT
+        '65' => 'indirect_cost_admin',       // Legal & consulting
+        '66' => 'indirect_cost_admin',       // Training & HR
+        '67' => 'indirect_cost_admin',       // IT & software
+        '68' => 'indirect_cost_marketing',   // Marketing, advertising & sales
+        '69' => 'depreciation_amortization', // Indirect depreciation & amortization
 
         // Non-Operating
         '71' => 'non_operating_revenue',     // Interest income, non-op income
-        '76' => 'non_operating_expense',     // Interest expense, financial cost
+        '76' => 'non_operating_expense',     // Interest expense, financial cost, forex
         '79' => 'non_operating_expense',     // Income tax
     ];
 
@@ -71,20 +73,14 @@ class CoaProfitLossMappingSeeder extends Seeder
      * Specific COA code overrides (takes precedence over prefix rules).
      */
     private const CODE_OVERRIDES = [
-        '4401000001' => 'revenue_passenger',        // Ticketing Discount → passenger
-        '5104000001' => 'direct_cost_traction',      // Operating Electricity Station
-        '5104000002' => 'direct_cost_traction',      // Opera Electric Overhead Catenary System
-        '5501000006' => 'indirect_cost_marketing',   // Sales expenses - Marketing Activities
-        '5803000001' => 'indirect_cost_marketing',   // Advertising Business Expenses
-        
-        // Specific alignment overrides
-        '5103000001' => 'direct_cost_crew',          // Salary and Benefit HSR (Crew/Direct staff)
-        '5103000008' => 'direct_cost_crew',          // Tax Benefits HSR
-        '5104000003' => 'direct_cost_others',        // Station Water Supply
-        '5702000001' => 'direct_cost_others',        // Security on Trains
-        '5702000002' => 'direct_cost_others',        // Security at the Station
-        '5702000003' => 'direct_cost_others',        // Security in Office and Company Environments
-        '5202100001' => 'direct_cost_others',        // Operational Insurance Expenses
+        '440101' => 'revenue_passenger',        // Sales discount → deduction from core revenue
+        '440102' => 'revenue_passenger',        // Sales return → deduction from core revenue
+        '4401000001' => 'revenue_passenger',    // Legacy discount code
+        '580101' => 'direct_cost_others',       // Cloud server & hosting
+        '580102' => 'direct_cost_others',       // Platform & core API licenses
+        '550101' => 'direct_cost_others',       // Payment gateway fees
+        '630101' => 'direct_cost_traction',     // Office electricity (utilitas)
+        '630102' => 'direct_cost_traction',     // Office water (utilitas)
     ];
 
     /**

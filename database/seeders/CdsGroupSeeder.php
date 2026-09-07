@@ -13,15 +13,15 @@ class CdsGroupSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['code' => 'CDS001', 'name' => 'Cash received from farebox'],
-            ['code' => 'CDS002', 'name' => 'Cash received from non farebox'],
-            ['code' => 'CDS003', 'name' => 'Cash received interest income'],
-            ['code' => 'CDS004', 'name' => 'Personel'],
-            ['code' => 'CDS005', 'name' => 'Listrik'],
-            ['code' => 'CDS006', 'name' => 'Maintenance'],
-            ['code' => 'CDS007', 'name' => 'Overhead'],
-            ['code' => 'CDS008', 'name' => 'Financing Cost'],
-            ['code' => 'CDS009', 'name' => 'Capex'],
+            ['code' => 'CDS001', 'name' => 'Penerimaan Kas dari Pendapatan Utama'],
+            ['code' => 'CDS002', 'name' => 'Penerimaan Kas dari Pendapatan Lain-lain'],
+            ['code' => 'CDS003', 'name' => 'Penerimaan Bunga (Interest Income)'],
+            ['code' => 'CDS004', 'name' => 'Beban Pegawai / Personel'],
+            ['code' => 'CDS005', 'name' => 'Beban Listrik & Utilitas'],
+            ['code' => 'CDS006', 'name' => 'Beban Pemeliharaan & Sarana'],
+            ['code' => 'CDS007', 'name' => 'Beban Umum & Operasional (Overhead)'],
+            ['code' => 'CDS008', 'name' => 'Biaya Keuangan & Bunga (Financing Cost)'],
+            ['code' => 'CDS009', 'name' => 'Pengeluaran Modal (Capex)'],
         ];
 
         foreach ($data as $item) {

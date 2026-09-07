@@ -15,15 +15,15 @@ class CashflowGroupSeeder extends Seeder
     $cashflowGroups = [
       [
         'code' => 'CF0A1B',
-        'name' => 'Penerimaan Pelanggan Farebox',
+        'name' => 'Penerimaan Kas dari Pendapatan Operasional Utama',
       ],
       [
         'code' => 'CF0A3',
-        'name' => 'Penerimaan Pelanggan Non Farebox',
+        'name' => 'Penerimaan Kas dari Pendapatan Lain-lain',
       ],
       [
         'code' => 'CF0B2',
-        'name' => 'Pembayaran Pemasok',
+        'name' => 'Pembayaran ke Pemasok (Opex)',
       ],
       [
         'code' => 'CF0B3',
@@ -31,59 +31,59 @@ class CashflowGroupSeeder extends Seeder
       ],
       [
         'code' => 'CF0B10',
-        'name' => 'Interest Income',
+        'name' => 'Pendapatan Bunga (Interest Income)',
       ],
       [
         'code' => 'CF0B5',
-        'name' => 'Pembayaran bunga',
+        'name' => 'Pembayaran Bunga (Interest Expense)',
       ],
       [
         'code' => 'CF0B2A',
-        'name' => 'Pembayaran ke Pemasok (non opex)',
+        'name' => 'Pembayaran ke Pemasok (Non Opex / Capex)',
       ],
       [
         'code' => 'CF0F1',
-        'name' => 'HAK PENGUSAHAAN KERETA CEPAT CF',
+        'name' => 'Pengeluaran Kas Hak Pengusahaan & Konsesi Proyek',
       ],
       [
         'code' => 'CF0E2',
-        'name' => 'Penerimaan Dana CO PSBI',
+        'name' => 'Penerimaan Pinjaman Pemegang Saham A',
       ],
       [
         'code' => 'CF0E3',
-        'name' => 'Penerimaan Dana CO BY',
+        'name' => 'Penerimaan Pinjaman Pemegang Saham B',
       ],
       [
         'code' => 'CF0E11',
-        'name' => 'Penarikan Dana Dibatasi Pengunannya Pendanaan',
+        'name' => 'Penarikan Dana Dibatasi Penggunaannya Pendanaan',
       ],
       [
         'code' => 'CF0E1',
-        'name' => 'Penerimaan Dana CDS PSBI 2024',
+        'name' => 'Penerimaan Pinjaman Sindikasi Tahap I',
       ],
       [
         'code' => 'CF0E1A',
-        'name' => 'Penerimaan Dana CDS BY 2024',
+        'name' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap I',
       ],
       [
         'code' => 'CF0E4',
-        'name' => 'Penerimaan Dana CDS PSBI 2025',
+        'name' => 'Penerimaan Pinjaman Sindikasi Tahap II',
       ],
       [
         'code' => 'CF0E4A',
-        'name' => 'Penerimaan Dana CDS BY 2025',
+        'name' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap II',
       ],
       [
         'code' => 'CF0E4B',
-        'name' => 'Penerimaan Dana CDS PSBI 2026',
+        'name' => 'Penerimaan Pinjaman Sindikasi Tahap III',
       ],
       [
         'code' => 'CF0E4C',
-        'name' => 'Penerimaan Dana CDS BY 2026',
+        'name' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap III',
       ],
       [
         'code' => 'CF0F8',
-        'name' => 'Penarikan Dana Dibatasi Pengunannya Investasi',
+        'name' => 'Penarikan Dana Dibatasi Penggunaannya Investasi',
       ],
     ];
 

@@ -4,16 +4,16 @@
     toastType: @js(session()->has('error') ? 'danger' : 'success')
 }" x-init="if (showToast) { setTimeout(() => showToast = false, 5000); }">
   <div class="d-flex justify-content-between align-items-center py-3 mb-4">
-    <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Pengajuan RKAP</h4>
+    <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> {{ __('Pengajuan RKAP') }}</h4>
     <div class="d-flex gap-2 align-items-center">
       @canany(['rkap.compilation.dept', 'rkap.compilation.dir', 'rkap.compilation.all'])
       <a href="{{ route('rkap-submissions-compilation') }}" class="btn btn-outline-info d-flex align-items-center gap-1">
-        <i class="bx bx-layer me-1"></i> Kompilasi RKAP
+        <i class="bx bx-layer me-1"></i> {{ __('Kompilasi RKAP') }}
       </a>
       @endcanany
       @can('rkap.create')
       <button wire:click="openPeriodSelector" class="btn btn-primary">
-        <i class="bx bx-plus me-1"></i> Buat Pengajuan
+        <i class="bx bx-plus me-1"></i> {{ __('Buat Pengajuan') }}
       </button>
       @endcan
     </div>
@@ -96,7 +96,7 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-1">
-          <select class="form-select" wire:model.live="perPage" title="Baris per halaman">
+          <select class="form-select" wire:model.live="perPage" title="{{ __('Baris per halaman') }}">
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -112,23 +112,23 @@
         </div>
         <div class="col-md-4">
           <select class="form-select" wire:model.live="filterStatus">
-            <option value="">Semua Status</option>
+            <option value="">{{ __('Semua Status') }}</option>
             <option value="draft">Draft</option>
-            <option value="submitted">Diajukan</option>
-            <option value="dept_review">Review Kadep</option>
-            <option value="dept_approved">Disetujui Kadep</option>
-            <option value="dept_revision">Revisi Kadep</option>
-            <option value="dir_review">Review Direksi</option>
-            <option value="dir_approved">Disetujui Direksi</option>
-            <option value="dir_revision">Revisi Direksi</option>
-            <option value="final_review">Verifikasi Final</option>
-            <option value="final_revision">Revisi Verifikator</option>
-            <option value="approved">Disetujui Final</option>
+            <option value="submitted">{{ __('Diajukan') }}</option>
+            <option value="dept_review">{{ __('Review Kadep') }}</option>
+            <option value="dept_approved">{{ __('Disetujui Kadep') }}</option>
+            <option value="dept_revision">{{ __('Revisi Kadep') }}</option>
+            <option value="dir_review">{{ __('Review Direksi') }}</option>
+            <option value="dir_approved">{{ __('Disetujui Direksi') }}</option>
+            <option value="dir_revision">{{ __('Revisi Direksi') }}</option>
+            <option value="final_review">{{ __('Verifikasi Final') }}</option>
+            <option value="final_revision">{{ __('Revisi Verifikator') }}</option>
+            <option value="approved">{{ __('Disetujui Final') }}</option>
           </select>
         </div>
         <div class="col-md-3">
           <select class="form-select" wire:model.live="filterPeriod">
-            <option value="">Semua Periode</option>
+            <option value="">{{ __('Semua Periode') }}</option>
             @foreach ($periods as $period)
             <option value="{{ $period->id }}">{{ $period->title }}</option>
             @endforeach
@@ -144,12 +144,12 @@
       <table class="table table-hover mb-0">
         <thead class="table-primary text-white fw-semibold">
           <tr>
-            <th>Biro</th>
-            <th>Periode (Versi)</th>
+            <th>{{ __('Biro') }}</th>
+            <th>{{ __('Periode (Versi)') }}</th>
             <th class="text-end">{{ __('Total Anggaran') }}</th>
             <th class="text-center">{{ __('Status') }}</th>
             <th class="text-center">{{ __('Diperbarui') }}</th>
-            <th class="text-center">Aksi</th>
+            <th class="text-center">{{ __('Aksi') }}</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0">
@@ -216,7 +216,7 @@
                   @if ($submission->canBeEditedBy(Auth::user()))
                   <li>
                     <a class="dropdown-item text-primary" href="{{ route('rkap-submissions-edit', $submission->id) }}">
-                      <i class="bx bx-edit-alt me-2"></i> Edit
+                      <i class="bx bx-edit-alt me-2"></i> {{ __('Edit') }}
                     </a>
                   </li>
                   @endif
@@ -229,12 +229,12 @@
                   @endif
                   <li>
                     <a class="dropdown-item text-secondary" href="{{ route('rkap-submissions-review', $submission->id) }}">
-                      <i class="bx bx-show me-2"></i> Detail
+                      <i class="bx bx-show me-2"></i> {{ __('Detail') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item text-info" href="{{ route('rkap-submissions-versions', $submission->id) }}">
-                      <i class="bx bx-history me-2"></i> Riwayat Versi
+                      <i class="bx bx-history me-2"></i> {{ __('Riwayat Versi') }}
                     </a>
                   </li>
                   <li>
@@ -250,7 +250,7 @@
           <tr>
             <td colspan="6" class="text-center text-muted py-5">
               <i class="bx bx-file bx-lg d-block mb-3"></i>
-              Tidak ada pengajuan ditemukan.
+              {{ __('Tidak ada pengajuan ditemukan.') }}
             </td>
           </tr>
           @endforelse
@@ -340,7 +340,7 @@
           @empty
           <div class="text-center text-muted py-4">
             <i class="bx bx-calendar-x bx-lg d-block mb-2"></i>
-            Tidak ada periode aktif.<br>
+            {{ __('Tidak ada periode aktif.') }}<br>
             <small>{{ __('Hubungi admin untuk mengaktifkan periode RKAP.') }}</small>
           </div>
           @endforelse
@@ -369,7 +369,7 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">{{ __('Pilih Pengajuan Sumber') }}</label>
             <select class="form-select" wire:model.live="selectedSourceSubmissionId">
-              <option value="">-- Pilih Pengajuan Sumber --</option>
+              <option value="">-- {{ __('Pilih Pengajuan Sumber') }} --</option>
               @foreach ($previousSubmissions as $prev)
               <option value="{{ $prev->id }}">
                 {{ $prev->period->title }} (v{{ $prev->current_version }} - Rp
@@ -387,9 +387,9 @@
           <div class="alert alert-info py-2 px-3 small mb-0">
             <div class="fw-semibold">{{ __('Detail Pengajuan Sumber:') }}</div>
             <ul class="mb-0 ps-3 mt-1">
-              <li>Versi: v{{ $selectedSource->current_version }}</li>
-              <li>Total Rencana Kerja: {{ $selectedSource->workPlans()->count() }}</li>
-              <li>Total Anggaran: Rp {{ number_format($selectedSource->total_budget, 0, ',', '.') }}</li>
+              <li>{{ __('Versi:') }} v{{ $selectedSource->current_version }}</li>
+              <li>{{ __('Total Rencana Kerja:') }} {{ $selectedSource->workPlans()->count() }}</li>
+              <li>{{ __('Total Anggaran:') }} Rp {{ number_format($selectedSource->total_budget, 0, ',', '.') }}</li>
             </ul>
           </div>
           @endif
@@ -399,7 +399,7 @@
           <button type="button" class="btn btn-label-secondary" wire:click="closeDuplicateModal">{{ __('Batal') }}</button>
           <button type="button" class="btn btn-primary" wire:click="duplicateSubmission"
             @if (!$selectedSourceSubmissionId) disabled @endif>
-            <i class="bx bx-copy me-1"></i> Mulai Duplikasi
+            <i class="bx bx-copy me-1"></i> {{ __('Mulai Duplikasi') }}
           </button>
         </div>
       </div>

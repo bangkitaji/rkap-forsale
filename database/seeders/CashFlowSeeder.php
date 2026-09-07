@@ -30,30 +30,30 @@ class CashFlowSeeder extends Seeder
         // 2. Seed Line Items (Dimension)
         $lineItems = [
             // Operasi (Category 1)
-            ['item_code' => 'CF0A1B', 'category_id' => 1, 'description' => 'Penerimaan Pelanggan Farebox', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0A3',  'category_id' => 1, 'description' => 'Penerimaan Pelanggan Non Farebox', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B10', 'category_id' => 1, 'description' => 'Penerimaan Bunga', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B2',  'category_id' => 1, 'description' => 'Pembayaran ke Pemasok', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B2A', 'category_id' => 1, 'description' => 'Pembayaran ke Pemasok (capex)', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B2B', 'category_id' => 1, 'description' => 'Pembayaran ke Maintenance Reserved Account (MRA)', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0A1B', 'category_id' => 1, 'description' => 'Penerimaan Kas dari Pendapatan Operasional Utama', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0A3',  'category_id' => 1, 'description' => 'Penerimaan Kas dari Pendapatan Lain-lain', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B10', 'category_id' => 1, 'description' => 'Penerimaan Bunga (Interest Income)', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B2',  'category_id' => 1, 'description' => 'Pembayaran ke Pemasok (Opex)', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B2A', 'category_id' => 1, 'description' => 'Pembayaran ke Pemasok (Capex)', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B2B', 'category_id' => 1, 'description' => 'Pembayaran ke Maintenance Reserve Account (MRA)', 'created_at' => now(), 'updated_at' => now()],
             ['item_code' => 'CF0B3',  'category_id' => 1, 'description' => 'Pembayaran ke Karyawan', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B5',  'category_id' => 1, 'description' => 'Pembayaran Bunga', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0B9',  'category_id' => 1, 'description' => 'Penarikan Dana Dibatasi Pengunannya Operasi', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B5',  'category_id' => 1, 'description' => 'Pembayaran Bunga (Interest Expense)', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0B9',  'category_id' => 1, 'description' => 'Penarikan Dana Dibatasi Penggunaannya Operasi', 'created_at' => now(), 'updated_at' => now()],
 
             // Investasi (Category 2)
-            ['item_code' => 'CF0F1',  'category_id' => 2, 'description' => 'Perolehan Hak Pengusahaan Kereta Cepat', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0F8',  'category_id' => 2, 'description' => 'Penarikan Dana Dibatasi Pengunannya Investasi', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0F1',  'category_id' => 2, 'description' => 'Perolehan Hak Pengusahaan & Konsesi Proyek', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0F8',  'category_id' => 2, 'description' => 'Penarikan Dana Dibatasi Penggunaannya Investasi', 'created_at' => now(), 'updated_at' => now()],
 
             // Pendanaan (Category 3)
-            ['item_code' => 'CF0E2',  'category_id' => 3, 'description' => 'Penerimaan Dana CO PSBI', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E3',  'category_id' => 3, 'description' => 'Penerimaan Dana CO BY', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E1',  'category_id' => 3, 'description' => 'Penerimaan Dana CDS PSBI 2024', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E1A', 'category_id' => 3, 'description' => 'Penerimaan Dana CDS BY 2024', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E4',  'category_id' => 3, 'description' => 'Penerimaan Dana CDS PSBI 2025', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E4A', 'category_id' => 3, 'description' => 'Penerimaan Dana CDS BY 2025', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E4B', 'category_id' => 3, 'description' => 'Penerimaan Dana CDS PSBI 2026', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E4C', 'category_id' => 3, 'description' => 'Penerimaan Dana CDS BY 2026', 'created_at' => now(), 'updated_at' => now()],
-            ['item_code' => 'CF0E11', 'category_id' => 3, 'description' => 'Penarikan Dana Dibatasi Pengunannya Pendanaan', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E2',  'category_id' => 3, 'description' => 'Penerimaan Pinjaman Pemegang Saham A', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E3',  'category_id' => 3, 'description' => 'Penerimaan Pinjaman Pemegang Saham B', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E1',  'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Tahap I', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E1A', 'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap I', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E4',  'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Tahap II', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E4A', 'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap II', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E4B', 'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Tahap III', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E4C', 'category_id' => 3, 'description' => 'Penerimaan Pinjaman Sindikasi Mitra Tahap III', 'created_at' => now(), 'updated_at' => now()],
+            ['item_code' => 'CF0E11', 'category_id' => 3, 'description' => 'Penarikan Dana Dibatasi Penggunaannya Pendanaan', 'created_at' => now(), 'updated_at' => now()],
 
             // Rekonsiliasi (Category 4)
             ['item_code' => 'CF0D1',        'category_id' => 4, 'description' => 'Selisih Kurs', 'created_at' => now(), 'updated_at' => now()],
@@ -74,14 +74,14 @@ class CashFlowSeeder extends Seeder
         // 4. Seed Cash Flow Facts
         $facts = [
             // Operasi
-            // CF0A1B (Penerimaan Pelanggan Farebox)
+            // CF0A1B (Penerimaan Kas dari Pendapatan Operasional Utama)
             ['item_code' => 'CF0A1B', 'version_id' => 1, 'amount' => 1976683208500],
             ['item_code' => 'CF0A1B', 'version_id' => 2, 'amount' => 1828274026752],
             ['item_code' => 'CF0A1B', 'version_id' => 3, 'amount' => 2324866825000],
             ['item_code' => 'CF0A1B', 'version_id' => 4, 'amount' => 711056831968],
             ['item_code' => 'CF0A1B', 'version_id' => 5, 'amount' => 1968399300691],
 
-            // CF0A3 (Penerimaan Pelanggan Non Farebox)
+            // CF0A3 (Penerimaan Kas dari Pendapatan Lain-lain)
             ['item_code' => 'CF0A3', 'version_id' => 1, 'amount' => 55423535119],
             ['item_code' => 'CF0A3', 'version_id' => 2, 'amount' => 81655291616],
             ['item_code' => 'CF0A3', 'version_id' => 3, 'amount' => 90896332934],
@@ -139,7 +139,7 @@ class CashFlowSeeder extends Seeder
 
 
             // Investasi
-            // CF0F1 (Perolehan Hak Pengusahaan Kereta Cepat)
+            // CF0F1 (Perolehan Hak Pengusahaan & Konsesi Proyek)
             ['item_code' => 'CF0F1', 'version_id' => 1, 'amount' => -11779274848625],
             ['item_code' => 'CF0F1', 'version_id' => 2, 'amount' => -4775453440856],
             ['item_code' => 'CF0F1', 'version_id' => 3, 'amount' => -5718751590837],
@@ -155,56 +155,56 @@ class CashFlowSeeder extends Seeder
 
 
             // Pendanaan
-            // CF0E2 (Penerimaan Dana CO PSBI)
+            // CF0E2 (Penerimaan Pinjaman Pemegang Saham A)
             ['item_code' => 'CF0E2', 'version_id' => 1, 'amount' => 1542137001600],
             ['item_code' => 'CF0E2', 'version_id' => 2, 'amount' => 1543177707552],
             ['item_code' => 'CF0E2', 'version_id' => 3, 'amount' => 0],
             ['item_code' => 'CF0E2', 'version_id' => 4, 'amount' => 0],
             ['item_code' => 'CF0E2', 'version_id' => 5, 'amount' => 0],
 
-            // CF0E3 (Penerimaan Dana CO BY)
+            // CF0E3 (Penerimaan Pinjaman Pemegang Saham B)
             ['item_code' => 'CF0E3', 'version_id' => 1, 'amount' => 0],
             ['item_code' => 'CF0E3', 'version_id' => 2, 'amount' => 0],
             ['item_code' => 'CF0E3', 'version_id' => 3, 'amount' => 0],
             ['item_code' => 'CF0E3', 'version_id' => 4, 'amount' => 0],
             ['item_code' => 'CF0E3', 'version_id' => 5, 'amount' => 0],
 
-            // CF0E1 (Penerimaan Dana CDS PSBI 2024)
+            // CF0E1 (Penerimaan Pinjaman Sindikasi Tahap I)
             ['item_code' => 'CF0E1', 'version_id' => 1, 'amount' => 939704477282],
             ['item_code' => 'CF0E1', 'version_id' => 2, 'amount' => 254855216564],
             ['item_code' => 'CF0E1', 'version_id' => 3, 'amount' => 684244044320],
             ['item_code' => 'CF0E1', 'version_id' => 4, 'amount' => 0],
             ['item_code' => 'CF0E1', 'version_id' => 5, 'amount' => 684245069897],
 
-            // CF0E1A (Penerimaan Dana CDS BY 2024)
+            // CF0E1A (Penerimaan Pinjaman Sindikasi Mitra Tahap I)
             ['item_code' => 'CF0E1A', 'version_id' => 1, 'amount' => 935092429365],
             ['item_code' => 'CF0E1A', 'version_id' => 2, 'amount' => 855205646490],
             ['item_code' => 'CF0E1A', 'version_id' => 3, 'amount' => 117572846078],
             ['item_code' => 'CF0E1A', 'version_id' => 4, 'amount' => 105010891915],
             ['item_code' => 'CF0E1A', 'version_id' => 5, 'amount' => 119213999753],
 
-            // CF0E4 (Penerimaan Dana CDS PSBI 2025)
+            // CF0E4 (Penerimaan Pinjaman Sindikasi Tahap II)
             ['item_code' => 'CF0E4', 'version_id' => 1, 'amount' => 1246669559323],
             ['item_code' => 'CF0E4', 'version_id' => 2, 'amount' => 526727707455],
             ['item_code' => 'CF0E4', 'version_id' => 3, 'amount' => 719941851868],
             ['item_code' => 'CF0E4', 'version_id' => 4, 'amount' => 157517362442],
             ['item_code' => 'CF0E4', 'version_id' => 5, 'amount' => 719942875793],
 
-            // CF0E4A (Penerimaan Dana CDS BY 2025)
+            // CF0E4A (Penerimaan Pinjaman Sindikasi Mitra Tahap II)
             ['item_code' => 'CF0E4A', 'version_id' => 1, 'amount' => 831113039549],
             ['item_code' => 'CF0E4A', 'version_id' => 2, 'amount' => 0],
             ['item_code' => 'CF0E4A', 'version_id' => 3, 'amount' => 831113039549],
             ['item_code' => 'CF0E4A', 'version_id' => 4, 'amount' => 0],
             ['item_code' => 'CF0E4A', 'version_id' => 5, 'amount' => 831113039549],
 
-            // CF0E4B (Penerimaan Dana CDS PSBI 2026)
+            // CF0E4B (Penerimaan Pinjaman Sindikasi Tahap III)
             ['item_code' => 'CF0E4B', 'version_id' => 1, 'amount' => 0],
             ['item_code' => 'CF0E4B', 'version_id' => 2, 'amount' => 0],
             ['item_code' => 'CF0E4B', 'version_id' => 3, 'amount' => 1584726546739],
             ['item_code' => 'CF0E4B', 'version_id' => 4, 'amount' => 317487347418],
             ['item_code' => 'CF0E4B', 'version_id' => 5, 'amount' => 1628668448302],
 
-            // CF0E4C (Penerimaan Dana CDS BY 2026)
+            // CF0E4C (Penerimaan Pinjaman Sindikasi Mitra Tahap III)
             ['item_code' => 'CF0E4C', 'version_id' => 1, 'amount' => 0],
             ['item_code' => 'CF0E4C', 'version_id' => 2, 'amount' => 0],
             ['item_code' => 'CF0E4C', 'version_id' => 3, 'amount' => 1056484364492],

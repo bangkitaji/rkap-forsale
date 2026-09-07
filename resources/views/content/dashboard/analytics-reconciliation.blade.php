@@ -258,7 +258,7 @@ $netProfitProj = $plSummary['net_profit']['projection'] ?? 0.0;
       dataLabels: {
         enabled: false
       },
-      colors: ['#696cff', '#71dd37', '#ffab00'],
+      colors: ['{{ \App\Helpers\BrandHelper::themeDark() }}', '{{ \App\Helpers\BrandHelper::themePrimary() }}', '#ffab00'],
       xaxis: {
         categories: categories,
         labels: {

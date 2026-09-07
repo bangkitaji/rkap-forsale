@@ -493,7 +493,7 @@
             return formatValueShort(val);
           }
         },
-        colors: ['#1a1f5e', '#960b10ff', '#ffab00'],
+        colors: ['{{ \App\Helpers\BrandHelper::themeDark() }}', '{{ \App\Helpers\BrandHelper::themePrimary() }}', '#ffab00'],
         xaxis: {
           categories: labels,
           labels: {

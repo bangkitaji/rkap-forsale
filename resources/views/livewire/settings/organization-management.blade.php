@@ -1,6 +1,6 @@
 <div>
     <h4 class="py-3 mb-4">
-        <span class="text-muted fw-light">Settings /</span> Manajemen Organisasi
+        <span class="text-muted fw-light">{{ __('Settings /') }}</span> {{ __('Manajemen Organisasi') }}
     </h4>
 
     <div class="card">
@@ -9,19 +9,19 @@
                 <li class="nav-item">
                     <button type="button" class="nav-link @if($activeTab === 'directorates') active @endif"
                         wire:click="$set('activeTab', 'directorates')" role="tab">
-                        <i class="bx bx-building me-1"></i> Direktorat
+                        <i class="bx bx-building me-1"></i> {{ __('Direktorat') }}
                     </button>
                 </li>
                 <li class="nav-item">
                     <button type="button" class="nav-link @if($activeTab === 'departments') active @endif"
                         wire:click="$set('activeTab', 'departments')" role="tab">
-                        <i class="bx bx-sitemap me-1"></i> Departemen
+                        <i class="bx bx-sitemap me-1"></i> {{ __('Departemen') }}
                     </button>
                 </li>
                 <li class="nav-item">
                     <button type="button" class="nav-link @if($activeTab === 'bureaus') active @endif"
                         wire:click="$set('activeTab', 'bureaus')" role="tab">
-                        <i class="bx bx-folder me-1"></i> Biro
+                        <i class="bx bx-folder me-1"></i> {{ __('Biro') }}
                     </button>
                 </li>
             </ul>

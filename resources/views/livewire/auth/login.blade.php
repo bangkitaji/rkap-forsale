@@ -39,7 +39,8 @@
                         <img
                             class="form-brand__logo"
                             src="{{ \App\Helpers\BrandHelper::logo('login') }}"
-                            alt="{{ \App\Helpers\BrandHelper::companyName() }}" />
+                            alt="{{ \App\Helpers\BrandHelper::companyName() }}"
+                            style="height: 48px; max-width: 220px; object-fit: contain;" />
                     </div>
                     <h2 class="login-card__heading text-center">{{ __('Selamat datang!') }}</h2>
                     <p class="login-card__sub text-center">{{ __('Silakan masuk ke akun Anda untuk melanjutkan.') }}</p>

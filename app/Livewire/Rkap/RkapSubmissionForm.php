@@ -1028,7 +1028,7 @@ class RkapSubmissionForm extends Component
                     }
 
                     $isGain = isset($bi['is_gain']) ? filter_var($bi['is_gain'], FILTER_VALIDATE_BOOLEAN) : true;
-                    if ($accountCode === '7603000001' && $isGain) {
+                    if (\App\Models\Coa::isForexAccount($accountCode) && $isGain) {
                         $itemTotal = -$itemTotal;
                     }
                     $total += $itemTotal;
@@ -1576,7 +1576,7 @@ class RkapSubmissionForm extends Component
     public function getMasterData()
     {
         return [
-            'coas' => \App\Models\Coa::select('id', 'code', 'title')->get()->map(fn($c) => ['id' => $c->id, 'code' => $c->code, 'title' => $c->title, 'is_past' => str_starts_with($c->code, '2'), 'search' => strtolower($c->code . ' ' . $c->title)])->toArray(),
+            'coas' => \App\Models\Coa::select('id', 'code', 'title', 'is_gain_loss')->get()->map(fn($c) => ['id' => $c->id, 'code' => $c->code, 'title' => $c->title, 'is_past' => str_starts_with($c->code, '2'), 'is_forex' => ($c->is_gain_loss || \App\Models\Coa::isForexAccount($c->code)), 'search' => strtolower($c->code . ' ' . $c->title)])->toArray(),
             'workPlans' => \App\Models\WorkPlan::select('id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($w) => ['id' => $w->id, 'code' => $w->code, 'title' => $w->title, 'search' => strtolower($w->code . ' ' . $w->title)])->toArray(),
             'activities' => \App\Models\Activity::select('id', 'work_plan_id', 'code', 'title')->where('approval_status', 'approved')->get()->map(fn($a) => ['id' => $a->id, 'work_plan_id' => $a->work_plan_id, 'code' => $a->code, 'title' => $a->title, 'search' => strtolower($a->code . ' ' . $a->title)])->toArray(),
         ];

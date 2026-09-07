@@ -1,7 +1,7 @@
 <div>
     {{-- Page header --}}
     <div class="d-flex justify-content-between align-items-center py-3 mb-4 flex-wrap gap-2">
-        <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> Kompilasi Pengajuan RKAP</h4>
+        <h4 class="mb-0"><span class="text-muted fw-light">RKAP /</span> {{ __('Kompilasi Pengajuan RKAP') }}</h4>
         <div class="d-flex gap-2 align-items-center flex-wrap">
             @if($selectedPeriod)
             <span class="badge bg-label-primary fs-6 px-3 py-2">
@@ -12,9 +12,9 @@
                 wire:click="exportExcel"
                 wire:loading.attr="disabled"
                 class="btn btn-success d-flex align-items-center gap-1"
-                title="Export Kompilasi ke Excel">
+                title="{{ __('Export Kompilasi ke Excel') }}">
                 <span wire:loading.remove wire:target="exportExcel">
-                    <i class="bx bx-download me-1"></i> Export Excel
+                    <i class="bx bx-download me-1"></i> {{ __('Export Excel') }}
                 </span>
                 <span wire:loading wire:target="exportExcel">
                     <span class="spinner-border spinner-border-sm me-1"></span> Memproses...
@@ -42,17 +42,17 @@
         @if($canSeeAll)
         <div class="alert alert-info py-2 mb-0 d-inline-flex align-items-center gap-2">
             <i class="bx bx-globe fs-5"></i>
-            <span><strong>{{ __('Cakupan:') }}</strong> Semua Direktorat</span>
+            <span><strong>{{ __('Cakupan:') }}</strong> {{ __('Semua Direktorat') }}</span>
         </div>
         @elseif($canSeeDir)
         <div class="alert alert-warning py-2 mb-0 d-inline-flex align-items-center gap-2">
             <i class="bx bx-buildings fs-5"></i>
-            <span><strong>{{ __('Cakupan:') }}</strong> Direktorat Anda</span>
+            <span><strong>{{ __('Cakupan:') }}</strong> {{ __('Direktorat Anda') }}</span>
         </div>
         @else
         <div class="alert alert-secondary py-2 mb-0 d-inline-flex align-items-center gap-2">
             <i class="bx bx-group fs-5"></i>
-            <span><strong>{{ __('Cakupan:') }}</strong> Departemen Anda</span>
+            <span><strong>{{ __('Cakupan:') }}</strong> {{ __('Departemen Anda') }}</span>
         </div>
         @endif
     </div>
@@ -63,12 +63,12 @@
             <div class="row g-3 align-items-center">
                 <div class="col-auto">
                     <label class="col-form-label fw-semibold">
-                        <i class="bx bx-filter-alt me-1"></i>Filter Periode
+                        <i class="bx bx-filter-alt me-1"></i>{{ __('Filter Periode') }}
                     </label>
                 </div>
                 <div class="col-md-4">
                     <select class="form-select" wire:model.live="filterPeriod" id="filter-period-compilation">
-                        <option value="">Semua Periode</option>
+                        <option value="">{{ __('Semua Periode') }}</option>
                         @foreach($periods as $period)
                         <option value="{{ $period->id }}">{{ $period->title }}</option>
                         @endforeach
@@ -77,7 +77,7 @@
                 <div class="col-auto ms-auto">
                     <span class="text-muted small">
                         <i class="bx bx-info-circle me-1"></i>
-                        Menampilkan pengajuan RKAP semua status
+                        {{ __('Menampilkan pengajuan RKAP semua status') }}
                     </span>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <div class="fw-bold fs-4">{{ $bureauCount }}</div>
-                        <div class="text-muted small">Biro</div>
+                        <div class="text-muted small">{{ __('Biro') }}</div>
                     </div>
                 </div>
             </div>
@@ -148,9 +148,9 @@
             <div class="fw-semibold mb-1">{{ __('Belum ada data kompilasi') }}</div>
             <small>
                 @if(!$filterPeriod)
-                Pilih periode untuk melihat kompilasi pengajuan RKAP.
+                {{ __('Pilih periode untuk melihat kompilasi pengajuan RKAP.') }}
                 @else
-                Tidak ada pengajuan pada periode ini dalam cakupan Anda.
+                {{ __('Tidak ada pengajuan pada periode ini dalam cakupan Anda.') }}
                 @endif
             </small>
         </div>
@@ -178,8 +178,8 @@
                 <i class="bx bx-chevron-down fs-5 text-primary transition-transform"></i>
                 <div>
                     <span class="fw-bold text-primary">{{ $dirName }}</span>
-                    <span class="badge bg-label-primary ms-2">{{ $deptGroups->count() }} Departemen</span>
-                    <span class="badge bg-label-info ms-1">{{ $dirBureaus }} Biro</span>
+                    <span class="badge bg-label-primary ms-2">{{ $deptGroups->count() }} {{ __('Departemen') }}</span>
+                    <span class="badge bg-label-info ms-1">{{ $dirBureaus }} {{ __('Biro') }}</span>
                 </div>
             </div>
             <div class="text-end">
@@ -225,7 +225,7 @@
                     <div>
                         <i class="bx bx-layer text-secondary me-1"></i>
                         <span class="fw-semibold text-secondary">{{ $deptName }}</span>
-                        <span class="badge bg-label-secondary ms-2">{{ $deptSubmissions->count() }} Biro</span>
+                        <span class="badge bg-label-secondary ms-2">{{ $deptSubmissions->count() }} {{ __('Biro') }}</span>
                     </div>
                     <span class="has-tooltip fw-semibold text-secondary small">
                         Rp {{ number_format($deptTotal, 0, ',', '.') }}
@@ -262,7 +262,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="text-center rkap-w-30">#</th>
-                                <th>Biro</th>
+                                <th>{{ __('Biro') }}</th>
                                 <th class="text-center">{{ __('Periode') }}</th>
                                 <th class="text-center">{{ __('Versi') }}</th>
                                 <th class="text-center">{{ __('Rencana Kerja') }}</th>
@@ -327,7 +327,7 @@
                                 <td class="text-center">
                                     <a href="{{ route('rkap-submissions-review', $submission->id) }}"
                                         class="btn btn-sm btn-icon btn-text-secondary rounded-pill"
-                                        title="Lihat Detail">
+                                        title="{{ __('Lihat Detail') }}">
                                         <i class="bx bx-show"></i>
                                     </a>
                                 </td>
@@ -378,7 +378,7 @@
             {{-- Directorate total row --}}
             <div class="bg-primary text-white px-4 py-2 d-flex justify-content-between align-items-center rounded-bottom">
                 <span class="fw-semibold">
-                    <i class="bx bx-check-double me-1"></i>Total Direktorat {{ $dirName }}
+                    <i class="bx bx-check-double me-1"></i>{{ __('Total Direktorat') }} {{ $dirName }}
                 </span>
                 <span class="has-tooltip fw-bold fs-6 text-white">
                     Rp {{ number_format($dirTotal, 0, ',', '.') }}

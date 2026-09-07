@@ -695,7 +695,7 @@
   aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header d-flex align-items-center text-white rkap-bg-kcic-red">
+      <div class="modal-header d-flex align-items-center text-white rkap-bg-primary">
         <h5 class="modal-title d-flex align-items-center text-white mb-0 rkap-text-white" id="coaGroupDetailModalLabel">
           <i class="bx bx-detail me-2 fs-4 text-white rkap-text-white"></i>
           <span id="coaGroupDetailTitle" class="text-white rkap-text-white">{{ __('Detail COA') }}</span>
